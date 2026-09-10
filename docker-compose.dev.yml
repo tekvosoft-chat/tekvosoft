@@ -1,0 +1,62 @@
+# Override de DESENVOLVIMENTO.
+# Compila a partir do código local e recarrega sozinho quando você salva.
+#
+#   ./tekvosoft dev
+#
+# Portas no host:
+#   3000 -> frontend (dev server do React, com hot reload)
+#   8080 -> backend  (API, reinicia sozinho a cada save)
+#   5432 -> postgres
+#   6379 -> redis
+#   9229 -> debugger do Node (attach pelo VSCode)
+
+services:
+  postgres:
+    ports:
+      - "${DB_PORT_HOST:-5432}:5432"
+
+  redis:
+    ports:
+      - "${REDIS_PORT_HOST:-6379}:6379"
+
+  backend:
+    build:
+      context: ./backend
+      target: dev
+    # variante que expõe o debugger em 0.0.0.0 — dentro de container
+    # o --inspect padrão só escuta em 127.0.0.1 e fica inalcançável
+    command: ["npm", "run", "dev:server:docker"]
+    environment:
+      NODE_ENV: development
+      LOG_LEVEL: debug
+      PORT: 3000
+      BACKEND_URL: http://localhost:${API_PORT:-8080}
+      FRONTEND_URL: http://localhost:${PORT:-3000}
+    volumes:
+      # código do host -> hot reload
+      - ./backend:/usr/src/app
+      # node_modules fica DENTRO do container: o host não interfere
+      - backend_node_modules:/usr/src/app/node_modules
+    ports:
+      - "${API_PORT:-8080}:3000"
+      - "${DEBUG_PORT:-9229}:9229"
+
+  frontend:
+    build:
+      context: ./frontend
+      target: dev
+    environment:
+      # o dev server do React fala direto com o backend, sem passar pelo nginx
+      REACT_APP_BACKEND_URL: http://localhost:${API_PORT:-8080}
+      # o watcher precisa de polling para enxergar alterações em volume montado
+      CHOKIDAR_USEPOLLING: "true"
+      BROWSER: none
+    volumes:
+      - ./frontend:/usr/src/app
+      - frontend_node_modules:/usr/src/app/node_modules
+    ports:
+      - "${PORT:-3000}:3000"
+
+volumes:
+  backend_node_modules:
+  frontend_node_modules:

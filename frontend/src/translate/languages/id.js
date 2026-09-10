@@ -108,17 +108,6 @@ const messages = {
           perDay: {
             title: "Interaksi Hari Ini: "
           }
-        },
-        blog: {
-          title: "Blog Ticketz",
-          loading: "Memuat postingan...",
-          error: "Postingan blog tidak dapat dimuat.",
-          empty: "Tidak ada postingan blog.",
-          showAll: "Tampilkan semua postingan",
-          showLess: "Tampilkan lebih sedikit",
-          openPost: "Baca postingan",
-          previous: "Postingan sebelumnya",
-          next: "Postingan berikutnya"
         }
       },
       connections: {
@@ -789,20 +778,20 @@ const messages = {
       },
       about: {
         aboutthe: "Tentang",
-        copyright: "� 2024 - Didukung oleh ticketz",
+        copyright: "� 2024 - Didukung oleh Tekvosoft",
         buttonclose: "Tutup",
-        title: "Tentang ticketz",
+        title: "Tentang Tekvosoft",
         abouttitle: "Asal dan peningkatan",
         aboutdetail:
-          "ticketz berasal secara tidak langsung dari proyek Whaticket dengan peningkatan yang dibagikan oleh para pengembang sistem EquipeChat melalui saluran VemFazer di YouTube, kemudian ditingkatkan oleh Claudemir Todo Bom",
+          "Tekvosoft berasal secara tidak langsung dari proyek Whaticket dengan peningkatan yang dibagikan oleh para pengembang sistem EquipeChat melalui saluran VemFazer di YouTube, kemudian ditingkatkan oleh Claudemir Todo Bom",
         aboutauthorsite: "Situs penulis",
         aboutwhaticketsite: "Situs Komunitas Whaticket di Github",
         aboutvemfazersite: "Situs saluran Vem Fazer di Github",
         licenseheading: "Lisensi Sumber Terbuka",
         licensedetail:
-          "ticketz dilisensikan di bawah GNU Affero General Public License versi 3, yang berarti bahwa setiap pengguna yang memiliki akses ke aplikasi ini berhak untuk mendapatkan akses ke kode sumbernya. Informasi lebih lanjut di tautan berikut:",
+          "Tekvosoft dilisensikan di bawah GNU Affero General Public License versi 3, yang berarti bahwa setiap pengguna yang memiliki akses ke aplikasi ini berhak untuk mendapatkan akses ke kode sumbernya. Informasi lebih lanjut di tautan berikut:",
         licensefulltext: "Teks lengkap lisensi",
-        licensesourcecode: "Kode sumber Ticketz"
+        licensesourcecode: "Kode sumber Tekvosoft"
       },
       schedules: {
         title: "Jadwal",
@@ -1261,50 +1250,6 @@ const messages = {
           "Warna ini sudah digunakan, pilih yang lain.",
         ERR_WAPP_GREETING_REQUIRED:
           "Pesan sambutan wajib jika ada lebih dari satu antrian."
-      },
-      ticketz: {
-        registration: {
-          header: "Daftar di basis pengguna Ticketz",
-          description:
-            "Isi kolom di bawah ini untuk mendaftar di basis pengguna Ticketz dan menerima berita tentang proyek.",
-          name: "Nama",
-          country: "Negara",
-          phoneNumber: "Nomor Telepon",
-          submit: "Daftar"
-        },
-        proAd: {
-          imageAlt: "Tangkapan layar Ticketz PRO",
-          title: "Ticketz PRO",
-          features: {
-            officialChannels:
-              "WhatsApp resmi - Instagram - Messenger dan lainnya",
-            exclusiveFeatures: "Fitur eksklusif",
-            advancedSupport: "Dukungan lanjutan",
-            easyMigration: "Migrasi mudah"
-          },
-          subscribePrice: "Berlangganan seharga {{monthlyPrice}}/bulan",
-          subscribeSubtitle: "langsung di dalam sistem",
-          ctaUpgrade: "Klik untuk instruksi upgrade",
-          ctaVisitSite: "Klik untuk mengunjungi situs",
-          instructions: {
-            title: "Instruksi upgrade",
-            stepIntro:
-              "Jika Anda menginstal image yang disediakan proyek di server atau VPS menggunakan instruksi sederhana, Anda hanya perlu mengakses server dan menjalankan perintah di bawah ini:",
-            stepInstall:
-              'Dalam beberapa saat Ticketz PRO akan terpasang dengan semua data Anda; setelah itu buka menu pengguna, klik "Langganan Ticketz PRO", lalu selesaikan langganan Anda.',
-            helpPrefix:
-              "Jika instalasi Anda berbeda atau Anda merasa perlu bantuan untuk memasang Ticketz PRO, ",
-            helpLink: "hubungi kami",
-            helpSuffix: " dan kami akan membantu!"
-          }
-        },
-        support: {
-          title: "Dukung proyek Ticketz",
-          mercadopagotitle: "Kartu Kredit",
-          recurringbrl: "Donasi berulang dalam BRL",
-          paypaltitle: "Kartu Kredit",
-          international: "Donasi dalam USD"
-        }
       }
     }
   }

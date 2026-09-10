@@ -1,102 +1,91 @@
-# AGENTS.md — Ticketz
+# AGENTS.md — Tekvosoft
 
-Compact guidance for OpenCode sessions working in this repo.
+Guia compacto para agentes trabalhando neste repositório.
 
-## Project structure
+## Estrutura
 
-- Two independent packages, **no root `package.json`**.
-  - `backend/` — Node/Express/TypeScript, Sequelize ORM, Postgres, Redis, Bull queues.
-  - `frontend/` — React 17 (JavaScript, **not TypeScript**), Material-UI v4, Create React App 5.
-- Docker-first deployment; local development is easiest via Docker Compose.
+Repositório único, dois pacotes independentes, **sem `package.json` na raiz**.
 
-## Backend (`backend/`)
+- `backend/` — Node 24 / Express / TypeScript, Sequelize (Postgres), Redis + Bull, Baileys, Socket.IO
+- `frontend/` — React 17 (JavaScript, **não TypeScript**), Material-UI v4, Create React App 5
+- `tekvosoft` — CLI único. **Sempre prefira ele a chamar `docker compose` na mão.**
+- `docker-compose.yml` + `.dev.yml` / `.prod.yml` — base e overrides
+- `scripts/backup.sh` — backup/restauração, roda dentro do container `tools`
 
-### Entrypoints & build
-- Source entry: `src/server.ts`. Compiled output: `dist/server.js`.
-- `npm run build` — production compile (no sourcemaps).
-- `npm run devbuild` — compile with sourcemaps.
-- `npm run dev:server` — run via `ts-node-dev` with `--inspect --respawn --transpile-only`.
-- `npm run watch` — `tsc -w`.
+## Comandos
 
-### Database
-- `npm run db:migrate` — run Sequelize migrations.
-- `npm run db:seed` — run all seeders.
-- `.sequelizerc` resolves config to `dist/config/database.js`; **build first** before running CLI commands in production.
-- `src/bootstrap.ts` loads `.env` (or `.env.test` when `NODE_ENV=test`). `src/config/database.ts` imports this bootstrap, so env vars are available before DB config is read.
-- Docker startup runs migrations automatically before starting the server.
+```bash
+./tekvosoft dev      # sobe tudo local com hot reload
+./tekvosoft logs     # logs ao vivo
+./tekvosoft shell backend
+./tekvosoft psql
+./tekvosoft reset    # zera o banco de desenvolvimento
+```
 
-### Tests
-- `npm test` — runs `pretest` (migrate + seed in test env), then Jest, then `posttest` (undo all migrations).
-- Test files: `**/__tests__/**/*.spec.ts`.
-- Jest preset: `ts-jest`, environment: `node`, coverage collected from `src/services/**/*.ts`.
+Portas em dev: frontend `3000`, backend `8080`, postgres `5432`, redis `6379`,
+debugger `9229`. Todas configuráveis no `.env` se já estiverem ocupadas.
 
-### Lint & style
-- `npm run lint` — ESLint on `src/**/*.ts`.
-- Config in `eslint.config.js`: Prettier enforced as error, double quotes preferred, `import/no-duplicates` is an error, `no-console` is allowed, `@typescript-eslint/no-unused-vars` ignores `_` prefixed args.
-- **After edits, run `npx eslint --fix src/**/*.ts` to resolve Prettier violations and warnings.**
+## Backend
 
-### Other scripts
-- `npm run generate:i18nkeys` — extracts translation keys into the DB.
-- `npm run mark-seeds` — marks all seeds as executed without running them (used during upgrades).
+- Entrada: `src/server.ts` → compilado em `dist/server.js`
+- `npm run build` (produção) / `npm run devbuild` (com sourcemaps) / `npm run dev:server` (ts-node-dev)
+- `npm run generate:i18nkeys` — codegen para `src/generated/translationKeys.ts`; **precisa rodar antes do build**
+- `.sequelizerc` aponta para `dist/`, então **compile antes** de usar o CLI do Sequelize
+- `scripts/entrypoint.sh` cuida de esperar o banco, compilar (só em dev), migrar e semear
+- Testes: `npm test` (Jest + ts-jest). Arquivos em `**/__tests__/**/*.spec.ts`
+- Após editar: `npx eslint --fix src/**/*.ts`
 
-### Runtime quirks
-- i18n is initialized asynchronously (`i18nReady`) before the HTTP server starts.
-- On startup, the server iterates all companies and starts WhatsApp sessions (`StartAllWhatsAppsSessions`).
-- Graceful shutdown handles `SIGINT`/`SIGTERM` with a 30s timeout.
-- `app.ts` mounts `/public/*` to serve uploaded files from `uploadConfig.directory`.
-- Sentry is initialized unconditionally in `app.ts` (empty `dsn` is harmless).
+### i18n do backend
+Traduções ficam na tabela `Translation` do Postgres. Use `_t(key, origem)` para
+resolver o idioma a partir de um `Ticket`, `Contact`, `Whatsapp` ou `Company`.
+`i18nReady` bloqueia a subida do servidor — não emita texto traduzido antes dele.
 
-### Internationalization
-- Uses `i18next` with a custom `TranslationsSequelize` backend module.
-- Translations live in the Postgres `Translation` table (`language`, `namespace`, `key`, `value`); default namespace is `backend`.
-- Export `_t(key, lngSource)` resolves language from a `Ticket`, `Contact`, `Whatsapp`, `Company`, model with `language`, or a raw language string.
-- `i18nReady` gates server startup; do not emit translated strings before it resolves.
-- `npm run generate:i18nkeys` extracts keys from source into the DB.
+## Frontend
 
-## Frontend (`frontend/`)
+- `npm start` (dev) / `npm run build` (produção)
+- Após editar: `npx prettier --write src/`
+- i18n com dicionários estáticos em `src/translate/languages/*.js`; use `i18n.t("chave")`
+- O toolchain exige `NODE_OPTIONS=--openssl-legacy-provider` no Node 20+
 
-### Commands
-- `npm start` — dev server.
-- `npm run build` — production build with `GENERATE_SOURCEMAP=false`.
-- `npm run builddev` — production build with sourcemaps.
-- `npm test` — CRA test runner (no test files visible in the repo currently).
+### `config.json` é público
+`frontend/docker-entrypoint.sh` gera `/config.json`, servido a qualquer
+visitante. Ele usa uma **lista explícita** de variáveis. Nunca acrescente
+segredo ali, e nunca troque a lista por um despejo do ambiente.
 
-### Lint & style
-- **After edits, run `npx prettier --write src/` (or the specific files changed) to keep formatting consistent and warnings clean.**
+## Convenções entre as pontas
 
-### Internationalization
-- Uses `i18next` with `i18next-browser-languagedetector`.
-- Static dictionaries in `src/translate/languages/*.js` (pt, pt_PT, en, es, fr, de, it, id).
-- Detection order: `localStorage` → `navigator`; default/fallback is `en`.
-- Namespace is `translations`; import `{ i18n }` from `../../translate/i18n` and call `i18n.t("key")`.
+- Mensagens enviadas ao WhatsApp são traduzidas **no backend** com `_t()`. Nunca
+  mande chave de tradução crua para o usuário final.
+- Códigos de erro da API permanecem como códigos; quem traduz é o frontend.
 
-### Build quirks
-- The Docker build sets `NODE_OPTIONS=--openssl-legacy-provider` because the React 17 toolchain needs legacy OpenSSL on Node 20+.
-- Runtime config is generated from environment variables at container startup and written to `/var/www/public/config.json` by the container entrypoint.
+## Nomes que NÃO devem ser renomeados
 
-## Docker & local development
+O projeto foi renomeado de `ticketz` para `tekvosoft`, mas estes identificadores
+ficaram para trás **de propósito** — são formato de dados ou integração externa:
 
-- **Full stack locally**: `docker compose -f docker-compose-local.yaml up -d`
-  - Frontend on port `3000`, backend on port `8080`.
-  - Postgres and Redis included.
-  - Default login: `admin@ticketz.host` / `123456`.
-- **Infrastructure only** (Postgres + Redis + pgAdmin): `docker compose -f docker-compose-dev.yaml up -d`
-- **Internet deployment**: `docker compose -f docker-compose-acme.yaml up -d` (requires editing `.env-backend-acme` and `.env-frontend-acme`).
-- Backend container auto-runs migrations and seeds on startup, then starts the app.
+| Identificador | Por que fica |
+|---|---|
+| `ticketzvCard` | Chave JSON dentro do corpo de mensagens já gravadas no banco |
+| `TICKETZ_JWT_SECRET` | Chave no Redis; renomear invalida todas as sessões ativas |
+| `/subscription/ticketz/webhook` | URL já registrada na operadora de pagamento |
+| `pixTicketz` | Identificador de gateway gravado nas configurações |
+| `ticketz_safe_jsonb_*` | Função criada por migration já aplicada — histórico é imutável |
+| cupom `TICKETZ` (Wavoip) | Código de desconto real de um parceiro |
 
-## CI / Docker images
+## Migrations
 
-- Workflow: `.github/workflows/build-docker.yml`.
-- Builds multi-arch (`linux/amd64`, `linux/arm64`) images on push to `main`, `fix/**`, `dev`, `test-**`, and tags `v*.*.*`.
-- Publishes to `ghcr.io/ticketz-oss/ticketz-backend` and `ghcr.io/ticketz-oss/ticketz-frontend`.
-- CI generates `backend/src/gitinfo.ts` and `frontend/public/gitinfo.json` from git metadata at build time.
+Migrations já aplicadas são **imutáveis**. Para corrigir algo, crie uma nova.
+Ao escrever SQL que será restaurado por `pg_dump`, **qualifique o schema**
+(`public.funcao(...)`) — o pg_dump restaura com `search_path` vazio, e chamadas
+sem qualificar quebram a recriação de índices na restauração de backup.
 
-## Cross-stack conventions
+## CI
 
-- **Backend messages** emitted to chat channels (WhatsApp, etc.) must be translated on the backend using `_t(key, entity)` before sending. Never send raw translation keys to end users.
-- **Error codes** returned by API responses should remain as keys or codes; the frontend translates them with its own i18n stack.
-- **Frontend UI strings** must always use the frontend i18n stack (`i18n.t("key")`).
+`.github/workflows/build.yml` compila as duas imagens (amd64 + arm64) e publica
+em `ghcr.io/${{ github.repository_owner }}/tekvosoft-{backend,frontend}`.
+Use `github.repository_owner`, nunca um nome de organização fixo.
 
-## License constraint
+## Licença
 
-- Project is **AGPL**. If distributing the system, the source code link must remain easily accessible to all users (default location is the "About Ticketz" screen).
+AGPL. Se distribuir o sistema, o link para o código-fonte precisa continuar
+acessível a qualquer usuário (hoje fica na tela "Sobre").

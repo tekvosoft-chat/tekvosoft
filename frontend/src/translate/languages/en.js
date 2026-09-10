@@ -166,17 +166,6 @@ const messages = {
         ticketCountersLabels: {
           created: "Created",
           closed: "Closed"
-        },
-        blog: {
-          title: "Ticketz Blog",
-          loading: "Loading posts...",
-          error: "Could not load blog posts right now.",
-          empty: "No blog posts found.",
-          showAll: "Show all posts",
-          showLess: "Show less",
-          openPost: "Read post",
-          previous: "Previous post",
-          next: "Next post"
         }
       },
       connections: {
@@ -844,20 +833,20 @@ const messages = {
       },
       about: {
         aboutthe: "About the",
-        copyright: "© 2024 - Powered by ticketz",
+        copyright: "© 2024 - Powered by Tekvosoft",
         buttonclose: "Close",
-        title: "About ticketz",
+        title: "About Tekvosoft",
         abouttitle: "Origin and improvements",
         aboutdetail:
-          "ticketz is indirectly derived from the Whaticket project with improvements shared by the developers of the EquipeChat system through the VemFazer channel on YouTube, later improved by Claudemir Todo Bom",
+          "Tekvosoft is indirectly derived from the Whaticket project with improvements shared by the developers of the EquipeChat system through the VemFazer channel on YouTube, later improved by Claudemir Todo Bom",
         aboutauthorsite: "Author's site",
         aboutwhaticketsite: "Whaticket Community site on Github",
         aboutvemfazersite: "Vem Fazer channel site on Github",
         licenseheading: "Open Source License",
         licensedetail:
-          "ticketz is licensed under the GNU Affero General Public License version 3, which means that any user who has access to this application has the right to obtain access to the source code. More information at the links below:",
+          "Tekvosoft is licensed under the GNU Affero General Public License version 3, which means that any user who has access to this application has the right to obtain access to the source code. More information at the links below:",
         licensefulltext: "Full text of the license",
-        licensesourcecode: "Ticketz source code"
+        licensesourcecode: "Tekvosoft source code"
       },
       schedules: {
         title: "Schedules",
@@ -1423,50 +1412,6 @@ const messages = {
           fri: "Friday",
           sat: "Saturday",
           sun: "Sunday"
-        }
-      },
-      ticketz: {
-        registration: {
-          header: "Register in the Ticketz user base",
-          description:
-            "Fill in the fields below to register in the Ticketz user base and receive news about the project.",
-          name: "Name",
-          country: "Country",
-          phoneNumber: "Whatsapp Number",
-          submit: "Register"
-        },
-        proAd: {
-          imageAlt: "Ticketz PRO screenshot",
-          title: "Ticketz PRO",
-          features: {
-            officialChannels:
-              "Official WhatsApp - Instagram - Messenger and more",
-            exclusiveFeatures: "Exclusive features",
-            advancedSupport: "Advanced support",
-            easyMigration: "Easy migration"
-          },
-          subscribePrice: "Subscribe for {{monthlyPrice}}/month",
-          subscribeSubtitle: "directly inside the system",
-          ctaUpgrade: "Click for upgrade instructions",
-          ctaVisitSite: "Click to visit the website!",
-          instructions: {
-            title: "Upgrade Instructions",
-            stepIntro:
-              "If you installed the images provided by the project on a server or VPS using the simplified instructions, all you need to do is access your server and run the command below:",
-            stepInstall:
-              'In a few moments Ticketz PRO will be installed with all your data; then go to the user menu, click "Ticketz PRO Subscription", and complete your subscription.',
-            helpPrefix:
-              "If your installation is different or you believe you need help installing Ticketz PRO, ",
-            helpLink: "contact us",
-            helpSuffix: " and we will help you!"
-          }
-        },
-        support: {
-          title: "Support Ticketz project",
-          mercadopagotitle: "Credit Card",
-          recurringbrl: "Recurring donations in BRL",
-          paypaltitle: "Credit Card",
-          international: "Donations in USD"
         }
       }
     }

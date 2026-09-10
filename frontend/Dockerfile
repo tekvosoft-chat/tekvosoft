@@ -1,26 +1,41 @@
-FROM node:24-alpine as build-deps
+# Frontend do Tekvosoft.
+#   target dev   -> usado por ./tekvosoft dev  (dev server do React, hot reload)
+#   padrão       -> build estático servido por nginx
 
+# ── desenvolvimento ──────────────────────────────────────────
+FROM node:24-alpine AS dev
 WORKDIR /usr/src/app
+COPY package.json package-lock.json ./
+RUN --mount=type=cache,target=/root/.npm npm ci
 COPY . .
+# O toolchain do React 17 / CRA 5 exige o provider legado de OpenSSL no Node 20+
+ENV NODE_OPTIONS=--openssl-legacy-provider
+EXPOSE 3000
+CMD ["npm", "start"]
 
-ENV NODE_OPTIONS --openssl-legacy-provider
+# ── compilação de produção ───────────────────────────────────
+FROM node:24-alpine AS build
+WORKDIR /usr/src/app
+COPY package.json package-lock.json ./
+RUN --mount=type=cache,target=/root/.npm npm ci
+COPY . .
+ENV NODE_OPTIONS=--openssl-legacy-provider
+RUN npm run build
 
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci && npm run build
+# ── produção ─────────────────────────────────────────────────
+FROM nginx:alpine AS prod
+RUN rm -rf /usr/share/nginx/html/*
 
-FROM ghcr.io/ticketz-oss/nginx-alpine
-
-WORKDIR /usr/share/nginx/html
-
-COPY --from=build-deps /usr/src/app/build /var/www/public
-COPY --from=build-deps /usr/src/app/node_modules/@socket.io/admin-ui/ui/dist /var/www/public/socket-admin
+COPY --from=build /usr/src/app/build /var/www/public
+COPY --from=build /usr/src/app/node_modules/@socket.io/admin-ui/ui/dist /var/www/public/socket-admin
 COPY nginx /etc/nginx
+COPY docker-entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-CMD (echo "{" && while IFS='=' read -r name value; do \
-        printf '\t"%s": "%s"\n' "$name" "$value"; \
-    done < <(env) | sed '$!s/$/,/' && echo "}")  > /var/www/public/config.json \
-    && if [ -n "$BACKEND_SERVICE" ]; then \
-        BACKEND_IP=$(getent hosts $BACKEND_SERVICE | awk '{ print $1 }') \
-        && echo "$BACKEND_IP backend" >> /etc/hosts; \
-    fi \
-    && nginx -g "daemon off;"
+EXPOSE 80
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget -qO- http://127.0.0.1/ >/dev/null 2>&1 || exit 1
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["nginx", "-g", "daemon off;"]

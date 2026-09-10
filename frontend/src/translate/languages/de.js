@@ -108,17 +108,6 @@ const messages = {
           perDay: {
             title: "Heutige Interaktionen: "
           }
-        },
-        blog: {
-          title: "Ticketz-Blog",
-          loading: "Lade Blogbeitraege...",
-          error: "Blogbeitraege konnten nicht geladen werden.",
-          empty: "Keine Blogbeitraege gefunden.",
-          showAll: "Alle Beitraege anzeigen",
-          showLess: "Weniger anzeigen",
-          openPost: "Beitrag lesen",
-          previous: "Vorheriger Beitrag",
-          next: "Naechster Beitrag"
         }
       },
       connections: {
@@ -778,20 +767,20 @@ const messages = {
       },
       about: {
         aboutthe: "Über",
-        copyright: "© 2024 - Betrieben mit ticketz",
+        copyright: "© 2024 - Betrieben mit Tekvosoft",
         buttonclose: "Schließen",
-        title: "Über ticketz",
+        title: "Über Tekvosoft",
         abouttitle: "Ursprung und Verbesserungen",
         aboutdetail:
-          "Ticketz ist indirekt vom Whaticket-Projekt abgeleitet, mit Verbesserungen, die von den Entwicklern des EquipeChat-Systems über den YouTube-Kanal VemFazer geteilt wurden, und später von Claudemir Todo Bom verbessert wurden",
+          "Tekvosoft ist indirekt vom Whaticket-Projekt abgeleitet, mit Verbesserungen, die von den Entwicklern des EquipeChat-Systems über den YouTube-Kanal VemFazer geteilt wurden, und später von Claudemir Todo Bom verbessert wurden",
         aboutauthorsite: "Website des Autors",
         aboutwhaticketsite: "Website der Whaticket-Community auf Github",
         aboutvemfazersite: "Website des Vem Fazer-Kanals auf Github",
         licenseheading: "Open-Source-Lizenz",
         licensedetail:
-          "Ticketz ist unter der GNU Affero General Public License Version 3 lizenziert, was bedeutet, dass jeder Benutzer, der Zugriff auf diese Anwendung hat, das Recht hat, auf den Quellcode zuzugreifen. Weitere Informationen finden Sie in den folgenden Links:",
+          "Tekvosoft ist unter der GNU Affero General Public License Version 3 lizenziert, was bedeutet, dass jeder Benutzer, der Zugriff auf diese Anwendung hat, das Recht hat, auf den Quellcode zuzugreifen. Weitere Informationen finden Sie in den folgenden Links:",
         licensefulltext: "Vollständiger Lizenztext",
-        licensesourcecode: "Quellcode von ticketz"
+        licensesourcecode: "Quellcode von Tekvosoft"
       },
       schedules: {
         title: "Planungen",
@@ -1253,50 +1242,6 @@ const messages = {
           "Diese Farbe wird bereits verwendet, wählen Sie eine andere.",
         ERR_WAPP_GREETING_REQUIRED:
           "Die Begrüßungsnachricht ist erforderlich, wenn es mehr als eine Warteschlange gibt."
-      },
-      ticketz: {
-        registration: {
-          header: "Registrieren Sie sich in der Ticketz-Benutzerdatenbank",
-          description:
-            "Füllen Sie die folgenden Felder aus, um sich in der Ticketz-Benutzerdatenbank zu registrieren und Neuigkeiten über das Projekt zu erhalten.",
-          name: "Name",
-          country: "Land",
-          phoneNumber: "WhatsApp-Nummer",
-          submit: "Registrieren"
-        },
-        proAd: {
-          imageAlt: "Ticketz PRO Screenshot",
-          title: "Ticketz PRO",
-          features: {
-            officialChannels:
-              "Offizielles WhatsApp - Instagram - Messenger und mehr",
-            exclusiveFeatures: "Exklusive Funktionen",
-            advancedSupport: "Erweiterter Support",
-            easyMigration: "Einfache Migration"
-          },
-          subscribePrice: "Abonnieren Sie für {{monthlyPrice}}/Monat",
-          subscribeSubtitle: "direkt im System",
-          ctaUpgrade: "Klicken Sie für Upgrade-Anweisungen",
-          ctaVisitSite: "Klicken Sie, um die Website zu besuchen",
-          instructions: {
-            title: "Upgrade-Anweisungen",
-            stepIntro:
-              "Wenn Sie die vom Projekt bereitgestellten Images auf einem Server oder VPS mit den vereinfachten Anweisungen installiert haben, müssen Sie nur auf Ihren Server zugreifen und den folgenden Befehl ausführen:",
-            stepInstall:
-              'In wenigen Augenblicken wird Ticketz PRO mit all Ihren Daten installiert; gehen Sie dann ins Benutzermenü, klicken Sie auf "Ticketz PRO-Abonnement" und schließen Sie Ihr Abonnement ab.',
-            helpPrefix:
-              "Wenn Ihre Installation anders ist oder Sie Hilfe bei der Installation von Ticketz PRO benötigen, ",
-            helpLink: "kontaktieren Sie uns",
-            helpSuffix: " und wir helfen Ihnen!"
-          }
-        },
-        support: {
-          title: "Unterstützen Sie das Ticketz Open Source-Projekt",
-          mercadopagotitle: "Kreditkarte",
-          recurringbrl: "Wiederkehrende Spende in R$",
-          paypaltitle: "Kreditkarte",
-          international: "International in US$"
-        }
       }
     }
   }

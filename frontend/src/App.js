@@ -171,8 +171,7 @@ const App = () => {
             inputBackground: mode === "light" ? "#FFFFFF" : "#333",
             barraSuperior: mode === "light" ? primaryColorLight : "#666",
             boxticket: mode === "light" ? "#EEE" : "#666",
-            campaigntab: mode === "light" ? "#ededed" : "#666",
-            ticketzproad: { main: "#39ACE7", contrastText: "white" }
+            campaigntab: mode === "light" ? "#ededed" : "#666"
           },
           mode,
           appLogoLight,
@@ -265,7 +264,7 @@ const App = () => {
       });
     getPublicSetting("appName")
       .then(name => {
-        setAppName(name || "ticketz");
+        setAppName(name || "Tekvosoft");
       })
       .catch(error => {
         console.log("Error reading setting", error);

@@ -1,0 +1,121 @@
+name: tekvosoft
+
+# Base comum a desenvolvimento e produção.
+# Nunca é usado sozinho — sempre com um override:
+#   dev  ->  docker-compose.dev.yml
+#   prod ->  docker-compose.prod.yml
+# O script ./tekvosoft cuida disso pra você.
+
+volumes:
+  postgres_data:
+  redis_data:
+  backend_public:
+  backend_private:
+
+networks:
+  tekvosoft:
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-tekvosoft}
+      POSTGRES_DB: ${DB_NAME:-tekvosoft}
+      POSTGRES_PASSWORD: ${DB_PASS:?defina DB_PASS no .env}
+      TZ: ${TZ:-America/Sao_Paulo}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-tekvosoft} -d ${DB_NAME:-tekvosoft}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    networks: [tekvosoft]
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [tekvosoft]
+
+  backend:
+    restart: always
+    volumes:
+      - backend_public:/usr/src/app/public
+      - backend_private:/usr/src/app/private
+    environment:
+      # --- conexões (derivadas, você não precisa mexer) ---
+      DB_DIALECT: postgres
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-tekvosoft}
+      DB_NAME: ${DB_NAME:-tekvosoft}
+      DB_PASS: ${DB_PASS}
+      DB_TIMEZONE: ${DB_TIMEZONE:--03:00}
+      REDIS_URI: redis://redis:6379
+      REDIS_OPT_LIMITER_MAX: 1
+      REDIS_OPT_LIMITER_DURATION: 3000
+      TZ: ${TZ:-America/Sao_Paulo}
+      # --- identidade / primeiro acesso ---
+      EMAIL_ADDRESS: ${ADMIN_EMAIL}
+      # --- limites ---
+      USER_LIMIT: ${USER_LIMIT:-10000}
+      CONNECTIONS_LIMIT: ${CONNECTIONS_LIMIT:-100000}
+      CLOSED_SEND_BY_ME: "true"
+      # --- integrações opcionais ---
+      RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY:-}
+      FACEBOOK_APP_ID: ${FACEBOOK_APP_ID:-}
+      FACEBOOK_APP_SECRET: ${FACEBOOK_APP_SECRET:-}
+      VERIFY_TOKEN: ${VERIFY_TOKEN:-tekvosoft}
+      SOCKET_ADMIN: ${SOCKET_ADMIN:-false}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [tekvosoft]
+
+  frontend:
+    restart: always
+    volumes:
+      - backend_public:/var/www/backend-public
+    # ATENÇÃO: tudo que estiver no ambiente deste container é publicado
+    # em /config.json, legível por qualquer visitante. Por isso aqui vai
+    # uma lista explícita — nunca um env_file com segredos.
+    environment:
+      BACKEND_HOST: ${DOMAIN}
+      BACKEND_PATH: /backend
+      RECAPTCHA_SITE_KEY: ${RECAPTCHA_SITE_KEY:-}
+    depends_on:
+      - backend
+    networks: [tekvosoft]
+
+  # Backup e restauração. Não sobe junto com o sistema — só é acionado
+  # por ./tekvosoft backup e ./tekvosoft restore.
+  tools:
+    image: postgres:16-alpine
+    profiles: [tools]
+    restart: "no"
+    environment:
+      DB_USER: ${DB_USER:-tekvosoft}
+      DB_NAME: ${DB_NAME:-tekvosoft}
+      DB_PASS: ${DB_PASS}
+    volumes:
+      - backend_public:/data/public
+      - backend_private:/data/private
+      - ./backups:/backups
+      - ./scripts/backup.sh:/usr/local/bin/backup.sh:ro
+    entrypoint: ["/bin/sh", "/usr/local/bin/backup.sh"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [tekvosoft]

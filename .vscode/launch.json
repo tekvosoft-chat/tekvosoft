@@ -2,51 +2,32 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug Backend (F5)",
-      "type": "node",
-      "request": "launch",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": [
-        "run",
-        "dev:server"
-      ],
-      "cwd": "${workspaceFolder}/backend",
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "outputCapture": "std"
-    },
-    {
-      "name": "Debug Backend + Frontend",
-      "type": "node",
-      "request": "launch",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": [
-        "run",
-        "dev:server"
-      ],
-      "cwd": "${workspaceFolder}/backend",
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "outputCapture": "std",
-      "preLaunchTask": "Start Frontend Dev Server"
-    },
-    {
-      "name": "Attach to Node.js Debug Server",
+      // Fluxo normal: rode ./tekvosoft dev e depois dê F5 aqui.
+      // O breakpoint no código local casa com o que roda no container.
+      "name": "Anexar ao backend (./tekvosoft dev)",
       "type": "node",
       "request": "attach",
       "port": 9229,
+      "address": "localhost",
       "protocol": "inspector",
       "restart": true,
+      "localRoot": "${workspaceFolder}/backend",
+      "remoteRoot": "/usr/src/app",
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"]
+    },
+    {
+      // Alternativa sem Docker: exige node_modules instalado em backend/
+      // e postgres/redis acessíveis em localhost.
+      "name": "Rodar backend localmente (sem Docker)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:server"],
       "cwd": "${workspaceFolder}/backend",
-      "skipFiles": [
-        "<node_internals>/**"
-      ]
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": ["<node_internals>/**"],
+      "outputCapture": "std"
     }
   ]
 }

@@ -1,38 +1,64 @@
 # syntax=docker/dockerfile:1.7-labs
+#
+# Backend do Tekvosoft.
+#   target dev   -> usado por ./tekvosoft dev  (código montado do host, hot reload)
+#   padrão       -> imagem de produção, sem código-fonte dentro
 
-# Stage 1: Build the application
-FROM node:24 AS build
+# ── dependências (compartilhadas entre dev e build) ──────────
+FROM node:24 AS deps
+WORKDIR /usr/src/app
+COPY package.json package-lock.json ./
+RUN --mount=type=cache,target=/root/.npm npm ci
 
+# ── desenvolvimento ──────────────────────────────────────────
+FROM node:24 AS dev
+WORKDIR /usr/src/app
+
+# psql: usado pelo entrypoint para esperar o banco e importar dados
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends postgresql-client \
+ && rm -rf /var/lib/apt/lists/*
+
+COPY --from=deps /usr/src/app/node_modules ./node_modules
+COPY . .
+RUN chmod +x scripts/*.sh
+
+ENV NODE_ENV=development
+ENV PORT=3000
+EXPOSE 3000 9229
+
+ENTRYPOINT ["./scripts/entrypoint.sh"]
+CMD ["npm", "run", "dev:server"]
+
+# ── compilação de produção ───────────────────────────────────
+FROM deps AS build
 WORKDIR /usr/src/app
 COPY . .
+RUN npm run generate:i18nkeys && npm run build
 
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci && npm run generate:i18nkeys && npm run build
-
-# Stage 2: Create the final image without source files
-FROM ghcr.io/ticketz-oss/ticketz-node-24
-
-ARG TICKETZ_REGISTRY_URL
-
+# ── produção ─────────────────────────────────────────────────
+FROM node:24 AS prod
 WORKDIR /usr/src/app
 
-# Copy only the necessary build artifacts from the build stage
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends postgresql-client \
+ && rm -rf /var/lib/apt/lists/*
+
+# Só os artefatos compilados — o código-fonte não vai para produção.
 COPY --from=build --parents \
   /usr/src/app/./dist \
   /usr/src/app/./node_modules \
   /usr/src/app/./package.json \
   /usr/src/app/./scripts \
   .
+RUN chmod +x scripts/*.sh
 
 ENV NODE_ENV=production
 ENV PORT=3000
-ENV TICKETZ_REGISTRY_URL=${TICKETZ_REGISTRY_URL}
-
 EXPOSE 3000
 
-CMD dockerize -wait tcp://${DB_HOST}:5432 -timeout 60s \
-  && npx sequelize db:migrate  --config dist/config/database.js --migrations-path dist/database/migrations \
-  && ./scripts/load-retrieved.sh /retrieve; exit_code=$? \
-  && if [ $exit_code -eq 1 ]; then npm run mark-seeds; exit 0; elif [ $exit_code -ge 100 ]; then exit 1; fi \
-  && npx sequelize db:seed:all --config dist/config/database.js --seeders-path dist/database/seeds \
-  && node dist/server.js
+HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \
+  CMD node -e "require('http').get('http://127.0.0.1:3000/',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
+
+ENTRYPOINT ["./scripts/entrypoint.sh"]
+CMD ["node", "dist/server.js"]

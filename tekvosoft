@@ -1,0 +1,268 @@
+#!/usr/bin/env bash
+#
+#  Tekvosoft — um comando para tudo.
+#
+#      ./tekvosoft dev       desenvolver na sua máquina (hot reload)
+#      ./tekvosoft deploy    subir em produção com HTTPS
+#      ./tekvosoft update    atualizar a produção
+#
+#  ./tekvosoft help mostra o resto.
+
+set -euo pipefail
+cd "$(dirname "${BASH_SOURCE[0]}")"
+
+BASE=docker-compose.yml
+DEV="-f $BASE -f docker-compose.dev.yml"
+PROD="-f $BASE -f docker-compose.prod.yml"
+
+# ── aparência ────────────────────────────────────────────────
+if [ -t 1 ]; then
+  B=$'\e[1m'; DIM=$'\e[2m'; R=$'\e[31m'; G=$'\e[32m'; Y=$'\e[33m'; C=$'\e[36m'; N=$'\e[0m'
+else
+  B=""; DIM=""; R=""; G=""; Y=""; C=""; N=""
+fi
+say()  { echo "${C}→${N} $*"; }
+ok()   { echo "${G}✓${N} $*"; }
+warn() { echo "${Y}!${N} $*"; }
+die()  { echo "${R}✗${N} $*" >&2; exit 1; }
+
+# ── verificações ─────────────────────────────────────────────
+need_docker() {
+  command -v docker >/dev/null 2>&1 || die "Docker não está instalado.
+    Instale com:  curl -sSL https://get.docker.com | sudo sh"
+  docker compose version >/dev/null 2>&1 || die "Você tem Docker, mas sem o plugin Compose v2.
+    Atualize o Docker: https://docs.docker.com/engine/install/"
+  docker info >/dev/null 2>&1 || die "O Docker está instalado mas não responde.
+    Tente:  sudo systemctl start docker
+    Se precisar de sudo para usar docker:  sudo usermod -aG docker \$USER  (e refaça o login)"
+}
+
+# Cria o .env na primeira execução e valida o que não pode ficar em branco.
+need_env() {
+  if [ ! -f .env ]; then
+    cp .env.example .env
+    ok "Criei o arquivo .env a partir do exemplo."
+    if [ "${1:-}" = "prod" ]; then
+      echo
+      warn "Antes de subir em produção, edite o .env e defina:"
+      echo "    DOMAIN       o domínio com DNS apontando para este servidor"
+      echo "    ADMIN_EMAIL  seu e-mail (vira o login e registra o certificado)"
+      echo "    DB_PASS      uma senha forte  ->  openssl rand -base64 32"
+      echo
+      die "Edite o .env e rode de novo."
+    fi
+  fi
+
+  set -a; . ./.env; set +a
+
+  if [ -z "${DB_PASS:-}" ]; then
+    die "DB_PASS está vazio no .env."
+  fi
+  if [ "${DB_PASS}" = "troque-esta-senha-antes-de-subir" ]; then
+    die "DB_PASS ainda está com o valor de exemplo.
+    Gere uma senha de verdade:  openssl rand -base64 32"
+  fi
+
+  if [ "${1:-}" = "prod" ]; then
+    if [ -z "${DOMAIN:-}" ] || [ "${DOMAIN}" = "localhost" ]; then
+      die "Em produção o DOMAIN precisa ser um domínio real com DNS apontando
+    para este servidor — hoje está '${DOMAIN:-vazio}'."
+    fi
+    if [ -z "${ADMIN_EMAIL:-}" ]; then
+      die "ADMIN_EMAIL está vazio no .env."
+    fi
+  fi
+  return 0
+}
+
+# Descobre se o que está no ar é o ambiente de dev ou o de produção.
+active_files() {
+  if docker compose $DEV ps -q 2>/dev/null | grep -q .; then
+    echo "$DEV"
+  else
+    echo "$PROD"
+  fi
+}
+
+# ── comandos ─────────────────────────────────────────────────
+
+cmd_dev() {
+  need_docker; need_env dev
+  say "Subindo o ambiente de desenvolvimento..."
+  echo "${DIM}  Na primeira vez isto compila as dependências e pode levar alguns minutos.${N}"
+  docker compose $DEV up -d --build
+  echo
+  ok "Ambiente no ar."
+  echo
+  echo "   ${B}Sistema${N}    http://localhost:${PORT:-3000}"
+  echo "   ${B}API${N}        http://localhost:${API_PORT:-8080}"
+  echo "   ${B}Login${N}      ${ADMIN_EMAIL:-admin@tekvosoft.local}  /  123456"
+  echo
+  echo "${DIM}   Edite backend/ ou frontend/ e recarrega sozinho.${N}"
+  echo "${DIM}   Acompanhe os logs:  ./tekvosoft logs${N}"
+  echo
+  say "Aguardando o backend responder..."
+  for _ in $(seq 1 90); do
+    if curl -sf "http://localhost:${API_PORT:-8080}/" >/dev/null 2>&1; then
+      ok "Backend respondendo."; return 0
+    fi
+    sleep 2
+  done
+  warn "O backend ainda não respondeu. Ele pode estar compilando — veja ./tekvosoft logs backend"
+}
+
+cmd_deploy() {
+  need_docker; need_env prod
+  say "Baixando as imagens (${TAG:-latest})..."
+  docker compose $PROD pull
+  say "Subindo os serviços..."
+  docker compose $PROD up -d
+  echo
+  ok "Deploy concluído."
+  echo
+  echo "   ${B}Sistema${N}   https://${DOMAIN}"
+  echo "   ${B}Login${N}     ${ADMIN_EMAIL}  /  123456"
+  echo
+  warn "Troque a senha no primeiro acesso."
+  echo "${DIM}   O certificado HTTPS é emitido automaticamente e leva 1-2 minutos.${N}"
+  echo "${DIM}   Acompanhe:  ./tekvosoft logs${N}"
+}
+
+cmd_update() {
+  need_docker; need_env prod
+  say "Fazendo backup antes de mexer..."
+  if cmd_backup >/dev/null 2>&1; then
+    ok "Backup guardado em ./backups"
+  else
+    warn "Não consegui fazer o backup (o sistema já estava no ar?). Continuando."
+  fi
+  say "Buscando imagens novas..."
+  docker compose $PROD pull
+  say "Reiniciando com a versão nova..."
+  docker compose $PROD up -d
+  say "Limpando imagens antigas..."
+  docker image prune -f >/dev/null 2>&1 || true
+  echo
+  ok "Atualizado. https://${DOMAIN}"
+  echo "${DIM}   Se algo quebrou, volte com:  ./tekvosoft rollback <tag>${N}"
+}
+
+cmd_rollback() {
+  need_docker; need_env prod
+  [ -z "${1:-}" ] && die "Diga para qual versão voltar. Ex:  ./tekvosoft rollback v1.4.2
+    As versões disponíveis estão em https://github.com/tekvosoft-chat/tekvosoft/pkgs/container/tekvosoft-backend"
+  say "Voltando para a versão $1..."
+  TAG="$1" docker compose $PROD up -d
+  ok "Rodando a versão $1."
+  echo "${DIM}   Para fixar isto, ajuste TAG=$1 no .env${N}"
+}
+
+cmd_backup() {
+  need_docker; need_env
+  mkdir -p backups
+  docker compose $(active_files) run --rm -T tools backup
+}
+
+cmd_restore() {
+  need_docker; need_env
+  [ -d backups ] || die "Não existe a pasta ./backups"
+  echo
+  docker compose $(active_files) run --rm -T tools list
+  echo
+  warn "A restauração SUBSTITUI todos os dados atuais pelo backup mais recente."
+  read -r -p "Digite 'restaurar' para confirmar: " a
+  if [ "$a" != "restaurar" ]; then die "Cancelado."; fi
+  local f; f=$(active_files)
+  docker compose $f run --rm -T tools restore "$@"
+  say "Reiniciando o backend para reler os dados..."
+  docker compose $f restart backend
+  ok "Dados restaurados."
+}
+
+cmd_logs() {
+  need_docker
+  docker compose $(active_files) logs -f --tail=100 "$@"
+}
+
+cmd_ps() {
+  need_docker
+  echo "${B}desenvolvimento${N}"; docker compose $DEV ps 2>/dev/null || true
+  echo; echo "${B}produção${N}";   docker compose $PROD ps 2>/dev/null || true
+}
+
+cmd_stop() {
+  need_docker
+  docker compose $DEV down 2>/dev/null || true
+  docker compose $PROD down 2>/dev/null || true
+  ok "Tudo parado. Os dados continuam salvos nos volumes."
+}
+
+cmd_shell() {
+  need_docker
+  local svc="${1:-backend}"
+  docker compose $DEV exec "$svc" bash 2>/dev/null \
+    || docker compose $PROD exec "$svc" bash 2>/dev/null \
+    || die "O serviço '$svc' não está rodando."
+}
+
+cmd_psql() {
+  need_docker; need_env
+  docker compose $(active_files) exec postgres \
+    psql -U "${DB_USER:-tekvosoft}" -d "${DB_NAME:-tekvosoft}"
+}
+
+cmd_reset() {
+  need_docker
+  warn "Isto APAGA o banco, o Redis e os arquivos enviados do ambiente de DESENVOLVIMENTO."
+  read -r -p "Digite 'apagar' para confirmar: " a
+  [ "$a" = "apagar" ] || die "Cancelado."
+  docker compose $DEV down -v
+  ok "Ambiente de desenvolvimento zerado. Rode ./tekvosoft dev para começar do zero."
+}
+
+cmd_help() {
+  cat <<EOF
+
+  ${B}Tekvosoft${N} ${DIM}— atendimento via WhatsApp com CRM e helpdesk${N}
+
+  ${B}O dia a dia${N}
+    ${C}dev${N}                 desenvolver aqui na sua máquina, com hot reload
+    ${C}deploy${N}              subir em produção com HTTPS automático
+    ${C}update${N}              atualizar a produção para a última versão
+
+  ${B}Operação${N}
+    ${C}logs${N} [serviço]      acompanhar os logs ao vivo
+    ${C}ps${N}                  ver o que está rodando
+    ${C}stop${N}                parar tudo (os dados continuam salvos)
+    ${C}backup${N}              gravar um backup em ./backups
+    ${C}restore${N}             restaurar o backup mais recente
+    ${C}rollback${N} <tag>      voltar para uma versão anterior
+
+  ${B}Depuração${N}
+    ${C}shell${N} [serviço]     abrir um terminal dentro do container
+    ${C}psql${N}                abrir o console do banco de dados
+    ${C}reset${N}               zerar o banco do ambiente de desenvolvimento
+
+  ${B}Primeira vez?${N}
+    ${DIM}Desenvolvimento:${N}  ./tekvosoft dev
+    ${DIM}Produção:${N}         cp .env.example .env  →  edite  →  ./tekvosoft deploy
+
+EOF
+}
+
+case "${1:-help}" in
+  dev)      shift; cmd_dev "$@" ;;
+  deploy)   shift; cmd_deploy "$@" ;;
+  update)   shift; cmd_update "$@" ;;
+  rollback) shift; cmd_rollback "$@" ;;
+  backup)   shift; cmd_backup "$@" ;;
+  restore)  shift; cmd_restore "$@" ;;
+  logs)     shift; cmd_logs "$@" ;;
+  ps)       shift; cmd_ps "$@" ;;
+  stop)     shift; cmd_stop "$@" ;;
+  shell)    shift; cmd_shell "$@" ;;
+  psql)     shift; cmd_psql "$@" ;;
+  reset)    shift; cmd_reset "$@" ;;
+  help|-h|--help) cmd_help ;;
+  *) echo "Comando desconhecido: $1"; cmd_help; exit 1 ;;
+esac

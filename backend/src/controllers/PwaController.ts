@@ -22,8 +22,8 @@ export const manifest = async (
   }
 
   const data = {
-    short_name: appName || "TIcketz",
-    name: appName || "Ticketz - Chat Based Ticket System",
+    short_name: appName || "Tekvosoft",
+    name: appName || "Tekvosoft - Atendimento via WhatsApp",
     icons: [
       {
         src: logoFavicon

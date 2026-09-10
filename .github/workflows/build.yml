@@ -1,0 +1,99 @@
+name: Compilar e publicar as imagens
+
+# Toda vez que você faz push na main, o GitHub compila as duas imagens
+# e publica no GHCR da SUA organização. No servidor, ./tekvosoft update
+# só baixa o resultado — nada é compilado em produção.
+#
+# Para lançar uma versão fixa (com rollback fácil):
+#     git tag v1.0.0 && git push --tags
+
+on:
+  push:
+    branches: [main, dev]
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        component: [backend, frontend]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # precisamos das tags para gerar a versão exibida no app
+
+      - name: Gerar informações de versão
+        run: |
+          COMMIT=$(git rev-parse --short HEAD)
+          COMMIT_AT=$(date -u -d "$(git log -1 --format=%cI)" +'%Y-%m-%dT%H:%M:%SZ')
+          BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          BUILT_AT=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+
+          cat > backend/src/gitinfo.ts <<EOF
+          export const GitInfo = {
+              commitHash: "${COMMIT}",
+              commitTimestamp: "${COMMIT_AT}",
+              branchName: "${BRANCH}",
+              tagName: "${TAG}",
+              buildTimestamp: "${BUILT_AT}"
+          };
+          EOF
+
+          cat > frontend/public/gitinfo.json <<EOF
+          {
+              "commitHash": "${COMMIT}",
+              "commitTimestamp": "${COMMIT_AT}",
+              "branchName": "${BRANCH}",
+              "tagName": "${TAG}",
+              "buildTimestamp": "${BUILT_AT}"
+          }
+          EOF
+
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Entrar no registro de imagens
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Definir nome e tags da imagem
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          # publica na organização dona deste repositório, seja ela qual for
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/tekvosoft-${{ matrix.component }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=tekvosoft-${{ matrix.component }}
+
+      - name: Compilar e publicar
+        uses: docker/build-push-action@v6
+        with:
+          context: ./${{ matrix.component }}
+          target: prod
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.component }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.component }}

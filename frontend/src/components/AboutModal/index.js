@@ -38,7 +38,7 @@ const useStyles = makeStyles(theme => ({
     margin: "0 auto",
     content: `url("${theme.calculatedLogo()}")`
   },
-  ticketzLogoImg: {
+  tekvosoftLogoImg: {
     width: "100%",
     margin: "0 auto",
     content: "url(" + (theme.mode === "light" ? logo : logoDark) + ")"
@@ -81,13 +81,13 @@ const AboutModal = ({ open, onClose }) => {
       >
         <DialogTitle id="form-dialog-title">
           {i18n.t("about.aboutthe")}{" "}
-          {currentUser?.super ? "ticketz" : theme.appName}
+          {currentUser?.super ? "Tekvosoft" : theme.appName}
         </DialogTitle>
         <DialogContent dividers>
           {currentUser?.super ? (
             <>
               <div>
-                <img className={classes.ticketzLogoImg} />
+                <img className={classes.tekvosoftLogoImg} />
               </div>
               <Typography variant="body1" gutterBottom>
                 <b>
@@ -156,7 +156,7 @@ const AboutModal = ({ open, onClose }) => {
               <Typography>
                 <Link
                   target="_blank"
-                  href="https://github.com/ticketz-oss/ticketz/blob/main/LICENSE.md"
+                  href="https://github.com/tekvosoft-chat/tekvosoft/blob/main/LICENSE.md"
                 >
                   {i18n.t("about.licensefulltext")}
                 </Link>
@@ -164,7 +164,7 @@ const AboutModal = ({ open, onClose }) => {
               <Typography>
                 <Link
                   target="_blank"
-                  href="https://github.com/ticketz-oss/ticketz"
+                  href="https://github.com/tekvosoft-chat/tekvosoft"
                 >
                   {i18n.t("about.licensesourcecode")}
                 </Link>
@@ -176,7 +176,10 @@ const AboutModal = ({ open, onClose }) => {
                 <img className={classes.logoImg} />
               </div>
               <Typography className={classes.textCenter}>
-                <Link target="_blank" href="https://ticke.tz">
+                <Link
+                  target="_blank"
+                  href="https://github.com/tekvosoft-chat/tekvosoft"
+                >
                   {i18n.t("about.copyright")}
                 </Link>
               </Typography>

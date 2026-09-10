@@ -9,6 +9,7 @@
     "watch": "tsc -w",
     "start": "nodemon dist/server.js",
     "dev:server": "ts-node-dev --inspect --respawn --transpile-only --ignore node_modules src/server.ts",
+    "dev:server:docker": "ts-node-dev --inspect=0.0.0.0:9229 --respawn --transpile-only --ignore node_modules src/server.ts",
     "db:migrate": "npx sequelize db:migrate",
     "db:seed": "sequelize db:seed:all",
     "pretest": "NODE_ENV=test sequelize db:migrate && NODE_ENV=test sequelize db:seed:all",

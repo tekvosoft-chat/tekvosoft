@@ -1,3 +1,10 @@
+# Configuração local — contém senhas. Nunca vai para o repositório.
+.env
+
+# Gerados em tempo de execução
+/backups/
+/retrieve/
+
 .docker
 *~
 /.project
