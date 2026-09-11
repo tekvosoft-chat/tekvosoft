@@ -51,7 +51,16 @@ need_docker() {
 # Cria o .env na primeira execução e valida o que não pode ficar em branco.
 need_env() {
   if [ ! -f .env ]; then
-    cp .env.example .env
+    if [ "${1:-}" = "prod" ]; then
+      cp .env.example .env
+    else
+      # Em desenvolvimento a senha do banco não é uma decisão: geramos uma
+      # e seguimos, para que um clone novo suba com um comando só.
+      local pass
+      pass=$(openssl rand -base64 24 2>/dev/null | tr -d '/+=' | head -c 24) || true
+      [ -n "${pass}" ] || pass="dev$(date +%s)"
+      sed "s|^DB_PASS=.*|DB_PASS=${pass}|" .env.example > .env
+    fi
     ok "Criei o arquivo .env a partir do exemplo."
     if [ "${1:-}" = "prod" ]; then
       echo
@@ -142,9 +151,52 @@ active_files() {
 
 # ── comandos ─────────────────────────────────────────────────
 
+# POSTGRES_PASSWORD só vale na criação do banco. Se o DB_PASS do .env mudar
+# depois disso, o backend passa a falhar com "password authentication failed",
+# que não diz nada sobre a causa. Detectamos e explicamos.
+check_db_auth() {
+  local files="$1"
+  docker compose $files run --rm -T --entrypoint sh tools -c \
+    'PGPASSWORD="$DB_PASS" psql -h postgres -U "$DB_USER" -d "$DB_NAME" -c "select 1" >/dev/null 2>&1' \
+    >/dev/null 2>&1 && return 0
+
+  echo
+  warn "O banco não aceitou a senha que está no .env."
+  echo "${DIM}   A senha do Postgres é gravada quando o banco é criado; mudar o"
+  echo "   DB_PASS depois disso não muda a senha do banco que já existe.${N}"
+  echo
+  echo "   ${B}Se estes dados não importam${N} (ambiente de desenvolvimento):"
+  echo "       ./tekvosoft reset        ${DIM}apaga o banco e recria com a senha nova${N}"
+  echo
+  echo "   ${B}Se os dados importam${N}:"
+  echo "       devolva ao .env o DB_PASS antigo e suba de novo."
+  echo
+  return 1
+}
+
+# O frontend lê /config.json no boot (src/index.js) e NÃO tem alternativa:
+# sem o arquivo ele mostra "Erro de configuração" e não sobe. Em produção
+# quem gera é o entrypoint do nginx; em desenvolvimento precisamos gerar
+# aqui, no host — de dentro do container o arquivo sairia pertencendo ao
+# root, já que o código é montado por bind mount.
+write_dev_config() {
+  local out="frontend/public/config.json"
+  cat > "${out}" <<EOF
+{
+  "BACKEND_PROTOCOL": "http",
+  "BACKEND_HOST": "localhost",
+  "BACKEND_PORT": "${API_PORT:-8080}",
+  "BACKEND_PATH": "",
+  "LOG_LEVEL": "debug"
+}
+EOF
+  ok "Configuração do frontend apontando para http://localhost:${API_PORT:-8080}"
+}
+
 cmd_dev() {
   need_docker; need_env dev
   ensure_free_ports
+  write_dev_config
   say "Subindo o ambiente de desenvolvimento..."
   echo "${DIM}  Na primeira vez isto compila as dependências e pode levar alguns minutos.${N}"
   docker compose $DEV up -d --build
@@ -158,6 +210,8 @@ cmd_dev() {
   echo "${DIM}   Edite backend/ ou frontend/ e recarrega sozinho.${N}"
   echo "${DIM}   Acompanhe os logs:  ./tekvosoft logs${N}"
   echo
+  check_db_auth "$DEV" || return 1
+
   say "Aguardando o backend responder..."
   for _ in $(seq 1 90); do
     if curl -sf "http://localhost:${API_PORT:-8080}/" >/dev/null 2>&1; then

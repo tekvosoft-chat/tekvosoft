@@ -22,7 +22,10 @@ services:
     environment:
       POSTGRES_USER: ${DB_USER:-tekvosoft}
       POSTGRES_DB: ${DB_NAME:-tekvosoft}
-      POSTGRES_PASSWORD: ${DB_PASS:?defina DB_PASS no .env}
+      # Sem ":?" de propósito: marcar como obrigatório aqui faz TODO comando
+      # do compose falhar quando o .env não existe — inclusive "down", que é
+      # justamente o que você precisa para limpar. Quem valida é o ./tekvosoft.
+      POSTGRES_PASSWORD: ${DB_PASS}
       TZ: ${TZ:-America/Sao_Paulo}
     volumes:
       - postgres_data:/var/lib/postgresql/data

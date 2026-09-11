@@ -50,8 +50,8 @@ services:
       context: ./frontend
       target: dev
     environment:
-      # o dev server do React fala direto com o backend, sem passar pelo nginx
-      REACT_APP_BACKEND_URL: http://localhost:${API_PORT:-8080}
+      # O endereço do backend NÃO vem daqui: o app lê public/config.json,
+      # que o ./tekvosoft dev gera no host com a porta já resolvida.
       # o watcher precisa de polling para enxergar alterações em volume montado
       CHOKIDAR_USEPOLLING: "true"
       BROWSER: none
