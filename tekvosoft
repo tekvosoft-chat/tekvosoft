@@ -404,11 +404,13 @@ EOF
   git rev-parse "v${new}" >/dev/null 2>&1 && die "A versão v${new} já existe."
 
   # ── notas ──
+  # Os commits "Versão X.Y.Z" são gerados por este próprio comando para
+  # gravar o CHANGELOG; não fazem parte das alterações.
   local notes
   if [ "$last" = "v0.0.0" ]; then
-    notes=$(git log --no-merges --pretty='- %s' -20)
+    notes=$(git log --no-merges --pretty='- %s' -20 | grep -v '^- Versão [0-9]' || true)
   else
-    notes=$(git log --no-merges --pretty='- %s' "${last}..HEAD")
+    notes=$(git log --no-merges --pretty='- %s' "${last}..HEAD" | grep -v '^- Versão [0-9]' || true)
   fi
   [ -n "$notes" ] || notes="- Sem alterações registradas desde ${last}."
 
@@ -424,10 +426,11 @@ EOF
   local today; today=$(date +%Y-%m-%d)
   local tmp; tmp=$(mktemp)
   {
+    echo            # separa do que vier antes — sem isto o cabeçalho cola
+    echo            # na tabela do topo e o Markdown renderiza errado
     echo "## ${new} — ${today}"
     echo
     echo "$notes"
-    echo
   } > "$tmp"
 
   if [ -f CHANGELOG.md ]; then

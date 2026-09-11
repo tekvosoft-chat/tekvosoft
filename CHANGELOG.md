@@ -9,10 +9,10 @@ As versões seguem o formato `MAIOR.MENOR.CORREÇÃO`:
 | **correção** | conserto de bug, sem mudança de comportamento | `1.2.3` → `1.2.4` |
 | **menor** | recurso novo, compatível com o que já existia | `1.2.3` → `1.3.0` |
 | **maior** | mudança que exige atenção ao atualizar | `1.2.3` → `2.0.0` |
+
 ## 1.0.0 — 2026-09-11
 
 - Compila o frontend nativamente em vez de sob emulação
-- Versão 1.0.0
 - Documenta o versionamento e corrige a consulta de versões
 - Adiciona versionamento com tags, releases e rollback
 - Evita resumo duplicado ao instalar
