@@ -208,14 +208,77 @@ cmd_update() {
   echo "${DIM}   Se algo quebrou, volte com:  ./tekvosoft rollback <tag>${N}"
 }
 
+# ── versões ──────────────────────────────────────────────────
+# Dono do registro, derivado do REGISTRY do .env (ghcr.io/<dono>).
+registry_owner() { echo "${REGISTRY:-ghcr.io/tekvosoft-chat}" | sed 's|.*/||'; }
+
+# Lista as versões publicadas, da mais nova para a mais antiga.
+published_versions() {
+  local owner img token
+  owner="$(registry_owner)"
+  img="tekvosoft-backend"
+  token=$(curl -fsS --max-time 15 \
+    "https://ghcr.io/token?scope=repository:${owner}/${img}:pull&service=ghcr.io" 2>/dev/null \
+    | sed -n 's/.*"token":"\([^"]*\)".*/\1/p') || return 1
+  [ -n "$token" ] || return 1
+  curl -fsS --max-time 15 -H "Authorization: Bearer ${token}" \
+    "https://ghcr.io/v2/${owner}/${img}/tags/list" 2>/dev/null \
+    | tr ',' '\n' | sed -n 's/.*"\([0-9][0-9.]*\)".*/\1/p' \
+    | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -Vr
+}
+
+cmd_version() {
+  need_env
+  echo
+  echo "  ${B}Versões${N}"
+  echo
+  printf "     configurada no .env    %s\n" "${B}${TAG:-latest}${N}"
+
+  # o que está de fato no ar
+  local running=""
+  if docker compose $PROD ps -q backend >/dev/null 2>&1 && [ -n "$(docker compose $PROD ps -q backend 2>/dev/null)" ]; then
+    running=$(docker compose $PROD exec -T backend sh -c \
+      'node -e "try{console.log(require(\"/usr/src/app/dist/gitinfo.js\").GitInfo.tagName||\"\")}catch(e){}"' 2>/dev/null | tr -d '\r')
+  fi
+  [ -n "$running" ] && printf "     rodando agora          %s\n" "${B}${running}${N}"
+
+  echo
+  say "Consultando as versões publicadas..."
+  local list; list=$(published_versions) || {
+    warn "Não consegui falar com o registro de imagens."
+    echo; return 0
+  }
+  if [ -z "$list" ]; then
+    echo "     ${DIM}Nenhuma release publicada ainda. Crie a primeira com:"
+    echo "     ./tekvosoft release minor${N}"
+  else
+    echo "     ${B}disponíveis${N}"
+    echo "$list" | head -10 | sed 's/^/       /'
+    local total; total=$(echo "$list" | wc -l)
+    [ "$total" -gt 10 ] && echo "       ${DIM}... e mais $((total - 10))${N}"
+  fi
+  echo
+}
+
 cmd_rollback() {
   need_docker; need_env prod
-  [ -z "${1:-}" ] && die "Diga para qual versão voltar. Ex:  ./tekvosoft rollback v1.4.2
-    As versões disponíveis estão em https://github.com/tekvosoft-chat/tekvosoft/pkgs/container/tekvosoft-backend"
-  say "Voltando para a versão $1..."
-  TAG="$1" docker compose $PROD up -d
-  ok "Rodando a versão $1."
-  echo "${DIM}   Para fixar isto, ajuste TAG=$1 no .env${N}"
+  if [ -z "${1:-}" ]; then
+    echo
+    warn "Diga para qual versão voltar. Por exemplo:  ./tekvosoft rollback 1.4.2"
+    echo
+    local list; list=$(published_versions 2>/dev/null) || true
+    if [ -n "$list" ]; then
+      echo "     ${B}Versões disponíveis${N}"
+      echo "$list" | head -10 | sed 's/^/       /'
+    fi
+    echo
+    exit 1
+  fi
+  local target="${1#v}"
+  say "Voltando para a versão ${target}..."
+  TAG="${target}" docker compose $PROD up -d
+  ok "Rodando a versão ${target}."
+  echo "${DIM}   Isto vale até o próximo update. Para fixar, ajuste TAG=${target} no .env${N}"
 }
 
 cmd_backup() {
@@ -281,6 +344,120 @@ cmd_reset() {
   ok "Ambiente de desenvolvimento zerado. Rode ./tekvosoft dev para começar do zero."
 }
 
+cmd_release() {
+  [ -d .git ] || die "Isto só funciona no repositório de desenvolvimento."
+  command -v git >/dev/null 2>&1 || die "Git não está instalado."
+
+  local kind="${1:-}"
+  if [ -z "$kind" ]; then
+    die "Diga o tamanho da mudança:
+
+    ./tekvosoft release patch    correção            1.2.3 -> 1.2.4
+    ./tekvosoft release minor    recurso novo        1.2.3 -> 1.3.0
+    ./tekvosoft release major    quebra compatível   1.2.3 -> 2.0.0
+    ./tekvosoft release 1.5.0    versão exata"
+  fi
+
+  # ── o repositório está em condições de publicar? ──
+  local branch; branch=$(git rev-parse --abbrev-ref HEAD)
+  if [ "$branch" != "main" ]; then
+    die "Releases saem da main; você está na branch '${branch}'."
+  fi
+  if ! git diff --quiet || ! git diff --cached --quiet; then
+    die "Há alterações não commitadas. Commite ou descarte antes de publicar."
+  fi
+  say "Sincronizando com o GitHub..."
+  git fetch --quiet --tags origin || die "Não consegui falar com o GitHub."
+  if [ -n "$(git log origin/main..HEAD --oneline 2>/dev/null)" ]; then
+    die "Você tem commits que ainda não foram enviados. Rode 'git push' antes."
+  fi
+  if [ -n "$(git log HEAD..origin/main --oneline 2>/dev/null)" ]; then
+    die "O GitHub está à frente do seu repositório. Rode 'git pull' antes."
+  fi
+
+  # ── calcula a próxima versão ──
+  local last major minor patch new
+  last=$(git tag -l 'v*.*.*' --sort=-v:refname | head -1)
+  [ -n "$last" ] || last="v0.0.0"
+  IFS=. read -r major minor patch <<EOF
+${last#v}
+EOF
+  case "$kind" in
+    patch) new="${major}.${minor}.$((patch + 1))" ;;
+    minor) new="${major}.$((minor + 1)).0" ;;
+    major) new="$((major + 1)).0.0" ;;
+    [0-9]*|v[0-9]*)
+      new="${kind#v}"
+      echo "$new" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$' \
+        || die "Versão inválida: '${kind}'. Use o formato 1.2.3." ;;
+    *) die "Não entendi '${kind}'. Use patch, minor, major ou uma versão como 1.5.0." ;;
+  esac
+
+  git rev-parse "v${new}" >/dev/null 2>&1 && die "A versão v${new} já existe."
+
+  # ── notas ──
+  local notes
+  if [ "$last" = "v0.0.0" ]; then
+    notes=$(git log --no-merges --pretty='- %s' -20)
+  else
+    notes=$(git log --no-merges --pretty='- %s' "${last}..HEAD")
+  fi
+  [ -n "$notes" ] || notes="- Sem alterações registradas desde ${last}."
+
+  echo
+  echo "  ${B}Publicar a versão ${new}${N}   ${DIM}(anterior: ${last})${N}"
+  echo
+  echo "$notes" | sed 's/^/     /'
+  echo
+  read -r -p "  Confirma? [s/N] " answer
+  case "$answer" in [sS]|[sS][iI][mM]) ;; *) die "Cancelado." ;; esac
+
+  # ── CHANGELOG ──
+  local today; today=$(date +%Y-%m-%d)
+  local tmp; tmp=$(mktemp)
+  {
+    echo "## ${new} — ${today}"
+    echo
+    echo "$notes"
+    echo
+  } > "$tmp"
+
+  if [ -f CHANGELOG.md ]; then
+    # insere a nova seção logo após o cabeçalho do arquivo
+    awk -v f="$tmp" '
+      !done && /^## / { while ((getline l < f) > 0) print l; done=1 }
+      { print }
+      END { if (!done) { while ((getline l < f) > 0) print l } }
+    ' CHANGELOG.md > "${tmp}.novo"
+    mv "${tmp}.novo" CHANGELOG.md
+  else
+    { echo "# Histórico de versões"; echo; cat "$tmp"; } > CHANGELOG.md
+  fi
+  rm -f "$tmp"
+
+  git add CHANGELOG.md
+  git commit -q -m "Versão ${new}"
+  git tag -a "v${new}" -m "Versão ${new}"
+
+  say "Enviando..."
+  git push -q origin main || die "Falha ao enviar os commits."
+  git push -q origin "v${new}" || die "Falha ao enviar a tag."
+
+  local repo; repo=$(git remote get-url origin | sed -e 's|.*github.com[:/]||' -e 's|\.git$||')
+  cat <<EOF
+
+  ${G}${B}Versão ${new} publicada.${N}
+
+  O GitHub está compilando as imagens agora. Quando terminar:
+     • as tags ${B}${new}${N}, ${B}${major:-}${N}... e ${B}latest${N} apontam para ela
+     • a release aparece em https://github.com/${repo}/releases
+
+  ${DIM}Acompanhe:  https://github.com/${repo}/actions
+  Nos servidores:  sudo tekvosoft update${N}
+
+EOF
+}
+
 cmd_help() {
   cat <<EOF
 
@@ -297,7 +474,11 @@ cmd_help() {
     ${C}stop${N}                parar tudo (os dados continuam salvos)
     ${C}backup${N}              gravar um backup em ./backups
     ${C}restore${N}             restaurar o backup mais recente
-    ${C}rollback${N} <tag>      voltar para uma versão anterior
+
+  ${B}Versões${N}
+    ${C}version${N}             ver a versão em uso e as disponíveis
+    ${C}rollback${N} <versão>   voltar para uma versão anterior
+    ${C}release${N} <tipo>      publicar uma versão nova ${DIM}(patch, minor, major)${N}
 
   ${B}Depuração${N}
     ${C}shell${N} [serviço]     abrir um terminal dentro do container
@@ -316,6 +497,8 @@ case "${1:-help}" in
   deploy)   shift; cmd_deploy "$@" ;;
   update)   shift; cmd_update "$@" ;;
   rollback) shift; cmd_rollback "$@" ;;
+  version|versao|versão) shift; cmd_version "$@" ;;
+  release)  shift; cmd_release "$@" ;;
   backup)   shift; cmd_backup "$@" ;;
   restore)  shift; cmd_restore "$@" ;;
   logs)     shift; cmd_logs "$@" ;;

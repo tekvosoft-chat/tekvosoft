@@ -88,12 +88,20 @@ jobs:
         with:
           # publica na organização dona deste repositório, seja ela qual for
           images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/tekvosoft-${{ matrix.component }}
+          # Convenção de tags:
+          #   main    último build da branch main — pode conter trabalho em andamento
+          #   1.2.3   release exata, imutável, é nela que produção deve ficar
+          #   1.2 / 1 acompanham correções dentro da mesma minor/major
+          #   latest  aponta para a ÚLTIMA RELEASE, nunca para a main
+          #
+          # "latest" sair de tag e não da main é o que impede um commit
+          # qualquer de ir para produção no próximo ./tekvosoft update.
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
           labels: |
             org.opencontainers.image.title=tekvosoft-${{ matrix.component }}
 
@@ -108,3 +116,68 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.component }}
           cache-to: type=gha,mode=max,scope=${{ matrix.component }}
+
+  # Publica a release no GitHub quando uma tag v*.*.* é enviada.
+  # As notas saem do CHANGELOG.md; se a versão não estiver lá, caem para a
+  # lista de commits desde a tag anterior.
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Montar as notas da versão
+        id: notes
+        run: |
+          VERSION="${GITHUB_REF_NAME}"
+          NUM="${VERSION#v}"
+          NOTES_FILE=$(mktemp)
+
+          # Tenta extrair a seção desta versão do CHANGELOG
+          if [ -f CHANGELOG.md ]; then
+            awk -v v="## ${NUM}" '
+              $0 ~ "^" v " " || $0 == v { found=1; next }
+              found && /^## / { exit }
+              found { print }
+            ' CHANGELOG.md > "${NOTES_FILE}"
+          fi
+
+          if [ ! -s "${NOTES_FILE}" ]; then
+            PREV=$(git tag -l 'v*.*.*' --sort=-v:refname | grep -v "^${VERSION}$" | head -1)
+            echo "### Alterações" >> "${NOTES_FILE}"
+            echo "" >> "${NOTES_FILE}"
+            if [ -n "${PREV}" ]; then
+              git log --no-merges --pretty='- %s' "${PREV}..${VERSION}" >> "${NOTES_FILE}"
+            else
+              git log --no-merges --pretty='- %s' -20 >> "${NOTES_FILE}"
+            fi
+          fi
+
+          cat >> "${NOTES_FILE}" <<EOF
+
+          ---
+
+          ### Como atualizar
+
+          \`\`\`bash
+          curl -sSL https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/main/update.sh | sudo bash
+          \`\`\`
+
+          Para fixar exatamente esta versão, use \`TAG=${NUM}\` no \`.env\`.
+          EOF
+
+          echo "file=${NOTES_FILE}" >> "$GITHUB_OUTPUT"
+
+      - name: Criar a release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "${GITHUB_REF_NAME}" \
+            --notes-file "${{ steps.notes.outputs.file }}" \
+            --verify-tag
