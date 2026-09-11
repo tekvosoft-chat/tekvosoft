@@ -1,6 +1,6 @@
 # verifyContact
 
-This document describes how [verifyContact.ts](/home/allgood/Projetos/ticketz/backend/src/services/WbotServices/verifyContact.ts) behaves in every relevant branch of execution.
+This document describes how [verifyContact.ts](./verifyContact.ts) behaves in every relevant branch of execution.
 
 ## Purpose
 

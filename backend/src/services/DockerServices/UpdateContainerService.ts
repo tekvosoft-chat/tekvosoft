@@ -75,7 +75,7 @@ const UpdateContainerService = async (
   const isSelf = !!hostname && info.Id.startsWith(hostname);
 
   const env = (info.Config.Env || []).filter(
-    entry => !entry.startsWith("TICKETZ_UPDATE_REPLACE=")
+    entry => !entry.startsWith("TEKVOSOFT_UPDATE_REPLACE=")
   );
 
   const createOptions: ContainerCreateOptions = {
@@ -97,7 +97,7 @@ const UpdateContainerService = async (
     const oldName = `${containerName}-old-${Date.now()}`;
     await container.rename({ name: oldName });
 
-    createOptions.Env = [...env, `TICKETZ_UPDATE_REPLACE=${info.Id}`];
+    createOptions.Env = [...env, `TEKVOSOFT_UPDATE_REPLACE=${info.Id}`];
 
     const newContainer = await docker.createContainer(createOptions);
     await newContainer.start();

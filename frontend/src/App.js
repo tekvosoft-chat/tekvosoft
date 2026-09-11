@@ -16,9 +16,9 @@ import { getBackendURL } from "./services/config";
 import Routes from "./routes";
 
 const queryClient = new QueryClient();
-const defaultLogoLight = "/vector/logo.svg";
-const defaultLogoDark = "/vector/logo-dark.svg";
-const defaultLogoFavicon = "/vector/favicon.svg";
+const defaultLogoLight = "/vector/logo.png";
+const defaultLogoDark = "/vector/logo-dark.png";
+const defaultLogoFavicon = "/vector/favicon.png";
 
 function useViewportHeight() {
   useEffect(() => {

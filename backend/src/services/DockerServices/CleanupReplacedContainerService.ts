@@ -2,10 +2,10 @@ import { logger } from "../../utils/logger";
 import GetDockerClient from "./GetDockerClient";
 
 // After a self update, the replacement container is created with the
-// TICKETZ_UPDATE_REPLACE env var pointing to the previous container id.
+// TEKVOSOFT_UPDATE_REPLACE env var pointing to the previous container id.
 // On boot, the new instance stops and removes the old container.
 const CleanupReplacedContainerService = async (): Promise<void> => {
-  const replacedContainerId = process.env.TICKETZ_UPDATE_REPLACE;
+  const replacedContainerId = process.env.TEKVOSOFT_UPDATE_REPLACE;
 
   if (!replacedContainerId) {
     return;

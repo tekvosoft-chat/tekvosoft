@@ -5,11 +5,12 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
     />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/favicon.ico" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="%PUBLIC_URL%/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="%PUBLIC_URL%/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="%PUBLIC_URL%/favicon-16x16.png" />
     <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#7830F8" />
     <meta
       name="viewport"
       content="minimum-scale=1, initial-scale=1, width=device-width"
@@ -279,7 +280,7 @@
       window.renderError = message => {
         // During restart transition, suppress error rendering — the
         // backend is expected to be down.
-        if (window.__ticketzRestartTransition) return;
+        if (window.__tekvosoftRestartTransition) return;
 
         const splashScreen = document.getElementById("splash-screen");
         splashScreen.innerHTML = `
@@ -308,7 +309,7 @@
       const configureSplash = async config => {
         // During restart transition, skip backend fetches — the
         // backend is expected to be down.
-        if (window.__ticketzRestartTransition) return;
+        if (window.__tekvosoftRestartTransition) return;
 
         const protocol = config.BACKEND_PROTOCOL || "https";
         const hostname = config.BACKEND_HOST || window.location.hostname;
@@ -335,7 +336,7 @@
             root.style.setProperty("--primary", color);
             // Persist the resolved primary color so the restart
             // transition can render it while the backend is down.
-            localStorage.setItem("ticketzPrimaryColor", color);
+            localStorage.setItem("tekvosoftPrimaryColor", color);
           });
 
         // Persist the login background image so the restart transition
@@ -345,7 +346,7 @@
           .then(data => {
             if (data) {
               localStorage.setItem(
-                "ticketzBackgroundImage",
+                "tekvosoftBackgroundImage",
                 backendUrl + "/public/" + data
               );
             }
@@ -362,7 +363,7 @@
             (await (theme === "dark" ? responses[1] : responses[0]).json());
 
           if (!logoSrc) {
-            appLogo.src = `/vector/logo${theme === "dark" ? "-dark" : ""}.svg`;
+            appLogo.src = `/vector/logo${theme === "dark" ? "-dark" : ""}.png`;
           } else {
             appLogo.src = backendUrl + "/public/" + (logoSrc || logoAltSrc);
           }
@@ -413,7 +414,7 @@
 
         // Signal to other parts of the page that the backend is restarting
         // so they suppress error rendering and skip backend fetches.
-        window.__ticketzRestartTransition = true;
+        window.__tekvosoftRestartTransition = true;
 
         // Stop the normal splash progress
         clearInterval(interval);
@@ -422,12 +423,12 @@
         // restart transition matches the configured branding while the
         // backend is down.
         const root = document.documentElement;
-        const storedPrimaryColor = localStorage.getItem("ticketzPrimaryColor");
+        const storedPrimaryColor = localStorage.getItem("tekvosoftPrimaryColor");
         if (storedPrimaryColor) {
           root.style.setProperty("--primary", storedPrimaryColor);
         }
         const storedBackgroundImage = localStorage.getItem(
-          "ticketzBackgroundImage"
+          "tekvosoftBackgroundImage"
         );
         if (storedBackgroundImage) {
           const splashBackground = document.getElementById(

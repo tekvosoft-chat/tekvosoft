@@ -297,7 +297,7 @@ const useStyles = makeStyles(theme => ({
     height: "40px",
     logo: theme.logo,
     margin: "auto",
-    content: `url("${theme.appLogoFavicon ? theme.appLogoFavicon : "/vector/favicon.svg"}")`
+    content: `url("${theme.appLogoFavicon ? theme.appLogoFavicon : "/vector/favicon.png"}")`
   },
   hideLogo: {
     display: "none"

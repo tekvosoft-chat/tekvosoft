@@ -17,14 +17,8 @@ funcionamento
 Coloque aqui qualquer informação adicional que achar útil
 
 
-## Licença / Autorização de utilização
+## Licença
 
-(não concluir a contribuição se não estiver de acordo com os termos)
-
-Ao submeter essa contribuição **AUTORIZO** que elas sejam utilizadas
-em produtos comerciais derivados do Ticketz OSS única e exclusivamente
-por seus autores originais, a saber Claudemir Todo Bom e TODOBOM.COM
-Tecnologia da Informação Ltda. Demais derivações que incluam estas
-contribuições ficam submetidas à licença original do projeto (GNU
-AFFERO GENERAL PUBLIC LICENSE) conforme o arquivo LICENSE.md na raiz
-do projeto.
+Ao submeter esta contribuição você concorda que ela passa a integrar o
+Tekvosoft sob a mesma licença do projeto (GNU AFFERO GENERAL PUBLIC
+LICENSE), conforme o arquivo LICENSE.md na raiz do repositório.

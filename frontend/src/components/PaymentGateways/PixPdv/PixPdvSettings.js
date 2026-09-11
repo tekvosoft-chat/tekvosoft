@@ -89,10 +89,10 @@ const createSchema = Yup.object().shape({
     .required("Required")
 });
 
-export default function PixTicketzSettings(props) {
+export default function PixPdvSettings(props) {
   const { settings } = props;
   const classes = useStyles();
-  const [pixTicketzSettings, setPixTicketzSettings] = useState({});
+  const [pixPdvSettings, setPixPdvSettings] = useState({});
   const { update } = useSettings();
   const [showCreateForm, setShowCreateForm] = useState(true);
   const initialCreateState = { nome: "", cnpj: "", email: "", whatsapp: "" };
@@ -106,7 +106,7 @@ export default function PixTicketzSettings(props) {
           newSettings[setting.key.substring(1)] = setting.value;
         }
       });
-      setPixTicketzSettings(newSettings);
+      setPixPdvSettings(newSettings);
       if (
         newSettings.owenCnpj &&
         newSettings.owenToken &&
@@ -126,10 +126,10 @@ export default function PixTicketzSettings(props) {
   }
 
   async function handleSaveSetting(key) {
-    if (typeof pixTicketzSettings[key] !== "string") {
+    if (typeof pixPdvSettings[key] !== "string") {
       return;
     }
-    storeSetting(`_${key}`, pixTicketzSettings[key]);
+    storeSetting(`_${key}`, pixPdvSettings[key]);
     toast.success("Operação atualizada com sucesso.");
   }
 
@@ -153,7 +153,7 @@ export default function PixTicketzSettings(props) {
     <>
       <div>
         <p>
-          <b>Pix Ticketz</b> é uma implementação para recebimento via PIX
+          <b>PixPDV</b> é uma implementação para recebimento via PIX
           através do parceiro PixPDV.
         </p>
       </div>
@@ -172,11 +172,11 @@ export default function PixTicketzSettings(props) {
                   label="CNPJ"
                   variant="standard"
                   name="owenCnpj"
-                  value={pixTicketzSettings.owenCnpj || ""}
+                  value={pixPdvSettings.owenCnpj || ""}
                   onChange={e => {
-                    const newSettings = { ...pixTicketzSettings };
+                    const newSettings = { ...pixPdvSettings };
                     newSettings.owenCnpj = e.target.value;
-                    setPixTicketzSettings(newSettings);
+                    setPixPdvSettings(newSettings);
                   }}
                   onBlur={async _ => {
                     await handleSaveSetting("owenCnpj");
@@ -191,11 +191,11 @@ export default function PixTicketzSettings(props) {
                   label="Token"
                   variant="standard"
                   name="owenToken"
-                  value={pixTicketzSettings.owenToken || ""}
+                  value={pixPdvSettings.owenToken || ""}
                   onChange={e => {
-                    const newSettings = { ...pixTicketzSettings };
+                    const newSettings = { ...pixPdvSettings };
                     newSettings.owenToken = e.target.value;
-                    setPixTicketzSettings(newSettings);
+                    setPixPdvSettings(newSettings);
                   }}
                   onBlur={async _ => {
                     await handleSaveSetting("owenToken");
@@ -210,11 +210,11 @@ export default function PixTicketzSettings(props) {
                   label="Secret Key"
                   variant="standard"
                   name="owenSecretKey"
-                  value={pixTicketzSettings.owenSecretKey || ""}
+                  value={pixPdvSettings.owenSecretKey || ""}
                   onChange={e => {
-                    const newSettings = { ...pixTicketzSettings };
+                    const newSettings = { ...pixPdvSettings };
                     newSettings.owenSecretKey = e.target.value;
-                    setPixTicketzSettings(newSettings);
+                    setPixPdvSettings(newSettings);
                   }}
                   onBlur={async _ => {
                     await handleSaveSetting("owenSecretKey");

@@ -19,8 +19,8 @@ import { loadJSON } from "../../helpers/loadJSON";
 import api from "../../services/api";
 
 const frontendGitInfo = loadJSON("/gitinfo.json");
-const logo = "/vector/logo.svg";
-const logoDark = "/vector/logo-dark.svg";
+const logo = "/vector/logo.png";
+const logoDark = "/vector/logo-dark.png";
 
 const useStyles = makeStyles(theme => ({
   root: {
