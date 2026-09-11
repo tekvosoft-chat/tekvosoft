@@ -1,0 +1,159 @@
+# ─────────────────────────────────────────────────────────────
+#  Tekvosoft — stack para Docker Swarm atrás do Traefik
+#
+#  Use este arquivo quando a VM JÁ tem um Traefik cuidando das portas
+#  80 e 443. Aqui o Tekvosoft não sobe proxy nem emite certificado:
+#  ele se anuncia ao Traefik por labels, igual às suas outras stacks.
+#
+#  Antes de subir, defina estas variáveis (no Portainer elas aparecem
+#  na tela de deploy da stack):
+#
+#      DOMAIN        chat.suaempresa.com.br
+#      ADMIN_EMAIL   voce@suaempresa.com.br   (vira o seu login)
+#      DB_PASS       uma senha longa e aleatória
+#      CERT_RESOLVER letsencryptresolver      (o nome usado no seu Traefik)
+#      NETWORK       network_public           (a rede externa do Traefik)
+#
+#  Depois: acesse https://$DOMAIN e entre com ADMIN_EMAIL / 123456.
+#  TROQUE A SENHA no primeiro acesso.
+# ─────────────────────────────────────────────────────────────
+
+version: "3.7"
+
+services:
+
+  # ── interface web ──────────────────────────────────────────
+  # É o único serviço que o Traefik enxerga. Ele serve a interface e
+  # encaminha /backend para a API pela rede interna.
+  frontend:
+    image: ghcr.io/tekvosoft-chat/tekvosoft-frontend:${TAG:-latest}
+    environment:
+      # Este container publica um /config.json legível por qualquer
+      # visitante. Só entra aqui o que o navegador precisa saber —
+      # nunca senha nem chave secreta.
+      BACKEND_PROTOCOL: https
+      BACKEND_HOST: ${DOMAIN}
+      BACKEND_PORT: 443
+      BACKEND_PATH: /backend
+    volumes:
+      - tekvosoft_public:/var/www/backend-public
+    networks:
+      - tekvosoft_internal
+      - network_public
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      labels:
+        - "traefik.enable=true"
+        # O frontend esta em DUAS redes (a publica e a interna). Sem esta
+        # linha o Traefik pode escolher a rede errada e o site nao abre.
+        # Vale para Traefik v2 e v3. No v3 aparece um aviso de "deprecated":
+        # se quiser silenciar, troque por traefik.swarm.network (so v3).
+        - "traefik.docker.network=${NETWORK:-network_public}"
+        - "traefik.http.routers.tekvosoft.rule=Host(`${DOMAIN}`)"
+        - "traefik.http.routers.tekvosoft.entrypoints=websecure"
+        - "traefik.http.routers.tekvosoft.service=tekvosoft"
+        - "traefik.http.routers.tekvosoft.tls.certresolver=${CERT_RESOLVER:-letsencryptresolver}"
+        - "traefik.http.services.tekvosoft.loadbalancer.server.port=80"
+
+  # ── API, WhatsApp e WebSocket ──────────────────────────────
+  # Fica só na rede interna: ninguém alcança de fora, o acesso é
+  # sempre via /backend no frontend.
+  #
+  # replicas SEMPRE 1: este serviço mantém as sessões do WhatsApp
+  # abertas e os agendamentos; duas cópias brigariam entre si.
+  backend:
+    image: ghcr.io/tekvosoft-chat/tekvosoft-backend:${TAG:-latest}
+    environment:
+      NODE_ENV: production
+      BACKEND_URL: https://${DOMAIN}/backend
+      FRONTEND_URL: https://${DOMAIN}
+      EMAIL_ADDRESS: ${ADMIN_EMAIL}
+      DB_DIALECT: postgres
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: tekvosoft
+      DB_NAME: tekvosoft
+      DB_PASS: ${DB_PASS}
+      DB_TIMEZONE: "-03:00"
+      REDIS_URI: redis://redis:6379
+      REDIS_OPT_LIMITER_MAX: 1
+      REDIS_OPT_LIMITER_DURATION: 3000
+      TZ: ${TZ:-America/Sao_Paulo}
+      USER_LIMIT: ${USER_LIMIT:-10000}
+      CONNECTIONS_LIMIT: ${CONNECTIONS_LIMIT:-100000}
+      CLOSED_SEND_BY_ME: "true"
+      VERIFY_TOKEN: ${VERIFY_TOKEN:-tekvosoft}
+    volumes:
+      - tekvosoft_public:/usr/src/app/public
+      - tekvosoft_private:/usr/src/app/private
+    networks:
+      - tekvosoft_internal
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+
+  # ── banco de dados ─────────────────────────────────────────
+  # Dedicado de propósito. Reaproveitar o postgres compartilhado da VM
+  # misturaria os dados dos seus atendimentos com os de outros sistemas
+  # e tornaria backup e restauração muito mais arriscados.
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: tekvosoft
+      POSTGRES_DB: tekvosoft
+      POSTGRES_PASSWORD: ${DB_PASS}
+      TZ: ${TZ:-America/Sao_Paulo}
+    volumes:
+      - tekvosoft_postgres:/var/lib/postgresql/data
+    networks:
+      - tekvosoft_internal
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+
+  # ── cache e filas ──────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    # ignore-warnings ARM64-COW-BUG: em servidores ARM o Redis testa um
+    # bug antigo de copy-on-write do kernel e, ao suspeitar dele, ENCERRA
+    # em vez de subir. O teste dá falso positivo em boa parte das VMs ARM
+    # — sem esta linha a stack não sobe lá. Aqui o Redis guarda cache e
+    # filas; o dado de verdade está no Postgres.
+    command: redis-server --appendonly yes --ignore-warnings ARM64-COW-BUG
+    volumes:
+      - tekvosoft_redis:/data
+    networks:
+      - tekvosoft_internal
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+
+volumes:
+  tekvosoft_postgres:
+  tekvosoft_redis:
+  tekvosoft_public:
+  tekvosoft_private:
+
+networks:
+  # Rede privada da stack: é por ela que frontend, backend, banco e
+  # cache conversam. Nada aqui é alcançável de fora.
+  tekvosoft_internal:
+    driver: overlay
+
+  # A rede onde o seu Traefik já está.
+  network_public:
+    external: true
+    name: ${NETWORK:-network_public}
