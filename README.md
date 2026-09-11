@@ -96,6 +96,8 @@ tudo com hot reload. Precisa só de Docker e Git: nem Node, nem Postgres, nem
 Redis instalados na máquina.
 
 Se alguma porta já estiver ocupada, ele detecta e usa a próxima livre.
+Se alguma imagem guardada no Docker for de outra arquitetura, ele percebe e
+baixa a correta antes de subir.
 
 | | |
 |---|---|
@@ -301,6 +303,13 @@ As imagens são publicadas para **`linux/amd64`** (Intel/AMD, o caso comum) e
 **`linux/arm64`** (Ampere, Graviton, as instâncias ARM gratuitas da Oracle,
 Raspberry Pi 4+, Macs com chip M). O Docker escolhe a certa sozinho — você não
 passa nada.
+
+Uma ressalva vale para a máquina de desenvolvimento: o Docker guarda a imagem
+que baixou e o `compose up` nunca vai atrás de outra. Quem em algum momento
+puxou um Postgres ou Redis de outra arquitetura — testando ARM, por exemplo —
+fica com ela no cache, e o container morre com `exec format error` enquanto a
+tela mostra apenas `container is unhealthy`. O `./tekvosoft dev` confere isso
+antes de subir e rebaixa a variante certa sozinho.
 
 O instalador detecta a arquitetura e recusa a instalação se não for uma
 dessas, em vez de falhar no meio.

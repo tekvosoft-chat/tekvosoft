@@ -115,9 +115,19 @@ first_free_port() {
   echo "$p"
 }
 
+# Portas que os nossos próprios containers já publicam. Sem isto, rodar
+# ./tekvosoft dev com o ambiente no ar enxergaria as próprias portas como
+# ocupadas e trocaria todas de lugar a cada execução.
+own_ports() {
+  docker ps --filter "label=com.docker.compose.project=tekvosoft" \
+    --format '{{.Ports}}' 2>/dev/null \
+    | tr ',' '\n' | sed -n 's/.*:\([0-9][0-9]*\)->.*/\1/p' | sort -u
+}
+
 # Troca no .env qualquer porta ocupada pela próxima livre.
 ensure_free_ports() {
-  local changed=0 name label cur new
+  local changed=0 name label cur new mine
+  mine=$(own_ports)
   for entry in "PORT:frontend" "API_PORT:backend" "DB_PORT_HOST:postgres" \
                "REDIS_PORT_HOST:redis" "DEBUG_PORT:debugger"; do
     name="${entry%%:*}"; label="${entry##*:}"
@@ -126,6 +136,8 @@ ensure_free_ports() {
     cur="${!name:-}"
     [ -n "$cur" ] || continue
     case "$cur" in (*[!0-9]*) continue ;; esac
+    # porta que já é nossa não conta como ocupada
+    if echo "$mine" | grep -qx "$cur"; then continue; fi
     if port_busy "$cur"; then
       new="$(first_free_port $((cur + 1)))"
       sed -i "s|^${name}=.*|${name}=${new}|" .env
@@ -138,6 +150,99 @@ ensure_free_ports() {
     set -a; . ./.env; set +a
     echo
   fi
+}
+
+# ── arquitetura das imagens ──────────────────────────────────
+# O "compose up" nunca rebaixa uma imagem que já está no cache: usa a que
+# encontrar, seja de qual arquitetura for. Quem em algum momento puxou um
+# postgres ou redis de outra arquitetura nesta máquina (testando ARM, por
+# exemplo) fica com ela guardada para sempre — o container morre com
+# "exec format error" e a tela mostra só "container is unhealthy", que não
+# diz nada sobre a causa. Por isso conferimos antes de subir.
+
+# Plataforma desta máquina no formato que o Docker entende: linux/amd64.
+host_platform() {
+  local os arch
+  os=$(docker version --format '{{.Server.Os}}' 2>/dev/null)     || return 1
+  arch=$(docker version --format '{{.Server.Arch}}' 2>/dev/null) || return 1
+  [ -n "$os" ] && [ -n "$arch" ] || return 1
+  # fora de x86_64 e arm64 não temos o que decidir com segurança
+  case "$arch" in amd64|arm64) ;; *) return 1 ;; esac
+  echo "${os}/${arch}"
+}
+
+# A variante da arquitetura desta máquina está mesmo baixada?
+image_matches_host() {
+  local img="$1" plat="$2" arch
+  # Docker com image store containerd: o que fica local é um índice com todas
+  # as arquiteturas, mas só a que foi baixada tem config. Pedir a plataforma
+  # do host revela se ela está lá de verdade — se não estiver, vem vazio.
+  if docker image inspect --platform "$plat" "$img" \
+       --format '{{.Architecture}}' 2>/dev/null | grep -q .; then
+    return 0
+  fi
+  # Docker antigo, sem --platform no inspect: existe uma variante local só.
+  arch=$(docker image inspect "$img" --format '{{.Architecture}}' 2>/dev/null) || return 1
+  [ -n "$arch" ] && [ "$arch" = "${plat##*/}" ]
+}
+
+# Imagens que vêm prontas do Docker Hub (Postgres e Redis). As do backend e
+# do frontend são compiladas aqui e já nascem na arquitetura certa.
+infra_images() {
+  grep -E '^[[:space:]]+image:[[:space:]]' "$BASE" | awk '{print $2}' | sort -u
+}
+
+ensure_native_images() {
+  local plat img
+  plat=$(host_platform) || return 0
+
+  if [ -n "${DOCKER_DEFAULT_PLATFORM:-}" ] && [ "${DOCKER_DEFAULT_PLATFORM}" != "$plat" ]; then
+    warn "seu shell define DOCKER_DEFAULT_PLATFORM=${DOCKER_DEFAULT_PLATFORM}, mas esta máquina é ${plat}."
+    echo "${DIM}   Imagens de outra arquitetura não rodam aqui. Se algo não subir:"
+    echo "       unset DOCKER_DEFAULT_PLATFORM${N}"
+  fi
+
+  for img in $(infra_images); do
+    # ainda não baixada: o compose busca a variante certa sozinho
+    docker image inspect "$img" >/dev/null 2>&1 || continue
+    image_matches_host "$img" "$plat" && continue
+
+    warn "a imagem ${img} guardada nesta máquina não é ${plat}."
+    say "Baixando a versão ${plat} — sem ela o container não sobe..."
+    if docker pull --platform "$plat" "$img" >/dev/null 2>&1; then
+      ok "${img} corrigida para ${plat}."
+      # Baixar a imagem certa não basta: um container já criado continua
+      # preso à variante antiga, porque o compose o reaproveita quando a
+      # configuração não mudou. Quem sobe precisa recriá-lo.
+      IMAGES_FIXED=1
+    else
+      warn "não consegui baixar. Com internet, rode:
+    docker pull --platform ${plat} ${img}"
+    fi
+  done
+}
+
+# "dependency failed to start: container ... is unhealthy" não conta o que
+# aconteceu. O motivo está no log de quem não subiu; trazemos para a tela.
+explain_up_failure() {
+  local files="$1" svc logs arch_problem=0
+  echo
+  warn "A subida falhou. O que a infraestrutura registrou:"
+  for svc in postgres redis; do
+    logs=$(docker compose $files logs --tail=8 "$svc" 2>/dev/null || true)
+    [ -n "$logs" ] || continue
+    echo
+    echo "   ${B}${svc}${N}"
+    echo "$logs" | sed 's/^/     /'
+    echo "$logs" | grep -q "exec format error" && arch_problem=1
+  done
+  echo
+  if [ "$arch_problem" = "1" ]; then
+    warn "'exec format error' significa imagem de outra arquitetura no cache."
+    echo "${DIM}   Rode ./tekvosoft dev de novo com internet: ele rebaixa a imagem certa.${N}"
+    echo
+  fi
+  echo "${DIM}   Log completo:  ./tekvosoft logs${N}"
 }
 
 # Descobre se o que está no ar é o ambiente de dev ou o de produção.
@@ -197,9 +302,17 @@ cmd_dev() {
   need_docker; need_env dev
   ensure_free_ports
   write_dev_config
+  ensure_native_images
   say "Subindo o ambiente de desenvolvimento..."
   echo "${DIM}  Na primeira vez isto compila as dependências e pode levar alguns minutos.${N}"
-  docker compose $DEV up -d --build
+  local recreate=""
+  if [ "${IMAGES_FIXED:-0}" = "1" ]; then
+    recreate="--force-recreate"
+  fi
+  if ! docker compose $DEV up -d --build $recreate; then
+    explain_up_failure "$DEV"
+    return 1
+  fi
   echo
   ok "Ambiente no ar."
   echo
