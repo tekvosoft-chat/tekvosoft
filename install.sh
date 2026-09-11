@@ -230,7 +230,7 @@ say "Baixando as imagens e subindo os serviços..."
 echo "${DIM}   Pode levar alguns minutos na primeira vez.${N}"
 echo
 
-./tekvosoft deploy || die "Falha ao subir os serviços. Veja: cd ${INSTALL_DIR} && ./tekvosoft logs"
+TEKVOSOFT_QUIET=1 ./tekvosoft deploy || die "Falha ao subir os serviços. Veja: cd ${INSTALL_DIR} && ./tekvosoft logs"
 
 if [ -n "${RESTORED}" ]; then
   say "Restaurando o backup..."
