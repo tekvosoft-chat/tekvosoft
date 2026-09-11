@@ -99,6 +99,11 @@ Se alguma porta já estiver ocupada, ele detecta e usa a próxima livre.
 Se alguma imagem guardada no Docker for de outra arquitetura, ele percebe e
 baixa a correta antes de subir.
 
+Apagar a pasta e clonar de novo não quebra nada: os volumes do Docker
+sobrevivem, e o `.env` novo nasce com outra senha de banco. Em vez de exigir
+que você apague o banco, o `./tekvosoft dev` grava nele a senha do `.env` e
+segue — o que estava lá dentro continua lá.
+
 | | |
 |---|---|
 | Sistema | <http://localhost:3000> |

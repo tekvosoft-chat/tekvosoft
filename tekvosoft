@@ -98,8 +98,24 @@ need_env() {
 # ── portas ───────────────────────────────────────────────────
 # Máquina de desenvolvimento costuma já ter Postgres ou Redis rodando.
 # Sem isto, o usuário recebe um "address already in use" cru do Docker.
+
+# Portas publicadas pelos nossos próprios containers. Sem isto, rodar
+# ./tekvosoft dev com o ambiente no ar enxergaria as próprias portas como
+# ocupadas e trocaria todas de lugar a cada execução.
+own_ports() {
+  docker ps --filter "label=com.docker.compose.project=tekvosoft" \
+    --format '{{.Ports}}' 2>/dev/null \
+    | tr ',' '\n' | sed -n 's/.*:\([0-9][0-9]*\)->.*/\1/p' | sort -u
+}
+
+is_own_port() {
+  echo "${OWN_PORTS:-}" | grep -qx "$1"
+}
+
 port_busy() {
   local p="$1"
+  # quem está usando é o próprio ambiente, que será recriado no lugar
+  if is_own_port "$p"; then return 1; fi
   if command -v ss >/dev/null 2>&1; then
     ss -ltn 2>/dev/null | awk '{print $4}' | grep -qE "[:.]${p}\$"
   elif command -v netstat >/dev/null 2>&1; then
@@ -115,19 +131,10 @@ first_free_port() {
   echo "$p"
 }
 
-# Portas que os nossos próprios containers já publicam. Sem isto, rodar
-# ./tekvosoft dev com o ambiente no ar enxergaria as próprias portas como
-# ocupadas e trocaria todas de lugar a cada execução.
-own_ports() {
-  docker ps --filter "label=com.docker.compose.project=tekvosoft" \
-    --format '{{.Ports}}' 2>/dev/null \
-    | tr ',' '\n' | sed -n 's/.*:\([0-9][0-9]*\)->.*/\1/p' | sort -u
-}
-
 # Troca no .env qualquer porta ocupada pela próxima livre.
 ensure_free_ports() {
-  local changed=0 name label cur new mine
-  mine=$(own_ports)
+  local changed=0 name label cur new
+  OWN_PORTS=$(own_ports)
   for entry in "PORT:frontend" "API_PORT:backend" "DB_PORT_HOST:postgres" \
                "REDIS_PORT_HOST:redis" "DEBUG_PORT:debugger"; do
     name="${entry%%:*}"; label="${entry##*:}"
@@ -136,8 +143,6 @@ ensure_free_ports() {
     cur="${!name:-}"
     [ -n "$cur" ] || continue
     case "$cur" in (*[!0-9]*) continue ;; esac
-    # porta que já é nossa não conta como ocupada
-    if echo "$mine" | grep -qx "$cur"; then continue; fi
     if port_busy "$cur"; then
       new="$(first_free_port $((cur + 1)))"
       sed -i "s|^${name}=.*|${name}=${new}|" .env
@@ -258,15 +263,44 @@ active_files() {
 
 # POSTGRES_PASSWORD só vale na criação do banco. Se o DB_PASS do .env mudar
 # depois disso, o backend passa a falhar com "password authentication failed",
-# que não diz nada sobre a causa. Detectamos e explicamos.
-check_db_auth() {
+# que não diz nada sobre a causa. Detectamos e consertamos.
+db_auth_ok() {
   local files="$1"
   docker compose $files run --rm -T --entrypoint sh tools -c \
     'PGPASSWORD="$DB_PASS" psql -h postgres -U "$DB_USER" -d "$DB_NAME" -c "select 1" >/dev/null 2>&1' \
-    >/dev/null 2>&1 && return 0
+    >/dev/null 2>&1
+}
 
+# Grava no banco a senha que está no .env, sem tocar nos dados. Funciona
+# porque o pg_hba da imagem oficial confia em quem entra pelo socket local:
+# de dentro do container não é preciso saber a senha para trocá-la.
+realign_db_password() {
+  local files="$1"
+  echo "ALTER USER \"${DB_USER:-tekvosoft}\" WITH PASSWORD :'pw';" \
+    | docker compose $files exec -T postgres \
+        psql -U "${DB_USER:-tekvosoft}" -d "${DB_NAME:-tekvosoft}" \
+             -v ON_ERROR_STOP=1 -v pw="${DB_PASS}" >/dev/null 2>&1
+}
+
+check_db_auth() {
+  local files="$1"
+  db_auth_ok "$files" && return 0
+
+  # O caso comum é ter apagado a pasta do projeto e clonado de novo: o .env
+  # nasce com uma senha nova, mas o volume do Postgres continuou aí com a
+  # antiga. Apagar o banco resolveria, só que leva junto o que houver dentro.
+  # Trocar a senha do banco pela do .env resolve sem perder nada.
   echo
   warn "O banco não aceitou a senha que está no .env."
+  say "Gravando no banco a senha do .env (os dados continuam onde estão)..."
+  if realign_db_password "$files" && db_auth_ok "$files"; then
+    ok "Senha do banco realinhada."
+    docker compose $files restart backend >/dev/null 2>&1 || true
+    return 0
+  fi
+
+  echo
+  warn "Não consegui ajustar a senha sozinho."
   echo "${DIM}   A senha do Postgres é gravada quando o banco é criado; mudar o"
   echo "   DB_PASS depois disso não muda a senha do banco que já existe.${N}"
   echo
