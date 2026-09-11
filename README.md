@@ -5,33 +5,55 @@ atendentes, filas, chatbot, campanhas e agendamentos — tudo em um sistema só.
 
 ---
 
-## Três comandos
+## Um comando para cada coisa
 
-Tudo o que você faz no dia a dia cabe aqui:
+### Instalar em produção
 
-```bash
-./tekvosoft dev       # desenvolver na sua máquina, com hot reload
-./tekvosoft deploy    # subir em produção, com HTTPS automático
-./tekvosoft update    # atualizar a produção
-```
-
-`./tekvosoft help` lista o resto (logs, backup, rollback, banco).
-
----
-
-## Começando
-
-### Para desenvolver
-
-Precisa só de Docker. Nem Node, nem Postgres, nem Redis instalados na máquina.
+Servidor vazio → sistema no ar com HTTPS. Um comando:
 
 ```bash
-git clone https://github.com/tekvosoft-chat/tekvosoft.git
-cd tekvosoft
-./tekvosoft dev
+curl -sSL https://raw.githubusercontent.com/tekvosoft-chat/tekvosoft/main/install.sh \
+  | sudo bash -s chat.exemplo.com.br voce@exemplo.com.br
 ```
 
-Na primeira vez leva alguns minutos (compila as dependências). Depois:
+Troque pelo seu domínio e seu e-mail. O script instala o Docker se faltar,
+baixa o projeto em `/opt/tekvosoft`, **gera a senha do banco sozinho** e sobe
+tudo. O certificado sai automático pelo Let's Encrypt e se renova sozinho —
+você nunca toca em certificado.
+
+Antes de rodar, confira:
+
+- [ ] servidor limpo com Ubuntu 20+ (ou Debian equivalente)
+- [ ] portas 80 e 443 livres e liberadas no firewall
+- [ ] DNS do domínio apontando para o IP do servidor
+
+O login é o e-mail que você passou, senha `123456` — **troque no primeiro
+acesso**.
+
+Pode rodar de novo quando quiser: preserva o `.env`, a senha do banco e
+os dados.
+
+### Atualizar a produção
+
+```bash
+curl -sSL https://raw.githubusercontent.com/tekvosoft-chat/tekvosoft/main/update.sh | sudo bash
+```
+
+Faz backup antes de mexer, traz o código e as imagens novas e reinicia.
+Encontra a instalação sozinho. Se algo quebrar, `sudo tekvosoft rollback v1.2.3`
+volta para a versão anterior.
+
+### Preparar a máquina de desenvolvimento
+
+```bash
+curl -sSL https://raw.githubusercontent.com/tekvosoft-chat/tekvosoft/main/dev.sh | bash
+```
+
+Sem `sudo` — o código precisa ser seu. Clona o projeto na pasta atual e sobe
+tudo com hot reload. Precisa só de Docker e Git: nem Node, nem Postgres, nem
+Redis instalados na máquina.
+
+Se alguma porta já estiver ocupada, ele detecta e usa a próxima livre.
 
 | | |
 |---|---|
@@ -39,36 +61,26 @@ Na primeira vez leva alguns minutos (compila as dependências). Depois:
 | API | <http://localhost:8080> |
 | Login | `admin@tekvosoft.local` / `123456` |
 
-Edite qualquer coisa em `backend/` ou `frontend/` e recarrega sozinho. O
-debugger do Node fica exposto em `9229` — dá para dar attach pelo VSCode.
+Edite `backend/` ou `frontend/` e recarrega sozinho. O debugger do Node fica
+em `9229` — dá para dar attach pelo VSCode (`F5` → *Anexar ao backend*).
 
-### Para subir em produção
+---
 
-Você precisa de um servidor com Docker, portas 80 e 443 livres e um domínio
-com DNS apontando para ele.
+## O CLI
 
-```bash
-git clone https://github.com/tekvosoft-chat/tekvosoft.git
-cd tekvosoft
-cp .env.example .env
-nano .env          # DOMAIN, ADMIN_EMAIL e DB_PASS
-./tekvosoft deploy
-```
-
-O certificado HTTPS é emitido sozinho pelo Let's Encrypt e renovado sozinho.
-Você nunca toca em certificado.
-
-Entre com o `ADMIN_EMAIL` e a senha `123456` — **e troque a senha na hora**.
-
-### Para atualizar
+Depois de instalado, tudo passa pelo mesmo comando. Em produção ele fica
+disponível como `sudo tekvosoft` de qualquer pasta; em desenvolvimento, como
+`./tekvosoft` dentro do projeto.
 
 ```bash
-git pull
-./tekvosoft update
+./tekvosoft dev       # desenvolver, com hot reload
+./tekvosoft deploy    # subir em produção
+./tekvosoft update    # atualizar
+./tekvosoft help      # ver tudo
 ```
 
-O `update` faz backup antes de mexer, baixa a versão nova e reinicia. Se algo
-der errado, `./tekvosoft rollback v1.2.3` volta para a versão anterior.
+Os scripts de instalação acima são só um atalho: eles preparam a máquina e
+chamam este mesmo CLI. Nada é duplicado.
 
 ---
 
@@ -108,6 +120,9 @@ são acessíveis de fora.
 | `frontend/` | Interface em React 17 + Material-UI. Servida por nginx em produção |
 | `tekvosoft` | O CLI. É o único ponto de entrada — não chame `docker compose` na mão |
 | `.env` | **A única configuração que você edita.** Todo o resto é derivado |
+| `install.sh` | Instalador de produção (`curl \| sudo bash`) |
+| `update.sh` | Atualizador de produção (`curl \| sudo bash`) |
+| `dev.sh` | Preparador da máquina de desenvolvimento (`curl \| bash`, sem sudo) |
 | `docker-compose.yml` | Serviços comuns aos dois ambientes |
 | `docker-compose.dev.yml` | O que muda em desenvolvimento (build local, hot reload, portas) |
 | `docker-compose.prod.yml` | O que muda em produção (imagens prontas, proxy, TLS) |
@@ -118,7 +133,8 @@ são acessíveis de fora.
 
 ## Configuração
 
-Um arquivo só: `.env`. Na prática você mexe em três linhas.
+Um arquivo só: `.env`. Se você usou os instaladores acima, ele já foi criado
+e preenchido — não precisa mexer em nada.
 
 | Variável | Para que serve |
 |---|---|
@@ -156,6 +172,24 @@ montado automaticamente nos compose a partir dessas. Você não repete nada.
 
 Um backup é um único `.tar.gz` com o dump do Postgres e os arquivos enviados.
 Ficam guardados os 10 mais recentes; os antigos são descartados sozinhos.
+
+### Mudar de servidor
+
+O backup é um arquivo só, então migrar é copiar e reinstalar:
+
+```bash
+# no servidor antigo
+sudo tekvosoft backup
+scp /opt/tekvosoft/backups/tekvosoft-*.tar.gz voce@servidor-novo:~/
+
+# no servidor novo — o instalador acha o backup e restaura sozinho
+curl -sSL https://raw.githubusercontent.com/tekvosoft-chat/tekvosoft/main/install.sh \
+  | sudo bash -s chat.exemplo.com.br voce@exemplo.com.br
+```
+
+O `install.sh` procura um `tekvosoft-*.tar.gz` na pasta onde você rodou o
+comando e, se encontrar numa instalação nova, restaura automaticamente. Os
+logins e senhas continuam sendo os do servidor de origem.
 
 ---
 

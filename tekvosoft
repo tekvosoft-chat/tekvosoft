@@ -86,6 +86,51 @@ need_env() {
   return 0
 }
 
+# ── portas ───────────────────────────────────────────────────
+# Máquina de desenvolvimento costuma já ter Postgres ou Redis rodando.
+# Sem isto, o usuário recebe um "address already in use" cru do Docker.
+port_busy() {
+  local p="$1"
+  if command -v ss >/dev/null 2>&1; then
+    ss -ltn 2>/dev/null | awk '{print $4}' | grep -qE "[:.]${p}\$"
+  elif command -v netstat >/dev/null 2>&1; then
+    netstat -ltn 2>/dev/null | awk '{print $4}' | grep -qE "[:.]${p}\$"
+  else
+    return 1
+  fi
+}
+
+first_free_port() {
+  local p="$1"
+  while port_busy "$p"; do p=$((p + 1)); done
+  echo "$p"
+}
+
+# Troca no .env qualquer porta ocupada pela próxima livre.
+ensure_free_ports() {
+  local changed=0 name label cur new
+  for entry in "PORT:frontend" "API_PORT:backend" "DB_PORT_HOST:postgres" \
+               "REDIS_PORT_HOST:redis" "DEBUG_PORT:debugger"; do
+    name="${entry%%:*}"; label="${entry##*:}"
+    # o .env já foi carregado por need_env; usar a variável evita ter de
+    # lidar com comentários e espaços na linha
+    cur="${!name:-}"
+    [ -n "$cur" ] || continue
+    case "$cur" in (*[!0-9]*) continue ;; esac
+    if port_busy "$cur"; then
+      new="$(first_free_port $((cur + 1)))"
+      sed -i "s|^${name}=.*|${name}=${new}|" .env
+      warn "porta ${cur} (${label}) já está em uso nesta máquina — troquei para ${new}"
+      changed=1
+    fi
+  done
+  if [ "$changed" = "1" ]; then
+    ok "Portas ajustadas no .env. Edite-o se quiser outras."
+    set -a; . ./.env; set +a
+    echo
+  fi
+}
+
 # Descobre se o que está no ar é o ambiente de dev ou o de produção.
 active_files() {
   if docker compose $DEV ps -q 2>/dev/null | grep -q .; then
@@ -99,6 +144,7 @@ active_files() {
 
 cmd_dev() {
   need_docker; need_env dev
+  ensure_free_ports
   say "Subindo o ambiente de desenvolvimento..."
   echo "${DIM}  Na primeira vez isto compila as dependências e pode levar alguns minutos.${N}"
   docker compose $DEV up -d --build
