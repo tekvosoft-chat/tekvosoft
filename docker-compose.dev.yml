@@ -35,8 +35,12 @@ services:
     volumes:
       # código do host -> hot reload
       - ./backend:/usr/src/app
-      # node_modules fica DENTRO do container: o host não interfere
+      # Artefatos de build ficam em volumes, não no host. O container roda
+      # como root; se estes caírem na sua pasta, viram arquivos que você
+      # não consegue apagar nem sobrescrever sem sudo.
       - backend_node_modules:/usr/src/app/node_modules
+      - backend_dist:/usr/src/app/dist
+      - backend_generated:/usr/src/app/src/generated
     ports:
       - "${API_PORT:-8080}:3000"
       - "${DEBUG_PORT:-9229}:9229"
@@ -59,4 +63,6 @@ services:
 
 volumes:
   backend_node_modules:
+  backend_dist:
+  backend_generated:
   frontend_node_modules:
