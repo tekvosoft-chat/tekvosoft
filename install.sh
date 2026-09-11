@@ -14,7 +14,7 @@ set -euo pipefail
 REPO_URL="https://github.com/tekvosoft-chat/tekvosoft.git"
 INSTALL_DIR="/opt/tekvosoft"
 BRANCH="main"
-TOTAL_PASSOS=6
+TOTAL_PASSOS=7
 
 # Guardado antes de qualquer cd: é onde procuramos um backup para restaurar.
 PWD_AT_START="${PWD}"
@@ -177,7 +177,101 @@ if [ "${LIVRE_GB:-0}" -gt 0 ] && [ "${LIVRE_GB}" -lt 10 ]; then
 fi
 ok "Servidor compatível."
 
-# ── 2. DNS ───────────────────────────────────────────────────
+# ── 2. portas ────────────────────────────────────────────────
+#
+# 80 e 443 não são intercambiáveis. O Let's Encrypt valida o domínio pela
+# porta 80, e o navegador do seu cliente vai na 443 quando ele digita
+# https://dominio. Mudar para outra porta significaria obrigar todo mundo a
+# digitar ":8443" na URL e ficar sem certificado. Por isso, em vez de
+# escolher outra porta, identificamos o que está ocupando e explicamos.
+passo "Conferindo as portas 80 e 443"
+
+porta_ocupada() {
+  ss -ltn 2>/dev/null | awk '{print $4}' | grep -qE "[:.]$1\$"
+}
+
+quem_ocupa() {
+  local p="$1" c proc
+  c=$(docker ps --format '{{.Names}}|{{.Ports}}' 2>/dev/null \
+        | awk -F'|' -v pat=":${p}->" '$2 ~ pat {print $1; exit}') || true
+  if [ -n "${c:-}" ]; then echo "container|${c}"; return; fi
+  proc=$(ss -ltnp 2>/dev/null | awk -v pat="[:.]${p}\$" '$4 ~ pat' \
+        | grep -oE 'users:\(\("[^"]+"' | head -1 | sed 's/.*"\(.*\)"/\1/') || true
+  if [ -n "${proc:-}" ]; then echo "processo|${proc}"; return; fi
+  echo "desconhecido|"
+}
+
+CONFLITO=""
+for PORTA in 80 443; do
+  if ! porta_ocupada "${PORTA}"; then
+    ok "Porta ${PORTA} livre."
+    continue
+  fi
+
+  DONO=$(quem_ocupa "${PORTA}")
+  TIPO="${DONO%%|*}"; NOME="${DONO##*|}"
+
+  if [ "${NOME}" = "tekvosoft-proxy" ]; then
+    ok "Porta ${PORTA}: já é o próprio Tekvosoft (instalação anterior)."
+  elif [ "${TIPO}" = "container" ]; then
+    warn "Porta ${PORTA} ocupada pelo container '${NOME}'."
+    CONFLITO="${CONFLITO}
+    ${B}Porta ${PORTA}${N} — container Docker ${B}${NOME}${N}
+        Para liberar:  ${C}docker stop ${NOME}${N}"
+  elif [ "${TIPO}" = "processo" ]; then
+    warn "Porta ${PORTA} ocupada pelo programa '${NOME}'."
+    CONFLITO="${CONFLITO}
+    ${B}Porta ${PORTA}${N} — programa ${B}${NOME}${N}
+        Para liberar:  ${C}sudo systemctl stop ${NOME} && sudo systemctl disable ${NOME}${N}"
+  else
+    warn "Porta ${PORTA} ocupada por um programa que não identifiquei."
+    CONFLITO="${CONFLITO}
+    ${B}Porta ${PORTA}${N} — descubra com:  ${C}sudo ss -ltnp | grep ':${PORTA}'${N}"
+  fi
+done
+
+if [ -n "${CONFLITO}" ]; then
+  die "As portas 80 e 443 precisam estar livres, e não estão.
+${CONFLITO}
+
+${B}Por que não uso outra porta?${N}
+
+A porta 80 é onde o Let's Encrypt confirma que o domínio é seu — sem ela
+não sai o certificado. A 443 é onde o navegador procura quando alguém
+digita https://${DOMINIO}. Em outra porta, seus clientes teriam que digitar
+o número na URL e o site ficaria sem o cadeado.
+
+Libere as portas com os comandos acima e rode a instalação de novo."
+fi
+
+# Oracle Cloud tem DUAS camadas de firewall, e a segunda pega quase todo
+# mundo: além da Security List no painel, a imagem Ubuntu vem com regras
+# de iptables que bloqueiam tudo menos SSH.
+if [ -d /etc/oracle-cloud-agent ] || [ -f /etc/oci-hostname.conf ] \
+   || grep -qi oracle /sys/class/dmi/id/chassis_asset_tag 2>/dev/null; then
+  echo
+  info "${B}Detectei que este servidor é da Oracle Cloud.${N}"
+  info "Lá o tráfego passa por duas barreiras — as duas precisam liberar:"
+  echo
+  info "  ${B}1. No painel da Oracle${N} ${DIM}(Security List da sub-rede)${N}"
+  info "     Adicione regras de entrada permitindo 0.0.0.0/0 nas portas 80 e 443."
+  echo
+  info "  ${B}2. Aqui dentro da máquina${N} ${DIM}(iptables — é este que costuma pegar)${N}"
+  info "     ${C}sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 80 -j ACCEPT${N}"
+  info "     ${C}sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 443 -j ACCEPT${N}"
+  info "     ${C}sudo netfilter-persistent save${N}   ${DIM}(sem isto, some ao reiniciar)${N}"
+  echo
+  info "${DIM}A instalação continua. Se o site não abrir de fora depois, é aqui.${N}"
+elif command -v ufw >/dev/null 2>&1 && ufw status 2>/dev/null | grep -q "Status: active"; then
+  if ufw status 2>/dev/null | grep -qE '^(80|443)'; then
+    ok "Firewall (ufw) já libera as portas."
+  else
+    warn "O firewall ufw está ativo e não parece liberar 80 e 443."
+    info "Para liberar:  ${C}sudo ufw allow 80/tcp && sudo ufw allow 443/tcp${N}"
+  fi
+fi
+
+# ── 3. DNS ───────────────────────────────────────────────────
 passo "Verificando o endereço ${DOMINIO}"
 
 IP_SERVIDOR=$(curl -s --max-time 10 https://api.ipify.org 2>/dev/null || echo "")
@@ -212,7 +306,7 @@ else
   ok "DNS correto: ${DOMINIO} aponta para este servidor (${IP_SERVIDOR})."
 fi
 
-# ── 3. Docker ────────────────────────────────────────────────
+# ── 4. Docker ────────────────────────────────────────────────
 passo "Preparando o Docker"
 
 if command -v docker >/dev/null 2>&1; then
@@ -274,7 +368,7 @@ PY
 configurar_ip_real
 ok "Docker pronto."
 
-# ── 4. código ────────────────────────────────────────────────
+# ── 5. código ────────────────────────────────────────────────
 passo "Baixando o Tekvosoft"
 
 if [ -d "${INSTALL_DIR}/.git" ]; then
@@ -301,7 +395,7 @@ ok "Código em ${INSTALL_DIR}"
 
 cd "${INSTALL_DIR}"
 
-# ── 5. configuração ──────────────────────────────────────────
+# ── 6. configuração ──────────────────────────────────────────
 passo "Gravando a configuração"
 
 # Numa reinstalação a senha do banco precisa ser preservada: trocá-la
@@ -340,7 +434,7 @@ if [ -n "${achado}" ] && [ ! -f .instalado ]; then
   RESTAURAR=1
 fi
 
-# ── 6. subir ─────────────────────────────────────────────────
+# ── 7. subir ─────────────────────────────────────────────────
 passo "Baixando os componentes e ligando o sistema"
 info "${DIM}Esta é a parte mais demorada. Pode deixar rodando.${N}"
 echo
