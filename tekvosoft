@@ -213,22 +213,30 @@ cmd_update() {
 registry_owner() { echo "${REGISTRY:-ghcr.io/tekvosoft-chat}" | sed 's|.*/||'; }
 
 # Lista as versões publicadas, da mais nova para a mais antiga.
+# Devolve as versões publicadas, uma por linha, da mais nova para a mais
+# antiga. Sai com 1 apenas se NÃO conseguiu falar com o registro — lista
+# vazia é uma resposta legítima (ainda não há release).
 published_versions() {
-  local owner img token
+  local owner img token body
   owner="$(registry_owner)"
   img="tekvosoft-backend"
+
   token=$(curl -fsS --max-time 15 \
     "https://ghcr.io/token?scope=repository:${owner}/${img}:pull&service=ghcr.io" 2>/dev/null \
     | sed -n 's/.*"token":"\([^"]*\)".*/\1/p') || return 1
   [ -n "$token" ] || return 1
-  curl -fsS --max-time 15 -H "Authorization: Bearer ${token}" \
-    "https://ghcr.io/v2/${owner}/${img}/tags/list" 2>/dev/null \
-    | tr ',' '\n' | sed -n 's/.*"\([0-9][0-9.]*\)".*/\1/p' \
-    | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -Vr
+
+  body=$(curl -fsS --max-time 15 -H "Authorization: Bearer ${token}" \
+    "https://ghcr.io/v2/${owner}/${img}/tags/list" 2>/dev/null) || return 1
+
+  echo "$body" | tr ',' '\n' | sed -n 's/.*"\([0-9][0-9.]*\)".*/\1/p' \
+    | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -Vr || true
 }
 
 cmd_version() {
-  need_env
+  # Comando informativo: carrega o .env se existir, mas não exige que
+  # esteja configurado — consultar versões não depende de senha de banco.
+  [ -f .env ] && { set -a; . ./.env; set +a; }
   echo
   echo "  ${B}Versões${N}"
   echo

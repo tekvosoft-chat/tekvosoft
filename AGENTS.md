@@ -89,3 +89,13 @@ Use `github.repository_owner`, nunca um nome de organização fixo.
 
 AGPL. Se distribuir o sistema, o link para o código-fonte precisa continuar
 acessível a qualquer usuário (hoje fica na tela "Sobre").
+
+## Versionamento
+
+Versões saem de tags git `vMAIOR.MENOR.CORREÇÃO`, criadas por
+`./tekvosoft release <patch|minor|major>`. Não crie tags na mão: o comando
+também escreve o `CHANGELOG.md` e valida o estado do repositório.
+
+Tags das imagens: `1.2.3` (imutável), `1.2`, `1`, `latest` (última release) e
+`main` (último build da branch). **`latest` sai de tag, nunca da main** — é o
+que impede um commit qualquer de chegar a produção no próximo update.

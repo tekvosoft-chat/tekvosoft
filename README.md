@@ -193,21 +193,62 @@ logins e senhas continuam sendo os do servidor de origem.
 
 ---
 
-## Publicação das imagens
+## Versões
 
-O GitHub Actions compila as duas imagens a cada push na `main` e publica em
-`ghcr.io/tekvosoft-chat/`. Em produção nada é compilado — o `deploy` e o
-`update` só baixam o resultado, o que faz cada subida levar segundos em vez de
-dezenas de minutos e permite rodar em VPS pequena.
+As versões seguem `MAIOR.MENOR.CORREÇÃO`:
 
-Para lançar uma versão fixa, com rollback fácil:
+| Parte | Quando muda | Exemplo |
+|---|---|---|
+| **correção** | conserto de bug | `1.2.3` → `1.2.4` |
+| **menor** | recurso novo, compatível | `1.2.3` → `1.3.0` |
+| **maior** | mudança que exige atenção ao atualizar | `1.2.3` → `2.0.0` |
+
+### Publicar uma versão
 
 ```bash
-git tag v1.0.0
-git push --tags
+./tekvosoft release patch     # ou minor, major, ou 1.5.0
 ```
 
-Isso publica as tags `1.0.0`, `1.0`, `1` e `latest`.
+O comando confere se o repositório está em condições de publicar (na `main`,
+sem alterações pendentes, sincronizado com o GitHub), calcula a versão nova,
+escreve o `CHANGELOG.md`, mostra o que vai entrar e pede confirmação. Só então
+cria a tag e envia.
+
+A partir daí o GitHub compila as imagens e publica a release sozinho.
+
+### Ver e trocar de versão
+
+```bash
+./tekvosoft version           # o que está rodando e o que existe
+./tekvosoft rollback 1.2.3    # voltar para uma anterior
+```
+
+### O que cada tag significa
+
+| Tag | Aponta para |
+|---|---|
+| `1.2.3` | aquela release exata — nunca muda |
+| `1.2` | a última correção da série 1.2 |
+| `1` | a última versão da série 1 |
+| `latest` | a **última release** |
+| `main` | o último build da branch main |
+
+**Produção nunca deve usar `main`.** Ela acompanha a branch e pode conter
+trabalho em andamento. O padrão do `.env` é `latest`, que só anda quando você
+publica uma release de propósito.
+
+Quer previsibilidade total? Fixe a versão exata no `.env`:
+
+```bash
+TAG=1.2.3
+```
+
+### Onde as imagens ficam
+
+O GitHub Actions compila e publica em `ghcr.io/tekvosoft-chat/`. Em produção
+nada é compilado — `deploy` e `update` só baixam o resultado, o que faz cada
+subida levar segundos em vez de dezenas de minutos e permite rodar em VPS
+pequena.
 
 ---
 
