@@ -9,7 +9,18 @@
 #  ./tekvosoft help mostra o resto.
 
 set -euo pipefail
-cd "$(dirname "${BASH_SOURCE[0]}")"
+
+# Resolve symlinks: o instalador cria /usr/local/bin/tekvosoft apontando
+# para cá, e precisamos acabar na pasta do projeto, não na do link.
+SELF="${BASH_SOURCE[0]}"
+while [ -L "$SELF" ]; do
+  LINK=$(readlink "$SELF")
+  case "$LINK" in
+    /*) SELF="$LINK" ;;
+    *)  SELF="$(dirname "$SELF")/$LINK" ;;
+  esac
+done
+cd "$(dirname "$SELF")"
 
 BASE=docker-compose.yml
 DEV="-f $BASE -f docker-compose.dev.yml"
