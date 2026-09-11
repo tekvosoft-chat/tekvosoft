@@ -14,7 +14,17 @@ EXPOSE 3000
 CMD ["npm", "start"]
 
 # ── compilação de produção ───────────────────────────────────
-FROM node:24-alpine AS build
+#
+# $BUILDPLATFORM prende esta etapa à arquitetura de QUEM compila, em vez
+# da arquitetura de destino. Isso importa muito: o webpack do React roda
+# sob emulação QEMU quando o alvo é arm64, e o JIT do V8 quebra lá com
+# "qemu: uncaught target signal 4 (Illegal instruction)" de forma
+# intermitente — o build falhava em cerca de metade das execuções.
+#
+# Como a saída (JS, CSS, HTML) é a mesma para qualquer arquitetura, não há
+# motivo para compilá-la emulada. Compilamos uma vez, nativamente, e só a
+# imagem final é montada por arquitetura.
+FROM --platform=$BUILDPLATFORM node:24-alpine AS build
 WORKDIR /usr/src/app
 COPY package.json package-lock.json ./
 RUN --mount=type=cache,target=/root/.npm npm ci
