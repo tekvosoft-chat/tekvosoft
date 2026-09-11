@@ -260,10 +260,23 @@ As versões seguem `MAIOR.MENOR.CORREÇÃO`:
 | **menor** | recurso novo, compatível | `1.2.3` → `1.3.0` |
 | **maior** | mudança que exige atenção ao atualizar | `1.2.3` → `2.0.0` |
 
-### Publicar uma versão
+### Correção: sai sozinha a cada push
+
+Todo push na `main` que mexa no código vira uma versão nova de correção —
+`1.0.3` vira `1.0.4` — sem você fazer nada. O GitHub cria a tag, compila as
+imagens, publica a release e move o `latest`. No servidor é só `./tekvosoft
+update` (ou *Update* na stack, se estiver no Portainer).
+
+Mudança só de documentação ou de arquivo de configuração não gera versão,
+porque nem chega a alterar as imagens.
+
+Para pular a versão num commit que mexe no código, escreva `[sem versao]`
+na mensagem do commit.
+
+### Recurso novo ou mudança grande: você decide
 
 ```bash
-./tekvosoft release patch     # ou minor, major, ou 1.5.0
+./tekvosoft release minor     # ou major, ou 1.5.0
 ```
 
 O comando confere se o repositório está em condições de publicar (na `main`,
@@ -271,7 +284,9 @@ sem alterações pendentes, sincronizado com o GitHub), calcula a versão nova,
 escreve o `CHANGELOG.md`, mostra o que vai entrar e pede confirmação. Só então
 cria a tag e envia.
 
-A partir daí o GitHub compila as imagens e publica a release sozinho.
+Use este caminho quando a versão merecer nome e texto próprio. A numeração
+automática só avança a correção; ela nunca decide sozinha que algo virou
+`1.3.0` ou `2.0.0`.
 
 ### Ver e trocar de versão
 

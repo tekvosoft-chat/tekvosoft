@@ -92,9 +92,19 @@ acessível a qualquer usuário (hoje fica na tela "Sobre").
 
 ## Versionamento
 
-Versões saem de tags git `vMAIOR.MENOR.CORREÇÃO`, criadas por
-`./tekvosoft release <patch|minor|major>`. Não crie tags na mão: o comando
-também escreve o `CHANGELOG.md` e valida o estado do repositório.
+Versões saem de tags git `vMAIOR.MENOR.CORREÇÃO`.
+
+A **correção** é automática: o job `versao` em `build.yml` calcula e cria a tag
+a cada push na `main` que altere as imagens. A tag nasce dentro da própria
+execução, e não num passo que dispararia outro workflow, porque o GitHub não
+dispara workflow para evento criado com `GITHUB_TOKEN` — uma tag criada assim
+nunca iniciaria a compilação. Para pular, use `[sem versao]` no commit.
+
+**Menor e maior** continuam manuais: `./tekvosoft release <minor|major>`, que
+escreve o `CHANGELOG.md` e valida o estado do repositório. Quando esse comando
+envia `main` e tag no mesmo push, o GitHub dispara duas execuções; a que vem
+pela branch se cala ao ver que o commit já tem tag, senão sairiam duas versões
+para o mesmo commit.
 
 Tags das imagens: `1.2.3` (imutável), `1.2`, `1`, `latest` (última release) e
 `main` (último build da branch). **`latest` sai de tag, nunca da main** — é o

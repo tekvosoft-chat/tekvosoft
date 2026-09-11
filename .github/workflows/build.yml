@@ -1,11 +1,20 @@
 name: Compilar e publicar as imagens
 
-# Toda vez que você faz push na main, o GitHub compila as duas imagens
-# e publica no GHCR da SUA organização. No servidor, ./tekvosoft update
-# só baixa o resultado — nada é compilado em produção.
+# Todo push na main vira uma versão nova automaticamente: o job "versao"
+# calcula o próximo número, cria a tag e entrega para os demais jobs.
 #
-# Para lançar uma versão fixa (com rollback fácil):
-#     git tag v1.0.0 && git push --tags
+# Por que a tag é criada AQUI dentro, e não por um passo solto que depois
+# dispara outro workflow: o GitHub, de propósito, não dispara workflow para
+# eventos criados com o GITHUB_TOKEN — é a proteção contra loop infinito.
+# Uma tag criada assim nunca iniciaria a compilação. Fazendo tudo na mesma
+# execução, a versão sai publicada sem depender de segundo disparo e sem
+# precisar de token pessoal.
+#
+# Para pular a versão num commit (ex.: ajuste de texto), escreva
+# [sem versao] na mensagem do commit.
+#
+# Para uma versão maior, continue usando ./tekvosoft release minor|major —
+# ele escreve o CHANGELOG e envia a tag pronta.
 
 on:
   push:
@@ -28,7 +37,82 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
+  # Decide qual versão este build carrega.
+  #   - push de tag feita à mão  -> usa ela
+  #   - push na main             -> calcula a próxima correção e cria a tag
+  #   - qualquer outro caso      -> build sem versão (só a tag da branch)
+  versao:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      lancar: ${{ steps.calc.outputs.lancar }}
+      versao: ${{ steps.calc.outputs.versao }}
+      tag: ${{ steps.calc.outputs.tag }}
+      maiormenor: ${{ steps.calc.outputs.maiormenor }}
+      maior: ${{ steps.calc.outputs.maior }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Calcular a versão
+        id: calc
+        run: |
+          set -euo pipefail
+          publicar() {
+            echo "lancar=true"                 >> "$GITHUB_OUTPUT"
+            echo "versao=$1"                   >> "$GITHUB_OUTPUT"
+            echo "tag=v$1"                     >> "$GITHUB_OUTPUT"
+            echo "maiormenor=${1%.*}"          >> "$GITHUB_OUTPUT"
+            echo "maior=${1%%.*}"              >> "$GITHUB_OUTPUT"
+            echo "Versão desta execução: $1"
+          }
+          pular() {
+            echo "lancar=false" >> "$GITHUB_OUTPUT"
+            echo "Sem versão nesta execução: $1"
+          }
+
+          # Tag enviada à mão (./tekvosoft release minor|major)
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            publicar "${GITHUB_REF_NAME#v}"
+            exit 0
+          fi
+
+          if [ "${GITHUB_REF_NAME}" != "main" ]; then
+            pular "versões saem apenas da main"
+            exit 0
+          fi
+
+          # Release manual envia main e tag juntos e o GitHub dispara DUAS
+          # execuções. Quem publica é a da tag; esta aqui sai de fininho,
+          # senão sairiam duas versões para o mesmo commit.
+          if git tag --points-at HEAD | grep -q '^v[0-9]'; then
+            pular "este commit já tem tag"
+            exit 0
+          fi
+
+          if git log -1 --pretty=%B | grep -qiE '\[sem versao\]|\[skip release\]'; then
+            pular "pedido pela mensagem do commit"
+            exit 0
+          fi
+
+          ANTERIOR=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -1)
+          if [ -z "${ANTERIOR}" ]; then
+            NOVA="1.0.0"
+          else
+            IFS=. read -r MA ME CO <<< "${ANTERIOR#v}"
+            NOVA="${MA}.${ME}.$((CO + 1))"
+          fi
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v${NOVA}" -m "Versão ${NOVA}"
+          git push origin "v${NOVA}"
+          publicar "${NOVA}"
+
   build:
+    needs: versao
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -49,7 +133,8 @@ jobs:
           COMMIT=$(git rev-parse --short HEAD)
           COMMIT_AT=$(date -u -d "$(git log -1 --format=%cI)" +'%Y-%m-%dT%H:%M:%SZ')
           BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          # Versão vinda do job "versao"; vazio em build sem release.
+          TAG="${{ needs.versao.outputs.tag }}"
           BUILT_AT=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
 
           cat > backend/src/gitinfo.ts <<EOF
@@ -98,10 +183,10 @@ jobs:
           # qualquer de ir para produção no próximo ./tekvosoft update.
           tags: |
             type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+            type=raw,value=${{ needs.versao.outputs.versao }},enable=${{ needs.versao.outputs.lancar == 'true' }}
+            type=raw,value=${{ needs.versao.outputs.maiormenor }},enable=${{ needs.versao.outputs.lancar == 'true' }}
+            type=raw,value=${{ needs.versao.outputs.maior }},enable=${{ needs.versao.outputs.lancar == 'true' }}
+            type=raw,value=latest,enable=${{ needs.versao.outputs.lancar == 'true' }}
           labels: |
             org.opencontainers.image.title=tekvosoft-${{ matrix.component }}
 
@@ -121,8 +206,8 @@ jobs:
   # As notas saem do CHANGELOG.md; se a versão não estiver lá, caem para a
   # lista de commits desde a tag anterior.
   release:
-    needs: build
-    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [versao, build]
+    if: needs.versao.outputs.lancar == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -134,7 +219,7 @@ jobs:
       - name: Montar as notas da versão
         id: notes
         run: |
-          VERSION="${GITHUB_REF_NAME}"
+          VERSION="${{ needs.versao.outputs.tag }}"
           NUM="${VERSION#v}"
           NOTES_FILE=$(mktemp)
 
@@ -177,7 +262,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" \
-            --title "${GITHUB_REF_NAME}" \
+          gh release create "${{ needs.versao.outputs.tag }}" \
+            --title "${{ needs.versao.outputs.tag }}" \
             --notes-file "${{ steps.notes.outputs.file }}" \
             --verify-tag
