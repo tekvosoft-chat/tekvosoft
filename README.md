@@ -9,29 +9,71 @@ atendentes, filas, chatbot, campanhas e agendamentos — tudo em um sistema só.
 
 ### Instalar em produção
 
-Servidor vazio → sistema no ar com HTTPS. Um comando:
+#### O que você precisa antes
+
+**1. Um servidor.** Qualquer VPS serve, desde que tenha:
+
+| | |
+|---|---|
+| Sistema | Ubuntu 20 ou mais novo (ou Debian equivalente) |
+| Memória | 2 GB no mínimo — 4 GB se tiver muitos atendentes |
+| Disco | 20 GB (as mídias do WhatsApp vão se acumulando) |
+| Processador | Intel/AMD (`x86_64`) **ou** ARM (`arm64`) — os dois funcionam |
+| Portas | 80 e 443 abertas no firewall |
+
+**2. Um domínio apontando para esse servidor.** No painel onde você comprou o
+domínio, crie um registro:
+
+| Campo | Valor |
+|---|---|
+| Tipo | `A` |
+| Nome | `chat` *(ou o subdomínio que preferir)* |
+| Valor | o IP do seu servidor |
+
+Isso dá `chat.suaempresa.com.br`. A propagação leva de minutos a algumas horas
+— **sem ela o certificado HTTPS não é emitido.** O instalador confere isso e
+avisa, mostrando o IP certo para você preencher.
+
+**3. Um e-mail que você acessa.** Ele vira o seu **login de administrador** e é
+usado para registrar o certificado de segurança.
+
+#### O comando
+
+Entre no servidor por SSH e rode, trocando pelos seus dados:
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/tekvosoft-chat/tekvosoft/main/install.sh \
-  | sudo bash -s chat.exemplo.com.br voce@exemplo.com.br
+  | sudo bash -s chat.suaempresa.com.br voce@suaempresa.com.br
 ```
 
-Troque pelo seu domínio e seu e-mail. O script instala o Docker se faltar,
-baixa o projeto em `/opt/tekvosoft`, **gera a senha do banco sozinho** e sobe
-tudo. O certificado sai automático pelo Let's Encrypt e se renova sozinho —
-você nunca toca em certificado.
+> O domínio vai **sem** `https://` e **sem** barra no final.
+> Certo: `chat.suaempresa.com.br` — Errado: `https://chat.suaempresa.com.br/`
 
-Antes de rodar, confira:
+Não precisa criar nem editar arquivo nenhum: o instalador escreve a
+configuração, **gera a senha do banco sozinho**, instala o Docker se faltar e
+sobe tudo em `/opt/tekvosoft`. Leva de 3 a 10 minutos.
 
-- [ ] servidor limpo com Ubuntu 20+ (ou Debian equivalente)
-- [ ] portas 80 e 443 livres e liberadas no firewall
-- [ ] DNS do domínio apontando para o IP do servidor
+#### Depois que terminar
 
-O login é o e-mail que você passou, senha `123456` — **troque no primeiro
-acesso**.
+Acesse `https://seu-dominio`, entre com o e-mail que você passou e a senha
+`123456` — e **troque a senha na hora**.
 
-Pode rodar de novo quando quiser: preserva o `.env`, a senha do banco e
-os dados.
+Se o navegador reclamar que "a conexão não é particular", espere 1 ou 2
+minutos e recarregue: o certificado está sendo emitido.
+
+Pode rodar o instalador de novo quando quiser — ele preserva a configuração,
+a senha do banco e os dados.
+
+#### Se precisar mudar algo depois
+
+Tudo mora em **`/opt/tekvosoft/.env`**:
+
+```bash
+sudo nano /opt/tekvosoft/.env
+sudo tekvosoft deploy          # aplica a mudança
+```
+
+As variáveis estão descritas na seção [Configuração](#configuração).
 
 ### Atualizar a produção
 
@@ -136,12 +178,27 @@ são acessíveis de fora.
 Um arquivo só: `.env`. Se você usou os instaladores acima, ele já foi criado
 e preenchido — não precisa mexer em nada.
 
+**Onde fica:** `/opt/tekvosoft/.env` em produção, ou na raiz do projeto em
+desenvolvimento. Depois de editar, rode `sudo tekvosoft deploy` para aplicar.
+
+**O essencial** — preenchido pelo instalador:
+
 | Variável | Para que serve |
 |---|---|
 | `DOMAIN` | Domínio do sistema. `localhost` em desenvolvimento |
 | `ADMIN_EMAIL` | Login do primeiro acesso e e-mail do certificado |
-| `DB_PASS` | Senha do banco. Gere com `openssl rand -base64 32` |
+| `DB_PASS` | Senha do banco. **Não mude depois de instalado** — a senha fica gravada no banco na criação, e trocá-la aqui deixa o sistema sem acesso aos dados |
 | `TAG` | Versão a rodar. `latest` acompanha a última release |
+
+**Opcionais** — só se você for usar:
+
+| Variável | Para que serve |
+|---|---|
+| `TZ` | Fuso horário. Padrão `America/Sao_Paulo` |
+| `RECAPTCHA_SITE_KEY` / `RECAPTCHA_SECRET_KEY` | Protege o cadastro de empresas contra robôs. Vazio = desligado |
+| `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET` | Atendimento por Facebook e Instagram. Vazio = só WhatsApp |
+| `VERIFY_TOKEN` | Token que a Meta usa para validar os webhooks |
+| `USER_LIMIT` / `CONNECTIONS_LIMIT` | Tetos de atendentes e de conexões da instância |
 
 O resto (`BACKEND_URL`, `FRONTEND_URL`, string de conexão, portas internas) é
 montado automaticamente nos compose a partir dessas. Você não repete nada.
@@ -222,6 +279,16 @@ A partir daí o GitHub compila as imagens e publica a release sozinho.
 ./tekvosoft version           # o que está rodando e o que existe
 ./tekvosoft rollback 1.2.3    # voltar para uma anterior
 ```
+
+### Arquiteturas
+
+As imagens são publicadas para **`linux/amd64`** (Intel/AMD, o caso comum) e
+**`linux/arm64`** (Ampere, Graviton, as instâncias ARM gratuitas da Oracle,
+Raspberry Pi 4+, Macs com chip M). O Docker escolhe a certa sozinho — você não
+passa nada.
+
+O instalador detecta a arquitetura e recusa a instalação se não for uma
+dessas, em vez de falhar no meio.
 
 ### O que cada tag significa
 

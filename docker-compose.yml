@@ -40,7 +40,12 @@ services:
   redis:
     image: redis:7-alpine
     restart: always
-    command: redis-server --appendonly yes
+    # ignore-warnings ARM64-COW-BUG: em arm64 o Redis testa um bug antigo de
+    # copy-on-write do kernel e, ao suspeitar dele, ENCERRA em vez de subir.
+    # O teste dá falso positivo em boa parte dos servidores ARM e em Docker
+    # sobre Apple Silicon — sem esta linha a stack simplesmente não sobe lá.
+    # Aqui o Redis guarda cache e filas; o dado de verdade está no Postgres.
+    command: redis-server --appendonly yes --ignore-warnings ARM64-COW-BUG
     volumes:
       - redis_data:/data
     healthcheck:

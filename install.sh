@@ -5,15 +5,16 @@
 #  Do servidor vazio ao sistema no ar, com HTTPS, em um comando:
 #
 #      curl -sSL https://raw.githubusercontent.com/tekvosoft-chat/tekvosoft/main/install.sh \
-#        | sudo bash -s chat.exemplo.com.br voce@exemplo.com.br
+#        | sudo bash -s chat.suaempresa.com.br voce@suaempresa.com.br
 #
-#  Pode rodar de novo quando quiser: preserva o .env e os dados existentes.
+#  Pode rodar de novo quando quiser: preserva a configuração e os dados.
 
 set -euo pipefail
 
 REPO_URL="https://github.com/tekvosoft-chat/tekvosoft.git"
 INSTALL_DIR="/opt/tekvosoft"
 BRANCH="main"
+TOTAL_PASSOS=6
 
 # Guardado antes de qualquer cd: é onde procuramos um backup para restaurar.
 PWD_AT_START="${PWD}"
@@ -24,29 +25,62 @@ if [ -t 1 ]; then
 else
   B=""; DIM=""; R=""; G=""; Y=""; C=""; N=""
 fi
-say()  { echo "${C}→${N} $*"; }
-ok()   { echo "${G}✓${N} $*"; }
-warn() { echo "${Y}!${N} $*"; }
-die()  { echo; echo "${R}✗${N} $*" >&2; echo; exit 1; }
+
+PASSO=0
+passo() {
+  PASSO=$((PASSO + 1))
+  echo
+  echo "${C}${B}[${PASSO}/${TOTAL_PASSOS}]${N} ${B}$1${N}"
+}
+info() { echo "        $*"; }
+ok()   { echo "        ${G}✓${N} $*"; }
+warn() { echo "        ${Y}!${N} $*"; }
+
+die() {
+  echo
+  echo "  ${R}${B}A instalação parou.${N}"
+  echo
+  echo "  $1" | sed 's/^/  /'
+  echo
+  exit 1
+}
+
+linha() { echo "  ${DIM}────────────────────────────────────────────────────────────${N}"; }
 
 usage() {
   cat <<EOF
 
   ${B}Instalador do Tekvosoft${N}
 
-  ${B}Uso${N}
-      curl -sSL ${DIM}<url-do-install.sh>${N} | sudo bash -s <dominio> <email>
+  ${B}Como usar${N}
+
+      curl -sSL ${DIM}<endereço deste script>${N} | sudo bash -s ${C}<seu-dominio> <seu-email>${N}
 
   ${B}Exemplo${N}
-      curl -sSL ${DIM}<url-do-install.sh>${N} | sudo bash -s chat.exemplo.com.br voce@exemplo.com.br
 
-  ${B}Antes de rodar, confira${N}
-      • servidor limpo com Ubuntu 20+ (ou Debian equivalente)
-      • portas 80 e 443 livres e liberadas no firewall
-      • DNS do domínio já apontando para o IP deste servidor
+      curl -sSL ${DIM}<endereço deste script>${N} | sudo bash -s ${C}chat.suaempresa.com.br voce@suaempresa.com.br${N}
 
-  ${B}Opções${N}
-      -b <branch>   instala a partir de outra branch (padrão: main)
+  ${B}O que cada informação significa${N}
+
+      ${C}<seu-dominio>${N}   O endereço onde o sistema vai atender, por exemplo
+                      chat.suaempresa.com.br
+                      Precisa estar com o DNS apontando para ESTE servidor.
+                      Escreva sem http:// e sem barra no final.
+
+      ${C}<seu-email>${N}     Vira o seu login de administrador e é usado para
+                      emitir o certificado de segurança (HTTPS).
+                      Use um e-mail que você acessa de verdade.
+
+  ${B}Antes de rodar, você precisa de${N}
+
+      • um servidor limpo com Ubuntu 20 ou mais novo (ou Debian equivalente)
+      • as portas 80 e 443 abertas no firewall
+      • um domínio com DNS apontando para o IP deste servidor
+      • pelo menos 2 GB de memória
+
+  ${B}Opção extra${N}
+
+      -b <branch>     instala a partir de outra branch (padrão: main)
 
 EOF
 }
@@ -61,81 +95,154 @@ fi
 
 if [ "${EUID}" -ne 0 ]; then
   usage
-  die "Este script precisa de root. Use ${B}sudo${N}."
+  die "Este script precisa de permissão de administrador.
+
+Repita o comando incluindo ${B}sudo${N}, como no exemplo acima."
 fi
 
-DOMAIN="${1:-}"
-ADMIN_EMAIL="${2:-}"
+DOMINIO="${1:-}"
+EMAIL="${2:-}"
 
-if [ -z "${DOMAIN}" ] || [ -z "${ADMIN_EMAIL}" ]; then
+if [ -z "${DOMINIO}" ] || [ -z "${EMAIL}" ]; then
   usage
-  die "Faltou informar o domínio e/ou o e-mail."
+  die "Faltou informar o domínio e o e-mail.
+
+Eles vão no final do comando, nessa ordem:
+
+    ... | sudo bash -s ${C}chat.suaempresa.com.br voce@suaempresa.com.br${N}"
 fi
 
-if ! [[ "${DOMAIN}" =~ ^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)+$ ]]; then
-  die "Domínio inválido: '${DOMAIN}'
-    Informe um domínio completo, como chat.exemplo.com.br — sem http:// e sem barra."
+if ! [[ "${DOMINIO}" =~ ^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)+$ ]]; then
+  die "O domínio '${DOMINIO}' não parece válido.
+
+Escreva apenas o endereço, sem http:// e sem barra no final:
+
+    ${G}certo:${N}   chat.suaempresa.com.br
+    ${R}errado:${N}  https://chat.suaempresa.com.br/"
 fi
 
-if ! [[ "${ADMIN_EMAIL}" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]]; then
-  die "E-mail inválido: '${ADMIN_EMAIL}'"
+if ! [[ "${EMAIL}" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]]; then
+  die "O e-mail '${EMAIL}' não parece válido.
+
+Ele vira o seu login de administrador, então use um endereço real,
+como voce@suaempresa.com.br"
 fi
 
-echo
-echo "  ${B}Tekvosoft${N} ${DIM}— instalação${N}"
-echo
-echo "     domínio   ${B}${DOMAIN}${N}"
-echo "     e-mail    ${B}${ADMIN_EMAIL}${N}"
-echo "     destino   ${B}${INSTALL_DIR}${N}"
-echo
+# ── apresentação ─────────────────────────────────────────────
+clear 2>/dev/null || true
+cat <<EOF
 
-# ── o DNS aponta mesmo para cá? ──────────────────────────────
-# Certificado só sai se o domínio resolver para este servidor. É de longe
-# a causa nº 1 de instalação que "sobe mas fica sem HTTPS".
-check_dns() {
-  command -v getent >/dev/null 2>&1 || return 0
-  local resolved server_ip
-  resolved=$(getent ahostsv4 "${DOMAIN}" 2>/dev/null | awk '{print $1; exit}') || true
-  server_ip=$(curl -s --max-time 8 https://api.ipify.org 2>/dev/null) || true
+  ${B}Tekvosoft${N} ${DIM}— atendimento via WhatsApp com CRM e helpdesk${N}
 
-  [ -z "${resolved}" ] && { warn "Não consegui resolver o DNS de ${DOMAIN} agora."; return 0; }
-  [ -z "${server_ip}" ] && return 0
+EOF
+linha
+cat <<EOF
 
-  if [ "${resolved}" != "${server_ip}" ]; then
-    warn "O DNS de ${DOMAIN} aponta para ${resolved}, mas este servidor é ${server_ip}."
-    echo "  ${DIM}A instalação continua, porém o certificado HTTPS não será emitido"
-    echo "  enquanto o DNS não apontar para cá. Se você usa Cloudflare com proxy"
-    echo "  ligado, isso é esperado.${N}"
-    echo
-  else
-    ok "DNS confere: ${DOMAIN} → ${server_ip}"
-  fi
-}
-check_dns
+  Vou instalar o sistema neste servidor com estas informações:
 
-# ── Docker ───────────────────────────────────────────────────
-if ! command -v docker >/dev/null 2>&1; then
-  say "Instalando o Docker..."
-  curl -sSL https://get.docker.com | sh >/dev/null 2>&1 || die "Falha ao instalar o Docker."
-  ok "Docker instalado."
+      ${B}Endereço do sistema${N}   https://${DOMINIO}
+      ${B}Seu login${N}             ${EMAIL}
+      ${B}Pasta de instalação${N}   ${INSTALL_DIR}
+
+  Leva de 3 a 10 minutos. Você não precisa fazer mais nada durante o
+  processo — ao final eu mostro como entrar.
+
+EOF
+linha
+
+# ── 1. requisitos do servidor ────────────────────────────────
+passo "Conferindo o servidor"
+
+ARQ=$(uname -m)
+case "${ARQ}" in
+  x86_64|amd64)  info "Arquitetura: ${ARQ} ${DIM}(compatível)${N}" ;;
+  aarch64|arm64) info "Arquitetura: ${ARQ} ${DIM}(compatível)${N}" ;;
+  *) die "Arquitetura '${ARQ}' não é suportada.
+
+O Tekvosoft roda em servidores x86_64 (o mais comum) e arm64.
+Contate o suporte se precisar de outra." ;;
+esac
+
+MEM_MB=$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo 2>/dev/null || echo 0)
+if [ "${MEM_MB}" -gt 0 ] && [ "${MEM_MB}" -lt 1800 ]; then
+  warn "Este servidor tem ${MEM_MB} MB de memória; o recomendado é 2 GB."
+  info "${DIM}A instalação continua, mas o sistema pode ficar lento ou instável.${N}"
 else
-  ok "Docker já presente."
+  [ "${MEM_MB}" -gt 0 ] && info "Memória: ${MEM_MB} MB"
 fi
 
-docker compose version >/dev/null 2>&1 \
-  || die "Seu Docker não tem o plugin Compose v2. Atualize: https://docs.docker.com/engine/install/"
+LIVRE_GB=$(df -BG --output=avail / 2>/dev/null | tail -1 | tr -dc '0-9' || echo 0)
+if [ "${LIVRE_GB:-0}" -gt 0 ] && [ "${LIVRE_GB}" -lt 10 ]; then
+  warn "Restam ${LIVRE_GB} GB de disco; o recomendado é pelo menos 10 GB."
+fi
+ok "Servidor compatível."
+
+# ── 2. DNS ───────────────────────────────────────────────────
+passo "Verificando o endereço ${DOMINIO}"
+
+IP_SERVIDOR=$(curl -s --max-time 10 https://api.ipify.org 2>/dev/null || echo "")
+IP_DOMINIO=""
+if command -v getent >/dev/null 2>&1; then
+  IP_DOMINIO=$(getent ahostsv4 "${DOMINIO}" 2>/dev/null | awk '{print $1; exit}' || echo "")
+fi
+
+if [ -z "${IP_DOMINIO}" ]; then
+  warn "O domínio ${DOMINIO} ainda não aponta para lugar nenhum."
+  echo
+  info "Para o site funcionar com HTTPS, entre no painel onde você"
+  info "comprou o domínio e crie um registro assim:"
+  echo
+  info "    ${B}Tipo${N}    A"
+  info "    ${B}Nome${N}    ${DOMINIO%%.*}"
+  info "    ${B}Valor${N}   ${IP_SERVIDOR:-o IP deste servidor}"
+  echo
+  info "${DIM}A instalação continua. Assim que o DNS propagar (costuma levar"
+  info "de minutos a algumas horas), o certificado é emitido sozinho.${N}"
+elif [ -n "${IP_SERVIDOR}" ] && [ "${IP_DOMINIO}" != "${IP_SERVIDOR}" ]; then
+  warn "O domínio aponta para outro servidor."
+  echo
+  info "    ${DOMINIO} aponta para   ${R}${IP_DOMINIO}${N}"
+  info "    este servidor é          ${G}${IP_SERVIDOR}${N}"
+  echo
+  info "Corrija o registro A do domínio para ${IP_SERVIDOR} — ou, se você"
+  info "usa Cloudflare com o proxy ligado (nuvem laranja), ignore este aviso."
+  echo
+  info "${DIM}Enquanto os dois não baterem, o certificado HTTPS não é emitido.${N}"
+else
+  ok "DNS correto: ${DOMINIO} aponta para este servidor (${IP_SERVIDOR})."
+fi
+
+# ── 3. Docker ────────────────────────────────────────────────
+passo "Preparando o Docker"
+
+if command -v docker >/dev/null 2>&1; then
+  ok "Docker já está instalado."
+else
+  info "Instalando o Docker (pode levar alguns minutos)..."
+  curl -sSL https://get.docker.com | sh >/dev/null 2>&1 \
+    || die "Não consegui instalar o Docker neste servidor.
+
+Instale manualmente seguindo https://docs.docker.com/engine/install/
+e rode este comando de novo."
+  ok "Docker instalado."
+fi
+
+docker compose version >/dev/null 2>&1 || die "O Docker deste servidor é antigo demais.
+
+Ele precisa do Docker Compose v2. Atualize seguindo
+https://docs.docker.com/engine/install/ e rode este comando de novo."
 
 systemctl enable docker >/dev/null 2>&1 || true
 systemctl start  docker >/dev/null 2>&1 || true
 
 # Sem isto o docker-proxy mascara o IP do visitante, e todo acesso aparece
-# vindo de um IP interno nos logs do nginx.
-configure_real_client_ip() {
+# vindo de um endereço interno nos registros do sistema.
+configurar_ip_real() {
   local cfg=/etc/docker/daemon.json
   local tmp; tmp=$(mktemp)
 
   if [ -f "${cfg}" ] && grep -q '"userland-proxy"[[:space:]]*:[[:space:]]*false' "${cfg}" 2>/dev/null; then
-    return 0
+    rm -f "${tmp}"; return 0
   fi
 
   if [ -f "${cfg}" ] && command -v python3 >/dev/null 2>&1; then
@@ -146,7 +253,7 @@ try:
     with open(src) as f:
         cfg = json.load(f)
 except Exception:
-    sys.exit(1)          # arquivo existe mas não é JSON — não mexemos
+    sys.exit(1)          # existe mas não é JSON — não mexemos
 cfg["userland-proxy"] = False
 with open(dst, "w") as f:
     json.dump(cfg, f, indent=2)
@@ -158,119 +265,144 @@ PY
     echo '{ "userland-proxy": false }' > "${cfg}"
   else
     rm -f "${tmp}"
-    warn "Não consegui ajustar ${cfg}; os logs podem não mostrar o IP real do visitante."
     return 0
   fi
 
-  say "Ajustando o Docker para preservar o IP real dos visitantes..."
+  info "Ajustando o Docker para registrar o IP real dos visitantes..."
   systemctl restart docker >/dev/null 2>&1 || true
 }
-configure_real_client_ip
+configurar_ip_real
+ok "Docker pronto."
 
-# ── código ───────────────────────────────────────────────────
+# ── 4. código ────────────────────────────────────────────────
+passo "Baixando o Tekvosoft"
+
 if [ -d "${INSTALL_DIR}/.git" ]; then
-  say "Instalação encontrada em ${INSTALL_DIR} — atualizando o código..."
-  git -C "${INSTALL_DIR}" fetch --quiet origin
+  info "Já existe uma instalação em ${INSTALL_DIR} — vou atualizá-la."
+  git -C "${INSTALL_DIR}" fetch --quiet origin \
+    || die "Não consegui acessar o GitHub para baixar as atualizações.
+
+Verifique a conexão do servidor com a internet."
   if ! git -C "${INSTALL_DIR}" diff --quiet; then
-    warn "Há alterações locais; guardando com git stash."
+    warn "Havia alterações locais; guardei com 'git stash'."
     git -C "${INSTALL_DIR}" stash push --quiet || true
   fi
   git -C "${INSTALL_DIR}" checkout --quiet "${BRANCH}" 2>/dev/null \
     || git -C "${INSTALL_DIR}" checkout --quiet -b "${BRANCH}" "origin/${BRANCH}"
   git -C "${INSTALL_DIR}" reset --hard --quiet "origin/${BRANCH}"
 else
-  say "Baixando o Tekvosoft..."
   mkdir -p "$(dirname "${INSTALL_DIR}")"
   git clone --quiet --branch "${BRANCH}" "${REPO_URL}" "${INSTALL_DIR}" \
-    || die "Falha ao baixar o repositório."
+    || die "Não consegui baixar o Tekvosoft do GitHub.
+
+Verifique a conexão do servidor com a internet e tente de novo."
 fi
-ok "Código em ${INSTALL_DIR} (branch ${BRANCH})."
+ok "Código em ${INSTALL_DIR}"
 
 cd "${INSTALL_DIR}"
 
-# ── configuração ─────────────────────────────────────────────
-# Numa reinstalação, DB_PASS precisa ser preservado: trocá-lo deixaria o
-# banco existente inacessível.
+# ── 5. configuração ──────────────────────────────────────────
+passo "Gravando a configuração"
+
+# Numa reinstalação a senha do banco precisa ser preservada: trocá-la
+# deixaria o banco existente inacessível.
 if [ -f .env ]; then
   DB_PASS=$(grep -E '^DB_PASS=' .env | head -1 | cut -d= -f2-)
-  ok "Reaproveitando a senha do banco já configurada."
+  info "Mantendo a senha do banco que já estava configurada."
 else
   DB_PASS=$(openssl rand -base64 32 2>/dev/null | tr -d '/+=' | head -c 32)
   [ -n "${DB_PASS}" ] || DB_PASS=$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')
-  say "Senha do banco gerada automaticamente."
+  info "Gerei uma senha forte para o banco de dados."
 fi
 
-sed -e "s|^DOMAIN=.*|DOMAIN=${DOMAIN}|" \
-    -e "s|^ADMIN_EMAIL=.*|ADMIN_EMAIL=${ADMIN_EMAIL}|" \
+sed -e "s|^DOMAIN=.*|DOMAIN=${DOMINIO}|" \
+    -e "s|^ADMIN_EMAIL=.*|ADMIN_EMAIL=${EMAIL}|" \
     -e "s|^DB_PASS=.*|DB_PASS=${DB_PASS}|" \
     .env.example > .env
 chmod 600 .env
-ok "Configuração escrita em ${INSTALL_DIR}/.env"
+ok "Configuração salva em ${INSTALL_DIR}/.env"
+info "${DIM}É esse o arquivo que você edita se precisar mudar algo depois.${N}"
 
-# ── restauração de backup, se houver ─────────────────────────
-# Coloque um tekvosoft-*.tar.gz ao lado de onde você rodou o comando e ele
-# é restaurado automaticamente numa instalação nova.
-RESTORED=""
-candidate=""
+# ── backup a restaurar, se houver ────────────────────────────
+RESTAURAR=""
+achado=""
 for dir in "${PWD_AT_START}" "${SUDO_USER:+/home/${SUDO_USER}}" /root; do
   [ -n "${dir}" ] && [ -d "${dir}" ] || continue
-  found=$(ls -t "${dir}"/tekvosoft-*.tar.gz 2>/dev/null | head -1) || true
-  if [ -n "${found}" ]; then candidate="${found}"; break; fi
+  cand=$(ls -t "${dir}"/tekvosoft-*.tar.gz 2>/dev/null | head -1) || true
+  if [ -n "${cand}" ]; then achado="${cand}"; break; fi
 done
 
-if [ -n "${candidate}" ] && [ ! -f .installed ]; then
-  say "Backup encontrado: $(basename "${candidate}") — será restaurado após subir o banco."
+if [ -n "${achado}" ] && [ ! -f .instalado ]; then
+  info "Encontrei um backup: $(basename "${achado}")"
+  info "Ele será restaurado assim que o sistema subir."
   mkdir -p backups
-  cp -n "${candidate}" backups/ 2>/dev/null || true
-  RESTORED=1
+  cp -n "${achado}" backups/ 2>/dev/null || true
+  RESTAURAR=1
 fi
 
-# ── sobe ─────────────────────────────────────────────────────
-say "Baixando as imagens e subindo os serviços..."
-echo "${DIM}   Pode levar alguns minutos na primeira vez.${N}"
+# ── 6. subir ─────────────────────────────────────────────────
+passo "Baixando os componentes e ligando o sistema"
+info "${DIM}Esta é a parte mais demorada. Pode deixar rodando.${N}"
 echo
 
-TEKVOSOFT_QUIET=1 ./tekvosoft deploy || die "Falha ao subir os serviços. Veja: cd ${INSTALL_DIR} && ./tekvosoft logs"
+TEKVOSOFT_QUIET=1 ./tekvosoft deploy || die "O sistema não subiu corretamente.
 
-if [ -n "${RESTORED}" ]; then
-  say "Restaurando o backup..."
-  echo restaurar | ./tekvosoft restore || warn "A restauração falhou; o sistema subiu vazio."
+Para ver o que aconteceu:
+
+    cd ${INSTALL_DIR}
+    ./tekvosoft logs"
+
+if [ -n "${RESTAURAR}" ]; then
+  info "Restaurando o backup..."
+  echo restaurar | ./tekvosoft restore >/dev/null 2>&1 \
+    && ok "Backup restaurado." \
+    || warn "Não consegui restaurar o backup; o sistema subiu vazio."
 fi
 
-touch .installed
-
-# ── atalho global ────────────────────────────────────────────
+touch .instalado
 ln -sf "${INSTALL_DIR}/tekvosoft" /usr/local/bin/tekvosoft
-ok "Comando ${B}tekvosoft${N} disponível em todo o sistema."
 
 # ── fim ──────────────────────────────────────────────────────
+echo
+linha
 cat <<EOF
 
-  ${G}${B}Instalação concluída.${N}
+  ${G}${B}Pronto! O Tekvosoft está no ar.${N}
 
-     Acesse      ${B}https://${DOMAIN}${N}
+  ${B}Acesse${N}    https://${DOMINIO}
+
 EOF
 
-if [ -n "${RESTORED}" ]; then
+if [ -n "${RESTAURAR}" ]; then
   cat <<EOF
-     Login       os mesmos do sistema de origem (dados restaurados)
+  ${B}Entrar${N}    use o mesmo login e senha do sistema anterior,
+            porque os dados foram restaurados
+
 EOF
 else
   cat <<EOF
-     Login       ${B}${ADMIN_EMAIL}${N}
-     Senha       ${B}123456${N}  ${R}← troque no primeiro acesso${N}
+  ${B}Entrar${N}    e-mail: ${B}${EMAIL}${N}
+            senha:  ${B}123456${N}
+
+  ${R}${B}Troque essa senha assim que entrar pela primeira vez.${N}
+
 EOF
 fi
 
+linha
 cat <<EOF
 
-  ${DIM}O certificado HTTPS é emitido automaticamente e leva 1-2 minutos.
-  Enquanto isso o navegador pode reclamar do certificado — é normal.${N}
+  ${B}O certificado de segurança (cadeado)${N}
 
-  ${B}Comandos${N}
-     sudo tekvosoft logs      acompanhar o sistema
-     sudo tekvosoft backup    gravar um backup
-     sudo tekvosoft update    atualizar para a última versão
-     sudo tekvosoft help      ver tudo
+  Ele é emitido sozinho e leva 1 a 2 minutos. Se você abrir o site agora
+  e o navegador reclamar que "a conexão não é particular", espere esse
+  tempo e recarregue a página — é normal.
+
+  ${B}Comandos para o dia a dia${N}
+
+      sudo tekvosoft logs      ver o que o sistema está fazendo
+      sudo tekvosoft backup    gravar uma cópia de segurança
+      sudo tekvosoft update    atualizar para a última versão
+      sudo tekvosoft help      ver todos os comandos
 
 EOF
