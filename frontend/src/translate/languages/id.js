@@ -178,6 +178,11 @@ const messages = {
           session: "Sesi"
         }
       },
+      mediaPreview: {
+        files: "berkas",
+        remove: "Hapus",
+        send: "Kirim"
+      },
       internalChat: {
         title: "Obrolan Internal",
         subtitle: "Percakapan dengan tim Anda",

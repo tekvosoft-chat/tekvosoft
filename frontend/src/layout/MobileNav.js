@@ -1,4 +1,11 @@
-import React, { useContext, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState
+} from "react";
 import { useHistory, useLocation } from "react-router-dom";
 
 import { makeStyles } from "@material-ui/core/styles";
@@ -67,7 +74,7 @@ const useStyles = makeStyles(theme => ({
   bar: {
     flex: "none",
     position: "relative",
-    zIndex: theme.zIndex.appBar + 2,
+    zIndex: 2,
     display: "flex",
     alignItems: "stretch",
     height: "auto",
@@ -77,8 +84,8 @@ const useStyles = makeStyles(theme => ({
     minHeight: "calc(56px + var(--safe-bottom, 0px))",
     padding: "2px 4px 0",
     paddingBottom: "calc(2px + var(--safe-bottom, 0px))",
-    borderTop: `1px solid ${theme.palette.tkv.border}`,
-    backgroundColor: theme.palette.tkv.surface
+    // o fundo mora no contêiner: aqui transparente para a pílula aparecer
+    backgroundColor: "transparent"
   },
 
   /**
@@ -112,9 +119,34 @@ const useStyles = makeStyles(theme => ({
       "& .MuiBottomNavigationAction-label": {
         fontSize: "0.65625rem",
         fontWeight: 700
-      },
-      "& $iconPill": { backgroundColor: theme.palette.tkv.brand.soft }
-    }
+      }
+    },
+    position: "relative",
+    zIndex: 1
+  },
+  barWrap: {
+    position: "relative",
+    flex: "none",
+    zIndex: theme.zIndex.appBar + 2,
+    borderTop: `1px solid ${theme.palette.tkv.border}`,
+    backgroundColor: theme.palette.tkv.surface
+  },
+  /**
+   * Um só "quadrado" para o item ativo, que DESLIZA até o próximo item
+   * tocado — em vez de cada item acender e apagar o próprio fundo. O olho
+   * acompanha o movimento e entende de onde saiu e para onde foi.
+   */
+  barIndicator: {
+    position: "absolute",
+    zIndex: 1,
+    top: 7,
+    width: 52,
+    height: 28,
+    borderRadius: theme.palette.tkv.radius.pill,
+    backgroundColor: theme.palette.tkv.brand.soft,
+    pointerEvents: "none",
+    transition:
+      "left .34s cubic-bezier(.2, .8, .2, 1), opacity .2s ease, transform .34s cubic-bezier(.2, .8, .2, 1)"
   },
   // "pílula" atrás do ícone ativo: indica onde a pessoa está sem depender
   // só da cor do texto, que é pequeno
@@ -124,8 +156,6 @@ const useStyles = makeStyles(theme => ({
     justifyContent: "center",
     width: 52,
     height: 28,
-    borderRadius: theme.palette.tkv.radius.pill,
-    transition: "background-color .15s ease",
     "& svg": { fontSize: 22 }
   },
 
@@ -143,6 +173,20 @@ const useStyles = makeStyles(theme => ({
     gridTemplateColumns: "repeat(3, 1fr)",
     gap: theme.spacing(0.5)
   },
+  gridsWrap: { position: "relative" },
+  // o quadrado da grade: sai do item atual e desliza até o item tocado
+  tileSquare: {
+    position: "absolute",
+    zIndex: 0,
+    left: 0,
+    top: 0,
+    borderRadius: theme.palette.tkv.radius.md,
+    backgroundColor: theme.palette.tkv.brand.soft,
+    boxShadow: `inset 0 0 0 1.5px ${theme.palette.tkv.brand.border}`,
+    pointerEvents: "none",
+    transition:
+      "transform .3s cubic-bezier(.2, .8, .2, 1), width .3s cubic-bezier(.2, .8, .2, 1), height .3s cubic-bezier(.2, .8, .2, 1), opacity .2s ease"
+  },
   tile: {
     display: "flex",
     flexDirection: "column",
@@ -153,10 +197,12 @@ const useStyles = makeStyles(theme => ({
     borderRadius: theme.palette.tkv.radius.md,
     width: "100%",
     textAlign: "center",
-    "&:hover": { backgroundColor: theme.palette.tkv.surfaceHover }
+    position: "relative",
+    zIndex: 1,
+    transition: "transform .12s ease",
+    "&:active": { transform: "scale(0.96)" }
   },
   tileActive: {
-    backgroundColor: theme.palette.tkv.brand.soft,
     "& $tileIcon": {
       backgroundColor: theme.palette.tkv.brand.main,
       color: theme.palette.tkv.brand.contrastText
@@ -350,37 +396,103 @@ const MobileNav = ({ onOpenProfile }) => {
     }
   };
 
+  // ── pílula da barra: fica no item da tela atual; com o painel aberto (ou
+  // quando a tela atual mora dentro do "Mais"), fica no "Mais" ──
+  const slots = barItems.length + 1;
+  const [pressed, setPressed] = useState(null);
+  const barIndex =
+    pressed !== null
+      ? pressed
+      : sheetOpen || currentIndex === -1
+        ? barItems.length
+        : currentIndex;
+  useLayoutEffect(() => setPressed(null), [location.pathname, sheetOpen]);
+
+  const pillLeft = `calc(4px + (100% - 8px) * ${barIndex} / ${slots} + ((100% - 8px) / ${slots} - 52px) / 2)`;
+
+  // ── quadrado da grade do "Mais" ──
+  const tileRefs = useRef({});
+  const [target, setTarget] = useState(null);
+  const [square, setSquare] = useState(null);
+  const activeTile =
+    target ||
+    sections
+      .flatMap(sec => sec.items)
+      .map(i => i.to)
+      .find(to => isActive(to));
+
+  const measure = useCallback(() => {
+    const el = activeTile && tileRefs.current[activeTile];
+    if (!el) {
+      setSquare(null);
+      return;
+    }
+    setSquare({
+      x: el.offsetLeft,
+      y: el.offsetTop,
+      w: el.offsetWidth,
+      h: el.offsetHeight
+    });
+  }, [activeTile]);
+
+  useLayoutEffect(() => {
+    measure();
+  }, [measure, sheetOpen]);
+
+  useLayoutEffect(() => {
+    if (!sheetOpen) setTarget(null);
+  }, [sheetOpen]);
+
+  const pickTile = to => {
+    setTarget(to);
+    // deixa o quadrado chegar antes de trocar de tela
+    setTimeout(() => go(to), 230);
+  };
+
   return (
     <>
-      <BottomNavigation
-        value={currentIndex}
-        showLabels
-        className={classes.bar}
-        component="nav"
-        aria-label={i18n.t("mainDrawer.listItems.menu")}
-      >
-        {barItems.map((item, index) => (
-          <BottomNavigationAction
-            key={item.to}
-            value={index}
-            label={item.short || item.label}
-            icon={<span className={classes.iconPill}>{item.icon}</span>}
-            className={classes.action}
-            onClick={() => go(item.to)}
-          />
-        ))}
-        <BottomNavigationAction
-          value="more"
-          label={t("more")}
-          icon={
-            <span className={classes.iconPill}>
-              <MoreHorizIcon />
-            </span>
-          }
-          className={classes.action}
-          onClick={() => setSheetOpen(true)}
+      <div className={classes.barWrap}>
+        <span
+          className={classes.barIndicator}
+          style={{ left: pillLeft }}
+          aria-hidden="true"
         />
-      </BottomNavigation>
+        <BottomNavigation
+          value={barIndex === barItems.length ? "more" : barIndex}
+          showLabels
+          className={classes.bar}
+          component="nav"
+          aria-label={i18n.t("mainDrawer.listItems.menu")}
+        >
+          {barItems.map((item, index) => (
+            <BottomNavigationAction
+              key={item.to}
+              value={index}
+              label={item.short || item.label}
+              icon={<span className={classes.iconPill}>{item.icon}</span>}
+              className={classes.action}
+              onClick={() => {
+                setPressed(index);
+                go(item.to);
+              }}
+            />
+          ))}
+          <BottomNavigationAction
+            value="more"
+            label={t("more")}
+            icon={
+              <span className={classes.iconPill}>
+                <MoreHorizIcon />
+              </span>
+            }
+            className={classes.action}
+            onClick={() => {
+              setPressed(barItems.length);
+              setSheetOpen(true);
+            }}
+          />
+        </BottomNavigation>
+      </div>
 
       <BottomSheet
         open={sheetOpen}
@@ -388,26 +500,45 @@ const MobileNav = ({ onOpenProfile }) => {
         title={i18n.t("mainDrawer.listItems.menu")}
         subtitle={user?.name}
       >
-        {sections.map(section => (
-          <div key={section.label}>
-            <Typography className={classes.sectionLabel} component="h3">
-              {section.label}
-            </Typography>
-            <div className={classes.grid}>
-              {section.items.map(item => (
-                <ButtonBase
-                  key={item.to}
-                  className={`${classes.tile}${isActive(item.to) ? ` ${classes.tileActive}` : ""}`}
-                  onClick={() => go(item.to)}
-                  aria-current={isActive(item.to) ? "page" : undefined}
-                >
-                  <span className={classes.tileIcon}>{item.icon}</span>
-                  <span className={classes.tileLabel}>{item.label}</span>
-                </ButtonBase>
-              ))}
+        <div className={classes.gridsWrap}>
+          <span
+            className={classes.tileSquare}
+            aria-hidden="true"
+            style={
+              square
+                ? {
+                    transform: `translate(${square.x}px, ${square.y}px)`,
+                    width: square.w,
+                    height: square.h,
+                    opacity: 1
+                  }
+                : { opacity: 0 }
+            }
+          />
+          {sections.map(section => (
+            <div key={section.label}>
+              <Typography className={classes.sectionLabel} component="h3">
+                {section.label}
+              </Typography>
+              <div className={classes.grid}>
+                {section.items.map(item => (
+                  <ButtonBase
+                    key={item.to}
+                    ref={el => {
+                      tileRefs.current[item.to] = el;
+                    }}
+                    className={`${classes.tile}${activeTile === item.to ? ` ${classes.tileActive}` : ""}`}
+                    onClick={() => pickTile(item.to)}
+                    aria-current={isActive(item.to) ? "page" : undefined}
+                  >
+                    <span className={classes.tileIcon}>{item.icon}</span>
+                    <span className={classes.tileLabel}>{item.label}</span>
+                  </ButtonBase>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
 
         <Divider style={{ marginTop: 16 }} />
 

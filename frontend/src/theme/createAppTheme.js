@@ -290,6 +290,140 @@ export default function createAppTheme({
                 }
             },
 
+            "@keyframes tkvPreviewIn": {
+              from: { opacity: 0, transform: "translateY(12px)" },
+              to: { opacity: 1, transform: "translateY(0)" }
+            },
+
+            "@keyframes tkvSheetUp": {
+              from: { transform: "translateY(100%)" },
+              to: { transform: "translateY(0)" }
+            },
+
+            /**
+             * Modais no celular: painel preso à base da tela, não caixa solta.
+             *
+             * O modal centralizado do Material deixa 32px de margem de cada
+             * lado e uma faixa escurecida em cima e embaixo — no celular isso
+             * vira um cartão estreito boiando no meio, com os campos
+             * apertados. Aqui ele ocupa a largura toda, cola na base, cresce
+             * até perto do topo conforme o conteúdo pede e entra deslizando.
+             * Um aviso curto vira um painel baixo; um formulário longo ocupa a
+             * tela de cima a baixo. Vale para os 31 modais do sistema de uma
+             * vez, sem mexer em nenhum deles.
+             */
+            // Texto de media query diferente do bloco das tabelas logo abaixo, de
+            // propósito: duas chaves iguais neste objeto fariam a segunda
+            // apagar a primeira, e estas regras sumiriam sem erro nenhum.
+            "@media screen and (max-width: 599.95px)": {
+              // !important: o CSS do próprio Dialog é carregado depois deste
+              // (só quando o primeiro modal abre) e centralizaria de novo
+              ".MuiDialog-scrollPaper": { alignItems: "flex-end !important" },
+              ".MuiDialog-paper:not(.MuiDialog-paperFullScreen)": {
+                margin: 0,
+                width: "100%",
+                maxWidth: "100% !important",
+                maxHeight:
+                  "calc(var(--vh, 100vh) - var(--safe-top, 0px) - 12px) !important",
+                borderRadius: "22px 22px 0 0",
+                border: "none",
+                boxShadow: isDark
+                  ? "0 -8px 32px rgba(0, 0, 0, 0.55)"
+                  : "0 -8px 32px rgba(26, 22, 38, 0.18)",
+                animation: "tkvSheetUp .32s cubic-bezier(.2, .8, .2, 1)"
+              },
+              ".MuiDialog-paper .MuiDialogTitle-root": {
+                flex: "none",
+                padding: "22px 20px 14px",
+                borderBottom: `1px solid ${n.border}`,
+                "& .MuiTypography-root": { fontSize: "1.125rem" }
+              },
+              ".MuiDialog-paper .MuiDialogContent-root": {
+                padding: "16px 20px 20px",
+                WebkitOverflowScrolling: "touch",
+                overscrollBehavior: "contain"
+              },
+
+              // Rodapé: botões grandes, fáceis de acertar com o polegar.
+              // A ação principal ocupa a linha inteira e fica por último,
+              // mais perto do dedo; as outras dividem a linha de cima.
+              ".MuiDialog-paper .MuiDialogActions-root": {
+                flex: "none",
+                flexWrap: "wrap",
+                gap: 10,
+                padding: "12px 16px calc(14px + var(--safe-bottom, 0px))",
+                backgroundColor: n.surface,
+                borderTop: `1px solid ${n.border}`
+              },
+              ".MuiDialog-paper .MuiDialogActions-root > *": {
+                flex: "1 1 calc(50% - 5px)",
+                minWidth: 0,
+                margin: "0 !important"
+              },
+              ".MuiDialog-paper .MuiDialogActions-root .MuiButton-root": {
+                width: "100%",
+                minHeight: 52,
+                padding: "12px 16px",
+                fontSize: "1rem",
+                fontWeight: 600,
+                lineHeight: 1.25,
+                borderRadius: 14
+              },
+              ".MuiDialog-paper .MuiDialogActions-root > .MuiButton-containedPrimary":
+                {
+                  flexBasis: "100%",
+                  order: 99
+                },
+              // regra separada: navegador sem :has() descarta a regra inteira
+              // em que ele aparece, e levaria a de cima junto
+              ".MuiDialog-paper .MuiDialogActions-root > :has(.MuiButton-containedPrimary)":
+                {
+                  flexBasis: "100%",
+                  order: 99
+                },
+              ".MuiDialog-paper .MuiDialogActions-root .MuiButton-containedPrimary":
+                {
+                  minHeight: 54,
+                  boxShadow: `0 6px 16px ${alpha(b.main, isDark ? 0.35 : 0.28)}`
+                },
+
+              /**
+               * Abas dentro de modal viram um seletor segmentado: um
+               * "quadrado" claro atrás da aba escolhida, que desliza até a
+               * outra quando se toca nela. O deslizamento é o próprio
+               * indicador do Material (que já anima posição e largura) —
+               * aqui ele só deixou de ser um traço fino embaixo do texto.
+               */
+              ".MuiDialog-paper .MuiTabs-root": {
+                // o painel é uma coluna flexível; sem isto, quando o conteúdo
+                // passa da altura, as abas são espremidas até sumir
+                flex: "none",
+                margin: "12px 16px 4px",
+                padding: 4,
+                minHeight: 0,
+                borderRadius: 14,
+                backgroundColor: n.surfaceSunken
+              },
+              ".MuiDialog-paper .MuiTabs-indicator": {
+                top: 0,
+                height: "100%",
+                borderRadius: 11,
+                backgroundColor: isDark ? n.surfaceRaised : "#FFFFFF",
+                boxShadow: shadows[2],
+                transition: "all .28s cubic-bezier(.2, .8, .2, 1) !important"
+              },
+              ".MuiDialog-paper .MuiTab-root": {
+                position: "relative",
+                zIndex: 1,
+                flex: 1,
+                minHeight: 40,
+                padding: "8px 10px",
+                fontSize: "0.875rem",
+                maxWidth: "none",
+                "&.Mui-selected": { color: b.main }
+              }
+            },
+
             /**
              * Tabela larga vira lista de cartões no celular.
              *
@@ -416,6 +550,21 @@ export default function createAppTheme({
             borderColor: b.border,
             color: b.main,
             "&:hover": { backgroundColor: b.soft, borderColor: b.main }
+          },
+          // No código antigo "secondary" quer dizer "botão de segunda
+          // importância" (quase sempre Cancelar), não "azul". Pintá-lo de
+          // azul criava uma terceira cor de ação sem significado nenhum.
+          outlinedSecondary: {
+            borderColor: n.borderStrong,
+            color: n.textPrimary,
+            "&:hover": {
+              backgroundColor: n.surfaceHover,
+              borderColor: n.borderStrong
+            }
+          },
+          textSecondary: {
+            color: n.textSecondary,
+            "&:hover": { backgroundColor: n.surfaceHover }
           },
           text: {
             padding: "7px 12px",

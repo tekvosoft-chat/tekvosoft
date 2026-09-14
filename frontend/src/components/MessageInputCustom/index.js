@@ -12,7 +12,7 @@ import {
   FormatQuote
 } from "@material-ui/icons";
 
-import { makeStyles } from "@material-ui/core/styles";
+import { makeStyles, useTheme } from "@material-ui/core/styles";
 import Paper from "@material-ui/core/Paper";
 import InputBase from "@material-ui/core/InputBase";
 import CircularProgress from "@material-ui/core/CircularProgress";
@@ -55,6 +55,7 @@ import WhatsMarked from "react-whatsmarked";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSignature } from "@fortawesome/free-solid-svg-icons";
 import { isMobile } from "../../helpers/isMobile";
+import MediaPreview from "../ui/MediaPreview";
 import { SocketContext } from "../../context/Socket/SocketContext";
 
 const Mp3Recorder = new MicRecorder({ bitRate: 128 });
@@ -849,6 +850,7 @@ const MessageInputCustom = props => {
   const { ticket, showTabGroups } = props;
   const { status: ticketStatus, id: ticketId } = ticket;
   const classes = useStyles();
+  const theme = useTheme();
 
   const [medias, setMedias] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
@@ -1194,35 +1196,19 @@ const MessageInputCustom = props => {
 
   if (medias.length > 0)
     return (
-      <Paper elevation={0} square className={classes.viewMediaInputWrapper}>
-        <IconButton
-          aria-label="cancel-upload"
-          component="span"
+      <Paper elevation={0} square className={classes.mainWrapper}>
+        <MediaPreview
+          files={medias}
+          accent={theme.palette.tkv.chat.accent}
+          loading={loading}
           disabled={disableOption}
-          onClick={e => setMedias([])}
-        >
-          <CancelIcon className={classes.sendMessageIcons} />
-        </IconButton>
-
-        {loading ? (
-          <div>
-            {/*<CircularProgress className={classes.circleLoading} />*/}
-            <LinearWithValueLabel progress={percentLoading} />
-          </div>
-        ) : (
-          <span>
-            {medias[0]?.name}
-            {/* <img src={media.preview} alt=""></img> */}
-          </span>
-        )}
-        <IconButton
-          aria-label="send-upload"
-          component="span"
-          onClick={handleUploadMedia}
-          disabled={disableOption}
-        >
-          <SendIcon className={classes.sendMessageIcons} />
-        </IconButton>
+          progress={<LinearWithValueLabel progress={percentLoading} />}
+          onClear={() => setMedias([])}
+          onRemove={index =>
+            setMedias(prev => prev.filter((_, i) => i !== index))
+          }
+          onSend={handleUploadMedia}
+        />
       </Paper>
     );
   else {

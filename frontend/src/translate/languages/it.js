@@ -174,6 +174,11 @@ const messages = {
           session: "Sessione"
         }
       },
+      mediaPreview: {
+        files: "file",
+        remove: "Rimuovi",
+        send: "Invia"
+      },
       internalChat: {
         title: "Chat Interno",
         subtitle: "Conversazioni con il tuo team",

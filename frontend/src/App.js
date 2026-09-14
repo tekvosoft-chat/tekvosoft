@@ -37,16 +37,56 @@ const defaultLogoFavicon = "/vector/favicon.png";
  */
 function useViewportHeight() {
   useEffect(() => {
+    const root = document.documentElement;
+    // Maior altura visível já vista nesta largura. Serve de referência de
+    // "sem teclado": no PWA do iPhone a janela inteira encolhe junto com o
+    // teclado, então comparar com window.innerHeight (como antes) nunca
+    // detectava o teclado aberto — e a margem da barra de gestos continuava
+    // lá, virando uma faixa branca entre a conversa e o teclado.
+    let baseline = 0;
+    let baselineWidth = 0;
+    const timers = [];
+
+    const isTypingField = el =>
+      !!el &&
+      (el.tagName === "TEXTAREA" ||
+        (el.tagName === "INPUT" &&
+          !["checkbox", "radio", "button", "submit", "file", "range"].includes(
+            el.type
+          )) ||
+        el.isContentEditable);
+
     const setVh = () => {
       const vv = window.visualViewport;
       const h = vv?.height || window.innerHeight;
-      const root = document.documentElement;
+      const w = vv?.width || window.innerWidth;
+
+      // girou a tela ou mudou a largura: a referência antiga não vale mais
+      if (Math.abs(w - baselineWidth) > 40) {
+        baseline = h;
+        baselineWidth = w;
+      }
+      if (!isTypingField(document.activeElement)) {
+        baseline = Math.max(baseline, h);
+      } else {
+        baseline = Math.max(baseline, window.innerHeight, h);
+      }
+
       root.style.setProperty("--vh", `${h}px`);
       root.style.setProperty(
         "--vv-top",
         `${Math.max(0, vv?.offsetTop || 0)}px`
       );
-      root.classList.toggle("kb-open", window.innerHeight - h > 150);
+      root.classList.toggle(
+        "kb-open",
+        isTypingField(document.activeElement) && baseline - h > 120
+      );
+    };
+
+    // o evento de resize do teclado do iOS chega atrasado e às vezes nem
+    // chega; recalcula também logo depois do foco e do fim da animação
+    const schedule = () => {
+      [60, 320, 650].forEach(ms => timers.push(setTimeout(setVh, ms)));
     };
 
     if (window.visualViewport) {
@@ -54,15 +94,20 @@ function useViewportHeight() {
       window.visualViewport.addEventListener("scroll", setVh);
     }
     window.addEventListener("resize", setVh);
+    document.addEventListener("focusin", schedule);
+    document.addEventListener("focusout", schedule);
 
     setVh(); // initial
 
     return () => {
+      timers.forEach(clearTimeout);
       if (window.visualViewport) {
         window.visualViewport.removeEventListener("resize", setVh);
         window.visualViewport.removeEventListener("scroll", setVh);
       }
       window.removeEventListener("resize", setVh);
+      document.removeEventListener("focusin", schedule);
+      document.removeEventListener("focusout", schedule);
     };
   }, []);
 }

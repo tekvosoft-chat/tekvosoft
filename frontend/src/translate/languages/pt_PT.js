@@ -205,6 +205,11 @@ const messages = {
           session: "Sessão"
         }
       },
+      mediaPreview: {
+        files: "ficheiros",
+        remove: "Remover",
+        send: "Enviar"
+      },
       internalChat: {
         title: "Chat Interno",
         subtitle: "Conversas com a sua equipa",

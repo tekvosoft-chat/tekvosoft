@@ -4,7 +4,8 @@ import {
   IconButton,
   InputBase,
   makeStyles,
-  Paper
+  Paper,
+  useTheme
 } from "@material-ui/core";
 import clsx from "clsx";
 import { format, isToday, isYesterday } from "date-fns";
@@ -14,6 +15,7 @@ import { AuthContext } from "../../context/Auth/AuthContext";
 import { useDate } from "../../hooks/useDate";
 import api from "../../services/api";
 import { i18n } from "../../translate/i18n";
+import MediaPreview from "../../components/ui/MediaPreview";
 
 import AttachFileIcon from "@material-ui/icons/AttachFile";
 import CancelIcon from "@material-ui/icons/Cancel";
@@ -155,6 +157,15 @@ const useStyles = makeStyles(theme => {
       [theme.breakpoints.down("xs")]: {
         padding: theme.spacing(0.75, 1),
         paddingBottom: `calc(${theme.spacing(1)}px + var(--safe-bottom, 0px))`
+      }
+    },
+    preview: {
+      margin: theme.spacing(-1, -2, -1.5),
+      width: `calc(100% + ${theme.spacing(4)}px)`,
+      borderTop: "none",
+      [theme.breakpoints.down("xs")]: {
+        margin: theme.spacing(-0.75, -1, -1),
+        width: `calc(100% + ${theme.spacing(2)}px)`
       }
     },
     inputPill: {
@@ -313,6 +324,7 @@ export default function ChatMessages({
   pageInfo
 }) {
   const classes = useStyles();
+  const theme = useTheme();
   const { user } = useContext(AuthContext);
   const { datetimeToClient } = useDate();
   const baseRef = useRef();
@@ -689,32 +701,17 @@ export default function ChatMessages({
             </IconButton>
           </div>
         ) : medias.length > 0 ? (
-          <>
-            <div className={classes.viewMediaInputWrapper}>
-              <IconButton
-                aria-label="cancel-upload"
-                component="span"
-                size="small"
-                onClick={() => setMedias([])}
-              >
-                <CancelIcon className={classes.sendMessageIcons} />
-              </IconButton>
-              {loading ? (
-                <CircularProgress size={22} className={classes.audioLoading} />
-              ) : (
-                <span className={classes.mediaName}>{medias[0]?.name}</span>
-              )}
-            </div>
-            <IconButton
-              aria-label="send-upload"
-              component="span"
-              onClick={handleSendMedia}
-              disabled={loading}
-              className={classes.roundAction}
-            >
-              <SendIcon />
-            </IconButton>
-          </>
+          <MediaPreview
+            files={medias}
+            accent={theme.palette.tkv.brand.main}
+            loading={loading}
+            onClear={() => setMedias([])}
+            onRemove={index =>
+              setMedias(prev => prev.filter((_, i) => i !== index))
+            }
+            onSend={handleSendMedia}
+            className={classes.preview}
+          />
         ) : (
           <>
             <div className={classes.inputPill}>
