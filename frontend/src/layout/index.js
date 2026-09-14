@@ -260,9 +260,10 @@ const useStyles = makeStyles(theme => ({
   // para texto branco): assim ela combina com qualquer cor de barra, em vez
   // de ficar presa às cores da imagem original.
   appBarLogo: {
-    height: 36,
-    width: "auto",
-    maxWidth: 170,
+    // a imagem do ícone tem respiro em volta: 44px mostra o símbolo com ~32px
+    height: 44,
+    width: 44,
+    margin: "-6px 4px -6px -4px",
     objectFit: "contain",
     marginRight: theme.spacing(1),
     display: "block",
@@ -272,7 +273,7 @@ const useStyles = makeStyles(theme => ({
         ? "brightness(0) invert(1)"
         : "brightness(0)",
     opacity: 0.96,
-    [theme.breakpoints.down("xs")]: { height: 30, maxWidth: 140 }
+    [theme.breakpoints.down("xs")]: { height: 40, width: 40 }
   },
   menuButtonHidden: {
     display: "none"
@@ -310,8 +311,6 @@ const useStyles = makeStyles(theme => ({
     lineHeight: 1.4
   },
   drawerPaper: {
-    // começa abaixo da barra superior (e da faixa de teste, se houver)
-    paddingTop: `calc(${appBarHeight}px + var(--banner-h, 0px) + ${theme.spacing(1.5)}px)`,
     // o menu é um cartão sobre o fundo da aplicação, como na referência
     backgroundColor: theme.palette.tkv.canvas,
     borderRight: "none",
@@ -326,6 +325,12 @@ const useStyles = makeStyles(theme => ({
     }),
     overflowY: "clip",
     ...theme.scrollbarStylesSoft
+  },
+  // só no papel do menu: começa abaixo da barra superior (e da faixa de teste).
+  // Fica fora de drawerPaper porque essa classe também vai na raiz do Drawer,
+  // e o espaço era somado duas vezes.
+  drawerPaperOffset: {
+    paddingTop: `calc(${appBarHeight}px + var(--banner-h, 0px) + ${theme.spacing(1.5)}px)`
   },
   drawerPaperClose: {
     overflowX: "hidden",
@@ -875,6 +880,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
           classes={{
             paper: clsx(
               classes.drawerPaper,
+              classes.drawerPaperOffset,
               !drawerOpen && classes.drawerPaperClose
             )
           }}
@@ -1006,9 +1012,10 @@ const LoggedInLayout = ({ children, themeToggle }) => {
               {drawerOpen ? <ChevronLeftIcon /> : <MenuIcon />}
             </IconButton>
           )}
+          {/* só o ícone, sem o nome escrito ao lado */}
           <img
             className={classes.appBarLogo}
-            src={theme.calculatedLogo?.()}
+            src={theme.appLogoFavicon || "/vector/favicon.png"}
             alt={theme.appName || "Tekvosoft"}
             onClick={() => history.push("/")}
           />

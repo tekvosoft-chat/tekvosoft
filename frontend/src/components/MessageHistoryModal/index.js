@@ -82,7 +82,7 @@ const MessageHistoryModal = ({ open, onClose, messageId }) => {
       <DialogContent>
         {loading ? (
           <div className={classes.loadingContainer}>
-            <BoxLoader size={36} />
+            <BoxLoader />
           </div>
         ) : (
           <TableContainer>

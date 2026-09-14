@@ -284,6 +284,13 @@ const App = () => {
     if (!meta) return;
     // a barra superior é da cor do tema nos dois modos
     meta.setAttribute("content", theme.palette.primary.main);
+    // a tela de carregamento (index.html) abre antes do login: guarda a cor
+    // do tema da empresa para ela não voltar ao roxo padrão
+    try {
+      localStorage.setItem("tkvLoaderColor", theme.palette.tkv.brand.text);
+    } catch (err) {
+      // sem armazenamento: usa a cor pública
+    }
   }, [theme, mode]);
 
   useEffect(() => {

@@ -10,8 +10,8 @@ import { useTheme } from "@material-ui/core/styles";
  * A cor vem do tema (currentColor), então as keyframes são sempre as mesmas —
  * nada de gerar uma animação por cor ou tamanho. O tamanho muda por escala.
  */
-const BASE = 56; // lado total, com a borda
-const BORDER = 4;
+const BASE = 72; // lado total, com a borda — o tamanho padrão do sistema
+const BORDER = 5;
 const HALF = (BASE - BORDER * 2) / 2;
 
 const StyledWrapper = styled.div`
@@ -21,6 +21,7 @@ const StyledWrapper = styled.div`
   flex: none;
 
   .box {
+    flex: none;
     box-sizing: content-box;
     width: ${BASE - BORDER * 2}px;
     height: ${BASE - BORDER * 2}px;

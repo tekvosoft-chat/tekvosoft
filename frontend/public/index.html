@@ -156,28 +156,28 @@
          tema. É a mesma animação do componente BoxLoader do app. */
       .box-loader {
         box-sizing: content-box;
-        width: 48px;
-        height: 48px;
-        border: 4px solid var(--loader-color, var(--primary));
+        width: 62px;
+        height: 62px;
+        border: 5px solid var(--loader-color, var(--primary));
         box-shadow: inset 0 0 0 var(--loader-color, var(--primary));
         animation: box-load 2s ease-in-out infinite;
       }
 
       @keyframes box-load {
         0% {
-          box-shadow: inset -24px -24px 0 var(--loader-color, var(--primary));
+          box-shadow: inset -31px -31px 0 var(--loader-color, var(--primary));
         }
         25% {
-          box-shadow: inset 24px -24px 0 var(--loader-color, var(--primary));
+          box-shadow: inset 31px -31px 0 var(--loader-color, var(--primary));
         }
         50% {
-          box-shadow: inset 24px 24px 0 var(--loader-color, var(--primary));
+          box-shadow: inset 31px 31px 0 var(--loader-color, var(--primary));
         }
         75% {
-          box-shadow: inset -24px 24px 0 var(--loader-color, var(--primary));
+          box-shadow: inset -31px 31px 0 var(--loader-color, var(--primary));
         }
         100% {
-          box-shadow: inset -24px -24px 0 var(--loader-color, var(--primary));
+          box-shadow: inset -31px -31px 0 var(--loader-color, var(--primary));
         }
       }
 
@@ -326,6 +326,15 @@
         : "light";
       const theme = localStorage.getItem("preferredTheme") || systemTheme;
 
+      // cor do tema escolhido pela empresa, guardada pelo app na última visita
+      const storedLoaderColor = localStorage.getItem("tkvLoaderColor");
+      if (storedLoaderColor) {
+        document.documentElement.style.setProperty(
+          "--loader-color",
+          storedLoaderColor
+        );
+      }
+
       if (theme) {
         const root = document.documentElement;
         root.style.setProperty("--background", themes[theme].background);
@@ -392,12 +401,13 @@
 
             root.style.setProperty("--primary", color);
             // no escuro, clareia a cor do tema para o quadrado aparecer
-            root.style.setProperty(
-              "--loader-color",
-              theme === "dark"
-                ? `color-mix(in srgb, ${color} 60%, #ffffff)`
-                : color
-            );
+            if (!storedLoaderColor)
+              root.style.setProperty(
+                "--loader-color",
+                theme === "dark"
+                  ? `color-mix(in srgb, ${color} 60%, #ffffff)`
+                  : color
+              );
             // Persist the resolved primary color so the restart
             // transition can render it while the backend is down.
             localStorage.setItem("tekvosoftPrimaryColor", color);

@@ -142,13 +142,14 @@ const useStyles = makeStyles(theme => ({
     }
   },
 
+  // carregando mensagens: no meio da área da conversa, grande e visível
   circleLoading: {
     position: "absolute",
     zIndex: 2,
-    top: 0,
+    top: "50%",
     left: "50%",
-    marginTop: 16,
-    transform: "translateX(-50%)"
+    transform: "translate(-50%, -50%)",
+    pointerEvents: "none"
   },
 
   messageLeft: {
@@ -2365,7 +2366,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
         ))}
       {loading && (
         <div>
-          <BoxLoader size={36} className={classes.circleLoading} />
+          <BoxLoader className={classes.circleLoading} />
         </div>
       )}
       <MediaGalleryLightbox

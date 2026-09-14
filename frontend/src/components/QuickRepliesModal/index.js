@@ -209,7 +209,7 @@ const QuickRepliesModal = ({ open, onClose, onPick, onChanged }) => {
 
           {loading ? (
             <div className={classes.empty}>
-              <BoxLoader size={40} />
+              <BoxLoader />
             </div>
           ) : filtered.length === 0 ? (
             <div className={classes.empty}>

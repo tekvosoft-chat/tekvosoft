@@ -99,7 +99,7 @@ const WavoipModal = ({ open, onClose, whatsappId }) => {
       <DialogTitle>Wavoip Token</DialogTitle>
       <DialogContent dividers>
         {loading && initialLoad ? (
-          <BoxLoader size={40} style={{ margin: "16px auto" }} />
+          <BoxLoader style={{ margin: "24px auto" }} />
         ) : (
           <>
             <Typography

@@ -12,7 +12,6 @@ import PlansManager from "../../components/PlansManager";
 import HelpsManager from "../../components/HelpsManager";
 import ContainersManager from "../../components/ContainersManager";
 import Options from "../../components/Settings/Options";
-import Whitelabel from "../../components/Settings/Whitelabel";
 import PaymentGateway from "../../components/Settings/PaymentGateway";
 import I18nSettings from "../../components/Settings/I18nSettings";
 
@@ -199,12 +198,6 @@ const SettingsCustom = () => {
           ) : null}
           {isSuper() ? (
             <Tab
-              label={i18n.t("settings.Whitelabel.title")}
-              value={"whitelabel"}
-            />
-          ) : null}
-          {isSuper() ? (
-            <Tab
               label={i18n.t("settings.PaymentGateways.title")}
               value={"paymentGateway"}
             />
@@ -272,13 +265,6 @@ const SettingsCustom = () => {
             user={currentUser}
             yes={() => (
               <>
-                <TabPanel
-                  className={classes.container}
-                  value={tab}
-                  name={"whitelabel"}
-                >
-                  <Whitelabel settings={settings} />
-                </TabPanel>
                 <TabPanel
                   className={classes.container}
                   value={tab}
