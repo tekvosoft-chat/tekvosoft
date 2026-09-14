@@ -5,6 +5,7 @@ import App from "./App";
 import { loadJSON } from "./helpers/loadJSON";
 import { i18n } from "./translate/i18n";
 import axios from "axios";
+import { registerServiceWorker } from "./services/push";
 
 const BACKEND_RETRY_INTERVAL_SECONDS = 30;
 const BACKEND_PROBE_TIMEOUT_MS = 10000;
@@ -95,6 +96,9 @@ function probeBackendAndRender(config, attempt = 1) {
       });
     });
 }
+
+// service worker das notificações push (app instalado / navegador)
+registerServiceWorker();
 
 const config = loadJSON("/config.json");
 

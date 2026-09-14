@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  CircularProgress,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -12,6 +11,7 @@ import {
 import { Close, GetApp } from "@material-ui/icons";
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
 import pdfjsWorker from "pdfjs-dist/build/pdf.worker.entry";
+import BoxLoader from "../ui/BoxLoader";
 
 GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
@@ -414,7 +414,7 @@ function PdfViewerDialog({ url, fileName, open, onClose }) {
           <>
             {viewerStatus === "loading" && (
               <div className={classes.spinnerWrap}>
-                <CircularProgress color="inherit" />
+                <BoxLoader color="inherit" />
               </div>
             )}
             {viewerStatus === "error" && (

@@ -32,6 +32,10 @@ import CachedIcon from "@material-ui/icons/Cached";
 
 import MainListItems from "./MainListItems";
 import MobileNav from "./MobileNav";
+import useNotificationSound, {
+  isNotificationSoundOn
+} from "../hooks/useNotificationSound";
+import { syncPush } from "../services/push";
 import TrialBanner, { getTrialStatus } from "../components/TrialBanner";
 import useAccountTheme from "../hooks/useAccountTheme";
 import NotificationsPopOver from "../components/NotificationsPopOver";
@@ -117,10 +121,12 @@ const useStyles = makeStyles(theme => ({
     borderRadius: 20,
     overflow: "hidden",
     cursor: "pointer",
-    backgroundColor: theme.palette.tkv.surfaceSunken,
-    border: `1px solid ${theme.palette.tkv.border}`,
+    // em cima da barra colorida: vidro claro em vez de cartão cinza
+    color: "inherit",
+    backgroundColor: "rgba(255, 255, 255, 0.14)",
+    border: "1px solid rgba(255, 255, 255, 0.22)",
     transition: "background-color .15s ease",
-    "&:hover": { backgroundColor: theme.palette.tkv.surfaceHover },
+    "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.22)" },
     [theme.breakpoints.down("xs")]: {
       borderRadius: 20
     },
@@ -190,8 +196,13 @@ const useStyles = makeStyles(theme => ({
     gap: theme.spacing(0.25),
     // No celular são até sete ícones mais o avatar em 390px. Sem apertar o
     // respiro de cada um, o último item fica cortado na borda da tela.
+    // ícones na cor do texto da barra (o tema deixa IconButton cinza)
+    "& .MuiIconButton-root": {
+      color: "inherit",
+      "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.14)" }
+    },
     [theme.breakpoints.down("xs")]: {
-      paddingLeft: theme.spacing(1),
+      paddingLeft: theme.spacing(1.5),
       paddingRight: theme.spacing(0.5),
       gap: 0,
       "& .MuiIconButton-root": { padding: 6 },
@@ -213,45 +224,55 @@ const useStyles = makeStyles(theme => ({
     padding: theme.spacing(0, 2),
     flex: "none"
   },
+  /**
+   * Barra superior na cor do tema, de ponta a ponta, com a logo em branco —
+   * como no Whaticket. Troca de cor junto com o tema escolhido pela empresa;
+   * o menu lateral fica logo abaixo dela.
+   */
   appBar: {
     zIndex: theme.zIndex.drawer + 1,
     // abaixo da faixa de teste grátis, quando ela existe
     top: "calc(var(--safe-top, 0px) + var(--banner-h, 0px))",
-    transition: theme.transitions.create(["width", "margin"], {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.leavingScreen
-    }),
-    // no celular não existe barra lateral: a de cima ocupa tudo
     width: "100%",
     marginLeft: 0,
-    [theme.breakpoints.up("sm")]: {
-      marginLeft: drawerWidthCollapsed,
-      width: `calc(100% - ${drawerWidthCollapsed}px)`
-    }
+    backgroundColor: theme.palette.tkv.brand.main,
+    color: theme.palette.tkv.brand.contrastText,
+    borderBottom: "none",
+    boxShadow: `0 1px 0 ${theme.palette.tkv.brand.hover}`,
+    transition: theme.transitions.create("background-color")
   },
-  appBarShift: {
-    [theme.breakpoints.up("sm")]: {
-      marginLeft: drawerWidth,
-      width: `calc(100% - ${drawerWidth}px)`,
-      transition: theme.transitions.create(["width", "margin"], {
-        easing: theme.transitions.easing.sharp,
-        duration: theme.transitions.duration.enteringScreen
-      })
-    }
+  appBarShift: {},
+  // celular: a faixa da hora e da bateria na mesma cor da barra
+  statusBarFill: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: "var(--safe-top, 0px)",
+    zIndex: theme.zIndex.drawer + 2,
+    backgroundColor: theme.palette.tkv.brand.main
   },
   menuButton: {
-    marginRight: theme.spacing(1),
+    marginRight: theme.spacing(0.5),
     color: "inherit"
   },
+  // A logo vira uma silhueta clara (ou escura, se o tema for claro demais
+  // para texto branco): assim ela combina com qualquer cor de barra, em vez
+  // de ficar presa às cores da imagem original.
   appBarLogo: {
-    height: 24,
+    height: 36,
     width: "auto",
-    maxWidth: 104,
+    maxWidth: 170,
     objectFit: "contain",
     marginRight: theme.spacing(1),
-    // a logo clara é feita para fundo escuro; no modo claro a barra é roxa,
-    // então ela funciona nos dois casos
-    display: "block"
+    display: "block",
+    cursor: "pointer",
+    filter:
+      theme.palette.tkv.brand.contrastText === "#FFFFFF"
+        ? "brightness(0) invert(1)"
+        : "brightness(0)",
+    opacity: 0.96,
+    [theme.breakpoints.down("xs")]: { height: 30, maxWidth: 140 }
   },
   menuButtonHidden: {
     display: "none"
@@ -289,7 +310,8 @@ const useStyles = makeStyles(theme => ({
     lineHeight: 1.4
   },
   drawerPaper: {
-    paddingTop: "var(--banner-h, 0px)",
+    // começa abaixo da barra superior (e da faixa de teste, se houver)
+    paddingTop: `calc(${appBarHeight}px + var(--banner-h, 0px) + ${theme.spacing(1.5)}px)`,
     // o menu é um cartão sobre o fundo da aplicação, como na referência
     backgroundColor: theme.palette.tkv.canvas,
     borderRight: "none",
@@ -568,6 +590,25 @@ const LoggedInLayout = ({ children, themeToggle }) => {
   const [currentUser, setCurrentUser] = useState({});
   // o volume dos avisos continua salvo; só o controle saiu da barra de cima
   const [volume] = useState(localStorage.getItem("volume") || 1);
+  const [soundOn, setSoundOn] = useNotificationSound();
+
+  // push: confirma a inscrição deste aparelho para quem entrou e abre a
+  // conversa quando a pessoa toca numa notificação com o app já aberto
+  useEffect(() => {
+    if (user?.id) syncPush({ silent: !isNotificationSoundOn() });
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return undefined;
+    const onMessage = event => {
+      if (event.data?.type === "tkv:navigate" && event.data.url) {
+        history.push(event.data.url);
+      }
+    };
+    navigator.serviceWorker.addEventListener("message", onMessage);
+    return () =>
+      navigator.serviceWorker.removeEventListener("message", onMessage);
+  }, [history]);
 
   const { dateToClient } = useDate();
 
@@ -821,6 +862,9 @@ const LoggedInLayout = ({ children, themeToggle }) => {
       style={{ "--banner-h": showTrialBanner ? "36px" : "0px" }}
     >
       {showTrialBanner && <TrialBanner user={user} status={trialStatus} />}
+      {isPhone && !inConversation && (
+        <div className={classes.statusBarFill} aria-hidden="true" />
+      )}
       {!isPhone && (
         <Drawer
           variant={drawerVariant}
@@ -836,22 +880,6 @@ const LoggedInLayout = ({ children, themeToggle }) => {
           }}
           open={drawerOpen}
         >
-          <div
-            className={classes.toolbarIcon}
-            onClick={handleDrawerToggle}
-            style={{ cursor: "pointer" }}
-          >
-            <img
-              className={
-                drawerOpen
-                  ? classes.logo
-                  : !isMobile
-                    ? classes.logoIcon
-                    : classes.hideLogo
-              }
-              alt="logo"
-            />
-          </div>
           {/* Cartão do menu: busca, itens e, no rodapé, quem está logado. */}
           <div
             className={clsx(
@@ -966,13 +994,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
         color="primary"
       >
         <Toolbar variant="dense" className={classes.toolbar}>
-          {isPhone ? (
-            <img
-              className={classes.appBarLogo}
-              src={theme.calculatedLogo?.()}
-              alt={theme.appName || "Tekvosoft"}
-            />
-          ) : (
+          {!isPhone && (
             <IconButton
               edge="start"
               aria-label={
@@ -984,6 +1006,12 @@ const LoggedInLayout = ({ children, themeToggle }) => {
               {drawerOpen ? <ChevronLeftIcon /> : <MenuIcon />}
             </IconButton>
           )}
+          <img
+            className={classes.appBarLogo}
+            src={theme.calculatedLogo?.()}
+            alt={theme.appName || "Tekvosoft"}
+            onClick={() => history.push("/")}
+          />
 
           <Typography
             component="h2"
@@ -1047,10 +1075,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
                 </Typography>
               </div>
               <div className={classes.profileAvatarSlot}>
-                <AccountCircle
-                  className={classes.avatar}
-                  style={{ color: theme.palette.tkv.brand.main }}
-                />
+                <AccountCircle className={classes.avatar} />
               </div>
             </div>
             <Menu
@@ -1089,6 +1114,12 @@ const LoggedInLayout = ({ children, themeToggle }) => {
               <Divider />
               <MenuItem onClick={handleOpenUserModal}>
                 {i18n.t("mainDrawer.appBar.user.profile")}
+              </MenuItem>
+              <MenuItem onClick={() => setSoundOn(!soundOn)}>
+                {i18n.t("notificationSound.title")}:{" "}
+                {soundOn
+                  ? i18n.t("notificationSound.on")
+                  : i18n.t("notificationSound.off")}
               </MenuItem>
               <MenuItem onClick={toggleColorMode}>
                 {theme.mode === "dark"

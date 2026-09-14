@@ -10,16 +10,17 @@ import React, {
 import { isSameDay, parseISO, format } from "date-fns";
 import clsx from "clsx";
 
-import { green, blue } from "@material-ui/core/colors";
+import { blue } from "@material-ui/core/colors";
 import {
   Avatar,
   Button,
-  CircularProgress,
   Divider,
   IconButton,
   makeStyles,
   Tooltip,
-  Typography
+  Typography,
+  useMediaQuery,
+  useTheme
 } from "@material-ui/core";
 
 import {
@@ -61,6 +62,14 @@ import { generateColor } from "../../helpers/colorGenerator";
 import { getInitials } from "../../helpers/getInitials";
 import { downloadFile } from "../../helpers/downloadFile";
 import { Mutex } from "async-mutex";
+import BoxLoader from "../ui/BoxLoader";
+import AudioBubble from "./AudioBubble";
+import { ReplyMessageContext } from "../../context/ReplyingMessage/ReplyingMessageContext";
+
+// seta de responder (branca), usada no gesto de arrastar a mensagem
+const REPLY_ICON = `url("data:image/svg+xml,${encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#fff"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>'
+)}")`;
 
 const loadPageMutex = new Mutex();
 
@@ -134,12 +143,12 @@ const useStyles = makeStyles(theme => ({
   },
 
   circleLoading: {
-    color: green[500],
     position: "absolute",
-    opacity: "70%",
+    zIndex: 2,
     top: 0,
     left: "50%",
-    marginTop: 12
+    marginTop: 16,
+    transform: "translateX(-50%)"
   },
 
   messageLeft: {
@@ -613,25 +622,77 @@ const useStyles = makeStyles(theme => ({
   audioBottom: {
     marginBottom: "12px"
   },
+  /**
+   * Reações no desenho do WhatsApp: uma pílula pequena presa na borda de
+   * baixo do balão, com o contorno da cor do fundo da conversa (parece
+   * "recortada" do balão), emojis agrupados e a contagem quando repete.
+   */
+  // o contêiner não ocupa altura dentro do balão; a margem de baixo "vaza"
+  // para fora dele e abre o espaço onde a pílula fica pendurada
   reactionsContainer: {
-    width: "fit-content",
-    height: 1,
-    marginLeft: "auto",
-    marginRight: "auto"
+    display: "block",
+    height: 0,
+    marginBottom: 18
   },
   reactions: {
-    top: -8,
-    display: "ruby",
-    position: "relative",
+    position: "absolute",
+    bottom: -19,
+    left: 8,
     zIndex: 1,
-    maxWidth: "75%",
-    paddingTop: 3,
-    paddingLeft: 5,
-    paddingRight: 5,
-    paddingBottom: 3,
-    borderRadius: 15,
-    backgroundColor: "gray",
-    cursor: "default"
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 3,
+    maxWidth: "calc(100% - 12px)",
+    height: 24,
+    padding: "0 7px",
+    borderRadius: 12,
+    backgroundColor: theme.palette.tkv.chat.bubbleIn,
+    border: `2px solid ${theme.palette.tkv.chat.wallpaper}`,
+    boxShadow: "0 1px 2px rgba(11, 20, 26, 0.18)",
+    cursor: "default",
+    whiteSpace: "nowrap",
+    animation: "$reactionPop .28s cubic-bezier(.34, 1.56, .64, 1)"
+  },
+  reactionsRight: {
+    left: "auto",
+    right: 8
+  },
+  reactionEmoji: {
+    fontSize: 15,
+    lineHeight: 1
+  },
+  reactionCount: {
+    fontSize: "0.6875rem",
+    fontWeight: 600,
+    color: theme.palette.tkv.chat.meta,
+    marginLeft: 1
+  },
+  "@keyframes reactionPop": {
+    from: { transform: "scale(0.4)", opacity: 0 },
+    to: { transform: "scale(1)", opacity: 1 }
+  },
+
+  // arrastar a mensagem para a direita responde (celular)
+  swipeable: {
+    touchAction: "pan-y",
+    "&::before": {
+      content: '""',
+      position: "absolute",
+      top: "50%",
+      left: -40,
+      width: 30,
+      height: 30,
+      marginTop: -15,
+      borderRadius: "50%",
+      backgroundColor: "rgba(0, 0, 0, 0.28)",
+      backgroundImage: REPLY_ICON,
+      backgroundSize: "18px 18px",
+      backgroundRepeat: "no-repeat",
+      backgroundPosition: "center",
+      opacity: "var(--swipe, 0)",
+      transform: "scale(calc(0.5 + var(--swipe, 0) * 0.5))",
+      pointerEvents: "none"
+    }
   },
   mediaDescription: {
     padding: 5,
@@ -746,6 +807,96 @@ const reducer = (state, action) => {
 
 const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
   const classes = useStyles();
+  const theme = useTheme();
+  const isPhone = useMediaQuery(theme.breakpoints.down("xs"));
+  const replyContext = useContext(ReplyMessageContext);
+  const canReply = !readOnly && !!replyContext?.setReplyingMessage;
+  const swipeRef = useRef(null);
+
+  const replyTo = (message, element) => {
+    replyContext.setReplyingMessage(message);
+    element?.animate?.(
+      [{ filter: "brightness(0.88)" }, { filter: "brightness(1)" }],
+      { duration: 380, easing: "ease-out" }
+    );
+  };
+
+  const finishSwipe = message => {
+    const swipe = swipeRef.current;
+    swipeRef.current = null;
+    if (!swipe || swipe.axis !== "x") return;
+    const { el } = swipe;
+    el.style.transition = "transform .28s cubic-bezier(.2, .8, .2, 1)";
+    el.style.transform = "";
+    el.style.setProperty("--swipe", "0");
+    setTimeout(() => {
+      el.style.transition = "";
+    }, 320);
+    if (message && swipe.dx >= 56) replyTo(message, el);
+  };
+
+  /**
+   * Responder em cima de uma mensagem sem abrir menu: no celular, arrastando
+   * o balão para a direita (como no WhatsApp); no computador, com dois
+   * cliques. Continua existindo o "Responder" no menu da mensagem.
+   */
+  const replyGestures = message => {
+    if (!canReply || message.isDeleted) return {};
+    return {
+      onTouchStart: e => {
+        if (e.touches.length !== 1) return;
+        const touch = e.touches[0];
+        swipeRef.current = {
+          x: touch.clientX,
+          y: touch.clientY,
+          dx: 0,
+          axis: null,
+          buzzed: false,
+          el: e.currentTarget
+        };
+      },
+      onTouchMove: e => {
+        const swipe = swipeRef.current;
+        if (!swipe) return;
+        const touch = e.touches[0];
+        const dx = touch.clientX - swipe.x;
+        const dy = touch.clientY - swipe.y;
+        if (!swipe.axis) {
+          if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+          swipe.axis = dx > 0 && Math.abs(dx) > Math.abs(dy) * 1.4 ? "x" : "y";
+          if (swipe.axis === "x") swipe.el.style.transition = "none";
+        }
+        if (swipe.axis !== "x") return;
+        swipe.dx = Math.max(0, dx);
+        const pull = swipe.dx < 64 ? swipe.dx : 64 + (swipe.dx - 64) * 0.3;
+        swipe.el.style.transform = `translateX(${Math.min(pull, 90)}px)`;
+        swipe.el.style.setProperty(
+          "--swipe",
+          String(Math.min(1, swipe.dx / 56))
+        );
+        if (swipe.dx >= 56 && !swipe.buzzed) {
+          swipe.buzzed = true;
+          if (navigator.vibrate) navigator.vibrate(12);
+        } else if (swipe.dx < 56) {
+          swipe.buzzed = false;
+        }
+      },
+      onTouchEnd: () => finishSwipe(message),
+      onTouchCancel: () => finishSwipe(null),
+      onDoubleClick: e => {
+        if (!window.matchMedia?.("(pointer: fine)").matches) return;
+        if (
+          e.target.closest?.(
+            "a, button, img, video, audio, input, textarea, [role=button]"
+          )
+        ) {
+          return;
+        }
+        window.getSelection?.()?.removeAllRanges();
+        replyTo(message, e.currentTarget);
+      }
+    };
+  };
 
   const [messagesList, dispatch] = useReducer(reducer, []);
   const messagesListRef = useRef(messagesList);
@@ -1129,6 +1280,36 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
         </>
       );
     }
+    if (!document && message.mediaType === "audio" && isPhone) {
+      return (
+        <>
+          <AudioBubble
+            id={message.id}
+            src={message.mediaUrl}
+            fromMe={message.fromMe}
+            avatarUrl={
+              message.contact?.profilePicUrl || ticket?.contact?.profilePicUrl
+            }
+            whatsappId={ticket?.whatsappId}
+            name={
+              message.fromMe
+                ? ticket?.whatsapp?.name
+                : message.contact?.name || ticket?.contact?.name
+            }
+            color={
+              message.fromMe
+                ? theme.palette.tkv.brand.main
+                : generateColor(
+                    message.contact?.number || ticket?.contact?.number
+                  )
+            }
+          />
+          {message.body && !["🔊", "Áudio"].includes(message.body) && (
+            <div className={classes.mediaDescription}>{message.body}</div>
+          )}
+        </>
+      );
+    }
     if (!document && message.mediaType === "audio") {
       return (
         <>
@@ -1393,27 +1574,53 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
     );
   };
 
-  const renderReplies = replies => {
-    const reactions =
-      replies &&
-      replies
-        .filter(reply => reply?.mediaType === "reactionMessage")
-        .map(reply => {
-          return reply.contact?.name ? (
-            <Tooltip title={reply.contact?.name} placement="top" arrow>
-              <div key={reply.id}>{reply.body}</div>
-            </Tooltip>
-          ) : (
-            <div key={reply.id}>{reply.body}</div>
-          );
-        });
+  const renderReplies = (replies, fromMe) => {
+    const reactions = (replies || []).filter(
+      reply => reply?.mediaType === "reactionMessage" && reply.body
+    );
+    if (!reactions.length) return null;
+
+    // agrupa o mesmo emoji: "❤️ 2" em vez de dois corações soltos
+    const groups = [];
+    reactions.forEach(reply => {
+      const group = groups.find(g => g.emoji === reply.body);
+      const who = reply.fromMe
+        ? i18n.t("messagesList.reactions.you")
+        : reply.contact?.name;
+      if (group) {
+        group.count += 1;
+        if (who) group.names.push(who);
+      } else {
+        groups.push({ emoji: reply.body, count: 1, names: who ? [who] : [] });
+      }
+    });
+    const total = reactions.length;
+    const names = [...new Set(groups.flatMap(g => g.names))].join(", ");
 
     return (
-      reactions?.length > 0 && (
-        <div className={classes.reactionsContainer}>
-          <div className={classes.reactions}>{reactions}</div>
-        </div>
-      )
+      <div className={classes.reactionsContainer}>
+        <Tooltip
+          title={names}
+          placement="top"
+          arrow
+          disableHoverListener={!names}
+        >
+          <div
+            className={clsx(classes.reactions, {
+              [classes.reactionsRight]: fromMe
+            })}
+          >
+            {groups.slice(0, 3).map(group => (
+              <span key={group.emoji} className={classes.reactionEmoji}>
+                {group.emoji}
+              </span>
+            ))}
+            {total > 1 && (
+              <span className={classes.reactionCount}>{total}</span>
+            )}
+          </div>
+        </Tooltip>
+      </div>
     );
   };
 
@@ -1867,10 +2074,12 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
               id={message.id}
               className={[
                 clsx(classes.messageContainer, classes.messageLeft, {
-                  [classes.messageMediaSticker]: isSticker
+                  [classes.messageMediaSticker]: isSticker,
+                  [classes.swipeable]: isPhone && canReply
                 })
               ]}
               title={message.queueId && message.queue?.name}
+              {...replyGestures(message)}
             >
               {readOnly || (
                 <IconButton
@@ -1969,7 +2178,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                 !data?.message?.extendedTextMessage &&
                 checkMessageMedia(message, data, isSticker)}
               {renderButtons(data?.message)}
-              {renderReplies(message.replies)}
+              {renderReplies(message.replies, false)}
             </div>
           </React.Fragment>
         );
@@ -1986,10 +2195,12 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
               id={message.id}
               className={[
                 clsx(classes.messageContainer, classes.messageRight, {
-                  [classes.messageMediaSticker]: isSticker
+                  [classes.messageMediaSticker]: isSticker,
+                  [classes.swipeable]: isPhone && canReply
                 })
               ]}
               title={message.queueId && message.queue?.name}
+              {...replyGestures(message)}
             >
               {readOnly || (
                 <IconButton
@@ -2064,7 +2275,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                 </span>
               </div>
               {message.mediaUrl && checkMessageMedia(message, data, isSticker)}
-              {renderReplies(message.replies)}
+              {renderReplies(message.replies, true)}
               {messageError && (
                 <div
                   className={classes.messageErrorBand}
@@ -2154,7 +2365,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
         ))}
       {loading && (
         <div>
-          <CircularProgress className={classes.circleLoading} />
+          <BoxLoader size={36} className={classes.circleLoading} />
         </div>
       )}
       <MediaGalleryLightbox

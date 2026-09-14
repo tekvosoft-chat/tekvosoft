@@ -831,6 +831,50 @@ const messages = {
       helps: {
         title: "Hilfezentrum"
       },
+      notificationSound: {
+        title: "Benachrichtigungston",
+        description:
+          "Spielt einen Ton ab, wenn eine neue Nachricht eingeht. Gilt nur für dieses Gerät.",
+        on: "an",
+        off: "aus"
+      },
+      push: {
+        title: "Benachrichtigungen auf diesem Gerät",
+        description:
+          "Erhalte neue Nachrichten mit Name und Foto des Kontakts, auch wenn die App geschlossen ist.",
+        activeDescription:
+          "Du erhältst neue Nachrichten mit Name und Foto des Kontakts, auch wenn die App geschlossen ist.",
+        enable: "Aktivieren",
+        enabled: "Aktiv",
+        enableOnPhone: "Benachrichtigungen aktivieren",
+        enabledToast: "Benachrichtigungen auf diesem Gerät aktiviert",
+        blocked:
+          "Benachrichtigungen sind blockiert. Erlaube sie in den Browser- oder Telefoneinstellungen.",
+        failed:
+          "Benachrichtigungen konnten gerade nicht aktiviert werden. Bitte erneut versuchen.",
+        unsupported:
+          "Dieser Browser unterstützt keine Push-Benachrichtigungen.",
+        iosHint:
+          "Füge die App auf dem iPhone zum Home-Bildschirm hinzu (Teilen > Zum Home-Bildschirm) und öffne sie dort, um sie zu aktivieren."
+      },
+      quickReplies: {
+        title: "Schnellantworten",
+        search: "Nach Kürzel oder Text suchen",
+        empty:
+          "Noch keine Schnellantworten. Erstelle die erste für deine Gespräche.",
+        emptySearch: "Keine Antworten gefunden.",
+        use: "Diese Antwort verwenden",
+        edit: "Bearbeiten",
+        delete: "Löschen",
+        deleteTitle: "Schnellantwort löschen?",
+        deleteMessage:
+          "Sie steht dem Team dann nicht mehr zur Verfügung. Das kann nicht rückgängig gemacht werden.",
+        add: "Neue Antwort",
+        close: "Schließen",
+        added: "Schnellantwort erstellt",
+        updated: "Schnellantwort aktualisiert",
+        deleted: "Schnellantwort gelöscht"
+      },
       about: {
         headline: "Gemacht, um jeden Tag besser zu betreuen",
         product:
@@ -1201,6 +1245,9 @@ const messages = {
         }
       },
       messagesList: {
+        reactions: {
+          you: "Du"
+        },
         header: {
           assignedTo: "Zugewiesen an:",
           tapForInfo: "Tippen für Kontaktinfos",

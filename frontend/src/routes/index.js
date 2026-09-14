@@ -19,7 +19,6 @@ import Helps from "../pages/Helps/";
 import ContactLists from "../pages/ContactLists/";
 import ContactListItems from "../pages/ContactListItems/";
 // import Companies from "../pages/Companies/";
-import QuickMessages from "../pages/QuickMessages/";
 import { AuthProvider } from "../context/Auth/AuthContext";
 import { TicketsContextProvider } from "../context/Tickets/TicketsContext";
 import { WhatsAppsProvider } from "../context/WhatsApp/WhatsAppsContext";
@@ -66,10 +65,11 @@ const Routes = () => {
                   component={Connections}
                   isPrivate
                 />
+                {/* respostas rápidas agora ficam dentro da conversa (botão ⚡) */}
                 <Route
                   exact
                   path="/quick-messages"
-                  component={QuickMessages}
+                  component={() => <Redirect to="/tickets" />}
                   isPrivate
                 />
                 <Route

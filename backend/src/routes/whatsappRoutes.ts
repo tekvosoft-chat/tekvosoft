@@ -9,6 +9,12 @@ const whatsappRoutes = express.Router();
 
 whatsappRoutes.get("/whatsapp/", isAuth, WhatsAppController.index);
 
+whatsappRoutes.get(
+  "/whatsapp/:whatsappId/profile-picture",
+  isAuth,
+  WhatsAppController.profilePicture
+);
+
 whatsappRoutes.post("/whatsapp/", isAuth, isAdmin, WhatsAppController.store);
 
 whatsappRoutes.get(

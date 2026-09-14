@@ -62,6 +62,7 @@ import { faSignature } from "@fortawesome/free-solid-svg-icons";
 import { isMobile } from "../../helpers/isMobile";
 import MediaPreview from "../ui/MediaPreview";
 import { AttachPanel, RecordingPanel } from "./PhoneComposer";
+import QuickRepliesModal from "../QuickRepliesModal";
 import { SocketContext } from "../../context/Socket/SocketContext";
 
 const Mp3Recorder = new MicRecorder({ bitRate: 128 });
@@ -504,7 +505,8 @@ const CustomInput = props => {
     disableOption,
     phone,
     onQuickReplies,
-    onFocusInput
+    onFocusInput,
+    quickVersion
   } = props;
   const classes = useStyles();
   const [quickMessages, setQuickMessages] = useState([]);
@@ -542,8 +544,9 @@ const CustomInput = props => {
       setQuickMessages(options);
     }
     fetchData();
+    // recarrega o atalho "/" quando as respostas mudam no modal
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [quickVersion]);
 
   useEffect(() => {
     if (
@@ -945,6 +948,8 @@ const MessageInputCustom = props => {
   const theme = useTheme();
   const isPhone = useMediaQuery(theme.breakpoints.down("xs"));
   const [attachOpen, setAttachOpen] = useState(false);
+  const [quickOpen, setQuickOpen] = useState(false);
+  const [quickVersion, setQuickVersion] = useState(0);
 
   const [medias, setMedias] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
@@ -1059,11 +1064,30 @@ const MessageInputCustom = props => {
     });
   };
 
+  // respostas rápidas: modal para escolher, criar e editar sem sair da conversa
   const handleQuickReplies = () => {
     setAttachOpen(false);
-    setInputMessage("/");
-    setTimeout(() => inputRef.current?.focus(), 0);
+    inputRef.current?.blur();
+    setQuickOpen(true);
   };
+
+  const handlePickQuickReply = text => {
+    setInputMessage(prev =>
+      prev && prev.trim() && !prev.startsWith("/")
+        ? `${prev}${/\s$/.test(prev) ? "" : " "}${text}`
+        : text
+    );
+    setTimeout(() => inputRef.current?.focus(), 250);
+  };
+
+  const quickRepliesModal = (
+    <QuickRepliesModal
+      open={quickOpen}
+      onClose={() => setQuickOpen(false)}
+      onPick={handlePickQuickReply}
+      onChanged={() => setQuickVersion(v => v + 1)}
+    />
+  );
 
   const handleInputPaste = e => {
     if (e.clipboardData.files[0]) {
@@ -1370,6 +1394,7 @@ const MessageInputCustom = props => {
               disableOption={disableOption}
               onQuickReplies={handleQuickReplies}
               onFocusInput={() => setAttachOpen(false)}
+              quickVersion={quickVersion}
             />
 
             {!inputMessage && (
@@ -1405,6 +1430,7 @@ const MessageInputCustom = props => {
           signMessage={signMessage}
           onToggleSign={() => setSignMessage(!signMessage)}
         />
+        {quickRepliesModal}
       </Paper>
     );
   } else {
@@ -1434,6 +1460,18 @@ const MessageInputCustom = props => {
             tooltip={i18n.t("messagesInput.signMessage")}
           />
 
+          <Tooltip title={i18n.t("quickReplies.title")}>
+            <span>
+              <IconButton
+                aria-label={i18n.t("quickReplies.title")}
+                disabled={disableOption}
+                onClick={handleQuickReplies}
+              >
+                <FlashOnRoundedIcon className={classes.sendMessageIcons} />
+              </IconButton>
+            </span>
+          </Tooltip>
+
           <CustomInput
             loading={loading}
             inputRef={inputRef}
@@ -1446,6 +1484,7 @@ const MessageInputCustom = props => {
             handleChangeMedias={handleChangeMedias}
             handlePresenceUpdate={handlePresenceUpdate}
             disableOption={disableOption}
+            quickVersion={quickVersion}
           />
 
           <ActionButtons
@@ -1460,6 +1499,7 @@ const MessageInputCustom = props => {
             handleStartRecording={handleStartRecording}
           />
         </div>
+        {quickRepliesModal}
       </Paper>
     );
   }

@@ -13,6 +13,7 @@ import {
 import { toast } from "react-toastify";
 import api from "../../services/api";
 import { i18n } from "../../translate/i18n";
+import BoxLoader from "../ui/BoxLoader";
 
 const useStyles = makeStyles(theme => ({
   wavoipTitle: {
@@ -98,7 +99,7 @@ const WavoipModal = ({ open, onClose, whatsappId }) => {
       <DialogTitle>Wavoip Token</DialogTitle>
       <DialogContent dividers>
         {loading && initialLoad ? (
-          <CircularProgress />
+          <BoxLoader size={40} style={{ margin: "16px auto" }} />
         ) : (
           <>
             <Typography

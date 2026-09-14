@@ -23,7 +23,6 @@ import ForumIcon from "@material-ui/icons/Forum";
 import ForumOutlinedIcon from "@material-ui/icons/ForumOutlined";
 import ViewWeekOutlinedIcon from "@material-ui/icons/ViewWeekOutlined";
 import ViewWeekIcon from "@material-ui/icons/ViewWeek";
-import FlashOnIcon from "@material-ui/icons/FlashOn";
 import EventIcon from "@material-ui/icons/Event";
 import LocalOfferIcon from "@material-ui/icons/LocalOffer";
 import HelpOutlineIcon from "@material-ui/icons/HelpOutline";
@@ -40,11 +39,20 @@ import Brightness4Icon from "@material-ui/icons/Brightness4";
 import Brightness7Icon from "@material-ui/icons/Brightness7";
 import ExitToAppIcon from "@material-ui/icons/ExitToApp";
 import MoreHorizIcon from "@material-ui/icons/MoreHoriz";
+import VolumeUpRoundedIcon from "@material-ui/icons/VolumeUpRounded";
+import VolumeOffRoundedIcon from "@material-ui/icons/VolumeOffRounded";
+import Switch from "@material-ui/core/Switch";
 
 import BottomSheet from "../components/ui/BottomSheet";
 import { AuthContext } from "../context/Auth/AuthContext";
 import ColorModeContext from "./themeContext";
 import { i18n } from "../translate/i18n";
+import useNotificationSound from "../hooks/useNotificationSound";
+import {
+  activatePush,
+  pushState
+} from "../components/NotificationSoundSetting";
+import NotificationsActiveRoundedIcon from "@material-ui/icons/NotificationsActiveRounded";
 
 /**
  * Navegação do celular.
@@ -265,6 +273,8 @@ const MobileNav = ({ onOpenProfile }) => {
   const { colorMode } = useContext(ColorModeContext);
 
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [soundOn, setSoundOn] = useNotificationSound();
+  const [push, setPush] = useState(pushState);
 
   const isAdmin = user?.profile === "admin";
   const showCampaigns = !!localStorage.getItem("cshow");
@@ -332,11 +342,6 @@ const MobileNav = ({ onOpenProfile }) => {
         items: [
           { to: "/tickets", label: t("tickets"), icon: <WhatsAppIcon /> },
           { to: "/kanban", label: t("kanban"), icon: <ViewWeekOutlinedIcon /> },
-          {
-            to: "/quick-messages",
-            label: t("quickMessages"),
-            icon: <FlashOnIcon />
-          },
           {
             to: "/contacts",
             label: t("contacts"),
@@ -621,6 +626,35 @@ const MobileNav = ({ onOpenProfile }) => {
           >
             <PersonOutlineIcon />
             {i18n.t("mainDrawer.appBar.user.profile")}
+          </ButtonBase>
+          {push === "off" && (
+            <ButtonBase
+              className={classes.accountItem}
+              onClick={() => activatePush(!soundOn, () => setPush(pushState()))}
+            >
+              <NotificationsActiveRoundedIcon />
+              <span style={{ flex: 1, textAlign: "left" }}>
+                {i18n.t("push.enableOnPhone")}
+              </span>
+            </ButtonBase>
+          )}
+          <ButtonBase
+            className={classes.accountItem}
+            onClick={() => setSoundOn(!soundOn)}
+            role="switch"
+            aria-checked={soundOn}
+          >
+            {soundOn ? <VolumeUpRoundedIcon /> : <VolumeOffRoundedIcon />}
+            <span style={{ flex: 1, textAlign: "left" }}>
+              {i18n.t("notificationSound.title")}
+            </span>
+            <Switch
+              size="small"
+              color="primary"
+              checked={soundOn}
+              tabIndex={-1}
+              style={{ pointerEvents: "none" }}
+            />
           </ButtonBase>
           <ButtonBase
             className={classes.accountItem}

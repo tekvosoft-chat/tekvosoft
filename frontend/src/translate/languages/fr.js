@@ -828,6 +828,50 @@ const messages = {
       helps: {
         title: "Centre d'Aide"
       },
+      notificationSound: {
+        title: "Son des notifications",
+        description:
+          "Joue un son à l'arrivée d'un nouveau message. Uniquement sur cet appareil.",
+        on: "activé",
+        off: "désactivé"
+      },
+      push: {
+        title: "Notifications sur cet appareil",
+        description:
+          "Recevez les nouveaux messages avec le nom et la photo du contact, même application fermée.",
+        activeDescription:
+          "Vous recevez les nouveaux messages avec le nom et la photo du contact, même application fermée.",
+        enable: "Activer",
+        enabled: "Activées",
+        enableOnPhone: "Activer les notifications",
+        enabledToast: "Notifications activées sur cet appareil",
+        blocked:
+          "Les notifications sont bloquées. Autorisez-les dans les réglages du navigateur ou du téléphone.",
+        failed:
+          "Impossible d'activer les notifications pour le moment. Réessayez.",
+        unsupported:
+          "Ce navigateur ne prend pas en charge les notifications push.",
+        iosHint:
+          "Sur iPhone, ajoutez l'application à l'écran d'accueil (Partager > Sur l'écran d'accueil) et ouvrez-la depuis là pour les activer."
+      },
+      quickReplies: {
+        title: "Réponses rapides",
+        search: "Rechercher par raccourci ou texte",
+        empty:
+          "Aucune réponse rapide pour l'instant. Créez la première pour l'utiliser dans les conversations.",
+        emptySearch: "Aucune réponse trouvée.",
+        use: "Utiliser cette réponse",
+        edit: "Modifier",
+        delete: "Supprimer",
+        deleteTitle: "Supprimer la réponse rapide ?",
+        deleteMessage:
+          "Elle ne sera plus disponible pour l'équipe. Action irréversible.",
+        add: "Nouvelle réponse",
+        close: "Fermer",
+        added: "Réponse rapide créée",
+        updated: "Réponse rapide mise à jour",
+        deleted: "Réponse rapide supprimée"
+      },
       about: {
         headline: "Conçue pour mieux servir, chaque jour",
         product:
@@ -1199,6 +1243,9 @@ const messages = {
         }
       },
       messagesList: {
+        reactions: {
+          you: "Vous"
+        },
         header: {
           assignedTo: "Attribué à :",
           tapForInfo: "Touchez pour voir les infos du contact",

@@ -893,6 +893,48 @@ const messages = {
       helps: {
         title: "Central de Ajuda"
       },
+      notificationSound: {
+        title: "Som das notificações",
+        description:
+          "Toca um aviso sonoro quando chega mensagem nova. Vale só para este aparelho.",
+        on: "ligado",
+        off: "desligado"
+      },
+      push: {
+        title: "Notificações neste aparelho",
+        description:
+          "Receba as mensagens novas com o nome e a foto do contato, mesmo com o app fechado.",
+        activeDescription:
+          "Você recebe as mensagens novas com o nome e a foto do contato, mesmo com o app fechado.",
+        enable: "Ativar",
+        enabled: "Ativadas",
+        enableOnPhone: "Ativar notificações",
+        enabledToast: "Notificações ativadas neste aparelho",
+        blocked:
+          "As notificações estão bloqueadas. Libere nas configurações do navegador ou do celular.",
+        failed: "Não foi possível ativar as notificações agora. Tente de novo.",
+        unsupported: "Este navegador não recebe notificações push.",
+        iosHint:
+          "No iPhone, adicione o sistema à Tela de Início (Compartilhar > Adicionar à Tela de Início) e abra por lá para ativar."
+      },
+      quickReplies: {
+        title: "Respostas rápidas",
+        search: "Buscar por atalho ou texto",
+        empty:
+          "Nenhuma resposta rápida ainda. Crie a primeira para usar nas conversas.",
+        emptySearch: "Nenhuma resposta encontrada.",
+        use: "Usar esta resposta",
+        edit: "Editar",
+        delete: "Excluir",
+        deleteTitle: "Excluir resposta rápida?",
+        deleteMessage:
+          "Ela deixa de aparecer para a equipe. Essa ação não pode ser desfeita.",
+        add: "Nova resposta",
+        close: "Fechar",
+        added: "Resposta rápida criada",
+        updated: "Resposta rápida atualizada",
+        deleted: "Resposta rápida excluída"
+      },
       about: {
         headline: "Feita para atender melhor, todos os dias",
         product:
@@ -1308,6 +1350,9 @@ const messages = {
         }
       },
       messagesList: {
+        reactions: {
+          you: "Você"
+        },
         header: {
           assignedTo: "Atribuído à:",
           tapForInfo: "Toque para ver os dados do contato",

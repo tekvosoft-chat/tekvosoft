@@ -11,6 +11,7 @@ import { SocketContext } from "../../context/Socket/SocketContext";
 import { clearAllCachedSettings } from "../../helpers/settingsCache";
 import moment from "moment";
 import { decodeToken } from "react-jwt";
+import { forgetPushForUser } from "../../services/push";
 
 let apiInterceptorsRegistered = false;
 
@@ -222,6 +223,8 @@ const useAuth = () => {
       const socket = socketManager.GetSocket();
       socket.logout();
 
+      // este aparelho para de receber as notificações desta conta
+      await forgetPushForUser();
       await api.delete("/auth/logout");
       clearAllCachedSettings();
       setIsAuth(false);

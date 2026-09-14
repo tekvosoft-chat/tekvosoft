@@ -277,15 +277,13 @@ const App = () => {
   }, [mode]);
 
   // A barra de status do celular (a faixa da hora e da bateria no PWA) segue
-  // o tema: cor principal no claro, superfície escura no escuro. Antes ficava
-  // sempre roxa, mesmo com a empresa usando outro tema.
+  // a cor do tema, igual à barra superior. Antes ficava sempre roxa, mesmo
+  // com a empresa usando outro tema.
   useEffect(() => {
     const meta = document.querySelector('meta[name="theme-color"]');
     if (!meta) return;
-    meta.setAttribute(
-      "content",
-      mode === "dark" ? theme.palette.tkv.surface : theme.palette.primary.main
-    );
+    // a barra superior é da cor do tema nos dois modos
+    meta.setAttribute("content", theme.palette.primary.main);
   }, [theme, mode]);
 
   useEffect(() => {

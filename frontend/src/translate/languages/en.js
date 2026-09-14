@@ -895,6 +895,48 @@ const messages = {
       helps: {
         title: "Help Center"
       },
+      notificationSound: {
+        title: "Notification sound",
+        description:
+          "Plays a sound when a new message arrives. Applies to this device only.",
+        on: "on",
+        off: "off"
+      },
+      push: {
+        title: "Notifications on this device",
+        description:
+          "Get new messages with the contact's name and photo, even with the app closed.",
+        activeDescription:
+          "You get new messages with the contact's name and photo, even with the app closed.",
+        enable: "Turn on",
+        enabled: "On",
+        enableOnPhone: "Turn on notifications",
+        enabledToast: "Notifications turned on for this device",
+        blocked:
+          "Notifications are blocked. Allow them in your browser or phone settings.",
+        failed: "Couldn't turn on notifications right now. Please try again.",
+        unsupported: "This browser doesn't support push notifications.",
+        iosHint:
+          "On iPhone, add the app to your Home Screen (Share > Add to Home Screen) and open it from there to turn this on."
+      },
+      quickReplies: {
+        title: "Quick replies",
+        search: "Search by shortcut or text",
+        empty:
+          "No quick replies yet. Create the first one to use in conversations.",
+        emptySearch: "No replies found.",
+        use: "Use this reply",
+        edit: "Edit",
+        delete: "Delete",
+        deleteTitle: "Delete quick reply?",
+        deleteMessage:
+          "It will no longer be available to the team. This can't be undone.",
+        add: "New reply",
+        close: "Close",
+        added: "Quick reply created",
+        updated: "Quick reply updated",
+        deleted: "Quick reply deleted"
+      },
       about: {
         headline: "Built to help you serve better, every day",
         product:
@@ -1307,6 +1349,9 @@ const messages = {
         }
       },
       messagesList: {
+        reactions: {
+          you: "You"
+        },
         header: {
           assignedTo: "Assigned to:",
           tapForInfo: "Tap to see contact info",

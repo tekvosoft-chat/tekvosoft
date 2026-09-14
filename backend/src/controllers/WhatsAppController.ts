@@ -2,7 +2,8 @@ import { Request, Response } from "express";
 import { Op } from "sequelize";
 import { cacheLayer } from "../libs/cache";
 import { getIO } from "../libs/socket";
-import { removeWbot } from "../libs/wbot";
+import { getWbot, removeWbot } from "../libs/wbot";
+import Whatsapp from "../models/Whatsapp";
 import DeleteBaileysService from "../services/BaileysServices/DeleteBaileysService";
 import { StartWhatsAppSession } from "../services/WbotServices/StartWhatsAppSession";
 
@@ -194,4 +195,50 @@ export const remove = async (
   });
 
   return res.status(200).json({ message: "Session disconnected." });
+};
+
+/**
+ * Foto de perfil do próprio número conectado. O app mostra essa foto nos
+ * áudios enviados, como o WhatsApp faz. Nada é gravado no banco: a URL fica
+ * algumas horas no cache (sem foto, poucos minutos, para tentar de novo).
+ */
+export const profilePicture = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { whatsappId } = req.params;
+  const { companyId } = req.user;
+
+  const whatsapp = await Whatsapp.findByPk(whatsappId, {
+    attributes: ["id", "companyId"]
+  });
+
+  if (!whatsapp || whatsapp.companyId !== companyId) {
+    throw new AppError("ERR_NO_WAPP_FOUND", 404);
+  }
+
+  const cacheKey = `picurl_self:${whatsapp.id}`;
+  const cached = await cacheLayer.get(cacheKey);
+  if (cached) {
+    return res.status(200).json({ url: cached === "none" ? null : cached });
+  }
+
+  let url: string | null = null;
+  try {
+    const wbot = getWbot(whatsapp.id);
+    if (wbot?.myJid) {
+      url = (await wbot.profilePictureUrl(wbot.myJid, "image", 5000)) || null;
+    }
+  } catch (error) {
+    url = null;
+  }
+
+  await cacheLayer.set(
+    cacheKey,
+    url || "none",
+    "EX",
+    url ? 60 * 60 * 6 : 60 * 10
+  );
+
+  return res.status(200).json({ url });
 };

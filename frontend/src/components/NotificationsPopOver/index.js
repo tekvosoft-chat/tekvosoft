@@ -22,6 +22,8 @@ import { AuthContext } from "../../context/Auth/AuthContext";
 import { SocketContext } from "../../context/Socket/SocketContext";
 import Favicon from "react-favicon";
 import useSettings from "../../hooks/useSettings";
+import { isNotificationSoundOn } from "../../hooks/useNotificationSound";
+import { isPushActive } from "../../services/push";
 
 const defaultLogoFavicon = "/vector/favicon.png";
 
@@ -230,10 +232,15 @@ const NotificationsPopOver = props => {
       body: `${format(new Date(), "HH:mm")}\n${body}`,
       icon: contact.profilePicUrl,
       tag: ticket.id,
-      renotify: true
+      renotify: true,
+      // som desligado neste aparelho: aviso sem barulho
+      silent: !isNotificationSoundOn()
     };
 
     try {
+      // com push ativo, o aviso do sistema vem do service worker (com foto
+      // e nome); aqui ficaria duplicado
+      if (isPushActive()) throw new Error("push-active");
       const notification = new Notification(
         `${i18n.t("tickets.notification.message")} ${contact.name}`,
         options
@@ -256,10 +263,12 @@ const NotificationsPopOver = props => {
         return [notification, ...prevState];
       });
     } catch (e) {
-      console.error("Failed to push browser notification");
+      if (e?.message !== "push-active") {
+        console.error("Failed to push browser notification");
+      }
     }
 
-    soundAlertRef.current();
+    if (isNotificationSoundOn()) soundAlertRef.current();
   };
 
   const handleClick = () => {

@@ -23,6 +23,7 @@ import api from "../../services/api";
 import toastError from "../../errors/toastError";
 import ConfirmationModal from "../ConfirmationModal";
 import { i18n } from "../../translate/i18n";
+import BoxLoader from "../ui/BoxLoader";
 
 const useStyles = makeStyles(theme => ({
   container: {
@@ -239,7 +240,7 @@ const ContainersManager = () => {
   if (loading) {
     return (
       <Box className={classes.loadingContainer}>
-        <CircularProgress />
+        <BoxLoader />
       </Box>
     );
   }

@@ -840,6 +840,48 @@ const messages = {
       helps: {
         title: "Pusat Bantuan"
       },
+      notificationSound: {
+        title: "Suara notifikasi",
+        description:
+          "Memutar suara saat pesan baru masuk. Hanya berlaku di perangkat ini.",
+        on: "aktif",
+        off: "nonaktif"
+      },
+      push: {
+        title: "Notifikasi di perangkat ini",
+        description:
+          "Terima pesan baru dengan nama dan foto kontak, bahkan saat aplikasi ditutup.",
+        activeDescription:
+          "Anda menerima pesan baru dengan nama dan foto kontak, bahkan saat aplikasi ditutup.",
+        enable: "Aktifkan",
+        enabled: "Aktif",
+        enableOnPhone: "Aktifkan notifikasi",
+        enabledToast: "Notifikasi diaktifkan di perangkat ini",
+        blocked:
+          "Notifikasi diblokir. Izinkan di pengaturan browser atau ponsel.",
+        failed: "Tidak dapat mengaktifkan notifikasi sekarang. Coba lagi.",
+        unsupported: "Browser ini tidak mendukung notifikasi push.",
+        iosHint:
+          "Di iPhone, tambahkan aplikasi ke Layar Utama (Bagikan > Tambahkan ke Layar Utama) lalu buka dari sana untuk mengaktifkan."
+      },
+      quickReplies: {
+        title: "Balasan cepat",
+        search: "Cari berdasarkan pintasan atau teks",
+        empty:
+          "Belum ada balasan cepat. Buat yang pertama untuk dipakai di percakapan.",
+        emptySearch: "Tidak ada balasan ditemukan.",
+        use: "Gunakan balasan ini",
+        edit: "Edit",
+        delete: "Hapus",
+        deleteTitle: "Hapus balasan cepat?",
+        deleteMessage:
+          "Balasan tidak akan tersedia lagi untuk tim. Tindakan ini tidak dapat dibatalkan.",
+        add: "Balasan baru",
+        close: "Tutup",
+        added: "Balasan cepat dibuat",
+        updated: "Balasan cepat diperbarui",
+        deleted: "Balasan cepat dihapus"
+      },
       about: {
         headline: "Dibuat untuk melayani lebih baik, setiap hari",
         product:
@@ -1218,6 +1260,9 @@ const messages = {
         }
       },
       messagesList: {
+        reactions: {
+          you: "Anda"
+        },
         header: {
           assignedTo: "Ditugaskan kepada:",
           tapForInfo: "Ketuk untuk melihat info kontak",

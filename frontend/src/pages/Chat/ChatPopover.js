@@ -29,6 +29,7 @@ import { AuthContext } from "../../context/Auth/AuthContext";
 import notifySound from "../../assets/chat_notify.mp3";
 import useSound from "use-sound";
 import { i18n } from "../../translate/i18n";
+import { isNotificationSoundOn } from "../../hooks/useNotificationSound";
 
 const useStyles = makeStyles(theme => ({
   mainPaper: {
@@ -148,7 +149,7 @@ export default function ChatPopover() {
       if (data.action === "new-message") {
         dispatch({ type: "CHANGE_CHAT", payload: data });
         if (data.newMessage.senderId !== user.id) {
-          soundAlertRef.current();
+          if (isNotificationSoundOn()) soundAlertRef.current();
         }
       }
       if (data.action === "update") {

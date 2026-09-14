@@ -15,7 +15,6 @@ import SettingsOutlinedIcon from "@material-ui/icons/SettingsOutlined";
 import PeopleAltOutlinedIcon from "@material-ui/icons/PeopleAltOutlined";
 import ContactPhoneOutlinedIcon from "@material-ui/icons/ContactPhoneOutlined";
 import AccountTreeOutlinedIcon from "@material-ui/icons/AccountTreeOutlined";
-import FlashOnIcon from "@material-ui/icons/FlashOn";
 import CalendarToday from "@material-ui/icons/CalendarToday";
 import HelpOutlineIcon from "@material-ui/icons/HelpOutline";
 import CodeRoundedIcon from "@material-ui/icons/CodeRounded";
@@ -530,11 +529,6 @@ const MainListItems = props => {
           to="/tags"
           primary={i18n.t("mainDrawer.listItems.tags")}
           icon={<LocalOfferIcon />}
-        />
-        <ListItemLink
-          to="/quick-messages"
-          primary={i18n.t("mainDrawer.listItems.quickMessages")}
-          icon={<FlashOnIcon />}
         />
         <ListItemLink
           to="/schedules"

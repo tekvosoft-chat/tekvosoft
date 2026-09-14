@@ -1,6 +1,7 @@
 import { Sequelize } from "sequelize-typescript";
 import User from "../models/User";
 import Setting from "../models/Setting";
+import PushSubscription from "../models/PushSubscription";
 import Contact from "../models/Contact";
 import ContactTag from "../models/ContactTag";
 import Ticket from "../models/Ticket";
@@ -94,7 +95,8 @@ const models = [
   OutOfTicketMessage,
   Subscriptions,
   Translation,
-  Wavoip
+  Wavoip,
+  PushSubscription
 ];
 
 sequelize.addModels(models);

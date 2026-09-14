@@ -6,6 +6,7 @@ import OldMessage from "../../models/OldMessage";
 import Ticket from "../../models/Ticket";
 import Whatsapp from "../../models/Whatsapp";
 import { logger } from "../../utils/logger";
+import { notifyNewMessage } from "../PushServices/WebPushService";
 
 interface MessageData {
   id: string;
@@ -114,6 +115,11 @@ const CreateMessageService = async ({
 
   if (!skipWebsocket) {
     websocketCreateMessage(message);
+
+    // push para os aparelhos da equipe; não segura a gravação da mensagem
+    notifyNewMessage(message).catch(error =>
+      logger.warn({ message: error?.message }, "WebPush: erro ao notificar")
+    );
   }
 
   io.to(`company-${companyId}-mainchannel`).emit(

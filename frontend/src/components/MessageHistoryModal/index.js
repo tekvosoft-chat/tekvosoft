@@ -10,8 +10,7 @@ import {
   TableBody,
   TableRow,
   TableCell,
-  makeStyles,
-  CircularProgress
+  makeStyles
 } from "@material-ui/core";
 
 import { parseISO, format } from "date-fns";
@@ -19,6 +18,7 @@ import { parseISO, format } from "date-fns";
 import { i18n } from "../../translate/i18n";
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
+import BoxLoader from "../ui/BoxLoader";
 
 const useStyles = makeStyles(theme => ({
   timestamp: {
@@ -82,7 +82,7 @@ const MessageHistoryModal = ({ open, onClose, messageId }) => {
       <DialogContent>
         {loading ? (
           <div className={classes.loadingContainer}>
-            <CircularProgress size={28} />
+            <BoxLoader size={36} />
           </div>
         ) : (
           <TableContainer>

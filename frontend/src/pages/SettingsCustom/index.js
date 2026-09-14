@@ -26,6 +26,7 @@ import config from "../../services/config.js";
 
 import OnlyForSuperUser from "../../components/OnlyForSuperUser";
 import OpenHoursEditor from "../../components/OpenHoursEditor";
+import NotificationSoundSetting from "../../components/NotificationSoundSetting";
 import AppearanceSettings from "../../components/AppearanceSettings";
 
 // Helper to check if value is OpenHours format or empty
@@ -331,6 +332,7 @@ const SettingsCustom = () => {
             name={"appearance"}
           >
             <AppearanceSettings />
+            <NotificationSoundSetting />
           </TabPanel>
           <TabPanel className={classes.container} value={tab} name={"options"}>
             <Options
