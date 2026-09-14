@@ -217,6 +217,51 @@ export const semanticDark = {
 };
 
 // ─────────────────────────────────────────────────────────────
+// Conversa do WhatsApp
+// ─────────────────────────────────────────────────────────────
+// A tela de conversa segue o WhatsApp oficial de propósito: é onde o
+// atendente passa o dia, e a pessoa do outro lado está no WhatsApp. Ler as
+// mensagens com as mesmas cores, papel de parede e balões do aplicativo tira
+// qualquer esforço de tradução visual. O roxo da marca continua no resto do
+// sistema — e no chat interno, que é conversa entre a equipe, não com cliente.
+
+export const whatsappLight = {
+  wallpaper: "#EFEAE2",
+  bubbleOut: "#D9FDD3",
+  bubbleIn: "#FFFFFF",
+  quoteOut: "#D1F4CC",
+  quoteIn: "#F5F6F6",
+  text: "#111B21",
+  meta: "#667781",
+  bar: "#F0F2F5",
+  input: "#FFFFFF",
+  icon: "#54656F",
+  accent: "#00A884",
+  accentHover: "#008F72",
+  datePill: "#FFFFFF",
+  datePillText: "#54656F",
+  bubbleShadow: "0 1px 0.5px rgba(11, 20, 26, 0.13)"
+};
+
+export const whatsappDark = {
+  wallpaper: "#0B141A",
+  bubbleOut: "#005C4B",
+  bubbleIn: "#202C33",
+  quoteOut: "#025144",
+  quoteIn: "#1D282F",
+  text: "#E9EDEF",
+  meta: "rgba(233, 237, 239, 0.6)",
+  bar: "#202C33",
+  input: "#2A3942",
+  icon: "#8696A0",
+  accent: "#00A884",
+  accentHover: "#06CF9C",
+  datePill: "#182229",
+  datePillText: "#8696A0",
+  bubbleShadow: "0 1px 0.5px rgba(0, 0, 0, 0.35)"
+};
+
+// ─────────────────────────────────────────────────────────────
 // Forma, espaço, elevação
 // ─────────────────────────────────────────────────────────────
 

@@ -12,7 +12,7 @@ import WhatsAppIcon from "@material-ui/icons/WhatsApp";
 import DashboardOutlinedIcon from "@material-ui/icons/DashboardOutlined";
 import ContactPhoneOutlinedIcon from "@material-ui/icons/ContactPhoneOutlined";
 import ForumIcon from "@material-ui/icons/Forum";
-import BorderColorIcon from "@material-ui/icons/BorderColor";
+import ViewWeekOutlinedIcon from "@material-ui/icons/ViewWeekOutlined";
 import FlashOnIcon from "@material-ui/icons/FlashOn";
 import EventIcon from "@material-ui/icons/Event";
 import LocalOfferIcon from "@material-ui/icons/LocalOffer";
@@ -50,28 +50,78 @@ import { i18n } from "../translate/i18n";
  *    ícone + rótulo, não por leitura linha a linha.
  *
  * 3. O que a barra mostra depende do perfil. O Dashboard é só de admin, então
- *    para o atendente comum o primeiro item é Tarefas — ninguém recebe um
+ *    para o atendente comum o primeiro item é o Kanban — ninguém recebe um
  *    atalho que leva a uma tela vazia.
  */
 const useStyles = makeStyles(theme => ({
+  /**
+   * A barra agora é um item do layout em coluna, não um elemento fixo.
+   *
+   * Com position: fixed e bottom: 0 ela se prendia ao fundo da janela de
+   * layout do navegador — que no celular fica ATRÁS da barra de ferramentas
+   * do Chrome/Safari. Resultado: a navegação aparecia baixa demais, meio
+   * escondida, e ainda cobria a última linha de cada tela. Dentro do fluxo
+   * ela senta no fim da área visível de verdade (a altura vem do
+   * visualViewport, em --vh) e o conteúdo termina exatamente acima dela.
+   */
   bar: {
-    position: "fixed",
-    left: 0,
-    right: 0,
-    bottom: 0,
+    flex: "none",
+    position: "relative",
     zIndex: theme.zIndex.appBar + 2,
+    display: "flex",
     height: "auto",
-    paddingBottom: "env(safe-area-inset-bottom, 0px)",
+    minHeight: 64,
+    padding: "4px 4px 0",
+    paddingBottom: "calc(4px + env(safe-area-inset-bottom, 0px))",
     borderTop: `1px solid ${theme.palette.tkv.border}`,
-    backgroundColor: theme.palette.tkv.surface,
-    boxShadow: theme.palette.tkv.isDark
-      ? "0 -2px 12px rgba(0,0,0,0.4)"
-      : "0 -2px 12px rgba(26,22,38,0.06)"
+    backgroundColor: theme.palette.tkv.surface
   },
+
+  /**
+   * O Material-UI v4 dá a cada item min-width de 80px. Cinco itens pedem
+   * 400px e um celular comum tem 360: o último item estourava a tela e os
+   * rótulos quebravam em duas linhas. Aqui cada item divide a largura por
+   * igual e o rótulo nunca quebra.
+   */
   action: {
+    flex: "1 1 0",
+    minWidth: 0,
+    maxWidth: "none",
+    padding: "4px 0 2px",
+    color: theme.palette.text.secondary,
+    "& .MuiBottomNavigationAction-wrapper": { gap: 2 },
+    "& .MuiBottomNavigationAction-label": {
+      fontSize: "0.65625rem",
+      fontWeight: 500,
+      letterSpacing: "-0.01em",
+      lineHeight: 1.25,
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      maxWidth: "100%",
+      opacity: 1,
+      transition: "none"
+    },
     "&.Mui-selected": {
-      "& .MuiBottomNavigationAction-label": { fontWeight: 700 }
+      color: theme.palette.tkv.brand.main,
+      "& .MuiBottomNavigationAction-label": {
+        fontSize: "0.65625rem",
+        fontWeight: 700
+      },
+      "& $iconPill": { backgroundColor: theme.palette.tkv.brand.soft }
     }
+  },
+  // "pílula" atrás do ícone ativo: indica onde a pessoa está sem depender
+  // só da cor do texto, que é pequeno
+  iconPill: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 52,
+    height: 30,
+    borderRadius: theme.palette.tkv.radius.pill,
+    transition: "background-color .15s ease",
+    "& svg": { fontSize: 22 }
   },
 
   // ── grade do painel "Mais" ──
@@ -182,7 +232,12 @@ const MobileNav = ({ onOpenProfile }) => {
       label: t("contacts"),
       icon: <ContactPhoneOutlinedIcon />
     };
-    const chats = { to: "/chats", label: t("chats"), icon: <ForumIcon /> };
+    const chats = {
+      to: "/chats",
+      label: t("chats"),
+      short: t("chatsShort"),
+      icon: <ForumIcon />
+    };
 
     if (isAdmin) {
       return [
@@ -194,7 +249,7 @@ const MobileNav = ({ onOpenProfile }) => {
     }
     return [
       tickets,
-      { to: "/todolist", label: t("tasks"), icon: <BorderColorIcon /> },
+      { to: "/kanban", label: t("kanban"), icon: <ViewWeekOutlinedIcon /> },
       contacts,
       chats
     ];
@@ -208,7 +263,7 @@ const MobileNav = ({ onOpenProfile }) => {
         label: t("service"),
         items: [
           { to: "/tickets", label: t("tickets"), icon: <WhatsAppIcon /> },
-          { to: "/todolist", label: t("tasks"), icon: <BorderColorIcon /> },
+          { to: "/kanban", label: t("kanban"), icon: <ViewWeekOutlinedIcon /> },
           {
             to: "/quick-messages",
             label: t("quickMessages"),
@@ -303,8 +358,8 @@ const MobileNav = ({ onOpenProfile }) => {
           <BottomNavigationAction
             key={item.to}
             value={index}
-            label={item.label}
-            icon={item.icon}
+            label={item.short || item.label}
+            icon={<span className={classes.iconPill}>{item.icon}</span>}
             className={classes.action}
             onClick={() => go(item.to)}
           />
@@ -312,7 +367,11 @@ const MobileNav = ({ onOpenProfile }) => {
         <BottomNavigationAction
           value="more"
           label={t("more")}
-          icon={<MoreHorizIcon />}
+          icon={
+            <span className={classes.iconPill}>
+              <MoreHorizIcon />
+            </span>
+          }
           className={classes.action}
           onClick={() => setSheetOpen(true)}
         />

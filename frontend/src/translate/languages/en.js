@@ -237,7 +237,22 @@ const messages = {
         }
       },
       internalChat: {
-        title: "Internal Chat"
+        title: "Internal Chat",
+        subtitle: "Conversations with your team",
+        newChat: "New conversation",
+        emptyListTitle: "No conversations yet",
+        emptyListDescription:
+          "Create a conversation and choose who on your team joins.",
+        selectTitle: "Select a conversation",
+        selectDescription:
+          "Pick a conversation from the list or start a new one with your team.",
+        participants: "participants",
+        typeMessage: "Type a message",
+        edit: "Edit",
+        delete: "Delete",
+        deleteTitle: "Delete conversation",
+        deleteMessage: "This action cannot be undone. Continue?",
+        you: "You"
       },
       whatsappModal: {
         title: {
@@ -539,6 +554,7 @@ const messages = {
           campaigns: "Campaigns",
           annoucements: "Announcements",
           chats: "Internal Chat",
+          chatsShort: "Chat",
           financeiro: "Financial",
           logout: "Logout",
           management: "Management",
@@ -592,6 +608,26 @@ const messages = {
       },
       kanban: {
         title: "Kanban",
+        subtitle:
+          "Drag contacts between columns to follow each stage of the conversation.",
+        inbox: "Open",
+        newLane: "New column",
+        editLane: "Edit column",
+        deleteLane: "Delete column",
+        deleteLaneTitle: "Delete the column",
+        deleteLaneMessage:
+          "Tickets in this column go back to Open. No ticket is deleted.",
+        moveTo: "Move to",
+        moveLeft: "Move left",
+        moveRight: "Move right",
+        openConversation: "Open conversation",
+        emptyLane: "Drag tickets here",
+        noLanesTitle: "Build your board",
+        noLanesDescription:
+          "Create columns with a name and color to organize tickets by stage: new, negotiating, paid…",
+        unassigned: "Unassigned",
+        moved: "Ticket moved",
+        ticketsCount: "tickets",
         searchPlaceholder: "Search",
         subMenus: {
           list: "Panel",

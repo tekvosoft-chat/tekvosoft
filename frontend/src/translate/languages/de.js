@@ -16,6 +16,8 @@ const messages = {
         confirm: "Bestätigen",
         close: "Schließen",
         back: "Zurück",
+        today: "Heute",
+        yesterday: "Gestern",
         error: "Fehler",
         success: "Erfolg",
         actions: "Aktionen",
@@ -174,7 +176,22 @@ const messages = {
         }
       },
       internalChat: {
-        title: "Interner Chat"
+        title: "Interner Chat",
+        subtitle: "Unterhaltungen mit Ihrem Team",
+        newChat: "Neue Unterhaltung",
+        emptyListTitle: "Noch keine Unterhaltungen",
+        emptyListDescription:
+          "Erstellen Sie eine Unterhaltung und wählen Sie die Teilnehmer.",
+        selectTitle: "Unterhaltung auswählen",
+        selectDescription:
+          "Wählen Sie eine Unterhaltung aus der Liste oder beginnen Sie eine neue.",
+        participants: "Teilnehmer",
+        typeMessage: "Nachricht schreiben",
+        edit: "Bearbeiten",
+        delete: "Löschen",
+        deleteTitle: "Unterhaltung löschen",
+        deleteMessage: "Dies kann nicht rückgängig gemacht werden. Fortfahren?",
+        you: "Sie"
       },
       whatsappModal: {
         title: {
@@ -477,6 +494,7 @@ const messages = {
           campaigns: "Kampagnen",
           annoucements: "Ankündigungen",
           chats: "Interner Chat",
+          chatsShort: "Chat",
           financeiro: "Finanzen",
           logout: "Abmelden",
           management: "Management",
@@ -531,6 +549,26 @@ const messages = {
       },
       kanban: {
         title: "Kanban",
+        subtitle:
+          "Ziehen Sie Kontakte zwischen den Spalten, um jede Phase zu verfolgen.",
+        inbox: "Offen",
+        newLane: "Neue Spalte",
+        editLane: "Spalte bearbeiten",
+        deleteLane: "Spalte löschen",
+        deleteLaneTitle: "Spalte löschen",
+        deleteLaneMessage:
+          "Tickets dieser Spalte gehen zurück zu Offen. Es wird kein Ticket gelöscht.",
+        moveTo: "Verschieben nach",
+        moveLeft: "Nach links",
+        moveRight: "Nach rechts",
+        openConversation: "Unterhaltung öffnen",
+        emptyLane: "Tickets hierher ziehen",
+        noLanesTitle: "Erstellen Sie Ihr Board",
+        noLanesDescription:
+          "Erstellen Sie Spalten mit Name und Farbe, um Tickets nach Phase zu ordnen: neu, in Verhandlung, bezahlt…",
+        unassigned: "Nicht zugewiesen",
+        moved: "Ticket verschoben",
+        ticketsCount: "Tickets",
         searchPlaceholder: "Suche",
         subMenus: {
           list: "Tafel",

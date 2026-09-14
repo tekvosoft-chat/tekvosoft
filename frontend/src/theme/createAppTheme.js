@@ -33,7 +33,9 @@ import {
   radius,
   semanticDark,
   semanticLight,
-  SPACING_UNIT
+  SPACING_UNIT,
+  whatsappDark,
+  whatsappLight
 } from "./tokens";
 
 export default function createAppTheme({
@@ -137,6 +139,7 @@ export default function createAppTheme({
           radius,
           layout,
           isDark,
+          chat: isDark ? whatsappDark : whatsappLight,
           // superfícies
           canvas: n.canvas,
           surface: n.surface,

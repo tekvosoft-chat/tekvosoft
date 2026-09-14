@@ -18,6 +18,8 @@ const messages = {
         areyousure: "Tem certeza?",
         close: "Fechar",
         back: "Voltar",
+        today: "Hoje",
+        yesterday: "Ontem",
         closed: "Fechado",
         error: "Erro",
         success: "Sucesso",
@@ -204,7 +206,22 @@ const messages = {
         }
       },
       internalChat: {
-        title: "Chat Interno"
+        title: "Chat Interno",
+        subtitle: "Conversas com a sua equipa",
+        newChat: "Nova conversa",
+        emptyListTitle: "Ainda não há conversas",
+        emptyListDescription:
+          "Crie uma conversa e escolha quem da equipa participa.",
+        selectTitle: "Selecione uma conversa",
+        selectDescription:
+          "Escolha uma conversa na lista ou comece uma nova com a sua equipa.",
+        participants: "participantes",
+        typeMessage: "Escreva uma mensagem",
+        edit: "Editar",
+        delete: "Eliminar",
+        deleteTitle: "Eliminar conversa",
+        deleteMessage: "Esta ação não pode ser desfeita. Confirmar?",
+        you: "Você"
       },
       whatsappModal: {
         title: {
@@ -393,8 +410,8 @@ const messages = {
         title: {
           add: "Nova Tag",
           edit: "Editar Tag",
-          addKanban: "Nova Lane",
-          editKanban: "Editar Lane"
+          addKanban: "Nova coluna",
+          editKanban: "Editar coluna"
         },
         form: {
           name: "Nome",
@@ -407,7 +424,7 @@ const messages = {
           cancel: "Cancelar"
         },
         success: "Tag salva com sucesso.",
-        successKanban: "Lane salva com sucesso."
+        successKanban: "Coluna salva com sucesso."
       },
       chat: {
         noTicketMessage: "Selecione um ticket para começar a conversar."
@@ -508,6 +525,7 @@ const messages = {
           campaigns: "Campanhas",
           annoucements: "Informativos",
           chats: "Chat Interno",
+          chatsShort: "Chat",
           financeiro: "Financeiro",
           logout: "Sair",
           management: "Gestão",
@@ -562,6 +580,26 @@ const messages = {
       },
       kanban: {
         title: "Kanban",
+        subtitle:
+          "Arraste os contactos entre as colunas para acompanhar cada etapa do atendimento.",
+        inbox: "Em aberto",
+        newLane: "Nova coluna",
+        editLane: "Editar coluna",
+        deleteLane: "Eliminar coluna",
+        deleteLaneTitle: "Eliminar a coluna",
+        deleteLaneMessage:
+          "Os atendimentos desta coluna voltam para Em aberto. Nenhum atendimento é apagado.",
+        moveTo: "Mover para",
+        moveLeft: "Mover para a esquerda",
+        moveRight: "Mover para a direita",
+        openConversation: "Abrir conversa",
+        emptyLane: "Arraste atendimentos para aqui",
+        noLanesTitle: "Monte o seu quadro",
+        noLanesDescription:
+          "Crie colunas com nome e cor para organizar os atendimentos por etapa: novo, em negociação, pago…",
+        unassigned: "Sem atendente",
+        moved: "Atendimento movido",
+        ticketsCount: "atendimentos",
         searchPlaceholder: "Pesquisa",
         subMenus: {
           list: "Painel",

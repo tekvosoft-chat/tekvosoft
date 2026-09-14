@@ -23,13 +23,14 @@ import { TicketsContext } from "../../context/Tickets/TicketsContext";
  */
 const useStyles = makeStyles(theme => ({
   root: {
-    height: "100%",
+    // Ocupa exatamente o espaço que o layout sobra (flex: 1), em vez de
+    // height: 100% — que somava à barra de cima e empurrava a conversa para
+    // baixo da dobra, com o campo de digitar fora da tela.
+    flex: 1,
     display: "flex",
     flexDirection: "column",
     minHeight: 0,
-    backgroundColor: theme.palette.tkv.surface,
-    // a navegação inferior não pode cobrir o campo de escrever a mensagem
-    paddingBottom: `calc(${theme.palette.tkv.layout.bottomNavHeight}px + env(safe-area-inset-bottom, 0px))`
+    backgroundColor: theme.palette.tkv.surface
   },
   pane: {
     flex: 1,

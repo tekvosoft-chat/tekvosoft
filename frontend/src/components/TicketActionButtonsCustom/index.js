@@ -30,10 +30,20 @@ const useStyles = makeStyles(theme => ({
   actionButtons: {
     marginRight: 6,
     flex: "none",
+    display: "flex",
+    alignItems: "center",
     alignSelf: "center",
     marginLeft: "auto",
     "& > *": {
       margin: theme.spacing(0.5)
+    },
+    // No celular os ícones apertam: cada margem de 4px e respiro de 12px
+    // somados tiravam do nome do contato o espaço que ele precisa.
+    [theme.breakpoints.down("xs")]: {
+      marginRight: 2,
+      "& > *": { margin: 0 },
+      "& .MuiIconButton-root": { padding: 8 },
+      "& .MuiSvgIcon-root": { fontSize: 22 }
     }
   }
 }));

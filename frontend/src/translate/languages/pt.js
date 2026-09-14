@@ -236,7 +236,22 @@ const messages = {
         }
       },
       internalChat: {
-        title: "Chat Interno"
+        title: "Chat Interno",
+        subtitle: "Conversas com a sua equipe",
+        newChat: "Nova conversa",
+        emptyListTitle: "Nenhuma conversa ainda",
+        emptyListDescription:
+          "Crie uma conversa e escolha quem da equipe participa.",
+        selectTitle: "Selecione uma conversa",
+        selectDescription:
+          "Escolha uma conversa na lista ou comece uma nova com a sua equipe.",
+        participants: "participantes",
+        typeMessage: "Escreva uma mensagem",
+        edit: "Editar",
+        delete: "Excluir",
+        deleteTitle: "Excluir conversa",
+        deleteMessage: "Esta ação não pode ser desfeita. Confirmar?",
+        you: "Você"
       },
       whatsappModal: {
         title: {
@@ -424,8 +439,8 @@ const messages = {
         title: {
           add: "Nova Tag",
           edit: "Editar Tag",
-          addKanban: "Nova Lane",
-          editKanban: "Editar Lane"
+          addKanban: "Nova coluna",
+          editKanban: "Editar coluna"
         },
         form: {
           name: "Nome",
@@ -438,7 +453,7 @@ const messages = {
           cancel: "Cancelar"
         },
         success: "Tag salvo com sucesso.",
-        successKanban: "Lane salva com sucesso."
+        successKanban: "Coluna salva com sucesso."
       },
       chat: {
         noTicketMessage: "Selecione um ticket para começar a conversar."
@@ -537,6 +552,7 @@ const messages = {
           campaigns: "Campanhas",
           annoucements: "Informativos",
           chats: "Chat Interno",
+          chatsShort: "Chat",
           financeiro: "Financeiro",
           logout: "Sair",
           management: "Gerência",
@@ -591,6 +607,26 @@ const messages = {
       },
       kanban: {
         title: "Kanban",
+        subtitle:
+          "Arraste os contatos entre as colunas para acompanhar cada etapa do atendimento.",
+        inbox: "Em aberto",
+        newLane: "Nova coluna",
+        editLane: "Editar coluna",
+        deleteLane: "Excluir coluna",
+        deleteLaneTitle: "Excluir a coluna",
+        deleteLaneMessage:
+          "Os atendimentos desta coluna voltam para Em aberto. Nenhum atendimento é apagado.",
+        moveTo: "Mover para",
+        moveLeft: "Mover para a esquerda",
+        moveRight: "Mover para a direita",
+        openConversation: "Abrir conversa",
+        emptyLane: "Arraste atendimentos para cá",
+        noLanesTitle: "Monte o seu quadro",
+        noLanesDescription:
+          "Crie colunas com nome e cor para organizar os atendimentos por etapa: novo, em negociação, pago…",
+        unassigned: "Sem atendente",
+        moved: "Atendimento movido",
+        ticketsCount: "atendimentos",
         searchPlaceholder: "Pesquisa",
         subMenus: {
           list: "Painel",

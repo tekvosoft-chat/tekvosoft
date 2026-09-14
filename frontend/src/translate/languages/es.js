@@ -235,7 +235,22 @@ const messages = {
         }
       },
       internalChat: {
-        title: "Chat Interno"
+        title: "Chat Interno",
+        subtitle: "Conversaciones con tu equipo",
+        newChat: "Nueva conversación",
+        emptyListTitle: "Aún no hay conversaciones",
+        emptyListDescription:
+          "Crea una conversación y elige quién del equipo participa.",
+        selectTitle: "Selecciona una conversación",
+        selectDescription:
+          "Elige una conversación de la lista o empieza una nueva con tu equipo.",
+        participants: "participantes",
+        typeMessage: "Escribe un mensaje",
+        edit: "Editar",
+        delete: "Eliminar",
+        deleteTitle: "Eliminar conversación",
+        deleteMessage: "Esta acción no se puede deshacer. ¿Confirmar?",
+        you: "Tú"
       },
       whatsappModal: {
         title: {
@@ -540,6 +555,7 @@ const messages = {
           campaigns: "Campañas",
           annoucements: "Anuncios",
           chats: "Chat Interno",
+          chatsShort: "Chat",
           financeiro: "Financiero",
           logout: "Cerrar sesión",
           management: "Gerencia",
@@ -593,6 +609,26 @@ const messages = {
       },
       kanban: {
         title: "Kanban",
+        subtitle:
+          "Arrastra los contactos entre columnas para seguir cada etapa de la atención.",
+        inbox: "Abiertos",
+        newLane: "Nueva columna",
+        editLane: "Editar columna",
+        deleteLane: "Eliminar columna",
+        deleteLaneTitle: "Eliminar la columna",
+        deleteLaneMessage:
+          "Las atenciones de esta columna vuelven a Abiertos. No se elimina ninguna atención.",
+        moveTo: "Mover a",
+        moveLeft: "Mover a la izquierda",
+        moveRight: "Mover a la derecha",
+        openConversation: "Abrir conversación",
+        emptyLane: "Arrastra atenciones aquí",
+        noLanesTitle: "Arma tu tablero",
+        noLanesDescription:
+          "Crea columnas con nombre y color para organizar las atenciones por etapa: nuevo, negociando, pagado…",
+        unassigned: "Sin agente",
+        moved: "Atención movida",
+        ticketsCount: "atenciones",
         searchPlaceholder: "Búsqueda",
         subMenus: {
           list: "Panel",

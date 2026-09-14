@@ -16,6 +16,8 @@ const messages = {
         confirm: "Conferma",
         close: "Chiudi",
         back: "Indietro",
+        today: "Oggi",
+        yesterday: "Ieri",
         error: "Errore",
         success: "Successo",
         actions: "Azioni",
@@ -173,7 +175,22 @@ const messages = {
         }
       },
       internalChat: {
-        title: "Chat Interno"
+        title: "Chat Interno",
+        subtitle: "Conversazioni con il tuo team",
+        newChat: "Nuova conversazione",
+        emptyListTitle: "Ancora nessuna conversazione",
+        emptyListDescription:
+          "Crea una conversazione e scegli chi del team partecipa.",
+        selectTitle: "Seleziona una conversazione",
+        selectDescription:
+          "Scegli una conversazione dall'elenco o iniziane una nuova con il team.",
+        participants: "partecipanti",
+        typeMessage: "Scrivi un messaggio",
+        edit: "Modifica",
+        delete: "Elimina",
+        deleteTitle: "Elimina conversazione",
+        deleteMessage: "Questa azione non può essere annullata. Confermare?",
+        you: "Tu"
       },
       whatsappModal: {
         title: {
@@ -472,6 +489,7 @@ const messages = {
           campaigns: "Campagne",
           annoucements: "Informazioni",
           chats: "Chat Interna",
+          chatsShort: "Chat",
           financeiro: "Finanziario",
           logout: "Esci",
           management: "Gestione",
@@ -526,6 +544,25 @@ const messages = {
       },
       kanban: {
         title: "Kanban",
+        subtitle: "Trascina i contatti tra le colonne per seguire ogni fase.",
+        inbox: "Aperti",
+        newLane: "Nuova colonna",
+        editLane: "Modifica colonna",
+        deleteLane: "Elimina colonna",
+        deleteLaneTitle: "Elimina la colonna",
+        deleteLaneMessage:
+          "I ticket di questa colonna tornano in Aperti. Nessun ticket viene eliminato.",
+        moveTo: "Sposta in",
+        moveLeft: "Sposta a sinistra",
+        moveRight: "Sposta a destra",
+        openConversation: "Apri conversazione",
+        emptyLane: "Trascina qui i ticket",
+        noLanesTitle: "Crea la tua bacheca",
+        noLanesDescription:
+          "Crea colonne con nome e colore per organizzare i ticket per fase: nuovo, in trattativa, pagato…",
+        unassigned: "Non assegnato",
+        moved: "Ticket spostato",
+        ticketsCount: "ticket",
         searchPlaceholder: "Cerca",
         subMenus: {
           list: "Pannello",

@@ -15,6 +15,8 @@ const messages = {
         confirm: "Konfirmasi",
         close: "Tutup",
         back: "Kembali",
+        today: "Hari ini",
+        yesterday: "Kemarin",
         error: "Kesalahan",
         success: "Sukses",
         actions: "Aksi",
@@ -177,7 +179,22 @@ const messages = {
         }
       },
       internalChat: {
-        title: "Obrolan Internal"
+        title: "Obrolan Internal",
+        subtitle: "Percakapan dengan tim Anda",
+        newChat: "Percakapan baru",
+        emptyListTitle: "Belum ada percakapan",
+        emptyListDescription:
+          "Buat percakapan dan pilih anggota tim yang ikut.",
+        selectTitle: "Pilih percakapan",
+        selectDescription:
+          "Pilih percakapan dari daftar atau mulai yang baru dengan tim Anda.",
+        participants: "peserta",
+        typeMessage: "Tulis pesan",
+        edit: "Ubah",
+        delete: "Hapus",
+        deleteTitle: "Hapus percakapan",
+        deleteMessage: "Tindakan ini tidak dapat dibatalkan. Lanjutkan?",
+        you: "Anda"
       },
       whatsappModal: {
         title: {
@@ -490,6 +507,7 @@ const messages = {
           campaigns: "Kampanye",
           annoucements: "Pengumuman",
           chats: "Chat Internal",
+          chatsShort: "Obrolan",
           financeiro: "Finansial",
           logout: "Logout",
           management: "Management",
@@ -544,6 +562,25 @@ const messages = {
       },
       kanban: {
         title: "Kanban",
+        subtitle: "Seret kontak antar kolom untuk memantau setiap tahap.",
+        inbox: "Terbuka",
+        newLane: "Kolom baru",
+        editLane: "Ubah kolom",
+        deleteLane: "Hapus kolom",
+        deleteLaneTitle: "Hapus kolom",
+        deleteLaneMessage:
+          "Tiket di kolom ini kembali ke Terbuka. Tidak ada tiket yang dihapus.",
+        moveTo: "Pindahkan ke",
+        moveLeft: "Geser ke kiri",
+        moveRight: "Geser ke kanan",
+        openConversation: "Buka percakapan",
+        emptyLane: "Seret tiket ke sini",
+        noLanesTitle: "Susun papan Anda",
+        noLanesDescription:
+          "Buat kolom dengan nama dan warna untuk mengatur tiket per tahap: baru, negosiasi, lunas…",
+        unassigned: "Belum ditugaskan",
+        moved: "Tiket dipindahkan",
+        ticketsCount: "tiket",
         searchPlaceholder: "Cari",
         subMenus: {
           list: "Panel",

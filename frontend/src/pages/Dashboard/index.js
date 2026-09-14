@@ -42,9 +42,7 @@ const useStyles = makeStyles(theme => ({
     [theme.breakpoints.down("xs")]: {
       paddingTop: theme.spacing(2),
       paddingLeft: theme.spacing(1.5),
-      paddingRight: theme.spacing(1.5),
-      // espaço para a navegação inferior não cobrir o fim da página
-      paddingBottom: `calc(${theme.palette.tkv.layout.bottomNavHeight}px + env(safe-area-inset-bottom, 0px) + ${theme.spacing(2)}px)`
+      paddingRight: theme.spacing(1.5)
     }
   },
   fixedHeightPaper: {

@@ -106,10 +106,16 @@ const useStyles = makeStyles(theme => ({
     flexGrow: 1,
     width: "100%",
     minWidth: 300,
-    minHeight: 150
+    minHeight: 150,
+    // minWidth de 300px empurrava a conversa para fora de celulares estreitos
+    [theme.breakpoints.down("xs")]: { minWidth: 0, minHeight: 0 }
   },
 
   messagesList: {
+    // Papel de parede e cor de fundo do WhatsApp oficial. A imagem de
+    // rabiscos saiu das telas de listagem, mas aqui ela é o ambiente certo:
+    // quem atende está conversando com alguém que vê exatamente isto.
+    backgroundColor: theme.palette.tkv.chat.wallpaper,
     backgroundImage:
       theme.mode === "light"
         ? `url(${whatsBackground})`
@@ -119,7 +125,12 @@ const useStyles = makeStyles(theme => ({
     flexGrow: 1,
     padding: "20px 20px 20px 20px",
     overflowY: "scroll",
-    ...theme.scrollbarStyles
+    overscrollBehavior: "contain",
+    ...theme.scrollbarStyles,
+    [theme.breakpoints.down("xs")]: {
+      padding: "10px 8px 12px",
+      "-webkit-overflow-scrolling": "touch"
+    }
   },
 
   circleLoading: {
@@ -147,8 +158,8 @@ const useStyles = makeStyles(theme => ({
     },
 
     whiteSpace: "pre-wrap",
-    backgroundColor: theme.mode === "light" ? "#ffffff" : "#024481",
-    color: theme.mode === "light" ? "#303030" : "#ffffff",
+    backgroundColor: theme.palette.tkv.chat.bubbleIn,
+    color: theme.palette.tkv.chat.text,
     alignSelf: "flex-start",
     borderTopLeftRadius: 0,
     borderTopRightRadius: 8,
@@ -158,15 +169,19 @@ const useStyles = makeStyles(theme => ({
     paddingRight: 5,
     paddingTop: 5,
     paddingBottom: 0,
-    boxShadow:
-      theme.mode === "light" ? "0 1px 1px #b3b3b3" : "0 1px 1px #000000",
-    transition: "background-color 0.5s ease-in-out"
+    boxShadow: theme.palette.tkv.chat.bubbleShadow,
+    transition: "background-color 0.5s ease-in-out",
+    [theme.breakpoints.down("xs")]: {
+      marginRight: 0,
+      maxWidth: "86%",
+      minWidth: 72
+    }
   },
 
   quotedContainerLeft: {
     margin: "-3px -80px 6px -6px",
     overflow: "hidden",
-    backgroundColor: theme.mode === "light" ? "#f0f0f0" : "#1c2134",
+    backgroundColor: theme.palette.tkv.chat.quoteIn,
     borderRadius: "7.5px",
     display: "flex",
     position: "relative",
@@ -209,8 +224,8 @@ const useStyles = makeStyles(theme => ({
       right: 0
     },
     whiteSpace: "pre-wrap",
-    backgroundColor: theme.mode === "light" ? "#dcf8c6" : "#005c4b",
-    color: theme.mode === "light" ? "#303030" : "#ffffff",
+    backgroundColor: theme.palette.tkv.chat.bubbleOut,
+    color: theme.palette.tkv.chat.text,
     alignSelf: "flex-end",
     borderTopLeftRadius: 8,
     borderTopRightRadius: 8,
@@ -220,15 +235,19 @@ const useStyles = makeStyles(theme => ({
     paddingRight: 5,
     paddingTop: 5,
     paddingBottom: 0,
-    boxShadow:
-      theme.mode === "light" ? "0 1px 1px #b3b3b3" : "0 1px 1px #000000",
-    transition: "background-color 0.5s ease-in-out"
+    boxShadow: theme.palette.tkv.chat.bubbleShadow,
+    transition: "background-color 0.5s ease-in-out",
+    [theme.breakpoints.down("xs")]: {
+      marginLeft: 0,
+      maxWidth: "86%",
+      minWidth: 72
+    }
   },
 
   quotedContainerRight: {
     margin: "-3px -80px 6px -6px",
     overflowY: "hidden",
-    backgroundColor: theme.mode === "light" ? "#cfe9ba" : "#075e54",
+    backgroundColor: theme.palette.tkv.chat.quoteOut,
     borderRadius: "7.5px",
     display: "flex",
     position: "relative"
@@ -279,6 +298,9 @@ const useStyles = makeStyles(theme => ({
   },
 
   textContentItem: {
+    fontSize: "0.9063rem",
+    lineHeight: 1.4,
+    [theme.breakpoints.down("xs")]: { padding: "3px 66px 6px 6px" },
     overflowWrap: "break-word",
     padding: "3px 80px 6px 6px"
   },
@@ -377,11 +399,11 @@ const useStyles = makeStyles(theme => ({
     position: "absolute",
     bottom: 0,
     right: 5,
-    color: theme.mode === "light" ? "#999" : "#d0d0d0"
+    color: theme.palette.tkv.chat.meta
   },
 
   timestampStickerLeft: {
-    backgroundColor: theme.mode === "light" ? "#ffffff" : "#024481",
+    backgroundColor: theme.palette.tkv.chat.bubbleIn,
     borderRadius: 8,
     padding: 5,
     boxShadow:
@@ -389,7 +411,7 @@ const useStyles = makeStyles(theme => ({
   },
 
   timestampStickerRight: {
-    backgroundColor: theme.mode === "light" ? "#dcf8c6" : "#128c7e",
+    backgroundColor: theme.palette.tkv.chat.bubbleOut,
     borderTopLeftRadius: 8,
     borderTopRightRadius: 8,
     borderBottomLeftRadius: 8,
@@ -406,16 +428,19 @@ const useStyles = makeStyles(theme => ({
     alignItems: "center",
     textAlign: "center",
     alignSelf: "center",
-    width: "110px",
-    backgroundColor: theme.palette.backgroundContrast.paper,
+    width: "auto",
+    minWidth: 90,
+    backgroundColor: theme.palette.tkv.chat.datePill,
     margin: "10px",
-    borderRadius: "10px",
-    boxShadow: `0 1px 1px ${theme.palette.backgroundContrast.border}`
+    borderRadius: 8,
+    boxShadow: theme.palette.tkv.chat.bubbleShadow
   },
 
   dailyTimestampText: {
-    color: theme.palette.textCommon.main,
-    padding: 8,
+    color: theme.palette.tkv.chat.datePillText,
+    fontSize: "0.75rem",
+    fontWeight: 500,
+    padding: "5px 12px",
     alignSelf: "center",
     marginLeft: "0px"
   },

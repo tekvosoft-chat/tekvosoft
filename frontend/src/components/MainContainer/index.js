@@ -16,8 +16,6 @@ import { makeStyles } from "@material-ui/core/styles";
  * - Sai o Container do Material-UI (que impunha largura fixa por breakpoint)
  *   e entra uma largura máxima generosa com respiro lateral proporcional.
  *
- * - Reserva espaço embaixo no celular para a barra de navegação inferior não
- *   cobrir a última linha da lista.
  */
 const useStyles = makeStyles(theme => ({
   mainContainer: {
@@ -32,9 +30,7 @@ const useStyles = makeStyles(theme => ({
       padding: theme.spacing(2)
     },
     [theme.breakpoints.down("xs")]: {
-      padding: theme.spacing(1.5),
-      // altura da bottom navigation + área segura do aparelho
-      paddingBottom: `calc(${theme.palette.tkv.layout.bottomNavHeight}px + env(safe-area-inset-bottom, 0px) + ${theme.spacing(1.5)}px)`
+      padding: theme.spacing(1.5)
     }
   },
 

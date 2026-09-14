@@ -60,42 +60,78 @@ import { SocketContext } from "../../context/Socket/SocketContext";
 const Mp3Recorder = new MicRecorder({ bitRate: 128 });
 
 const useStyles = makeStyles(theme => ({
+  /**
+   * Barra de digitação no desenho do WhatsApp: faixa cinza clara, campo em
+   * pílula branca sem borda e o botão principal redondo e verde, que vira
+   * enviar quando há texto e microfone quando não há. É o mesmo arranjo que
+   * a pessoa do outro lado usa, então ninguém precisa procurar onde clicar.
+   */
   mainWrapper: {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    borderTop: "1px solid rgba(0, 0, 0, 0.12)"
+    flex: "none",
+    backgroundColor: theme.palette.tkv.chat.bar,
+    borderTop: "none",
+    // aparelhos sem botão físico: a barra não fica atrás da faixa de gestos
+    paddingBottom: "env(safe-area-inset-bottom, 0px)"
   },
 
   newMessageBox: {
     width: "100%",
     display: "flex",
-    padding: "7px",
-    alignItems: "center"
+    gap: 2,
+    padding: "6px 8px",
+    alignItems: "flex-end",
+    [theme.breakpoints.down("xs")]: { padding: "6px 6px 8px" }
   },
 
   messageInputWrapper: {
-    padding: 6,
-    marginRight: 7,
-    //background: "#fff",
-    border: "1px solid #ccc",
+    padding: "4px 6px 4px 12px",
+    marginRight: 4,
+    backgroundColor: theme.palette.tkv.chat.input,
+    border: "none",
     display: "flex",
-    borderRadius: 20,
-    flex: 1
+    alignItems: "center",
+    minHeight: 44,
+    borderRadius: 22,
+    flex: 1,
+    minWidth: 0
   },
 
   messageInput: {
-    paddingLeft: 10,
+    paddingLeft: 2,
     flex: 1,
-    border: "none"
+    border: "none",
+    fontSize: "0.9375rem",
+    color: theme.palette.tkv.chat.text
   },
 
   cameraIcon: {
-    color: "grey"
+    color: theme.palette.tkv.chat.icon
   },
 
   sendMessageIcons: {
-    color: "grey"
+    color: theme.palette.tkv.chat.icon
+  },
+
+  // botão principal: enviar / gravar
+  roundAction: {
+    flex: "none",
+    width: 44,
+    height: 44,
+    padding: 0,
+    marginBottom: 0,
+    borderRadius: "50%",
+    backgroundColor: theme.palette.tkv.chat.accent,
+    color: "#FFFFFF",
+    "&:hover": { backgroundColor: theme.palette.tkv.chat.accentHover },
+    "&.Mui-disabled": {
+      backgroundColor: theme.palette.tkv.chat.accent,
+      opacity: 0.5,
+      color: "#FFFFFF"
+    },
+    "& svg": { color: "#FFFFFF", fontSize: 22 }
   },
 
   uploadInput: {
@@ -108,8 +144,8 @@ const useStyles = makeStyles(theme => ({
     position: "relative",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#eee",
-    borderTop: "1px solid rgba(0, 0, 0, 0.12)"
+    backgroundColor: theme.palette.tkv.chat.bar,
+    borderTop: "none"
   },
 
   emojiBox: {
@@ -154,7 +190,8 @@ const useStyles = makeStyles(theme => ({
     justifyContent: "center",
     paddingTop: 8,
     paddingLeft: 73,
-    paddingRight: 7
+    paddingRight: 7,
+    [theme.breakpoints.down("xs")]: { paddingLeft: 8, paddingRight: 4 }
   },
 
   replyginMsgContainer: {
@@ -310,8 +347,9 @@ const ActionButtons = props => {
         component="span"
         onClick={handleSendMessage}
         disabled={disableOption}
+        className={classes.roundAction}
       >
-        <SendIcon className={classes.sendMessageIcons} />
+        <SendIcon />
       </IconButton>
     );
   } else if (recording) {
@@ -351,8 +389,9 @@ const ActionButtons = props => {
         component="span"
         disabled={disableOption}
         onClick={handleStartRecording}
+        className={classes.roundAction}
       >
-        <MicIcon className={classes.sendMessageIcons} />
+        <MicIcon />
       </IconButton>
     );
   }

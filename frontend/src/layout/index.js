@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import { useHistory } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 import clsx from "clsx";
 import {
   makeStyles,
@@ -74,15 +74,16 @@ const useStyles = makeStyles(theme => ({
     display: "flex",
     height: "var(--vh)",
     backgroundColor: theme.palette.fancyBackground,
-    "& .MuiButton-outlinedPrimary": {
-      color: theme.palette.primary,
-      border:
-        theme.mode === "light"
-          ? "1px solid rgba(0 124 102)"
-          : "1px solid rgba(255, 255, 255, 0.5)"
-    },
-    "& .MuiTab-textColorPrimary.Mui-selected": {
-      color: theme.palette.primary
+    // Antes havia aqui dois estilos globais herdados (borda verde-azulada
+    // cravada em todo botão contornado e uma cor de aba inválida). Eles
+    // passavam por cima do tema e deixavam "Novo" e "Cancelar" com cores
+    // que não existem no resto do sistema. O tema já cuida dos dois.
+    [theme.breakpoints.down("xs")]: {
+      // No celular a pilha é vertical: conteúdo e, embaixo, a navegação.
+      // A barra inferior ocupa o próprio espaço no fluxo em vez de flutuar
+      // por cima com position: fixed — flutuando, ela ficava presa atrás da
+      // barra de ferramentas do navegador e cobria o fim das telas.
+      flexDirection: "column"
     }
   },
   avatar: {
@@ -297,12 +298,24 @@ const useStyles = makeStyles(theme => ({
       width: drawerWidthCollapsed
     }
   },
+  // Some sem desmontar: a barra continua viva (notificações, som, socket),
+  // só não ocupa a tela enquanto a conversa está aberta.
+  hiddenInConversation: {
+    display: "none"
+  },
   appBarSpacer: {
     minHeight: appBarHeight,
     flex: "none"
   },
   content: {
     flex: 1,
+    minWidth: 0,
+    minHeight: 0,
+    // Coluna: o espaçador da barra de cima ocupa o dele e a página ocupa o
+    // resto (flex: 1). Antes a página pedia height: 100% e isso somava aos
+    // 56px do espaçador — a tela ficava maior que a janela e tudo descia.
+    display: "flex",
+    flexDirection: "column",
     overflow: "auto"
   },
   container: {
@@ -347,6 +360,7 @@ const useStyles = makeStyles(theme => ({
 const LoggedInLayout = ({ children, themeToggle }) => {
   const classes = useStyles();
   const history = useHistory();
+  const location = useLocation();
   const [userModalOpen, setUserModalOpen] = useState(false);
   const [aboutModalOpen, setAboutModalOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -374,6 +388,11 @@ const LoggedInLayout = ({ children, themeToggle }) => {
   //   tablet    (600-959) -> barra lateral só de ícones
   //   desktop   (>=960)   -> barra lateral completa, a pessoa escolhe
   const isPhone = useMediaQuery(theme.breakpoints.down("xs"));
+  // Dentro de uma conversa (de atendimento ou do chat interno), o celular
+  // mostra só a conversa, como no WhatsApp: sem a barra de cima e sem a
+  // navegação de baixo. A saída é a seta de voltar no cabeçalho dela.
+  const inConversation =
+    isPhone && /^\/(tickets|chats)\/[^/]+/.test(location.pathname);
   const greaterThenMd = useMediaQuery(theme.breakpoints.up("md"));
   const { colorMode } = useContext(ColorModeContext);
 
@@ -661,7 +680,11 @@ const LoggedInLayout = ({ children, themeToggle }) => {
       />
       <AppBar
         position="absolute"
-        className={clsx(classes.appBar, drawerOpen && classes.appBarShift)}
+        className={clsx(
+          classes.appBar,
+          drawerOpen && classes.appBarShift,
+          inConversation && classes.hiddenInConversation
+        )}
         color="primary"
       >
         <Toolbar variant="dense" className={classes.toolbar}>
@@ -834,11 +857,13 @@ const LoggedInLayout = ({ children, themeToggle }) => {
         }}
       />
       <main className={classes.content}>
-        <div className={classes.appBarSpacer} />
+        {!inConversation && <div className={classes.appBarSpacer} />}
         <OnlyForSuperUser user={currentUser} yes={() => <GoogleAnalytics />} />
         {children ? children : null}
       </main>
-      {isPhone && <MobileNav onOpenProfile={handleOpenUserModal} />}
+      {isPhone && !inConversation && (
+        <MobileNav onOpenProfile={handleOpenUserModal} />
+      )}
     </div>
   );
 };

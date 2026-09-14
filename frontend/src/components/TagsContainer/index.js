@@ -1,4 +1,5 @@
 import { Chip, Paper, TextField } from "@material-ui/core";
+import { readableOn } from "../../theme/tokens";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import React, { useEffect, useRef, useState } from "react";
 import { isArray, isString } from "lodash";
@@ -112,10 +113,14 @@ export function TagsContainer({ ticket, contact }) {
           <Chip
             variant="outlined"
             style={{
-              color: "white",
-              backgroundColor: option.color || "#eee",
-              textShadow:
-                "-1px 0 #808080, 0 1px #808080, 1px 0 #808080, 0 -1px #808080"
+              // Texto branco com contorno cinza (text-shadow) era a tentativa
+              // de ler branco sobre qualquer cor — em cor clara ficava
+              // borrado. Agora a cor do texto é escolhida pelo contraste
+              // real com a cor da tag.
+              color: readableOn(option.color || "#EEEEEE"),
+              backgroundColor: option.color || "#EEEEEE",
+              borderColor: "transparent",
+              fontWeight: 600
             }}
             label={option.name}
             {...getTagProps({ index })}
@@ -127,7 +132,11 @@ export function TagsContainer({ ticket, contact }) {
         <TextField {...params} variant="outlined" placeholder="Tags" />
       )}
       PaperComponent={({ children }) => (
-        <Paper style={{ width: 400, marginLeft: 12 }}>{children}</Paper>
+        <Paper
+          style={{ width: "min(400px, calc(100vw - 24px))", marginLeft: 12 }}
+        >
+          {children}
+        </Paper>
       )}
     />
   );

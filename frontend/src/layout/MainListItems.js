@@ -36,7 +36,7 @@ import ForumIcon from "@material-ui/icons/Forum";
 import LocalAtmIcon from "@material-ui/icons/LocalAtm";
 import RotateRight from "@material-ui/icons/RotateRight";
 import { i18n } from "../translate/i18n";
-import BorderColorIcon from "@material-ui/icons/BorderColor";
+import ViewWeekOutlinedIcon from "@material-ui/icons/ViewWeekOutlined";
 import { WhatsAppsContext } from "../context/WhatsApp/WhatsAppsContext";
 import { AuthContext } from "../context/Auth/AuthContext";
 import { Can } from "../components/Can";
@@ -391,9 +391,9 @@ const MainListItems = props => {
                   icon={<WhatsAppIcon />}
                 />
                 <ListItemLink
-                  to="/todolist"
-                  primary={i18n.t("mainDrawer.listItems.tasks")}
-                  icon={<BorderColorIcon />}
+                  to="/kanban"
+                  primary={i18n.t("mainDrawer.listItems.kanban")}
+                  icon={<ViewWeekOutlinedIcon />}
                 />
                 <ListItemLink
                   to="/quick-messages"

@@ -14,6 +14,10 @@ const useStyles = makeStyles(theme => ({
     alignItems: "center",
     flex: "none",
     backgroundColor: theme.palette.tkv.surface,
+    // o estilo global de Card (borda e cantos arredondados) vence o "square";
+    // aqui o cabeçalho é faixa colada ao topo, só com a linha de baixo
+    border: "none",
+    borderRadius: 0,
     borderBottom: `1px solid ${theme.palette.tkv.border}`,
     boxShadow: "none"
   },

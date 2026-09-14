@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { BrowserRouter, Switch } from "react-router-dom";
+import { BrowserRouter, Redirect, Switch } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 
 import LoggedInLayout from "../layout";
@@ -30,7 +30,7 @@ import CampaignsConfig from "../pages/CampaignsConfig";
 import CampaignReport from "../pages/CampaignReport";
 import Annoucements from "../pages/Annoucements";
 import Chat from "../pages/Chat";
-import ToDoList from "../pages/ToDoList/";
+import Kanban from "../pages/Kanban/";
 import Subscription from "../pages/Subscription/";
 
 const Routes = () => {
@@ -78,7 +78,15 @@ const Routes = () => {
                   component={Schedules}
                   isPrivate
                 />
-                <Route exact path="/todolist" component={ToDoList} isPrivate />
+                <Route exact path="/kanban" component={Kanban} isPrivate />
+                {/* "Tarefas" virou Kanban: links e favoritos antigos continuam
+                    chegando ao lugar certo */}
+                <Route
+                  exact
+                  path="/todolist"
+                  component={() => <Redirect to="/kanban" />}
+                  isPrivate
+                />
                 <Route exact path="/tags" component={Tags} isPrivate />
                 <Route exact path="/contacts" component={Contacts} isPrivate />
                 <Route exact path="/helps" component={Helps} isPrivate />

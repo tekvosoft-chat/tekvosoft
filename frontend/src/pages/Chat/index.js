@@ -3,69 +3,180 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { useParams, useHistory } from "react-router-dom";
 
 import {
+  Avatar,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Grid,
+  IconButton,
   makeStyles,
-  Paper,
-  Tab,
-  Tabs,
-  TextField
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  TextField,
+  Tooltip,
+  Typography
 } from "@material-ui/core";
+import AddRoundedIcon from "@material-ui/icons/AddRounded";
+import ArrowBackIosRoundedIcon from "@material-ui/icons/ArrowBackIosRounded";
+import MoreVertIcon from "@material-ui/icons/MoreVert";
+import EditOutlinedIcon from "@material-ui/icons/EditOutlined";
+import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
+import ForumOutlinedIcon from "@material-ui/icons/ForumOutlined";
+
 import ChatList from "./ChatList";
 import ChatMessages from "./ChatMessages";
 import { UsersFilter } from "../../components/UsersFilter";
+import ConfirmationModal from "../../components/ConfirmationModal";
+import EmptyState from "../../components/ui/EmptyState";
 import api from "../../services/api";
 import { SocketContext } from "../../context/Socket/SocketContext";
+import { getInitials } from "../../helpers/getInitials";
 
 import { has, isObject } from "lodash";
 
 import { AuthContext } from "../../context/Auth/AuthContext";
 import withWidth, { isWidthUp } from "@material-ui/core/withWidth";
-import whatsBackground from "../../assets/wa-background.png";
-import whatsBackgroundDark from "../../assets/wa-background-dark.png";
 
 import { i18n } from "../../translate/i18n";
-import Title from "../../components/Title";
-const useStyles = makeStyles(theme => ({
-  mainContainer: {
-    display: "flex",
-    flexDirection: "column",
-    position: "relative",
-    flex: 1,
-    padding: theme.spacing(2),
-    height: `calc(100% - 48px)`,
-    overflowY: "hidden",
-    border: "1px solid rgba(0, 0, 0, 0.12)",
-    backgroundImage:
-      theme.mode === "light"
-        ? `url(${whatsBackground})`
-        : `url(${whatsBackgroundDark})`,
-    backgroundPosition: "center",
-    backgroundSize: "cover",
-    backgroundRepeat: "no-repeat"
-  },
-  gridContainer: {
-    flex: 1,
-    height: "100%",
-    border: "1px solid rgba(0, 0, 0, 0.12)",
-    backgroundColor: "inherit"
-  },
-  gridItem: {
-    height: "100%"
-  },
-  gridItemTab: {
-    height: "92%",
-    width: "100%"
-  },
-  btnContainer: {
-    textAlign: "right",
-    padding: 10
-  }
-}));
+
+/**
+ * Chat interno.
+ *
+ * Antes: um Paper com o papel de parede do WhatsApp atrás de tudo, uma grade
+ * de 3/9 colunas com bordas de 1px dentro de outra borda, o botão "Nova"
+ * alinhado à direita acima da lista e, no celular, duas abas ("Chats" e
+ * "Mensagens") — que obrigavam a pessoa a escolher a conversa numa aba e
+ * depois trocar de aba para lê-la.
+ *
+ * Agora é um mensageiro de verdade:
+ *  - desktop: lista à esquerda, conversa à direita, dentro de um cartão só;
+ *  - celular: a lista é a tela; tocar numa conversa abre a conversa em tela
+ *    cheia e a seta de voltar retorna à lista. A própria URL (/chats/:id) diz
+ *    qual das duas mostrar, sem abas.
+ */
+const useStyles = makeStyles(theme => {
+  const t = theme.palette.tkv;
+  return {
+    page: {
+      flex: 1,
+      minHeight: 0,
+      display: "flex",
+      padding: theme.spacing(3),
+      backgroundColor: t.canvas,
+      [theme.breakpoints.down("sm")]: { padding: theme.spacing(2) },
+      [theme.breakpoints.down("xs")]: { padding: 0 }
+    },
+    shell: {
+      flex: 1,
+      minHeight: 0,
+      minWidth: 0,
+      display: "flex",
+      maxWidth: t.layout.contentMaxWidth,
+      margin: "0 auto",
+      width: "100%",
+      overflow: "hidden",
+      borderRadius: t.radius.lg,
+      border: `1px solid ${t.border}`,
+      backgroundColor: t.surface,
+      [theme.breakpoints.down("xs")]: { borderRadius: 0, border: "none" }
+    },
+
+    // ── coluna da lista ──
+    sidebar: {
+      width: 340,
+      flex: "none",
+      minHeight: 0,
+      display: "flex",
+      flexDirection: "column",
+      borderRight: `1px solid ${t.border}`,
+      [theme.breakpoints.down("sm")]: {
+        width: "100%",
+        borderRight: "none"
+      }
+    },
+    sidebarHeader: {
+      flex: "none",
+      display: "flex",
+      alignItems: "center",
+      gap: theme.spacing(1.5),
+      padding: theme.spacing(2, 2, 1.5, 2.5),
+      [theme.breakpoints.down("xs")]: { padding: theme.spacing(1.5, 1.5, 1, 2) }
+    },
+    sidebarTitleBox: { flex: 1, minWidth: 0 },
+    sidebarTitle: {
+      fontSize: "1.1875rem",
+      fontWeight: 700,
+      letterSpacing: "-0.015em",
+      color: theme.palette.text.primary,
+      lineHeight: 1.25
+    },
+    sidebarSubtitle: {
+      fontSize: "0.75rem",
+      color: theme.palette.text.secondary,
+      marginTop: 2,
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap"
+    },
+
+    // ── coluna da conversa ──
+    conversation: {
+      flex: 1,
+      minWidth: 0,
+      minHeight: 0,
+      display: "flex",
+      flexDirection: "column"
+    },
+    conversationHeader: {
+      flex: "none",
+      display: "flex",
+      alignItems: "center",
+      gap: theme.spacing(1.25),
+      minHeight: 64,
+      padding: theme.spacing(1, 1.5, 1, 2.5),
+      borderBottom: `1px solid ${t.border}`,
+      backgroundColor: t.surface,
+      [theme.breakpoints.down("xs")]: {
+        minHeight: 58,
+        padding: theme.spacing(0.75, 0.5, 0.75, 0.5)
+      }
+    },
+    headerAvatar: {
+      width: 40,
+      height: 40,
+      fontSize: "0.8125rem",
+      fontWeight: 700,
+      backgroundColor: t.brand.main,
+      color: t.brand.contrastText
+    },
+    headerText: { flex: 1, minWidth: 0 },
+    headerTitle: {
+      fontSize: "0.9375rem",
+      fontWeight: 700,
+      color: theme.palette.text.primary,
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap"
+    },
+    headerSubtitle: {
+      fontSize: "0.75rem",
+      color: theme.palette.text.secondary,
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap"
+    },
+    placeholder: {
+      flex: 1,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: t.canvas
+    }
+  };
+});
 
 export function ChatModal({
   open,
@@ -176,7 +287,9 @@ function Chat(props) {
   const [messagesPageInfo, setMessagesPageInfo] = useState({ hasMore: false });
   const [messagesPage, setMessagesPage] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [tab, setTab] = useState(0);
+  const [, setTab] = useState(0);
+  const [headerMenu, setHeaderMenu] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const isMounted = useRef(true);
   const scrollToBottomRef = useRef();
   const { id } = useParams();
@@ -349,106 +462,174 @@ function Chat(props) {
     }
   };
 
-  const renderGrid = () => {
-    return (
-      <>
-        <Title>{i18n.t("internalChat.title")}</Title>
-        <Grid className={classes.gridContainer} container>
-          <Grid className={classes.gridItem} md={3} item>
-            <div className={classes.btnContainer}>
-              <Button
-                onClick={() => {
-                  setDialogType("new");
-                  setShowDialog(true);
-                }}
-                color="primary"
-                variant="contained"
-              >
-                Nova
-              </Button>
-            </div>
+  const hasChat = isObject(currentChat) && has(currentChat, "id");
+  const isWide = isWidthUp("md", props.width);
+  // No celular a URL decide: /chats mostra a lista, /chats/:id a conversa.
+  const showList = isWide || !id;
+  const showConversation = isWide || !!id;
 
-            <ChatList
-              chats={chats}
-              pageInfo={chatsPageInfo}
-              loading={loading}
-              handleSelectChat={chat => selectChat(chat)}
-              handleDeleteChat={chat => deleteChat(chat)}
-              handleEditChat={() => {
-                setDialogType("edit");
-                setShowDialog(true);
-              }}
-            />
-          </Grid>
-          <Grid className={classes.gridItem} md={9} item>
-            {isObject(currentChat) && has(currentChat, "id") && (
-              <ChatMessages
-                chat={currentChat}
-                scrollToBottomRef={scrollToBottomRef}
-                pageInfo={messagesPageInfo}
-                messages={messages}
-                loading={loading}
-                handleSendMessage={sendMessage}
-                handleLoadMore={loadMoreMessages}
-              />
-            )}
-          </Grid>
-        </Grid>
-      </>
-    );
+  const openNewChat = () => {
+    setDialogType("new");
+    setShowDialog(true);
   };
 
-  const renderTab = () => {
-    return (
-      <Grid className={classes.gridContainer} container>
-        <Grid md={12} item>
-          <Tabs
-            value={tab}
-            indicatorColor="primary"
-            textColor="primary"
-            onChange={(e, v) => setTab(v)}
-            aria-label="disabled tabs example"
-          >
-            <Tab label="Chats" />
-            <Tab label="Mensagens" />
-          </Tabs>
-        </Grid>
-        {tab === 0 && (
-          <Grid className={classes.gridItemTab} md={12} item>
-            <div className={classes.btnContainer}>
-              <Button
-                onClick={() => setShowDialog(true)}
-                color="primary"
-                variant="contained"
-              >
-                Novo
-              </Button>
-            </div>
-            <ChatList
-              chats={chats}
-              pageInfo={chatsPageInfo}
-              loading={loading}
-              handleSelectChat={chat => selectChat(chat)}
-              handleDeleteChat={chat => deleteChat(chat)}
+  const participantsLabel = chat => {
+    const names = (chat.users || [])
+      .map(u =>
+        u.userId === user.id ? i18n.t("internalChat.you") : u.user?.name
+      )
+      .filter(Boolean);
+    return names.length
+      ? names.join(", ")
+      : `${(chat.users || []).length} ${i18n.t("internalChat.participants")}`;
+  };
+
+  const newChatButton = (
+    <Button
+      variant="contained"
+      color="primary"
+      size="small"
+      startIcon={<AddRoundedIcon />}
+      onClick={openNewChat}
+    >
+      {i18n.t("internalChat.newChat")}
+    </Button>
+  );
+
+  const renderSidebar = () => (
+    <aside className={classes.sidebar}>
+      <div className={classes.sidebarHeader}>
+        <div className={classes.sidebarTitleBox}>
+          <Typography component="h1" className={classes.sidebarTitle}>
+            {i18n.t("internalChat.title")}
+          </Typography>
+          <Typography className={classes.sidebarSubtitle}>
+            {i18n.t("internalChat.subtitle")}
+          </Typography>
+        </div>
+        {isWide ? (
+          newChatButton
+        ) : (
+          <Tooltip title={i18n.t("internalChat.newChat")}>
+            <IconButton
+              color="primary"
+              onClick={openNewChat}
+              aria-label={i18n.t("internalChat.newChat")}
+            >
+              <AddRoundedIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+      </div>
+      <ChatList
+        chats={chats}
+        pageInfo={chatsPageInfo}
+        loading={loading}
+        handleSelectChat={chat => selectChat(chat)}
+        handleDeleteChat={chat => deleteChat(chat)}
+        handleEditChat={() => {
+          setDialogType("edit");
+          setShowDialog(true);
+        }}
+        onNewChat={newChatButton}
+      />
+    </aside>
+  );
+
+  const renderConversation = () => {
+    if (!hasChat) {
+      return (
+        <section className={classes.conversation}>
+          <div className={classes.placeholder}>
+            <EmptyState
+              icon={<ForumOutlinedIcon />}
+              title={i18n.t("internalChat.selectTitle")}
+              description={i18n.t("internalChat.selectDescription")}
+              action={chats.length ? null : newChatButton}
             />
-          </Grid>
-        )}
-        {tab === 1 && (
-          <Grid className={classes.gridItemTab} md={12} item>
-            {isObject(currentChat) && has(currentChat, "id") && (
-              <ChatMessages
-                chat={currentChat}
-                scrollToBottomRef={scrollToBottomRef}
-                pageInfo={messagesPageInfo}
-                messages={messages}
-                loading={loading}
-                handleSendMessage={sendMessage}
-                handleLoadMore={loadMoreMessages}
-              />
-            )}
-          </Grid>
-        )}
-      </Grid>
+          </div>
+        </section>
+      );
+    }
+
+    const isOwner = currentChat.ownerId === user.id;
+
+    return (
+      <section className={classes.conversation}>
+        <header className={classes.conversationHeader}>
+          {!isWide && (
+            <IconButton
+              size="small"
+              onClick={() => history.push("/chats")}
+              aria-label={i18n.t("common.back")}
+            >
+              <ArrowBackIosRoundedIcon fontSize="small" />
+            </IconButton>
+          )}
+          <Avatar className={classes.headerAvatar}>
+            {getInitials(currentChat.title)}
+          </Avatar>
+          <div className={classes.headerText}>
+            <Typography component="h2" className={classes.headerTitle}>
+              {currentChat.title}
+            </Typography>
+            <Typography className={classes.headerSubtitle}>
+              {participantsLabel(currentChat)}
+            </Typography>
+          </div>
+          {isOwner && (
+            <>
+              <IconButton
+                onClick={e => setHeaderMenu(e.currentTarget)}
+                aria-label={i18n.t("common.actions")}
+              >
+                <MoreVertIcon />
+              </IconButton>
+              <Menu
+                anchorEl={headerMenu}
+                open={Boolean(headerMenu)}
+                onClose={() => setHeaderMenu(null)}
+                getContentAnchorEl={null}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                transformOrigin={{ vertical: "top", horizontal: "right" }}
+              >
+                <MenuItem
+                  onClick={() => {
+                    setHeaderMenu(null);
+                    setDialogType("edit");
+                    setShowDialog(true);
+                  }}
+                >
+                  <ListItemIcon>
+                    <EditOutlinedIcon fontSize="small" />
+                  </ListItemIcon>
+                  {i18n.t("internalChat.edit")}
+                </MenuItem>
+                <MenuItem
+                  onClick={() => {
+                    setHeaderMenu(null);
+                    setConfirmDelete(true);
+                  }}
+                >
+                  <ListItemIcon>
+                    <DeleteOutlineIcon fontSize="small" />
+                  </ListItemIcon>
+                  {i18n.t("internalChat.delete")}
+                </MenuItem>
+              </Menu>
+            </>
+          )}
+        </header>
+        <ChatMessages
+          chat={currentChat}
+          scrollToBottomRef={scrollToBottomRef}
+          pageInfo={messagesPageInfo}
+          messages={messages}
+          loading={loading}
+          handleSendMessage={sendMessage}
+          handleLoadMore={loadMoreMessages}
+        />
+      </section>
     );
   };
 
@@ -468,9 +649,20 @@ function Chat(props) {
         handleClose={() => setShowDialog(false)}
         user={user}
       />
-      <Paper className={classes.mainContainer}>
-        {isWidthUp("md", props.width) ? renderGrid() : renderTab()}
-      </Paper>
+      <ConfirmationModal
+        title={i18n.t("internalChat.deleteTitle")}
+        open={confirmDelete}
+        onClose={setConfirmDelete}
+        onConfirm={() => deleteChat(currentChat)}
+      >
+        {i18n.t("internalChat.deleteMessage")}
+      </ConfirmationModal>
+      <div className={classes.page}>
+        <div className={classes.shell}>
+          {showList && renderSidebar()}
+          {showConversation && renderConversation()}
+        </div>
+      </div>
     </>
   );
 }

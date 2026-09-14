@@ -4,7 +4,16 @@ import { useParams, useHistory } from "react-router-dom";
 import { toast } from "react-toastify";
 import clsx from "clsx";
 
-import { Paper, makeStyles } from "@material-ui/core";
+import {
+  Badge,
+  IconButton,
+  Paper,
+  Tooltip,
+  makeStyles,
+  useMediaQuery,
+  useTheme
+} from "@material-ui/core";
+import LocalOfferOutlinedIcon from "@material-ui/icons/LocalOfferOutlined";
 
 import ContactDrawer from "../ContactDrawer";
 import MessageInput from "../MessageInputCustom/";
@@ -29,6 +38,24 @@ const useStyles = makeStyles(theme => ({
     height: "100%",
     position: "relative",
     overflow: "hidden"
+  },
+
+  // faixa de tags: fixa no desktop, recolhível no celular
+  tagsBar: {
+    flex: "none",
+    borderBottom: `1px solid ${theme.palette.tkv.border}`,
+    "& .MuiAutocomplete-root .MuiOutlinedInput-root": {
+      borderRadius: 0,
+      "& fieldset": { border: "none" }
+    }
+  },
+  tagsToggle: {
+    flex: "none",
+    color: theme.palette.text.secondary,
+    "& .MuiBadge-badge": {
+      backgroundColor: theme.palette.tkv.brand.main,
+      color: theme.palette.tkv.brand.contrastText
+    }
   },
 
   mainWrapper: {
@@ -78,6 +105,12 @@ const Ticket = () => {
   const { user } = useContext(AuthContext);
 
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const theme = useTheme();
+  const isPhone = useMediaQuery(theme.breakpoints.down("xs"));
+  // No celular a faixa de tags ocupava uma linha inteira entre o cabeçalho e
+  // as mensagens, mesmo quando o ticket não tinha tag nenhuma. Ela passa a
+  // abrir por um botão no cabeçalho; no desktop continua sempre visível.
+  const [tagsOpen, setTagsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [contact, setContact] = useState({});
   const [ticket, setTicket] = useState({});
@@ -221,14 +254,36 @@ const Ticket = () => {
         ></div>
         <TicketHeader loading={loading} showBack>
           {renderTicketInfo()}
+          {isPhone && (
+            <Tooltip title="Tags">
+              <IconButton
+                size="small"
+                className={classes.tagsToggle}
+                onClick={() => setTagsOpen(open => !open)}
+                aria-expanded={tagsOpen}
+                aria-label="Tags"
+              >
+                <Badge
+                  badgeContent={
+                    (tagsMode === "contact" ? contact?.tags : ticket?.tags)
+                      ?.length || 0
+                  }
+                >
+                  <LocalOfferOutlinedIcon fontSize="small" />
+                </Badge>
+              </IconButton>
+            </Tooltip>
+          )}
           <TicketActionButtons ticket={ticket} showTabGroups={showTabGroups} />
         </TicketHeader>
-        <Paper>
-          <TagsContainer
-            ticket={["ticket", "both"].includes(tagsMode) && ticket}
-            contact={tagsMode === "contact" && contact}
-          />
-        </Paper>
+        {(!isPhone || tagsOpen) && (
+          <Paper square elevation={0} className={classes.tagsBar}>
+            <TagsContainer
+              ticket={["ticket", "both"].includes(tagsMode) && ticket}
+              contact={tagsMode === "contact" && contact}
+            />
+          </Paper>
+        )}
         <ReplyMessageProvider>
           <EditMessageProvider>{renderMessagesList()}</EditMessageProvider>
         </ReplyMessageProvider>

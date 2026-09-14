@@ -1,65 +1,176 @@
 import React, { useContext, useState } from "react";
 import {
-  Chip,
+  Avatar,
+  ButtonBase,
   IconButton,
-  List,
-  ListItem,
-  ListItemSecondaryAction,
-  ListItemText,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  Typography,
   makeStyles
 } from "@material-ui/core";
-
 import { useHistory, useParams } from "react-router-dom";
+import { format, isToday, isYesterday, parseISO } from "date-fns";
+
+import MoreVertIcon from "@material-ui/icons/MoreVert";
+import EditOutlinedIcon from "@material-ui/icons/EditOutlined";
+import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
+import ForumOutlinedIcon from "@material-ui/icons/ForumOutlined";
+
 import { AuthContext } from "../../context/Auth/AuthContext";
-import { useDate } from "../../hooks/useDate";
-
-import DeleteIcon from "@material-ui/icons/Delete";
-import EditIcon from "@material-ui/icons/Edit";
-
 import ConfirmationModal from "../../components/ConfirmationModal";
+import EmptyState from "../../components/ui/EmptyState";
+import { getInitials } from "../../helpers/getInitials";
+import { i18n } from "../../translate/i18n";
 import api from "../../services/api";
 
+/**
+ * Lista de conversas do chat interno.
+ *
+ * Antes: título com um Chip de não lidas grudado, a data completa colada na
+ * frente da última mensagem ("11/09/2026 14:02: oi") e dois ícones de editar e
+ * excluir sempre visíveis em cada linha, competindo com o conteúdo. O item
+ * ativo era marcado por uma borda azul-marinho cravada (#002d6e) que não
+ * existia em nenhum outro lugar do sistema.
+ *
+ * Agora cada linha segue o desenho de qualquer app de mensagens: avatar,
+ * título, hora curta à direita, prévia da última mensagem embaixo e o contador
+ * de não lidas na cor da marca. Editar e excluir foram para um menu — são
+ * ações raras e destrutivas, não merecem ficar expostas o tempo todo.
+ */
 const useStyles = makeStyles(theme => ({
-  mainContainer: {
-    display: "flex",
-    flexDirection: "column",
-    position: "relative",
+  root: {
     flex: 1,
-    height: "calc(100% - 58px)",
-    overflow: "hidden",
-    borderRadius: 0
-    //backgroundColor: "inherit",
-  },
-  chatList: {
-    display: "flex",
-    flexDirection: "column",
-    position: "relative",
-    flex: 1,
-    overflowY: "scroll",
+    minHeight: 0,
+    overflowY: "auto",
+    padding: theme.spacing(0.5, 1, 1),
     ...theme.scrollbarStyles
   },
-  listItem: {
-    cursor: "pointer"
+  item: {
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    gap: theme.spacing(1.5),
+    width: "100%",
+    padding: theme.spacing(1.25, 1),
+    borderRadius: theme.palette.tkv.radius.md,
+    textAlign: "left",
+    transition: "background-color .12s ease",
+    "&:hover": { backgroundColor: theme.palette.tkv.surfaceHover },
+    "&:hover $menuButton, &:focus-within $menuButton": { opacity: 1 }
+  },
+  itemActive: {
+    backgroundColor: theme.palette.tkv.brand.soft,
+    "&:hover": { backgroundColor: theme.palette.tkv.brand.softHover }
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+    flex: "none",
+    fontSize: "0.875rem",
+    fontWeight: 700,
+    backgroundColor: theme.palette.tkv.brand.soft,
+    color: theme.palette.tkv.brand.main
+  },
+  avatarActive: {
+    backgroundColor: theme.palette.tkv.brand.main,
+    color: theme.palette.tkv.brand.contrastText
+  },
+  body: { flex: 1, minWidth: 0 },
+  row: {
+    display: "flex",
+    alignItems: "center",
+    gap: theme.spacing(1),
+    minWidth: 0
+  },
+  title: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: "0.9063rem",
+    fontWeight: 600,
+    color: theme.palette.text.primary,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap"
+  },
+  time: {
+    flex: "none",
+    fontSize: "0.6875rem",
+    color: theme.palette.text.secondary
+  },
+  timeUnread: {
+    color: theme.palette.tkv.brand.main,
+    fontWeight: 700
+  },
+  preview: {
+    flex: 1,
+    minWidth: 0,
+    marginTop: 2,
+    fontSize: "0.8125rem",
+    color: theme.palette.text.secondary,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap"
+  },
+  previewUnread: {
+    color: theme.palette.text.primary,
+    fontWeight: 500
+  },
+  unread: {
+    flex: "none",
+    minWidth: 20,
+    height: 20,
+    padding: "0 6px",
+    borderRadius: theme.palette.tkv.radius.pill,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "0.6875rem",
+    fontWeight: 700,
+    backgroundColor: theme.palette.tkv.brand.main,
+    color: theme.palette.tkv.brand.contrastText
+  },
+  menuSpacer: { flex: "none", width: 30 },
+  menuButton: {
+    flex: "none",
+    opacity: 0,
+    transition: "opacity .12s ease",
+    // no toque não existe hover: o menu fica sempre visível
+    "@media (hover: none)": { opacity: 1 }
   }
 }));
+
+// "14:02" hoje, "Ontem" ontem, "09/09" antes disso.
+const shortTime = value => {
+  if (!value) return "";
+  const date = typeof value === "string" ? parseISO(value) : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  if (isToday(date)) return format(date, "HH:mm");
+  if (isYesterday(date)) return i18n.t("common.yesterday", "Ontem");
+  return format(date, "dd/MM");
+};
 
 export default function ChatList({
   chats,
   handleSelectChat,
   handleDeleteChat,
   handleEditChat,
-  pageInfo,
-  loading
+  onNewChat
 }) {
   const classes = useStyles();
   const history = useHistory();
   const { user } = useContext(AuthContext);
-  const { datetimeToClient } = useDate();
 
   const [confirmationModal, setConfirmModalOpen] = useState(false);
   const [selectedChat, setSelectedChat] = useState({});
+  const [menu, setMenu] = useState({ anchor: null, chat: null });
 
   const { id } = useParams();
+
+  const unreadMessages = chat => {
+    const currentUser = chat.users.find(u => u.userId === user.id);
+    return currentUser?.unreads || 0;
+  };
 
   const goToMessages = async chat => {
     if (unreadMessages(chat) > 0) {
@@ -74,105 +185,129 @@ export default function ChatList({
     }
   };
 
-  const handleDelete = () => {
-    handleDeleteChat(selectedChat);
-  };
+  const closeMenu = () => setMenu({ anchor: null, chat: null });
 
-  const unreadMessages = chat => {
-    const currentUser = chat.users.find(u => u.userId === user.id);
-    return currentUser.unreads;
-  };
-
-  const getPrimaryText = chat => {
-    const mainText = chat.title;
-    const unreads = unreadMessages(chat);
+  if (!Array.isArray(chats) || chats.length === 0) {
     return (
-      <>
-        {mainText}
-        {unreads > 0 && (
-          <Chip
-            size="small"
-            style={{ marginLeft: 5 }}
-            label={unreads}
-            color="secondary"
-          />
-        )}
-      </>
+      <div className={classes.root}>
+        <EmptyState
+          icon={<ForumOutlinedIcon />}
+          title={i18n.t("internalChat.emptyListTitle")}
+          description={i18n.t("internalChat.emptyListDescription")}
+          action={onNewChat}
+        />
+      </div>
     );
-  };
-
-  const getSecondaryText = chat => {
-    return chat.lastMessage !== ""
-      ? `${datetimeToClient(chat.updatedAt)}: ${chat.lastMessage}`
-      : "";
-  };
-
-  const getItemStyle = chat => {
-    return {
-      borderLeft: chat.uuid === id ? "6px solid #002d6e" : null
-      // backgroundColor: chat.uuid === id ? "#eee" : null,
-    };
-  };
+  }
 
   return (
     <>
       <ConfirmationModal
-        title={"Excluir Conversa"}
+        title={i18n.t("internalChat.deleteTitle")}
         open={confirmationModal}
         onClose={setConfirmModalOpen}
-        onConfirm={handleDelete}
+        onConfirm={() => handleDeleteChat(selectedChat)}
       >
-        Esta ação não pode ser revertida, confirmar?
+        {i18n.t("internalChat.deleteMessage")}
       </ConfirmationModal>
-      <div className={classes.mainContainer}>
-        <div className={classes.chatList}>
-          <List>
-            {Array.isArray(chats) &&
-              chats.length > 0 &&
-              chats.map((chat, key) => (
-                <ListItem
-                  onClick={() => goToMessages(chat)}
-                  key={key}
-                  className={classes.listItem}
-                  style={getItemStyle(chat)}
-                  button
+
+      <Menu
+        anchorEl={menu.anchor}
+        open={Boolean(menu.anchor)}
+        onClose={closeMenu}
+        getContentAnchorEl={null}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <MenuItem
+          onClick={() => {
+            const chat = menu.chat;
+            closeMenu();
+            goToMessages(chat).then(() => handleEditChat?.(chat));
+          }}
+        >
+          <ListItemIcon>
+            <EditOutlinedIcon fontSize="small" />
+          </ListItemIcon>
+          {i18n.t("internalChat.edit")}
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setSelectedChat(menu.chat);
+            closeMenu();
+            setConfirmModalOpen(true);
+          }}
+        >
+          <ListItemIcon>
+            <DeleteOutlineIcon fontSize="small" />
+          </ListItemIcon>
+          {i18n.t("internalChat.delete")}
+        </MenuItem>
+      </Menu>
+
+      <div className={classes.root} role="list">
+        {chats.map(chat => {
+          const active = chat.uuid === id;
+          const unreads = unreadMessages(chat);
+          return (
+            <div role="listitem" key={chat.id}>
+              <ButtonBase
+                component="div"
+                className={`${classes.item}${active ? ` ${classes.itemActive}` : ""}`}
+                onClick={() => goToMessages(chat)}
+                aria-current={active ? "true" : undefined}
+              >
+                <Avatar
+                  className={`${classes.avatar}${active ? ` ${classes.avatarActive}` : ""}`}
                 >
-                  <ListItemText
-                    primary={getPrimaryText(chat)}
-                    secondary={getSecondaryText(chat)}
-                  />
-                  {chat.ownerId === user.id && (
-                    <ListItemSecondaryAction>
-                      <IconButton
-                        onClick={() => {
-                          goToMessages(chat).then(() => {
-                            handleEditChat(chat);
-                          });
-                        }}
-                        edge="end"
-                        aria-label="delete"
-                        size="small"
-                        style={{ marginRight: 5 }}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton
-                        onClick={() => {
-                          setSelectedChat(chat);
-                          setConfirmModalOpen(true);
-                        }}
-                        edge="end"
-                        aria-label="delete"
-                        size="small"
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </ListItemSecondaryAction>
-                  )}
-                </ListItem>
-              ))}
-          </List>
-        </div>
+                  {getInitials(chat.title)}
+                </Avatar>
+
+                <div className={classes.body}>
+                  <div className={classes.row}>
+                    <Typography component="span" className={classes.title}>
+                      {chat.title}
+                    </Typography>
+                    <span
+                      className={`${classes.time}${unreads > 0 ? ` ${classes.timeUnread}` : ""}`}
+                    >
+                      {shortTime(chat.updatedAt)}
+                    </span>
+                  </div>
+                  <div className={classes.row}>
+                    <Typography
+                      component="span"
+                      className={`${classes.preview}${unreads > 0 ? ` ${classes.previewUnread}` : ""}`}
+                    >
+                      {chat.lastMessage || " "}
+                    </Typography>
+                    {unreads > 0 && (
+                      <span className={classes.unread}>{unreads}</span>
+                    )}
+                  </div>
+                </div>
+
+                {chat.ownerId !== user.id ? (
+                  // mesmo sem menu, reserva o espaço: senão a hora de quem
+                  // não é dono fica desalinhada da hora dos demais itens
+                  <span className={classes.menuSpacer} aria-hidden="true" />
+                ) : (
+                  <IconButton
+                    size="small"
+                    className={classes.menuButton}
+                    aria-label={i18n.t("common.actions")}
+                    onClick={e => {
+                      e.stopPropagation();
+                      setMenu({ anchor: e.currentTarget, chat });
+                    }}
+                  >
+                    <MoreVertIcon fontSize="small" />
+                  </IconButton>
+                )}
+              </ButtonBase>
+            </div>
+          );
+        })}
       </div>
     </>
   );

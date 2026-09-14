@@ -16,6 +16,8 @@ const messages = {
         confirm: "Confirmer",
         close: "Fermer",
         back: "Retour",
+        today: "Aujourd'hui",
+        yesterday: "Hier",
         error: "Erreur",
         success: "Succès",
         actions: "Actions",
@@ -174,7 +176,22 @@ const messages = {
         }
       },
       internalChat: {
-        title: "Chat Interne"
+        title: "Chat Interne",
+        subtitle: "Conversations avec votre équipe",
+        newChat: "Nouvelle conversation",
+        emptyListTitle: "Aucune conversation pour l'instant",
+        emptyListDescription:
+          "Créez une conversation et choisissez qui y participe.",
+        selectTitle: "Sélectionnez une conversation",
+        selectDescription:
+          "Choisissez une conversation dans la liste ou commencez-en une nouvelle.",
+        participants: "participants",
+        typeMessage: "Écrivez un message",
+        edit: "Modifier",
+        delete: "Supprimer",
+        deleteTitle: "Supprimer la conversation",
+        deleteMessage: "Cette action est irréversible. Confirmer ?",
+        you: "Vous"
       },
       whatsappModal: {
         title: {
@@ -475,6 +492,7 @@ const messages = {
           campaigns: "Campagnes",
           annoucements: "Annonces",
           chats: "Chat Interne",
+          chatsShort: "Chat",
           financeiro: "Financier",
           logout: "Déconnexion",
           management: "Gestion",
@@ -529,6 +547,26 @@ const messages = {
       },
       kanban: {
         title: "Kanban",
+        subtitle:
+          "Glissez les contacts entre les colonnes pour suivre chaque étape.",
+        inbox: "Ouverts",
+        newLane: "Nouvelle colonne",
+        editLane: "Modifier la colonne",
+        deleteLane: "Supprimer la colonne",
+        deleteLaneTitle: "Supprimer la colonne",
+        deleteLaneMessage:
+          "Les tickets de cette colonne reviennent dans Ouverts. Aucun ticket n'est supprimé.",
+        moveTo: "Déplacer vers",
+        moveLeft: "Déplacer à gauche",
+        moveRight: "Déplacer à droite",
+        openConversation: "Ouvrir la conversation",
+        emptyLane: "Glissez des tickets ici",
+        noLanesTitle: "Créez votre tableau",
+        noLanesDescription:
+          "Créez des colonnes avec un nom et une couleur pour organiser les tickets par étape : nouveau, en négociation, payé…",
+        unassigned: "Non assigné",
+        moved: "Ticket déplacé",
+        ticketsCount: "tickets",
         searchPlaceholder: "Recherche",
         subMenus: {
           list: "Tableau",
