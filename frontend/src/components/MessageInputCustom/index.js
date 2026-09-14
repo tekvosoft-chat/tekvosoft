@@ -74,7 +74,7 @@ const useStyles = makeStyles(theme => ({
     backgroundColor: theme.palette.tkv.chat.bar,
     borderTop: "none",
     // aparelhos sem botão físico: a barra não fica atrás da faixa de gestos
-    paddingBottom: "env(safe-area-inset-bottom, 0px)"
+    paddingBottom: "var(--safe-bottom, 0px)"
   },
 
   newMessageBox: {
@@ -83,11 +83,19 @@ const useStyles = makeStyles(theme => ({
     gap: 2,
     padding: "6px 8px",
     alignItems: "flex-end",
-    [theme.breakpoints.down("xs")]: { padding: "6px 6px 8px" }
+    [theme.breakpoints.down("xs")]: {
+      padding: "6px 4px 8px",
+      gap: 0,
+      // No celular o texto do campo sobe para 16px (abaixo disso o iPhone dá
+      // zoom). Com os ícones no respiro padrão de 12px, "Digite uma mensagem"
+      // não cabia numa linha e o campo nascia com o dobro da altura.
+      "& .MuiIconButton-root:not($roundAction)": { padding: 8 }
+    }
   },
 
   messageInputWrapper: {
     padding: "4px 6px 4px 12px",
+    [theme.breakpoints.down("xs")]: { padding: "2px 2px 2px 12px" },
     marginRight: 4,
     backgroundColor: theme.palette.tkv.chat.input,
     border: "none",
@@ -904,7 +912,16 @@ const MessageInputCustom = props => {
   }, [replyingMessage, editingMessage, signMessage, user.name]);
 
   useEffect(() => {
-    inputRef.current.focus();
+    // Foco automático só no computador. No celular ele abria o teclado assim
+    // que a conversa carregava: o iPhone aproximava a tela, deslocava a área
+    // visível e a pessoa caía num vazio abaixo das mensagens, tendo que rolar
+    // de volta para cima. No WhatsApp o teclado só abre quando você toca no
+    // campo — aqui agora também.
+    const touch =
+      window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+    if (!touch) {
+      inputRef.current.focus();
+    }
     return () => {
       setShowEmoji(false);
       setMedias([]);

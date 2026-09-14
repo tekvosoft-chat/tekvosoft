@@ -23,11 +23,13 @@ const useStyles = makeStyles(theme => ({
     borderTopRightRadius: theme.palette.tkv.radius.xl,
     backgroundColor: theme.palette.tkv.surface,
     backgroundImage: "none",
-    maxHeight: "88vh",
+    // 88% da área VISÍVEL: no iOS, vh conta também a parte escondida atrás
+    // da barra do Safari, e o painel passava do topo da tela
+    maxHeight: "calc(var(--vh, 100vh) * 0.88)",
     display: "flex",
     flexDirection: "column",
     // respeita a barra de gestos dos aparelhos sem botão físico
-    paddingBottom: "env(safe-area-inset-bottom, 0px)"
+    paddingBottom: "var(--safe-bottom, 0px)"
   },
   grabber: {
     flex: "none",

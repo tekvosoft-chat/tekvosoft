@@ -151,10 +151,10 @@ const useStyles = makeStyles(theme => {
       padding: theme.spacing(1, 2, 1.5),
       backgroundColor: t.surface,
       borderTop: `1px solid ${t.border}`,
-      paddingBottom: `calc(${theme.spacing(1.5)}px + env(safe-area-inset-bottom, 0px))`,
+      paddingBottom: `calc(${theme.spacing(1.5)}px + var(--safe-bottom, 0px))`,
       [theme.breakpoints.down("xs")]: {
         padding: theme.spacing(0.75, 1),
-        paddingBottom: `calc(${theme.spacing(1)}px + env(safe-area-inset-bottom, 0px))`
+        paddingBottom: `calc(${theme.spacing(1)}px + var(--safe-bottom, 0px))`
       }
     },
     inputPill: {

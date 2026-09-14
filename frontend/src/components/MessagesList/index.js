@@ -963,6 +963,28 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
     });
   };
 
+  // Quando a lista encolhe (teclado abrindo, barra do navegador aparecendo,
+  // giro da tela) e a pessoa estava lendo o fim da conversa, ela continua no
+  // fim — como no WhatsApp. Sem isto, abrir o teclado escondia justamente as
+  // últimas mensagens atrás dele.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return undefined;
+    let nearBottom = true;
+    const onScroll = () => {
+      nearBottom = el.scrollHeight - el.clientHeight - el.scrollTop < 120;
+    };
+    const observer = new ResizeObserver(() => {
+      if (nearBottom) el.scrollTop = el.scrollHeight;
+    });
+    el.addEventListener("scroll", onScroll, { passive: true });
+    observer.observe(el);
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      observer.disconnect();
+    };
+  }, [ticketId]);
+
   const scrollToBottom = () => {
     if (scrollRef.current) {
       dispatch({ type: "RESET_STICKY" });

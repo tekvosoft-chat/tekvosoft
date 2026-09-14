@@ -22,11 +22,31 @@ const defaultLogoLight = "/vector/logo.png";
 const defaultLogoDark = "/vector/logo-dark.png";
 const defaultLogoFavicon = "/vector/favicon.png";
 
+/**
+ * Mantém o app do tamanho e na posição da área realmente visível.
+ *
+ * No iPhone, quando o teclado abre, a janela não encolhe: quem encolhe é a
+ * "área visível" (visualViewport), que ainda pode ser deslocada para baixo
+ * para mostrar o campo em foco. Sem acompanhar esse deslocamento, o app
+ * ficava preso no topo e a conversa sumia acima da tela.
+ *
+ *   --vh      altura visível (o layout ocupa exatamente isso)
+ *   --vv-top  quanto a área visível desceu (o #root desce junto)
+ *   kb-open   classe no <html> com o teclado aberto: tira a margem da barra
+ *             de gestos, que nessa hora fica escondida atrás do teclado
+ */
 function useViewportHeight() {
   useEffect(() => {
     const setVh = () => {
-      const h = window.visualViewport?.height || window.innerHeight;
-      document.documentElement.style.setProperty("--vh", `${h}px`);
+      const vv = window.visualViewport;
+      const h = vv?.height || window.innerHeight;
+      const root = document.documentElement;
+      root.style.setProperty("--vh", `${h}px`);
+      root.style.setProperty(
+        "--vv-top",
+        `${Math.max(0, vv?.offsetTop || 0)}px`
+      );
+      root.classList.toggle("kb-open", window.innerHeight - h > 150);
     };
 
     if (window.visualViewport) {

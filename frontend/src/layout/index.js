@@ -73,6 +73,10 @@ const useStyles = makeStyles(theme => ({
   root: {
     display: "flex",
     height: "var(--vh)",
+    boxSizing: "border-box",
+    // entalhe / barra de status: no PWA do iPhone o conteúdo não pode
+    // começar embaixo da hora e da bateria
+    paddingTop: "var(--safe-top, 0px)",
     backgroundColor: theme.palette.fancyBackground,
     // Antes havia aqui dois estilos globais herdados (borda verde-azulada
     // cravada em todo botão contornado e uma cor de aba inválida). Eles
@@ -204,6 +208,7 @@ const useStyles = makeStyles(theme => ({
   },
   appBar: {
     zIndex: theme.zIndex.drawer + 1,
+    top: "var(--safe-top, 0px)",
     transition: theme.transitions.create(["width", "margin"], {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.leavingScreen

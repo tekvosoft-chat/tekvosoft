@@ -69,10 +69,14 @@ const useStyles = makeStyles(theme => ({
     position: "relative",
     zIndex: theme.zIndex.appBar + 2,
     display: "flex",
+    alignItems: "stretch",
     height: "auto",
-    minHeight: 64,
-    padding: "4px 4px 0",
-    paddingBottom: "calc(4px + env(safe-area-inset-bottom, 0px))",
+    // 56px de toque + a faixa da barra de gestos do iPhone logo abaixo, como
+    // a barra de abas dos apps nativos do iOS (49 + 34). A faixa de gestos
+    // vem de --safe-bottom, que o index.html liga com viewport-fit=cover.
+    minHeight: "calc(56px + var(--safe-bottom, 0px))",
+    padding: "2px 4px 0",
+    paddingBottom: "calc(2px + var(--safe-bottom, 0px))",
     borderTop: `1px solid ${theme.palette.tkv.border}`,
     backgroundColor: theme.palette.tkv.surface
   },
@@ -87,7 +91,8 @@ const useStyles = makeStyles(theme => ({
     flex: "1 1 0",
     minWidth: 0,
     maxWidth: "none",
-    padding: "4px 0 2px",
+    padding: "5px 0 3px",
+    height: 52,
     color: theme.palette.text.secondary,
     "& .MuiBottomNavigationAction-wrapper": { gap: 2 },
     "& .MuiBottomNavigationAction-label": {
@@ -118,7 +123,7 @@ const useStyles = makeStyles(theme => ({
     alignItems: "center",
     justifyContent: "center",
     width: 52,
-    height: 30,
+    height: 28,
     borderRadius: theme.palette.tkv.radius.pill,
     transition: "background-color .15s ease",
     "& svg": { fontSize: 22 }

@@ -275,6 +275,22 @@ export default function createAppTheme({
             code: { fontFamily: monoStack },
 
             /**
+             * Telas de toque: todo campo com pelo menos 16px.
+             *
+             * Abaixo de 16px o Safari do iPhone aproxima a página inteira
+             * quando o campo recebe foco, e não afasta de volta ao sair —
+             * era o "aproxima e afasta" a cada toque. 16px é o limite exato
+             * em que o iOS deixa de fazer isso. Só vale para ponteiro grosso
+             * (dedo), então no computador os campos continuam com 14px.
+             */
+            "@media (pointer: coarse)": {
+              "input, textarea, select, .MuiInputBase-input, .MuiInputBase-inputMultiline":
+                {
+                  fontSize: "16px !important"
+                }
+            },
+
+            /**
              * Tabela larga vira lista de cartões no celular.
              *
              * Uma tabela de seis colunas não cabe em 390px: ou corta a última

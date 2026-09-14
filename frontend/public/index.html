@@ -7,24 +7,63 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap"
     />
-    <link rel="apple-touch-icon" sizes="180x180" href="%PUBLIC_URL%/apple-touch-icon.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="%PUBLIC_URL%/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="%PUBLIC_URL%/favicon-16x16.png" />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="%PUBLIC_URL%/apple-touch-icon.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="%PUBLIC_URL%/favicon-32x32.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="%PUBLIC_URL%/favicon-16x16.png"
+    />
     <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <meta name="theme-color" content="#7830F8" />
+    <!--
+      Sem zoom: o sistema é usado como aplicativo (PWA). No iPhone, tocar num
+      campo aproximava a tela e ela não voltava sozinha.
+      viewport-fit=cover faz o iOS informar as margens seguras (barra de gestos,
+      entalhe); sem isso env(safe-area-inset-*) vale 0 e a navegação de baixo
+      ficava embaixo da barrinha de gestos.
+    -->
     <meta
       name="viewport"
-      content="minimum-scale=1, initial-scale=1, width=device-width"
+      content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
     />
 
     <style>
+      :root {
+        /* margens seguras do aparelho, em variáveis para os componentes */
+        --safe-top: env(safe-area-inset-top, 0px);
+        --safe-bottom: env(safe-area-inset-bottom, 0px);
+        /* deslocamento da área visível quando o teclado do iOS empurra a tela */
+        --vv-top: 0px;
+      }
+
+      /* com o teclado aberto a barra de gestos fica atrás dele: a margem
+         inferior só abriria um vão entre o campo de digitar e o teclado */
+      html.kb-open {
+        --safe-bottom: 0px;
+      }
+
       html,
       body {
         height: var(--vh, 100vh);
         margin: 0;
         padding: 0;
         overflow: hidden;
+        overscroll-behavior: none;
+        -webkit-text-size-adjust: 100%;
+        /* sem zoom de toque duplo e sem o atraso de 300ms no clique */
+        touch-action: manipulation;
       }
 
       svg.alertsign {
@@ -35,12 +74,28 @@
 
       #root {
         position: fixed;
-        top: 0;
+        /* acompanha a área visível: quando o iOS desloca a tela para mostrar
+           o campo com o teclado, o app vai junto em vez de ficar para trás */
+        top: var(--vv-top, 0px);
         left: 0;
         width: 100%;
         height: var(--vh, 100vh);
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
+      }
+
+      /* campos de data do iOS: sem isto o Safari desenha o seu próprio
+         controle, centralizado e mais baixo que os outros campos */
+      input[type="date"],
+      input[type="time"],
+      input[type="datetime-local"] {
+        -webkit-appearance: none;
+        appearance: none;
+        min-height: 1.4375em;
+        text-align: left;
+      }
+      input::-webkit-date-and-time-value {
+        text-align: left;
       }
 
       :root {
@@ -425,7 +480,9 @@
         // restart transition matches the configured branding while the
         // backend is down.
         const root = document.documentElement;
-        const storedPrimaryColor = localStorage.getItem("tekvosoftPrimaryColor");
+        const storedPrimaryColor = localStorage.getItem(
+          "tekvosoftPrimaryColor"
+        );
         if (storedPrimaryColor) {
           root.style.setProperty("--primary", storedPrimaryColor);
         }
@@ -433,9 +490,7 @@
           "tekvosoftBackgroundImage"
         );
         if (storedBackgroundImage) {
-          const splashBackground = document.getElementById(
-            "splash-background"
-          );
+          const splashBackground = document.getElementById("splash-background");
           splashBackground.style.backgroundImage = `url("${storedBackgroundImage}")`;
           splashBackground.style.backgroundSize = "cover";
           splashBackground.style.backgroundPosition = "center";
