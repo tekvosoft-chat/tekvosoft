@@ -88,7 +88,10 @@ export const signup = async (
     }
   }
 
-  req.body.dueDate = moment().add(3, "day").format();
+  // Teste grátis de quem se cadastra sozinho. TRIAL_DAYS no .env muda o
+  // prazo sem precisar mexer no código.
+  const trialDays = Number(process.env.TRIAL_DAYS) || 14;
+  req.body.dueDate = moment().add(trialDays, "day").format();
 
   return store(req, res);
 };

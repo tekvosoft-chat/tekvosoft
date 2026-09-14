@@ -174,6 +174,13 @@ const messages = {
           session: "Sessione"
         }
       },
+      trialBanner: {
+        daysLeft: "La tua prova gratuita termina tra {{count}} giorni",
+        tomorrow: "La tua prova gratuita termina domani",
+        today: "La tua prova gratuita termina oggi",
+        ended: "La tua prova gratuita è terminata",
+        cta: "Abbonati ora"
+      },
       mediaPreview: {
         files: "file",
         remove: "Rimuovi",
@@ -495,6 +502,10 @@ const messages = {
           annoucements: "Informazioni",
           chats: "Chat Interna",
           chatsShort: "Chat",
+          ticketsShort: "Ticket",
+          search: "Cerca",
+          online: "Online",
+          noResults: "Nessun risultato",
           financeiro: "Finanziario",
           logout: "Esci",
           management: "Gestione",
@@ -814,6 +825,16 @@ const messages = {
         title: "Centro di Aiuto"
       },
       about: {
+        headline: "Pensata per assistere meglio, ogni giorno",
+        product:
+          "Tekvosoft è una piattaforma di assistenza clienti su WhatsApp che riunisce il tuo team in un unico posto: conversazioni, code, chatbot, Kanban e chat interna.",
+        founder:
+          "Sono David Fernandes, ho 22 anni e sono un imprenditore nel settore della tecnologia.",
+        improving:
+          "Miglioro Tekvosoft continuamente: ogni aggiornamento porta correzioni e novità per rendere più semplice il lavoro quotidiano di chi assiste i clienti.",
+        founderRole: "Fondatore di Tekvosoft",
+        license: "Software libero con licenza AGPL-3.0.",
+        sourceCode: "Codice sorgente",
         aboutthe: "Informazioni su",
         copyright: "© 2024 - Funzionante con Tekvosoft",
         buttonclose: "Chiudi",
@@ -907,6 +928,55 @@ const messages = {
         extensionBuildUnknownError: "Errore di creazione sconosciuto."
       },
       settings: {
+        appearance: {
+          tab: "Aspetto",
+          title: "Tema colori",
+          subtitle:
+            "Scegli i colori del sistema per tutto il team. La modifica appare subito sullo schermo di tutti.",
+          mode: "Modalità",
+          light: "Chiaro",
+          dark: "Scuro",
+          custom: "Personalizzato",
+          customDescription: "Usa il colore del tuo brand",
+          restore: "Ripristina predefinito",
+          applied: "Tema applicato a tutto il team",
+          restored: "Colori predefiniti ripristinati",
+          current: "In uso",
+          presets: {
+            tekvosoft: {
+              name: "Viola Tekvosoft",
+              description: "L'identità predefinita: viola vivace e moderno"
+            },
+            classicBlue: {
+              name: "Blu Classico",
+              description: "Blu professionale, sobrio e affidabile"
+            },
+            forestGreen: {
+              name: "Verde Foresta",
+              description: "Verde ispirato alla natura"
+            },
+            oceanTeal: {
+              name: "Verde Oceano",
+              description: "Petrolio rinfrescante ispirato al mare"
+            },
+            sunsetOrange: {
+              name: "Arancio Tramonto",
+              description: "Toni caldi di arancio e ambra"
+            },
+            nightPurple: {
+              name: "Viola Notte",
+              description: "Viola profondo ed elegante"
+            },
+            roseRed: {
+              name: "Rosa",
+              description: "Rosa intenso e sofisticato"
+            },
+            cosmic: {
+              name: "Cosmico",
+              description: "Indaco ispirato allo spazio"
+            }
+          }
+        },
         restartBackend: {
           button: "Riavvia Backend",
           restarting: "Riavvio…",
@@ -1128,6 +1198,7 @@ const messages = {
       messagesList: {
         header: {
           assignedTo: "Assegnato a:",
+          tapForInfo: "Tocca per vedere i dati del contatto",
           buttons: {
             return: "Ritorna",
             resolve: "Risolvi",
@@ -1138,6 +1209,19 @@ const messages = {
         openPaymentLink: "Apri link di pagamento"
       },
       messagesInput: {
+        phone: {
+          attach: "Allega",
+          camera: "Fotocamera",
+          gallery: "Foto e video",
+          document: "Documento",
+          quickReplies: "Risposte rapide",
+          signature: "Firma",
+          on: "Attiva",
+          off: "Disattiva",
+          recording: "Registrazione",
+          discardAudio: "Elimina audio",
+          sendAudio: "Invia audio"
+        },
         placeholderOpen: "Digita un messaggio",
         placeholderClosed:
           "Riapri o accetta questo ticket per inviare un messaggio.",
@@ -1149,6 +1233,30 @@ const messages = {
         edited: "Modificata"
       },
       contactDrawer: {
+        phone: {
+          edit: "Modifica",
+          call: "Chiama",
+          copy: "Copia",
+          copied: "Numero copiato",
+          copyFailed: "Impossibile copiare il numero",
+          schedule: "Pianifica",
+          notes: "Note",
+          email: "E-mail",
+          tags: "Tag",
+          none: "Nessuno",
+          queue: "Coda",
+          noQueue: "Nessuna coda",
+          attendant: "Operatore",
+          unassigned: "Non assegnato",
+          connection: "Connessione",
+          ticket: "Ticket",
+          status: {
+            open: "In corso",
+            pending: "In attesa",
+            closed: "Risolto",
+            group: "Gruppo"
+          }
+        },
         header: "Dati del contatto",
         buttons: {
           edit: "Modifica contatto"

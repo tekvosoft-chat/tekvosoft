@@ -130,6 +130,22 @@ export function contrastRatio(a, b) {
  * pelo contraste real, em vez de chutar pelo brilho — assim funciona também
  * para cores de whitelabel muito claras (amarelo, lima) onde branco sumiria.
  */
+/**
+ * A cor da marca ajustada para servir de ÍCONE ou TEXTO sobre um fundo.
+ * A cor escolhida no tema pode ser escura demais para o modo escuro (ou
+ * clara demais para o claro); aqui ela clareia ou escurece, mantendo o
+ * matiz, até ter contraste de leitura (4,5:1) com o fundo.
+ */
+export function readableAccent(color, background, target = 4.5) {
+  const towardLight = luminance(background) < 0.4;
+  let result = color;
+  for (let step = 0; step < 24; step += 1) {
+    if (contrastRatio(result, background) >= target) break;
+    result = towardLight ? lighten(result, 0.03) : darken(result, 0.03);
+  }
+  return result;
+}
+
 export function readableOn(background) {
   const onWhite = contrastRatio(background, "#FFFFFF");
   const onInk = contrastRatio(background, "#14121C");
@@ -189,6 +205,50 @@ export const neutralDark = {
   textTertiary: "#7C7594",
   textDisabled: "#5A5470"
 };
+
+/**
+ * Leva os neutros para o matiz da cor principal, mantendo saturação e
+ * luminosidade.
+ *
+ * Os cinzas do sistema sempre tiveram uma pitada da cor da marca. Com temas
+ * de cor escolhidos pelo cliente, manter essa pitada roxa fixa deixaria um
+ * tema verde parecendo "roxo com botão verde". Girando só o matiz, o fundo,
+ * as bordas e os textos secundários acompanham a cor escolhida — do jeito
+ * que acontece na prévia dos cartões de tema.
+ */
+export function tintNeutrals(base, brandHex) {
+  const hue = rgbToHsl(hexToRgb(brandHex)).h;
+  const out = {};
+  Object.entries(base).forEach(([key, value]) => {
+    const hsl = rgbToHsl(hexToRgb(value));
+    out[key] = rgbToHex(hslToRgb({ ...hsl, h: hue }));
+  });
+  return out;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Temas de cor (Configurações > Aparência)
+// ─────────────────────────────────────────────────────────────
+// Cada tema define a cor principal no claro e no escuro. No claro ela é
+// escura o bastante para texto branco em cima (contraste de pelo menos 4.5);
+// no escuro é clara o bastante para aparecer sobre fundo escuro.
+// "accent" é só a segunda bolinha da prévia.
+
+export const THEME_PRESETS = [
+  {
+    id: "tekvosoft",
+    light: BRAND_PURPLE,
+    dark: BRAND_PURPLE_DARK_MODE,
+    accent: "#EC4899"
+  },
+  { id: "classicBlue", light: "#2563EB", dark: "#7AA2FF", accent: "#F472B6" },
+  { id: "forestGreen", light: "#15803D", dark: "#4ADE80", accent: "#F59E0B" },
+  { id: "oceanTeal", light: "#0E7490", dark: "#22D3EE", accent: "#F472B6" },
+  { id: "sunsetOrange", light: "#C2410C", dark: "#FB923C", accent: "#A855F7" },
+  { id: "nightPurple", light: "#7E22CE", dark: "#C084FC", accent: "#22D3EE" },
+  { id: "roseRed", light: "#BE185D", dark: "#F472B6", accent: "#F59E0B" },
+  { id: "cosmic", light: "#4F46E5", dark: "#818CF8", accent: "#FB7185" }
+];
 
 // ─────────────────────────────────────────────────────────────
 // Cores semânticas

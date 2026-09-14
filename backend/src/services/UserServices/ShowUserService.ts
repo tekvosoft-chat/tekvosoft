@@ -24,7 +24,12 @@ const ShowUserService = async (
         as: "queues",
         attributes: ["id", "name", "color"]
       },
-      { model: Company, as: "company", attributes: ["id", "name", "dueDate"] }
+      {
+        model: Company,
+        as: "company",
+        // createdAt: o banner de teste grátis compara cadastro e vencimento
+        attributes: ["id", "name", "dueDate", "createdAt"]
+      }
     ],
     order: [[{ model: Queue, as: "queues" }, "name", "ASC"]]
   });

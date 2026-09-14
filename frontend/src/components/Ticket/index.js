@@ -49,9 +49,11 @@ const useStyles = makeStyles(theme => ({
       "& fieldset": { border: "none" }
     }
   },
+  // só existe no celular: na cor da marca, como os outros ícones do topo
   tagsToggle: {
     flex: "none",
-    color: theme.palette.text.secondary,
+    padding: 8,
+    color: theme.palette.tkv.brand.text,
     "& .MuiBadge-badge": {
       backgroundColor: theme.palette.tkv.brand.main,
       color: theme.palette.tkv.brand.contrastText
@@ -71,6 +73,12 @@ const useStyles = makeStyles(theme => ({
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.leavingScreen
     })
+  },
+
+  // celular: a conversa ocupa a tela de ponta a ponta, sem moldura
+  mainWrapperPhone: {
+    border: "none",
+    borderRadius: 0
   },
 
   mainWrapperShift: {
@@ -243,7 +251,8 @@ const Ticket = () => {
         variant="outlined"
         elevation={0}
         className={clsx(classes.mainWrapper, {
-          [classes.mainWrapperShift]: drawerOpen
+          [classes.mainWrapperShift]: drawerOpen,
+          [classes.mainWrapperPhone]: isPhone
         })}
       >
         <div
@@ -269,7 +278,7 @@ const Ticket = () => {
                       ?.length || 0
                   }
                 >
-                  <LocalOfferOutlinedIcon fontSize="small" />
+                  <LocalOfferOutlinedIcon />
                 </Badge>
               </IconButton>
             </Tooltip>

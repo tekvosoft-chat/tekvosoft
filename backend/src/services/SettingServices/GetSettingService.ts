@@ -15,7 +15,12 @@ export const safeSettingsKeys = {
   groupsTab: "disabled",
   CheckMsgIsGroup: "disabled",
   soundGroupNotifications: "disabled",
-  tagsMode: "ticket"
+  tagsMode: "ticket",
+  // Tema de cores da conta (Configurações > Aparência). Só o admin grava,
+  // mas todo usuário da empresa precisa ler para ver o sistema na cor
+  // escolhida — e, estando nesta lista, a troca chega pelo socket e muda a
+  // tela de todo mundo na hora. Vazio = cor padrão da instalação.
+  appTheme: ""
 };
 
 export const GetSettingService = async ({

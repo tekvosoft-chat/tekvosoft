@@ -26,6 +26,7 @@ import config from "../../services/config.js";
 
 import OnlyForSuperUser from "../../components/OnlyForSuperUser";
 import OpenHoursEditor from "../../components/OpenHoursEditor";
+import AppearanceSettings from "../../components/AppearanceSettings";
 
 // Helper to check if value is OpenHours format or empty
 const isOpenHoursFormat = schedules => {
@@ -176,6 +177,7 @@ const SettingsCustom = () => {
           className={classes.tab}
         >
           <Tab label={i18n.t("settings.Options.title")} value={"options"} />
+          <Tab label={i18n.t("settings.appearance.tab")} value={"appearance"} />
           {schedulesEnabled && (
             <Tab
               label={i18n.t("settings.schedules.title")}
@@ -323,6 +325,13 @@ const SettingsCustom = () => {
               </>
             )}
           />
+          <TabPanel
+            className={classes.container}
+            value={tab}
+            name={"appearance"}
+          >
+            <AppearanceSettings />
+          </TabPanel>
           <TabPanel className={classes.container} value={tab} name={"options"}>
             <Options
               settings={settings}

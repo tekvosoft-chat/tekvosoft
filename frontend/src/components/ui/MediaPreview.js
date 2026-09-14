@@ -143,7 +143,7 @@ const useStyles = makeStyles(theme => {
       marginLeft: "auto",
       borderRadius: "50%",
       backgroundColor: "var(--tkv-accent)",
-      color: "#FFFFFF",
+      color: "var(--tkv-accent-text, #FFFFFF)",
       boxShadow: theme.shadows[4],
       "&:hover": {
         backgroundColor: "var(--tkv-accent)",
@@ -151,7 +151,7 @@ const useStyles = makeStyles(theme => {
       },
       "&.Mui-disabled": {
         backgroundColor: "var(--tkv-accent)",
-        color: "#FFFFFF",
+        color: "var(--tkv-accent-text, #FFFFFF)",
         opacity: 0.5
       }
     },
@@ -180,6 +180,7 @@ const MediaPreview = ({
   disabled,
   progress,
   accent,
+  accentText = "#FFFFFF",
   className
 }) => {
   const classes = useStyles();
@@ -213,7 +214,7 @@ const MediaPreview = ({
   return (
     <div
       className={`${classes.root}${className ? ` ${className}` : ""}`}
-      style={{ "--tkv-accent": accent }}
+      style={{ "--tkv-accent": accent, "--tkv-accent-text": accentText }}
     >
       <div className={classes.header}>
         <IconButton
@@ -325,7 +326,8 @@ MediaPreview.propTypes = {
   loading: PropTypes.bool,
   disabled: PropTypes.bool,
   progress: PropTypes.node,
-  accent: PropTypes.string.isRequired
+  accent: PropTypes.string.isRequired,
+  accentText: PropTypes.string
 };
 
 export default MediaPreview;

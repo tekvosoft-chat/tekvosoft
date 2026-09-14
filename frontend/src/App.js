@@ -83,10 +83,50 @@ function useViewportHeight() {
       );
     };
 
+    // Campo dentro de modal ou painel: depois que o teclado sobe, rola o
+    // conteúdo do modal até o campo ficar à vista. O modal encolhe para caber
+    // acima do teclado, e o campo tocado podia ficar abaixo da dobra.
+    const revealFocused = () => {
+      const el = document.activeElement;
+      if (
+        !isTypingField(el) ||
+        !el.closest(".MuiDialog-root, .MuiDrawer-root")
+      ) {
+        return;
+      }
+      let scroller = el.parentElement;
+      while (scroller && scroller !== document.body) {
+        const { overflowY } = getComputedStyle(scroller);
+        if (
+          /(auto|scroll)/.test(overflowY) &&
+          scroller.scrollHeight > scroller.clientHeight
+        ) {
+          break;
+        }
+        scroller = scroller.parentElement;
+      }
+      if (!scroller || scroller === document.body) return;
+      const box = scroller.getBoundingClientRect();
+      const field = el.getBoundingClientRect();
+      const margin = 16;
+      if (field.bottom > box.bottom - margin) {
+        scroller.scrollTop += field.bottom - box.bottom + margin;
+      } else if (field.top < box.top + margin) {
+        scroller.scrollTop -= box.top + margin - field.top;
+      }
+    };
+
     // o evento de resize do teclado do iOS chega atrasado e às vezes nem
     // chega; recalcula também logo depois do foco e do fim da animação
     const schedule = () => {
-      [60, 320, 650].forEach(ms => timers.push(setTimeout(setVh, ms)));
+      [60, 320, 650].forEach(ms =>
+        timers.push(
+          setTimeout(() => {
+            setVh();
+            revealFocused();
+          }, ms)
+        )
+      );
     };
 
     if (window.visualViewport) {
@@ -131,10 +171,27 @@ const App = () => {
   const [appName, setAppName] = useState("");
   const { getPublicSetting } = useSettings();
 
+  /**
+   * Tema de cores da conta (Configurações > Aparência).
+   *
+   * Fica POR CIMA da cor da instalação (whitelabel), só enquanto alguém está
+   * logado: a tela de login continua com a cor da instalação, e cada empresa
+   * vê o sistema na cor que o próprio admin escolheu.
+   *   null                      -> usa a cor da instalação
+   *   { light, dark, preset }   -> cores do tema escolhido
+   */
+  const [accountTheme, setAccountTheme] = useState(null);
+
   const colorMode = useMemo(
     () => ({
       toggleColorMode: () => {
         setMode(prevMode => (prevMode === "light" ? "dark" : "light"));
+      },
+      setColorMode: next => {
+        setMode(next === "dark" ? "dark" : "light");
+      },
+      applyAccountTheme: theme => {
+        setAccountTheme(theme && theme.light && theme.dark ? theme : null);
       },
       setPrimaryColorLight: color => {
         setPrimaryColorLight(color);
@@ -175,7 +232,10 @@ const App = () => {
     () =>
       createAppTheme({
         mode,
-        primaryColor: mode === "light" ? primaryColorLight : primaryColorDark,
+        primaryColor:
+          mode === "light"
+            ? accountTheme?.light || primaryColorLight
+            : accountTheme?.dark || primaryColorDark,
         locale,
         appLogoLight,
         appLogoDark,
@@ -193,7 +253,8 @@ const App = () => {
       locale,
       mode,
       primaryColorDark,
-      primaryColorLight
+      primaryColorLight,
+      accountTheme
     ]
   );
 
@@ -214,6 +275,18 @@ const App = () => {
   useEffect(() => {
     window.localStorage.setItem("preferredTheme", mode);
   }, [mode]);
+
+  // A barra de status do celular (a faixa da hora e da bateria no PWA) segue
+  // o tema: cor principal no claro, superfície escura no escuro. Antes ficava
+  // sempre roxa, mesmo com a empresa usando outro tema.
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta) return;
+    meta.setAttribute(
+      "content",
+      mode === "dark" ? theme.palette.tkv.surface : theme.palette.primary.main
+    );
+  }, [theme, mode]);
 
   useEffect(() => {
     getPublicSetting("primaryColorLight")
@@ -276,7 +349,7 @@ const App = () => {
       <Favicon
         url={appLogoFavicon ? theme.appLogoFavicon : defaultLogoFavicon}
       />
-      <ColorModeContext.Provider value={{ colorMode }}>
+      <ColorModeContext.Provider value={{ colorMode, accountTheme, mode }}>
         <PhoneCallProvider>
           <ThemeProvider theme={theme}>
             <CssBaseline />

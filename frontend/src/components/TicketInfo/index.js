@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from "react";
 
-import { Avatar, CardHeader, makeStyles } from "@material-ui/core";
+import {
+  Avatar,
+  CardHeader,
+  makeStyles,
+  useMediaQuery,
+  useTheme
+} from "@material-ui/core";
 import { Lightbox } from "react-modal-image";
 
 import { i18n } from "../../translate/i18n";
@@ -58,6 +64,9 @@ const useStyles = makeStyles(theme => ({
     fontWeight: 500,
     color: theme.palette.text.secondary
   },
+  // celular: nome maior, sem o número do ticket (fica nos dados do contato)
+  phoneName: { fontSize: "1.0625rem" },
+  phoneAvatar: { width: 38, height: 38 },
   subheader: {
     fontSize: "0.75rem",
     color: theme.palette.text.secondary,
@@ -69,6 +78,8 @@ const useStyles = makeStyles(theme => ({
 
 const TicketInfo = ({ contact, ticket, onClick }) => {
   const classes = useStyles();
+  const theme = useTheme();
+  const isPhone = useMediaQuery(theme.breakpoints.down("xs"));
   const { user } = ticket;
   const [userName, setUserName] = useState("");
   const [avatarOpen, setAvatarOpen] = useState(false);
@@ -104,7 +115,7 @@ const TicketInfo = ({ contact, ticket, onClick }) => {
         disableTypography
         avatar={
           <Avatar
-            className={classes.avatarImg}
+            className={`${classes.avatarImg}${isPhone ? ` ${classes.phoneAvatar}` : ""}`}
             style={{ backgroundColor: generateColor(contact?.number) }}
             src={contact.profilePicUrl}
             alt="contact_image"
@@ -117,13 +128,23 @@ const TicketInfo = ({ contact, ticket, onClick }) => {
           </Avatar>
         }
         title={
-          <div className={classes.title}>
+          <div
+            className={`${classes.title}${isPhone ? ` ${classes.phoneName}` : ""}`}
+          >
             <span className={classes.name}>{contactName}</span>
-            <span className={classes.ticketId}>#{ticket.id}</span>
+            {!isPhone && <span className={classes.ticketId}>#{ticket.id}</span>}
           </div>
         }
         subheader={
-          ticket.user && <div className={classes.subheader}>{userName}</div>
+          ticket.user ? (
+            <div className={classes.subheader}>{userName}</div>
+          ) : (
+            isPhone && (
+              <div className={classes.subheader}>
+                {i18n.t("messagesList.header.tapForInfo")}
+              </div>
+            )
+          )
         }
       />
     </>

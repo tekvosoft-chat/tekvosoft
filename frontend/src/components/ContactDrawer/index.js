@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 
-import { makeStyles } from "@material-ui/core/styles";
+import { makeStyles, useTheme } from "@material-ui/core/styles";
+import useMediaQuery from "@material-ui/core/useMediaQuery";
 import Typography from "@material-ui/core/Typography";
 import IconButton from "@material-ui/core/IconButton";
 import CloseIcon from "@material-ui/icons/Close";
@@ -26,6 +27,7 @@ import { generateColor } from "../../helpers/colorGenerator";
 import { getInitials } from "../../helpers/getInitials";
 import { TagsContainer } from "../TagsContainer";
 import useSettings from "../../hooks/useSettings";
+import PhoneContactDetails from "./PhoneContactDetails";
 
 const drawerWidth = 320;
 
@@ -109,6 +111,8 @@ const ContactDrawer = ({
   loading
 }) => {
   const classes = useStyles();
+  const theme = useTheme();
+  const isPhone = useMediaQuery(theme.breakpoints.down("xs"));
   const { getSetting } = useSettings();
   const formattedContactName = formatWhatsappContactName(contact, ticket);
 
@@ -123,6 +127,19 @@ const ContactDrawer = ({
 
     setOpenForm(false);
   }, [open, contact]);
+
+  // no celular os dados do contato são uma tela inteira, como no WhatsApp
+  if (isPhone) {
+    return (
+      <PhoneContactDetails
+        open={open && !loading}
+        onClose={handleDrawerClose}
+        contact={contact}
+        ticket={ticket}
+        showTags={showTags}
+      />
+    );
+  }
 
   return (
     <>

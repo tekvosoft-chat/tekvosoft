@@ -15,8 +15,14 @@ import {
   Badge,
   Tooltip,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  Avatar,
+  ButtonBase,
+  InputBase
 } from "@material-ui/core";
+import SearchRoundedIcon from "@material-ui/icons/SearchRounded";
+import UnfoldMoreRoundedIcon from "@material-ui/icons/UnfoldMoreRounded";
+import { getInitials } from "../helpers/getInitials";
 
 import MenuIcon from "@material-ui/icons/Menu";
 import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
@@ -26,10 +32,10 @@ import CachedIcon from "@material-ui/icons/Cached";
 
 import MainListItems from "./MainListItems";
 import MobileNav from "./MobileNav";
+import TrialBanner, { getTrialStatus } from "../components/TrialBanner";
+import useAccountTheme from "../hooks/useAccountTheme";
 import NotificationsPopOver from "../components/NotificationsPopOver";
-import { Backendlogs } from "../components/Backendlogs";
 import { PhoneCall } from "../components/PhoneCall";
-import NotificationsVolume from "../components/NotificationsVolume";
 import UserModal from "../components/UserModal";
 import AboutModal from "../components/AboutModal";
 import { AuthContext } from "../context/Auth/AuthContext";
@@ -117,7 +123,8 @@ const useStyles = makeStyles(theme => ({
     "&:hover": { backgroundColor: theme.palette.tkv.surfaceHover },
     [theme.breakpoints.down("xs")]: {
       borderRadius: 20
-    }
+    },
+    [theme.breakpoints.up("sm")]: { display: "none" }
   },
   profileAvatarSlot: {
     width: 40,
@@ -208,7 +215,8 @@ const useStyles = makeStyles(theme => ({
   },
   appBar: {
     zIndex: theme.zIndex.drawer + 1,
-    top: "var(--safe-top, 0px)",
+    // abaixo da faixa de teste grátis, quando ela existe
+    top: "calc(var(--safe-top, 0px) + var(--banner-h, 0px))",
     transition: theme.transitions.create(["width", "margin"], {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.leavingScreen
@@ -281,6 +289,12 @@ const useStyles = makeStyles(theme => ({
     lineHeight: 1.4
   },
   drawerPaper: {
+    paddingTop: "var(--banner-h, 0px)",
+    // o menu é um cartão sobre o fundo da aplicação, como na referência
+    backgroundColor: theme.palette.tkv.canvas,
+    borderRight: "none",
+    display: "flex",
+    flexDirection: "column",
     position: "relative",
     whiteSpace: "nowrap",
     width: drawerWidth,
@@ -308,8 +322,13 @@ const useStyles = makeStyles(theme => ({
   hiddenInConversation: {
     display: "none"
   },
+  // conversa aberta no celular: a faixa da hora/bateria tem a cor do
+  // cabeçalho da conversa, como no WhatsApp, e não a do fundo do app
+  conversationRoot: {
+    backgroundColor: theme.palette.tkv.surface
+  },
   appBarSpacer: {
-    minHeight: appBarHeight,
+    minHeight: `calc(${appBarHeight}px + var(--banner-h, 0px))`,
     flex: "none"
   },
   content: {
@@ -335,17 +354,151 @@ const useStyles = makeStyles(theme => ({
   },
   containerWithScroll: {
     flex: 1,
-    padding: theme.spacing(1),
+    minHeight: 0,
+    padding: theme.spacing(0.5, 0),
     overflowY: "auto",
     overflowX: "hidden",
-    ...theme.scrollbarStyles
+    ...theme.scrollbarStylesSoft
+  },
+
+  // ── menu lateral em cartão (referência enviada pelo David) ──
+  sidebarCard: {
+    flex: 1,
+    minHeight: 0,
+    display: "flex",
+    flexDirection: "column",
+    margin: theme.spacing(0, 1.25, 1.25),
+    borderRadius: 16,
+    border: `1px solid ${theme.palette.tkv.border}`,
+    backgroundColor: theme.palette.tkv.surface,
+    boxShadow: theme.shadows[1],
+    overflow: "hidden"
+  },
+  sidebarCardCollapsed: {
+    margin: theme.spacing(0, 1, 1.25)
+  },
+  sidebarSearch: {
+    flex: "none",
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    height: 38,
+    margin: theme.spacing(1.25, 1.25, 0.5),
+    padding: "0 6px 0 10px",
+    borderRadius: 10,
+    border: `1px solid ${theme.palette.tkv.border}`,
+    backgroundColor: theme.palette.tkv.surfaceSunken,
+    color: theme.palette.text.secondary,
+    cursor: "text",
+    transition: "border-color .15s ease, box-shadow .15s ease",
+    "&:focus-within": {
+      borderColor: theme.palette.tkv.brand.main,
+      boxShadow: `0 0 0 3px ${theme.palette.tkv.brand.focusRing}`
+    }
+  },
+  sidebarSearchInput: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: "0.875rem"
+  },
+  sidebarSearchCollapsed: {
+    flex: "none",
+    alignSelf: "center",
+    margin: theme.spacing(1, 0, 0.5)
+  },
+  kbd: {
+    flex: "none",
+    padding: "2px 6px",
+    borderRadius: 6,
+    border: `1px solid ${theme.palette.tkv.border}`,
+    backgroundColor: theme.palette.tkv.surface,
+    color: theme.palette.text.secondary,
+    fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+    fontSize: 11,
+    lineHeight: 1.4,
+    whiteSpace: "nowrap",
+    // em tela de toque não existe teclado para o atalho
+    "@media (pointer: coarse)": { display: "none" }
+  },
+  userArea: {
+    flex: "none",
+    padding: theme.spacing(0.75),
+    borderTop: `1px solid ${theme.palette.tkv.border}`
+  },
+  userCard: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    width: "100%",
+    padding: theme.spacing(0.75, 1),
+    borderRadius: 12,
+    textAlign: "left",
+    transition: "background-color .15s ease",
+    "&:hover": { backgroundColor: theme.palette.tkv.surfaceHover }
+  },
+  userCardCollapsed: {
+    justifyContent: "center",
+    padding: theme.spacing(0.75, 0)
+  },
+  userAvatarWrap: {
+    position: "relative",
+    flex: "none",
+    display: "flex"
+  },
+  userAvatar: {
+    width: 36,
+    height: 36,
+    fontSize: "0.8125rem",
+    fontWeight: 700,
+    backgroundColor: theme.palette.tkv.brand.soft,
+    color: theme.palette.tkv.brand.main
+  },
+  onlineDot: {
+    position: "absolute",
+    right: -1,
+    bottom: -1,
+    width: 12,
+    height: 12,
+    borderRadius: "50%",
+    backgroundColor: theme.palette.tkv.semantic.success,
+    border: `2px solid ${theme.palette.tkv.surface}`
+  },
+  userText: {
+    flex: 1,
+    minWidth: 0,
+    display: "flex",
+    flexDirection: "column"
+  },
+  userName: {
+    fontSize: "0.875rem",
+    fontWeight: 700,
+    lineHeight: 1.3,
+    color: theme.palette.text.primary,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap"
+  },
+  userMeta: {
+    fontSize: "0.75rem",
+    lineHeight: 1.3,
+    color: theme.palette.text.secondary,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap"
+  },
+  userChevron: {
+    flex: "none",
+    fontSize: 20,
+    color: theme.palette.text.secondary
   },
   NotificationsPopOver: {
     // color: theme.barraSuperior.secondary.main,
   },
   logo: {
     maxWidth: "192px",
-    maxHeight: "72px",
+    // cabe na faixa de 56px acima do cartão do menu sem cortar o topo
+    maxHeight: appBarHeight - 12,
+    objectFit: "contain",
     logo: theme.logo,
     margin: "auto",
     content: `url("${theme.calculatedLogo()}")`
@@ -370,6 +523,11 @@ const LoggedInLayout = ({ children, themeToggle }) => {
   const [aboutModalOpen, setAboutModalOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  // o mesmo menu de perfil abre da barra de cima (celular) ou do cartão do
+  // usuário no rodapé do menu lateral (tablet e desktop)
+  const [profileMenuFrom, setProfileMenuFrom] = useState("appbar");
+  const [menuQuery, setMenuQuery] = useState("");
+  const searchRef = React.useRef(null);
   const [languageOpen, setLanguageOpen] = useState(false);
   const { handleLogout, loading } = useContext(AuthContext);
   const [drawerOpen, setDrawerOpen] = useState(() => {
@@ -384,6 +542,9 @@ const LoggedInLayout = ({ children, themeToggle }) => {
   const [drawerVariant, setDrawerVariant] = useState("permanent");
   // const [dueDate, setDueDate] = useState("");
   const { user } = useContext(AuthContext);
+  // cores da empresa (Configurações > Aparência), assim que há usuário logado
+  useAccountTheme(!!user?.id);
+  const trialStatus = getTrialStatus(user);
 
   const theme = useTheme();
   const greaterThenSm = useMediaQuery(theme.breakpoints.up("sm"));
@@ -405,10 +566,8 @@ const LoggedInLayout = ({ children, themeToggle }) => {
 
   const { getCurrentUserInfo } = useAuth();
   const [currentUser, setCurrentUser] = useState({});
-  const canAccessBackendlogs =
-    currentUser?.super || localStorage.getItem("impersonated") === "true";
-
-  const [volume, setVolume] = useState(localStorage.getItem("volume") || 1);
+  // o volume dos avisos continua salvo; só o controle saiu da barra de cima
+  const [volume] = useState(localStorage.getItem("volume") || 1);
 
   const { dateToClient } = useDate();
 
@@ -558,9 +717,30 @@ const LoggedInLayout = ({ children, themeToggle }) => {
   }, [socketManager]);
 
   const handleProfileMenu = event => {
+    setProfileMenuFrom("appbar");
     setAnchorEl(event.currentTarget);
     setMenuOpen(true);
   };
+
+  const handleSidebarProfileMenu = event => {
+    setProfileMenuFrom("sidebar");
+    setAnchorEl(event.currentTarget);
+    setMenuOpen(true);
+  };
+
+  // Ctrl+K (ou Cmd+K no Mac) abre o menu, se estiver recolhido, e foca a busca
+  useEffect(() => {
+    if (isPhone) return undefined;
+    const onKey = e => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setDrawerOpen(true);
+        setTimeout(() => searchRef.current?.focus(), 180);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isPhone]);
 
   const handleCloseProfileMenu = () => {
     setAnchorEl(null);
@@ -630,8 +810,17 @@ const LoggedInLayout = ({ children, themeToggle }) => {
     return <BackdropLoading />;
   }
 
+  const showTrialBanner = !!trialStatus && !inConversation;
+
   return (
-    <div className={classes.root}>
+    <div
+      className={clsx(
+        classes.root,
+        isPhone && inConversation && classes.conversationRoot
+      )}
+      style={{ "--banner-h": showTrialBanner ? "36px" : "0px" }}
+    >
+      {showTrialBanner && <TrialBanner user={user} status={trialStatus} />}
       {!isPhone && (
         <Drawer
           variant={drawerVariant}
@@ -663,15 +852,99 @@ const LoggedInLayout = ({ children, themeToggle }) => {
               alt="logo"
             />
           </div>
-          <Divider />
-          <List className={classes.containerWithScroll}>
-            <MainListItems
-              drawerClose={drawerClose}
-              drawerOpen={drawerOpen}
-              collapsed={!drawerOpen}
-            />
-          </List>
-          <Divider />
+          {/* Cartão do menu: busca, itens e, no rodapé, quem está logado. */}
+          <div
+            className={clsx(
+              classes.sidebarCard,
+              !drawerOpen && classes.sidebarCardCollapsed
+            )}
+          >
+            {drawerOpen ? (
+              <label className={classes.sidebarSearch}>
+                <SearchRoundedIcon fontSize="small" />
+                <InputBase
+                  inputRef={searchRef}
+                  value={menuQuery}
+                  onChange={e => setMenuQuery(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === "Escape") setMenuQuery("");
+                  }}
+                  placeholder={i18n.t("mainDrawer.listItems.search")}
+                  className={classes.sidebarSearchInput}
+                  inputProps={{
+                    "aria-label": i18n.t("mainDrawer.listItems.search")
+                  }}
+                />
+                {!menuQuery && <kbd className={classes.kbd}>Ctrl K</kbd>}
+              </label>
+            ) : (
+              <Tooltip
+                title={`${i18n.t("mainDrawer.listItems.search")} (Ctrl K)`}
+                placement="right"
+              >
+                <IconButton
+                  className={classes.sidebarSearchCollapsed}
+                  aria-label={i18n.t("mainDrawer.listItems.search")}
+                  onClick={() => {
+                    setDrawerOpen(true);
+                    setTimeout(() => searchRef.current?.focus(), 180);
+                  }}
+                >
+                  <SearchRoundedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+
+            <List className={classes.containerWithScroll}>
+              <MainListItems
+                drawerClose={drawerClose}
+                drawerOpen={drawerOpen}
+                collapsed={!drawerOpen}
+                query={drawerOpen ? menuQuery : ""}
+              />
+            </List>
+
+            <div className={classes.userArea}>
+              <Tooltip
+                title={!drawerOpen ? user?.name || "" : ""}
+                placement="right"
+              >
+                <ButtonBase
+                  className={clsx(
+                    classes.userCard,
+                    !drawerOpen && classes.userCardCollapsed
+                  )}
+                  onClick={handleSidebarProfileMenu}
+                  aria-haspopup="true"
+                  aria-controls="menu-appbar"
+                >
+                  <span className={classes.userAvatarWrap}>
+                    <Avatar className={classes.userAvatar}>
+                      {getInitials(user?.name)}
+                    </Avatar>
+                    <span className={classes.onlineDot} aria-hidden="true" />
+                  </span>
+                  {drawerOpen && (
+                    <>
+                      <span className={classes.userText}>
+                        <span className={classes.userName}>
+                          {user?.name || "-"}
+                        </span>
+                        <span className={classes.userMeta}>
+                          {user?.profile === "admin"
+                            ? i18n.t("userModal.listItems.adminProfile")
+                            : i18n.t("userModal.listItems.userProfile")}
+                          {" · "}
+                          {i18n.t("mainDrawer.listItems.online")}
+                        </span>
+                      </span>
+                      <UnfoldMoreRoundedIcon className={classes.userChevron} />
+                    </>
+                  )}
+                </ButtonBase>
+              </Tooltip>
+            </div>
+          </div>
         </Drawer>
       )}
       <UserModal
@@ -741,11 +1014,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
             </Tooltip>
           )}
 
-          {canAccessBackendlogs && <Backendlogs />}
-
           <PhoneCall />
-
-          <NotificationsVolume setVolume={setVolume} volume={volume} />
 
           {user.id && <NotificationsPopOver volume={volume} />}
 
@@ -788,14 +1057,16 @@ const LoggedInLayout = ({ children, themeToggle }) => {
               id="menu-appbar"
               anchorEl={anchorEl}
               getContentAnchorEl={null}
-              anchorOrigin={{
-                vertical: "bottom",
-                horizontal: "right"
-              }}
-              transformOrigin={{
-                vertical: "top",
-                horizontal: "right"
-              }}
+              anchorOrigin={
+                profileMenuFrom === "sidebar"
+                  ? { vertical: "top", horizontal: "left" }
+                  : { vertical: "bottom", horizontal: "right" }
+              }
+              transformOrigin={
+                profileMenuFrom === "sidebar"
+                  ? { vertical: "bottom", horizontal: "left" }
+                  : { vertical: "top", horizontal: "right" }
+              }
               open={menuOpen}
               onClose={handleCloseProfileMenu}
             >

@@ -1,203 +1,141 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 
-import { makeStyles } from "@material-ui/core/styles";
+import { makeStyles, useTheme } from "@material-ui/core/styles";
 import {
   Button,
   Dialog,
-  Link,
-  Typography,
   DialogActions,
   DialogContent,
-  DialogTitle
+  DialogTitle,
+  Typography
 } from "@material-ui/core";
 
 import { i18n } from "../../translate/i18n";
-import useAuth from "../../hooks/useAuth.js";
-import { useTheme } from "@material-ui/core/styles";
 
-import { loadJSON } from "../../helpers/loadJSON";
-import api from "../../services/api";
+const SOURCE_URL = "https://github.com/tekvosoft-chat/tekvosoft";
 
-const frontendGitInfo = loadJSON("/gitinfo.json");
-const logo = "/vector/logo.png";
-const logoDark = "/vector/logo-dark.png";
-
-const useStyles = makeStyles(theme => ({
-  root: {
-    display: "flex",
-    flexWrap: "wrap"
-  },
-  multFieldLine: {
-    display: "flex",
-    "& > *:not(:last-child)": {
-      marginRight: theme.spacing(1)
+const useStyles = makeStyles(theme => {
+  const t = theme.palette.tkv;
+  return {
+    content: {
+      display: "flex",
+      flexDirection: "column",
+      gap: theme.spacing(2)
+    },
+    logo: {
+      display: "block",
+      maxWidth: 200,
+      maxHeight: 64,
+      margin: theme.spacing(1, "auto", 0.5),
+      content: `url("${theme.calculatedLogo()}")`
+    },
+    headline: {
+      fontSize: "1.125rem",
+      fontWeight: 700,
+      letterSpacing: "-0.01em",
+      textAlign: "center",
+      color: theme.palette.text.primary
+    },
+    text: {
+      fontSize: "0.9375rem",
+      lineHeight: 1.6,
+      color: theme.palette.text.secondary
+    },
+    author: {
+      display: "flex",
+      alignItems: "center",
+      gap: theme.spacing(1.5),
+      padding: theme.spacing(1.5),
+      borderRadius: t.radius.lg,
+      backgroundColor: t.brand.soft
+    },
+    initials: {
+      flex: "none",
+      width: 44,
+      height: 44,
+      borderRadius: "50%",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontWeight: 700,
+      backgroundColor: t.brand.main,
+      color: t.brand.contrastText
+    },
+    authorName: {
+      fontSize: "0.9375rem",
+      fontWeight: 700,
+      color: theme.palette.text.primary
+    },
+    authorRole: {
+      fontSize: "0.8125rem",
+      color: theme.palette.text.secondary
+    },
+    // A licença AGPL-3.0 (LICENSE.md) exige oferecer o código-fonte a quem
+    // usa o sistema pela rede. É o único link que ficou, discreto no rodapé.
+    license: {
+      fontSize: "0.75rem",
+      textAlign: "center",
+      color: theme.palette.text.secondary,
+      "& a": { color: "inherit" }
     }
-  },
-  logoImg: {
-    width: "100%",
-    margin: "0 auto",
-    content: `url("${theme.calculatedLogo()}")`
-  },
-  tekvosoftLogoImg: {
-    width: "100%",
-    margin: "0 auto",
-    content: "url(" + (theme.mode === "light" ? logo : logoDark) + ")"
-  },
-  textCenter: {
-    textAlign: "center"
-  }
-}));
+  };
+});
 
 const AboutModal = ({ open, onClose }) => {
   const classes = useStyles();
-  const { getCurrentUserInfo } = useAuth();
-  const [currentUser, setCurrentUser] = useState({});
-  const [backendGitInfo, setBackendGitInfo] = useState(null);
   const theme = useTheme();
 
-  const handleClose = () => {
-    onClose();
-  };
-
-  useEffect(() => {
-    getCurrentUserInfo().then(user => {
-      setCurrentUser(user);
-    });
-
-    api.get("/").then(response => {
-      setBackendGitInfo(response.data);
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   return (
-    <div className={classes.root}>
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        maxWidth="sm"
-        fullWidth
-        scroll="paper"
-      >
-        <DialogTitle id="form-dialog-title">
-          {i18n.t("about.aboutthe")}{" "}
-          {currentUser?.super ? "Tekvosoft" : theme.appName}
-        </DialogTitle>
-        <DialogContent dividers>
-          {currentUser?.super ? (
-            <>
-              <div>
-                <img className={classes.tekvosoftLogoImg} />
-              </div>
-              <Typography variant="body1" gutterBottom>
-                <b>
-                  Frontend:
-                  {frontendGitInfo.tagName &&
-                    `Version: ${frontendGitInfo.tagName} Build info: ${frontendGitInfo.buildTimestamp}`}
-                  {!frontendGitInfo.tagName && (
-                    <>
-                      {frontendGitInfo.commitHash &&
-                        `Commit: {frontendGitInfo.commitHash} `}
-                      {frontendGitInfo.branchName &&
-                        `Branch: {frontendGitInfo.branchName} `}
-                      {frontendGitInfo.commitTimestamp &&
-                        `Time: {frontendGitInfo.commitTimestamp} `}
-                    </>
-                  )}
-                </b>
-                {backendGitInfo && (
-                  <>
-                    <br />
-                    <b>
-                      Backend:
-                      {backendGitInfo.tagName &&
-                        `Version: ${backendGitInfo.tagName} Build info: ${backendGitInfo.buildTimestamp}`}
-                      {!backendGitInfo.tagName && (
-                        <>
-                          {backendGitInfo.commitHash &&
-                            `Commit: {backendGitInfo.commitHash} `}
-                          {backendGitInfo.branchName &&
-                            `Branch: {backendGitInfo.branchName} `}
-                          {backendGitInfo.commitTimestamp &&
-                            `Time: {backendGitInfo.commitTimestamp} `}
-                        </>
-                      )}
-                    </b>
-                  </>
-                )}
-              </Typography>
-              <Typography variant="body1">
-                {i18n.t("about.aboutdetail")}
-              </Typography>
-              <Typography>
-                <Link target="_blank" href="https://todobom.com">
-                  {i18n.t("about.aboutauthorsite")}
-                </Link>
-              </Typography>
-              <Typography>
-                <Link
-                  target="_blank"
-                  href="https://github.com/canove/whaticket-community"
-                >
-                  {i18n.t("about.aboutwhaticketsite")}
-                </Link>
-              </Typography>
-              <Typography>
-                <Link target="_blank" href="https://github.com/vemfazer">
-                  {i18n.t("about.aboutvemfazersite")}
-                </Link>
-              </Typography>
-              <Typography variant="h4">
-                {i18n.t("about.licenseheading")}
-              </Typography>
-              <Typography variant="body1">
-                {i18n.t("about.licensedetail")}
-              </Typography>
-              <Typography>
-                <Link
-                  target="_blank"
-                  href="https://github.com/tekvosoft-chat/tekvosoft/blob/main/LICENSE.md"
-                >
-                  {i18n.t("about.licensefulltext")}
-                </Link>
-              </Typography>
-              <Typography>
-                <Link
-                  target="_blank"
-                  href="https://github.com/tekvosoft-chat/tekvosoft"
-                >
-                  {i18n.t("about.licensesourcecode")}
-                </Link>
-              </Typography>
-            </>
-          ) : (
-            <>
-              <div>
-                <img className={classes.logoImg} />
-              </div>
-              <Typography className={classes.textCenter}>
-                <Link
-                  target="_blank"
-                  href="https://github.com/tekvosoft-chat/tekvosoft"
-                >
-                  {i18n.t("about.copyright")}
-                </Link>
-              </Typography>
-            </>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={handleClose}
-            type="submit"
-            color="primary"
-            variant="contained"
-          >
-            {i18n.t("about.buttonclose")}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </div>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="xs"
+      fullWidth
+      scroll="paper"
+    >
+      <DialogTitle>
+        {i18n.t("about.aboutthe")} {theme.appName || "Tekvosoft"}
+      </DialogTitle>
+      <DialogContent dividers className={classes.content}>
+        <img className={classes.logo} alt="" />
+        <Typography className={classes.headline} component="p">
+          {i18n.t("about.headline")}
+        </Typography>
+        <Typography className={classes.text}>
+          {i18n.t("about.product")}
+        </Typography>
+        <Typography className={classes.text}>
+          {i18n.t("about.founder")}
+        </Typography>
+        <Typography className={classes.text}>
+          {i18n.t("about.improving")}
+        </Typography>
+        <div className={classes.author}>
+          <span className={classes.initials} aria-hidden="true">
+            DF
+          </span>
+          <div>
+            <Typography className={classes.authorName}>
+              David Fernandes
+            </Typography>
+            <Typography className={classes.authorRole}>
+              {i18n.t("about.founderRole")}
+            </Typography>
+          </div>
+        </div>
+        <Typography className={classes.license}>
+          {i18n.t("about.license")}{" "}
+          <a href={SOURCE_URL} target="_blank" rel="noopener noreferrer">
+            {i18n.t("about.sourceCode")}
+          </a>
+        </Typography>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} color="primary" variant="contained">
+          {i18n.t("about.buttonclose")}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 };
 

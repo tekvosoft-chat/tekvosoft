@@ -236,6 +236,13 @@ const messages = {
           session: "Session"
         }
       },
+      trialBanner: {
+        daysLeft: "Your free trial ends in {{count}} days",
+        tomorrow: "Your free trial ends tomorrow",
+        today: "Your free trial ends today",
+        ended: "Your free trial has ended",
+        cta: "Subscribe now"
+      },
       mediaPreview: {
         files: "files",
         remove: "Remove",
@@ -560,6 +567,10 @@ const messages = {
           annoucements: "Announcements",
           chats: "Internal Chat",
           chatsShort: "Chat",
+          ticketsShort: "Tickets",
+          search: "Search",
+          online: "Online",
+          noResults: "Nothing found",
           financeiro: "Financial",
           logout: "Logout",
           management: "Management",
@@ -885,6 +896,16 @@ const messages = {
         title: "Help Center"
       },
       about: {
+        headline: "Built to help you serve better, every day",
+        product:
+          "Tekvosoft is a WhatsApp customer service platform that brings your team together in one place: conversations, queues, chatbot, Kanban and internal chat.",
+        founder:
+          "I'm David Fernandes, I'm 22 years old and I'm an entrepreneur in the technology field.",
+        improving:
+          "I'm always improving Tekvosoft: every update brings fixes and new features to make the day-to-day of whoever handles support simpler.",
+        founderRole: "Founder of Tekvosoft",
+        license: "Free software under the AGPL-3.0 license.",
+        sourceCode: "Source code",
         aboutthe: "About the",
         copyright: "© 2024 - Powered by Tekvosoft",
         buttonclose: "Close",
@@ -978,6 +999,55 @@ const messages = {
         extensionBuildUnknownError: "Unknown build error."
       },
       settings: {
+        appearance: {
+          tab: "Appearance",
+          title: "Color theme",
+          subtitle:
+            "Choose the system colors for your whole team. The change shows up instantly on everyone's screen.",
+          mode: "Mode",
+          light: "Light",
+          dark: "Dark",
+          custom: "Custom",
+          customDescription: "Use your brand color",
+          restore: "Restore default",
+          applied: "Theme applied for the whole team",
+          restored: "Default colors restored",
+          current: "In use",
+          presets: {
+            tekvosoft: {
+              name: "Tekvosoft Purple",
+              description: "The default identity: vibrant, modern violet"
+            },
+            classicBlue: {
+              name: "Classic Blue",
+              description: "Professional, sober and trustworthy blue"
+            },
+            forestGreen: {
+              name: "Forest Green",
+              description: "Nature-inspired green for a calm look"
+            },
+            oceanTeal: {
+              name: "Ocean Teal",
+              description: "Refreshing teal inspired by the sea"
+            },
+            sunsetOrange: {
+              name: "Sunset Orange",
+              description: "Warm orange and amber tones"
+            },
+            nightPurple: {
+              name: "Night Purple",
+              description: "Deep, elegant purple"
+            },
+            roseRed: {
+              name: "Rosé",
+              description: "Bold pink for a sophisticated look"
+            },
+            cosmic: {
+              name: "Cosmic",
+              description: "Indigo inspired by deep space"
+            }
+          }
+        },
         restartBackend: {
           button: "Restart Backend",
           restarting: "Restarting…",
@@ -1239,6 +1309,7 @@ const messages = {
       messagesList: {
         header: {
           assignedTo: "Assigned to:",
+          tapForInfo: "Tap to see contact info",
           buttons: {
             return: "Return",
             resolve: "Resolve",
@@ -1251,6 +1322,19 @@ const messages = {
         openPaymentLink: "Open payment link"
       },
       messagesInput: {
+        phone: {
+          attach: "Attach",
+          camera: "Camera",
+          gallery: "Photos & videos",
+          document: "Document",
+          quickReplies: "Quick replies",
+          signature: "Signature",
+          on: "On",
+          off: "Off",
+          recording: "Recording",
+          discardAudio: "Delete audio",
+          sendAudio: "Send audio"
+        },
         placeholderOpen: "Type a message",
         placeholderClosed: "Reopen or accept this ticket to send a message.",
         signMessage: "Sign",
@@ -1263,6 +1347,30 @@ const messages = {
       },
 
       contactDrawer: {
+        phone: {
+          edit: "Edit",
+          call: "Call",
+          copy: "Copy",
+          copied: "Number copied",
+          copyFailed: "Couldn't copy the number",
+          schedule: "Schedule",
+          notes: "Notes",
+          email: "Email",
+          tags: "Tags",
+          none: "None",
+          queue: "Queue",
+          noQueue: "No queue",
+          attendant: "Agent",
+          unassigned: "Unassigned",
+          connection: "Connection",
+          ticket: "Ticket",
+          status: {
+            open: "In progress",
+            pending: "Waiting",
+            closed: "Resolved",
+            group: "Group"
+          }
+        },
         header: "Contact Information",
         buttons: {
           edit: "Edit Contact"

@@ -4,9 +4,10 @@ import { useHistory } from "react-router-dom";
 import {
   makeStyles,
   createTheme,
-  ThemeProvider
+  ThemeProvider,
+  useTheme
 } from "@material-ui/core/styles";
-import { IconButton } from "@material-ui/core";
+import { IconButton, useMediaQuery } from "@material-ui/core";
 import { MoreVert, Replay } from "@material-ui/icons";
 
 import { i18n } from "../../translate/i18n";
@@ -45,11 +46,18 @@ const useStyles = makeStyles(theme => ({
       "& .MuiIconButton-root": { padding: 8 },
       "& .MuiSvgIcon-root": { fontSize: 22 }
     }
+  },
+  // celular: ícones na cor da marca, como os do WhatsApp do iPhone
+  phoneButtons: {
+    "& .MuiIconButton-root": { color: theme.palette.tkv.brand.text },
+    "& .MuiSvgIcon-root": { fontSize: "24px !important" }
   }
 }));
 
 const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
   const classes = useStyles();
+  const theme = useTheme();
+  const isPhone = useMediaQuery(theme.breakpoints.down("xs"));
   const history = useHistory();
   const [anchorEl, setAnchorEl] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -113,7 +121,9 @@ const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
   };
 
   return (
-    <div className={classes.actionButtons}>
+    <div
+      className={`${classes.actionButtons}${isPhone ? ` ${classes.phoneButtons}` : ""}`}
+    >
       {ticket.status === "closed" && (!showTabGroups || !ticket.isGroup) && (
         <>
           <Tooltip title={i18n.t("ticketsManager.buttons.newTicket")}>
@@ -168,25 +178,39 @@ const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
 
           {(!showTabGroups || !ticket.isGroup) && (
             <>
-              <Tooltip title={i18n.t("messagesList.header.buttons.return")}>
-                <IconButton
-                  onClick={e => handleUpdateTicketStatus(e, "pending", null)}
-                >
-                  <UndoRoundedIcon />
-                </IconButton>
-              </Tooltip>
-              <ThemeProvider theme={customTheme}>
-                <Tooltip title={i18n.t("messagesList.header.buttons.resolve")}>
+              {/* no celular "devolver" vai para o menu ⋮ */}
+              {!isPhone && (
+                <Tooltip title={i18n.t("messagesList.header.buttons.return")}>
                   <IconButton
-                    onClick={e =>
-                      handleUpdateTicketStatus(e, "closed", user?.id)
-                    }
-                    color="primary"
+                    onClick={e => handleUpdateTicketStatus(e, "pending", null)}
                   >
-                    <CheckCircleIcon />
+                    <UndoRoundedIcon />
                   </IconButton>
                 </Tooltip>
-              </ThemeProvider>
+              )}
+              {isPhone ? (
+                <IconButton
+                  aria-label={i18n.t("messagesList.header.buttons.resolve")}
+                  onClick={e => handleUpdateTicketStatus(e, "closed", user?.id)}
+                >
+                  <CheckCircleIcon />
+                </IconButton>
+              ) : (
+                <ThemeProvider theme={customTheme}>
+                  <Tooltip
+                    title={i18n.t("messagesList.header.buttons.resolve")}
+                  >
+                    <IconButton
+                      onClick={e =>
+                        handleUpdateTicketStatus(e, "closed", user?.id)
+                      }
+                      color="primary"
+                    >
+                      <CheckCircleIcon />
+                    </IconButton>
+                  </Tooltip>
+                </ThemeProvider>
+              )}
             </>
           )}
 
@@ -199,6 +223,18 @@ const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
             menuOpen={ticketOptionsMenuOpen}
             handleClose={handleCloseTicketOptionsMenu}
             showTabGroups={showTabGroups}
+            extraItems={
+              isPhone && (!showTabGroups || !ticket.isGroup)
+                ? [
+                    {
+                      key: "return",
+                      label: i18n.t("messagesList.header.buttons.return"),
+                      onClick: () =>
+                        handleUpdateTicketStatus(null, "pending", null)
+                    }
+                  ]
+                : []
+            }
           />
         </>
       )}

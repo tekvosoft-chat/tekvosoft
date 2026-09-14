@@ -25,6 +25,7 @@ import {
   alpha,
   brandStates,
   buildShadows,
+  readableAccent,
   fontStack,
   layout,
   monoStack,
@@ -34,6 +35,7 @@ import {
   semanticDark,
   semanticLight,
   SPACING_UNIT,
+  tintNeutrals,
   whatsappDark,
   whatsappLight
 } from "./tokens";
@@ -50,9 +52,15 @@ export default function createAppTheme({
   calculatedLogoDark
 } = {}) {
   const isDark = mode === "dark";
-  const n = isDark ? neutralDark : neutralLight;
+  // neutros no matiz da cor principal: o tema escolhido tinge o sistema todo
+  const n = tintNeutrals(isDark ? neutralDark : neutralLight, primaryColor);
   const sem = isDark ? semanticDark : semanticLight;
   const b = brandStates(primaryColor, isDark);
+  // ícones e textos na cor da marca: legíveis mesmo quando a cor escolhida
+  // é escura e o modo é escuro (ou o contrário)
+  b.text = readableAccent(primaryColor, n.surface);
+  b.textSoft = alpha(b.text, isDark ? 0.16 : 0.1);
+  b.textBorder = alpha(b.text, isDark ? 0.34 : 0.26);
 
   const shadows = buildShadows(isDark);
 
@@ -316,6 +324,21 @@ export default function createAppTheme({
             // propósito: duas chaves iguais neste objeto fariam a segunda
             // apagar a primeira, e estas regras sumiriam sem erro nenhum.
             "@media screen and (max-width: 599.95px)": {
+              /**
+               * O modal mora na área VISÍVEL da tela, não na janela inteira.
+               *
+               * No Safari do iPhone o teclado não encolhe a página: ele cobre
+               * a parte de baixo. O painel preso no fundo da janela ficava
+               * atrás do teclado e só o título aparecia. Aqui a caixa do modal
+               * começa onde a área visível começa (--vv-top) e tem a altura
+               * dela (--vh); o painel assenta logo acima do teclado. O
+               * Material põe top/bottom como estilo inline, daí o !important.
+               */
+              ".MuiDialog-root": {
+                top: "var(--vv-top, 0px) !important",
+                bottom: "auto !important",
+                height: "var(--vh, 100vh)"
+              },
               // !important: o CSS do próprio Dialog é carregado depois deste
               // (só quando o primeiro modal abre) e centralizaria de novo
               ".MuiDialog-scrollPaper": { alignItems: "flex-end !important" },

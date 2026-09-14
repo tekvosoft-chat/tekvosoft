@@ -27,6 +27,11 @@ import MicIcon from "@material-ui/icons/Mic";
 import CheckCircleOutlineIcon from "@material-ui/icons/CheckCircleOutline";
 import HighlightOffIcon from "@material-ui/icons/HighlightOff";
 import CameraAltIcon from "@material-ui/icons/CameraAlt";
+import AddRoundedIcon from "@material-ui/icons/AddRounded";
+import PhotoCameraOutlinedIcon from "@material-ui/icons/PhotoCameraOutlined";
+import FlashOnRoundedIcon from "@material-ui/icons/FlashOnRounded";
+import SendRoundedIcon from "@material-ui/icons/SendRounded";
+import useMediaQuery from "@material-ui/core/useMediaQuery";
 import {
   FormControlLabel,
   Switch,
@@ -56,6 +61,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSignature } from "@fortawesome/free-solid-svg-icons";
 import { isMobile } from "../../helpers/isMobile";
 import MediaPreview from "../ui/MediaPreview";
+import { AttachPanel, RecordingPanel } from "./PhoneComposer";
 import { SocketContext } from "../../context/Socket/SocketContext";
 
 const Mp3Recorder = new MicRecorder({ bitRate: 128 });
@@ -145,6 +151,65 @@ const useStyles = makeStyles(theme => ({
 
   uploadInput: {
     display: "none"
+  },
+
+  /**
+   * Celular: o arranjo do WhatsApp do iPhone. "+" à esquerda abre o painel
+   * de anexos no lugar do teclado; o campo é uma pílula com o atalho de
+   * respostas rápidas dentro; câmera e microfone à direita. Os ícones usam a
+   * cor da marca, então mudam junto com o tema da empresa.
+   */
+  phoneBox: {
+    width: "100%",
+    display: "flex",
+    alignItems: "flex-end",
+    gap: 2,
+    padding: "6px 6px 8px"
+  },
+  phoneIconButton: {
+    flex: "none",
+    width: 44,
+    height: 44,
+    padding: 0,
+    color: theme.palette.tkv.brand.text,
+    "& svg": { fontSize: 26 }
+  },
+  plusIcon: {
+    transition: "transform .25s cubic-bezier(.34, 1.56, .64, 1)",
+    fontSize: "30px !important"
+  },
+  plusOpen: { transform: "rotate(45deg)" },
+  phoneInputWrapper: {
+    flex: 1,
+    minWidth: 0,
+    display: "flex",
+    alignItems: "center",
+    minHeight: 40,
+    margin: "2px 4px",
+    padding: "1px 2px 1px 14px",
+    borderRadius: 20,
+    backgroundColor: theme.palette.tkv.chat.input,
+    boxShadow: `inset 0 0 0 1px ${theme.palette.tkv.border}`
+  },
+  pillAction: {
+    padding: 6,
+    color: theme.palette.tkv.brand.text,
+    "& svg": { fontSize: 22 }
+  },
+  roundBrand: {
+    backgroundColor: theme.palette.tkv.brand.main,
+    color: theme.palette.tkv.brand.contrastText,
+    animation: "$popIn .22s cubic-bezier(.34, 1.56, .64, 1)",
+    "&:hover": { backgroundColor: theme.palette.tkv.brand.hover },
+    "&.Mui-disabled": {
+      backgroundColor: theme.palette.tkv.brand.main,
+      color: theme.palette.tkv.brand.contrastText
+    },
+    "& svg": { color: theme.palette.tkv.brand.contrastText }
+  },
+  "@keyframes popIn": {
+    from: { transform: "scale(0.6)", opacity: 0.4 },
+    to: { transform: "scale(1)", opacity: 1 }
   },
 
   viewMediaInputWrapper: {
@@ -346,19 +411,24 @@ const ActionButtons = props => {
     handleCancelAudio,
     handleUploadAudio,
     handleStartRecording,
-    disableOption
+    disableOption,
+    phone
   } = props;
   const classes = useStyles();
+  const roundClass = phone
+    ? `${classes.roundAction} ${classes.roundBrand}`
+    : classes.roundAction;
   if (inputMessage) {
     return (
       <IconButton
+        key="send"
         aria-label="sendMessage"
         component="span"
         onClick={handleSendMessage}
         disabled={disableOption}
-        className={classes.roundAction}
+        className={roundClass}
       >
-        <SendIcon />
+        {phone ? <SendRoundedIcon /> : <SendIcon />}
       </IconButton>
     );
   } else if (recording) {
@@ -394,11 +464,12 @@ const ActionButtons = props => {
   } else {
     return (
       <IconButton
+        key="mic"
         aria-label="showRecorder"
         component="span"
         disabled={disableOption}
         onClick={handleStartRecording}
-        className={classes.roundAction}
+        className={roundClass}
       >
         <MicIcon />
       </IconButton>
@@ -430,7 +501,10 @@ const CustomInput = props => {
     handleInputPaste,
     handleChangeMedias,
     handlePresenceUpdate,
-    disableOption
+    disableOption,
+    phone,
+    onQuickReplies,
+    onFocusInput
   } = props;
   const classes = useStyles();
   const [quickMessages, setQuickMessages] = useState([]);
@@ -671,7 +745,11 @@ const CustomInput = props => {
   };
 
   return (
-    <div className={classes.messageInputWrapper}>
+    <div
+      className={
+        phone ? classes.phoneInputWrapper : classes.messageInputWrapper
+      }
+    >
       <Autocomplete
         disabled={disableOption}
         freeSolo
@@ -717,27 +795,41 @@ const CustomInput = props => {
                 multiline
                 className={classes.messageInput}
                 maxRows={5}
+                onFocus={onFocusInput}
                 endAdornment={
-                  isMobile() && (
+                  phone ? (
                     <InputAdornment position="end">
-                      <input
-                        type="file"
-                        id="camera-button"
-                        accept="image/*"
-                        capture="camera"
-                        className={classes.uploadInput}
-                        onChange={handleChangeMedias}
-                      />
-                      <label htmlFor="camera-button">
-                        <IconButton
-                          aria-label="camera-upload"
-                          component="span"
-                          disabled={disableOption}
-                        >
-                          <CameraAltIcon className={classes.cameraIcon} />
-                        </IconButton>
-                      </label>
+                      <IconButton
+                        aria-label={i18n.t("messagesInput.phone.quickReplies")}
+                        className={classes.pillAction}
+                        disabled={disableOption}
+                        onClick={onQuickReplies}
+                      >
+                        <FlashOnRoundedIcon />
+                      </IconButton>
                     </InputAdornment>
+                  ) : (
+                    isMobile() && (
+                      <InputAdornment position="end">
+                        <input
+                          type="file"
+                          id="camera-button"
+                          accept="image/*"
+                          capture="camera"
+                          className={classes.uploadInput}
+                          onChange={handleChangeMedias}
+                        />
+                        <label htmlFor="camera-button">
+                          <IconButton
+                            aria-label="camera-upload"
+                            component="span"
+                            disabled={disableOption}
+                          >
+                            <CameraAltIcon className={classes.cameraIcon} />
+                          </IconButton>
+                        </label>
+                      </InputAdornment>
+                    )
                   )
                 }
                 onKeyDownCapture={e => {
@@ -851,6 +943,8 @@ const MessageInputCustom = props => {
   const { status: ticketStatus, id: ticketId } = ticket;
   const classes = useStyles();
   const theme = useTheme();
+  const isPhone = useMediaQuery(theme.breakpoints.down("xs"));
+  const [attachOpen, setAttachOpen] = useState(false);
 
   const [medias, setMedias] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
@@ -926,6 +1020,7 @@ const MessageInputCustom = props => {
     }
     return () => {
       setShowEmoji(false);
+      setAttachOpen(false);
       setMedias([]);
       setReplyingMessage(null);
       setEditingMessage(null);
@@ -953,6 +1048,21 @@ const MessageInputCustom = props => {
 
     const selectedMedias = Array.from(e.target.files);
     setMedias(selectedMedias);
+    setAttachOpen(false);
+  };
+
+  // celular: o painel do "+" abre no lugar do teclado, como no WhatsApp
+  const toggleAttach = () => {
+    setAttachOpen(open => {
+      if (!open) inputRef.current?.blur();
+      return !open;
+    });
+  };
+
+  const handleQuickReplies = () => {
+    setAttachOpen(false);
+    setInputMessage("/");
+    setTimeout(() => inputRef.current?.focus(), 0);
   };
 
   const handleInputPaste = e => {
@@ -1199,7 +1309,14 @@ const MessageInputCustom = props => {
       <Paper elevation={0} square className={classes.mainWrapper}>
         <MediaPreview
           files={medias}
-          accent={theme.palette.tkv.chat.accent}
+          accent={
+            isPhone
+              ? theme.palette.tkv.brand.main
+              : theme.palette.tkv.chat.accent
+          }
+          accentText={
+            isPhone ? theme.palette.tkv.brand.contrastText : "#FFFFFF"
+          }
           loading={loading}
           disabled={disableOption}
           progress={<LinearWithValueLabel progress={percentLoading} />}
@@ -1211,7 +1328,86 @@ const MessageInputCustom = props => {
         />
       </Paper>
     );
-  else {
+  else if (isPhone) {
+    return (
+      <Paper square elevation={0} className={classes.mainWrapper}>
+        {(replyingMessage && renderReplyingMessage(replyingMessage)) ||
+          (editingMessage && renderReplyingMessage(editingMessage))}
+        {recording ? (
+          <RecordingPanel
+            recorder={Mp3Recorder}
+            loading={loading}
+            onCancel={handleCancelAudio}
+            onSend={handleUploadAudio}
+          />
+        ) : (
+          <div className={classes.phoneBox}>
+            <IconButton
+              className={classes.phoneIconButton}
+              onClick={toggleAttach}
+              disabled={disableOption}
+              aria-label={i18n.t("messagesInput.phone.attach")}
+              aria-expanded={attachOpen}
+            >
+              <AddRoundedIcon
+                className={clsx(classes.plusIcon, {
+                  [classes.plusOpen]: attachOpen
+                })}
+              />
+            </IconButton>
+
+            <CustomInput
+              phone
+              loading={loading}
+              inputRef={inputRef}
+              ticketStatus={(isGroup && "open") || ticketStatus}
+              inputMessage={inputMessage}
+              setInputMessage={setInputMessage}
+              handleSendMessage={handleSendMessage}
+              handleInputPaste={handleInputPaste}
+              handleChangeMedias={handleChangeMedias}
+              handlePresenceUpdate={handlePresenceUpdate}
+              disableOption={disableOption}
+              onQuickReplies={handleQuickReplies}
+              onFocusInput={() => setAttachOpen(false)}
+            />
+
+            {!inputMessage && (
+              <IconButton
+                component="label"
+                htmlFor="camera-button"
+                className={classes.phoneIconButton}
+                disabled={disableOption}
+                aria-label={i18n.t("messagesInput.phone.camera")}
+              >
+                <PhotoCameraOutlinedIcon />
+              </IconButton>
+            )}
+
+            <ActionButtons
+              phone
+              inputMessage={inputMessage}
+              loading={loading}
+              recording={recording}
+              ticketStatus={ticketStatus}
+              handleSendMessage={handleSendMessage}
+              handleCancelAudio={handleCancelAudio}
+              handleUploadAudio={handleUploadAudio}
+              handleStartRecording={handleStartRecording}
+            />
+          </div>
+        )}
+        <AttachPanel
+          open={attachOpen && !recording}
+          disabled={disableOption}
+          onFiles={handleChangeMedias}
+          onQuickReplies={handleQuickReplies}
+          signMessage={signMessage}
+          onToggleSign={() => setSignMessage(!signMessage)}
+        />
+      </Paper>
+    );
+  } else {
     return (
       <Paper square elevation={0} className={classes.mainWrapper}>
         {(replyingMessage && renderReplyingMessage(replyingMessage)) ||

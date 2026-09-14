@@ -1,6 +1,7 @@
 import React, {
   useCallback,
   useContext,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -9,17 +10,19 @@ import React, {
 import { useHistory, useLocation } from "react-router-dom";
 
 import { makeStyles } from "@material-ui/core/styles";
-import BottomNavigation from "@material-ui/core/BottomNavigation";
-import BottomNavigationAction from "@material-ui/core/BottomNavigationAction";
 import Typography from "@material-ui/core/Typography";
 import ButtonBase from "@material-ui/core/ButtonBase";
 import Divider from "@material-ui/core/Divider";
 
 import WhatsAppIcon from "@material-ui/icons/WhatsApp";
 import DashboardOutlinedIcon from "@material-ui/icons/DashboardOutlined";
+import DashboardIcon from "@material-ui/icons/Dashboard";
 import ContactPhoneOutlinedIcon from "@material-ui/icons/ContactPhoneOutlined";
+import ContactPhoneIcon from "@material-ui/icons/ContactPhone";
 import ForumIcon from "@material-ui/icons/Forum";
+import ForumOutlinedIcon from "@material-ui/icons/ForumOutlined";
 import ViewWeekOutlinedIcon from "@material-ui/icons/ViewWeekOutlined";
+import ViewWeekIcon from "@material-ui/icons/ViewWeek";
 import FlashOnIcon from "@material-ui/icons/FlashOn";
 import EventIcon from "@material-ui/icons/Event";
 import LocalOfferIcon from "@material-ui/icons/LocalOffer";
@@ -62,101 +65,99 @@ import { i18n } from "../translate/i18n";
  */
 const useStyles = makeStyles(theme => ({
   /**
-   * A barra agora é um item do layout em coluna, não um elemento fixo.
+   * A barra é um item do layout em coluna, não um elemento fixo.
    *
    * Com position: fixed e bottom: 0 ela se prendia ao fundo da janela de
    * layout do navegador — que no celular fica ATRÁS da barra de ferramentas
-   * do Chrome/Safari. Resultado: a navegação aparecia baixa demais, meio
-   * escondida, e ainda cobria a última linha de cada tela. Dentro do fluxo
-   * ela senta no fim da área visível de verdade (a altura vem do
-   * visualViewport, em --vh) e o conteúdo termina exatamente acima dela.
+   * do Chrome/Safari. Dentro do fluxo ela senta no fim da área visível de
+   * verdade (a altura vem do visualViewport, em --vh).
+   *
+   * O desenho é uma cápsula flutuante, como a barra de abas do iOS: solta das
+   * bordas, com sombra, e a faixa da barra de gestos do iPhone logo abaixo.
    */
-  bar: {
-    flex: "none",
-    position: "relative",
-    zIndex: 2,
-    display: "flex",
-    alignItems: "stretch",
-    height: "auto",
-    // 56px de toque + a faixa da barra de gestos do iPhone logo abaixo, como
-    // a barra de abas dos apps nativos do iOS (49 + 34). A faixa de gestos
-    // vem de --safe-bottom, que o index.html liga com viewport-fit=cover.
-    minHeight: "calc(56px + var(--safe-bottom, 0px))",
-    padding: "2px 4px 0",
-    paddingBottom: "calc(2px + var(--safe-bottom, 0px))",
-    // o fundo mora no contêiner: aqui transparente para a pílula aparecer
-    backgroundColor: "transparent"
-  },
-
-  /**
-   * O Material-UI v4 dá a cada item min-width de 80px. Cinco itens pedem
-   * 400px e um celular comum tem 360: o último item estourava a tela e os
-   * rótulos quebravam em duas linhas. Aqui cada item divide a largura por
-   * igual e o rótulo nunca quebra.
-   */
-  action: {
-    flex: "1 1 0",
-    minWidth: 0,
-    maxWidth: "none",
-    padding: "5px 0 3px",
-    height: 52,
-    color: theme.palette.text.secondary,
-    "& .MuiBottomNavigationAction-wrapper": { gap: 2 },
-    "& .MuiBottomNavigationAction-label": {
-      fontSize: "0.65625rem",
-      fontWeight: 500,
-      letterSpacing: "-0.01em",
-      lineHeight: 1.25,
-      whiteSpace: "nowrap",
-      overflow: "hidden",
-      textOverflow: "ellipsis",
-      maxWidth: "100%",
-      opacity: 1,
-      transition: "none"
-    },
-    "&.Mui-selected": {
-      color: theme.palette.tkv.brand.main,
-      "& .MuiBottomNavigationAction-label": {
-        fontSize: "0.65625rem",
-        fontWeight: 700
-      }
-    },
-    position: "relative",
-    zIndex: 1
-  },
   barWrap: {
     position: "relative",
     flex: "none",
     zIndex: theme.zIndex.appBar + 2,
-    borderTop: `1px solid ${theme.palette.tkv.border}`,
-    backgroundColor: theme.palette.tkv.surface
+    padding: "6px 12px 0",
+    // a cápsula termina acima da barrinha de gestos, sem sobrar vão demais
+    paddingBottom: "max(8px, calc(var(--safe-bottom, 0px) - 6px))",
+    backgroundColor: theme.palette.background.default
   },
+  bar: {
+    position: "relative",
+    display: "flex",
+    alignItems: "stretch",
+    height: 62,
+    padding: 5,
+    borderRadius: theme.palette.tkv.radius.pill,
+    backgroundColor:
+      theme.mode === "dark"
+        ? theme.palette.tkv.surfaceRaised
+        : theme.palette.tkv.surface,
+    boxShadow:
+      theme.mode === "dark"
+        ? `0 10px 28px rgba(0, 0, 0, 0.5), inset 0 0 0 1px ${theme.palette.tkv.border}`
+        : `0 10px 28px rgba(26, 22, 38, 0.12), 0 2px 6px rgba(26, 22, 38, 0.06), inset 0 0 0 1px ${theme.palette.tkv.border}`
+  },
+
   /**
-   * Um só "quadrado" para o item ativo, que DESLIZA até o próximo item
-   * tocado — em vez de cada item acender e apagar o próprio fundo. O olho
-   * acompanha o movimento e entende de onde saiu e para onde foi.
+   * Um só destaque para o item ativo, que DESLIZA até o próximo item tocado.
+   * Ele tem a largura exata de um item e anda de item em item com
+   * translateX(n × 100%); no caminho estica e volta ao tamanho, como uma gota
+   * — o olho acompanha de onde saiu e para onde foi. O movimento é só de
+   * transform, que o navegador anima fora da thread principal: não trava
+   * enquanto a tela nova está sendo montada.
    */
   barIndicator: {
     position: "absolute",
-    zIndex: 1,
-    top: 7,
-    width: 52,
-    height: 28,
+    zIndex: 0,
+    top: 5,
+    bottom: 5,
+    left: 5,
     borderRadius: theme.palette.tkv.radius.pill,
-    backgroundColor: theme.palette.tkv.brand.soft,
+    backgroundColor: theme.palette.tkv.brand.textSoft,
+    boxShadow: `inset 0 0 0 1px ${theme.palette.tkv.brand.textBorder}`,
     pointerEvents: "none",
-    transition:
-      "left .34s cubic-bezier(.2, .8, .2, 1), opacity .2s ease, transform .34s cubic-bezier(.2, .8, .2, 1)"
+    willChange: "transform",
+    transition: "transform .42s cubic-bezier(.3, .7, .2, 1)"
   },
-  // "pílula" atrás do ícone ativo: indica onde a pessoa está sem depender
-  // só da cor do texto, que é pequeno
-  iconPill: {
+  action: {
+    position: "relative",
+    zIndex: 1,
+    flex: "1 1 0",
+    minWidth: 0,
     display: "flex",
+    flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    width: 52,
-    height: 28,
-    "& svg": { fontSize: 22 }
+    gap: 2,
+    borderRadius: theme.palette.tkv.radius.pill,
+    color: theme.palette.text.secondary,
+    WebkitTapHighlightColor: "transparent",
+    transition: "color .25s ease",
+    "&:active $icon": { transform: "scale(0.88)" }
+  },
+  actionActive: {
+    color: theme.palette.tkv.brand.text,
+    "& $icon": { transform: "translateY(-1px) scale(1.08)" },
+    "& $label": { fontWeight: 700 }
+  },
+  icon: {
+    display: "flex",
+    transition: "transform .38s cubic-bezier(.34, 1.56, .64, 1)",
+    "& svg": { fontSize: 23 }
+  },
+  label: {
+    maxWidth: "100%",
+    padding: "0 2px",
+    fontSize: "0.6875rem",
+    fontWeight: 500,
+    letterSpacing: "-0.01em",
+    lineHeight: 1.2,
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis"
   },
 
   // ── grade do painel "Mais" ──
@@ -181,8 +182,8 @@ const useStyles = makeStyles(theme => ({
     left: 0,
     top: 0,
     borderRadius: theme.palette.tkv.radius.md,
-    backgroundColor: theme.palette.tkv.brand.soft,
-    boxShadow: `inset 0 0 0 1.5px ${theme.palette.tkv.brand.border}`,
+    backgroundColor: theme.palette.tkv.brand.textSoft,
+    boxShadow: `inset 0 0 0 1.5px ${theme.palette.tkv.brand.textBorder}`,
     pointerEvents: "none",
     transition:
       "transform .3s cubic-bezier(.2, .8, .2, 1), width .3s cubic-bezier(.2, .8, .2, 1), height .3s cubic-bezier(.2, .8, .2, 1), opacity .2s ease"
@@ -208,7 +209,7 @@ const useStyles = makeStyles(theme => ({
       color: theme.palette.tkv.brand.contrastText
     },
     "& $tileLabel": {
-      color: theme.palette.tkv.brand.main,
+      color: theme.palette.tkv.brand.text,
       fontWeight: 700
     }
   },
@@ -273,26 +274,37 @@ const MobileNav = ({ onOpenProfile }) => {
 
   // ── itens fixos da barra ──
   const barItems = useMemo(() => {
+    // ícone vazado parado, preenchido quando é a tela atual
     const tickets = {
       to: "/tickets",
       label: t("tickets"),
-      icon: <WhatsAppIcon />
+      // rótulo curto: "Atendimentos" não cabe inteiro num item da barra
+      short: t("ticketsShort"),
+      icon: <WhatsAppIcon />,
+      activeIcon: <WhatsAppIcon />
     };
     const contacts = {
       to: "/contacts",
       label: t("contacts"),
-      icon: <ContactPhoneOutlinedIcon />
+      icon: <ContactPhoneOutlinedIcon />,
+      activeIcon: <ContactPhoneIcon />
     };
     const chats = {
       to: "/chats",
       label: t("chats"),
       short: t("chatsShort"),
-      icon: <ForumIcon />
+      icon: <ForumOutlinedIcon />,
+      activeIcon: <ForumIcon />
     };
 
     if (isAdmin) {
       return [
-        { to: "/", label: t("dashboard"), icon: <DashboardOutlinedIcon /> },
+        {
+          to: "/",
+          label: t("dashboard"),
+          icon: <DashboardOutlinedIcon />,
+          activeIcon: <DashboardIcon />
+        },
         tickets,
         contacts,
         chats
@@ -300,7 +312,12 @@ const MobileNav = ({ onOpenProfile }) => {
     }
     return [
       tickets,
-      { to: "/kanban", label: t("kanban"), icon: <ViewWeekOutlinedIcon /> },
+      {
+        to: "/kanban",
+        label: t("kanban"),
+        icon: <ViewWeekOutlinedIcon />,
+        activeIcon: <ViewWeekIcon />
+      },
       contacts,
       chats
     ];
@@ -396,6 +413,18 @@ const MobileNav = ({ onOpenProfile }) => {
     }
   };
 
+  // Troca de tela só depois que o destaque começou a andar: montar a tela
+  // nova ocupa o navegador por alguns quadros, e se a animação começasse
+  // junto ela "pularia" direto para o fim. Dois quadros bastam.
+  const frames = useRef([]);
+  useEffect(() => () => frames.current.forEach(cancelAnimationFrame), []);
+  const goAfterPaint = to => {
+    const first = requestAnimationFrame(() => {
+      frames.current.push(requestAnimationFrame(() => go(to)));
+    });
+    frames.current.push(first);
+  };
+
   // ── pílula da barra: fica no item da tela atual; com o painel aberto (ou
   // quando a tela atual mora dentro do "Mais"), fica no "Mais" ──
   const slots = barItems.length + 1;
@@ -408,7 +437,32 @@ const MobileNav = ({ onOpenProfile }) => {
         : currentIndex;
   useLayoutEffect(() => setPressed(null), [location.pathname, sheetOpen]);
 
-  const pillLeft = `calc(4px + (100% - 8px) * ${barIndex} / ${slots} + ((100% - 8px) / ${slots} - 52px) / 2)`;
+  const indicatorRef = useRef(null);
+  const lastIndex = useRef(barIndex);
+  useLayoutEffect(() => {
+    const el = indicatorRef.current;
+    const from = lastIndex.current;
+    lastIndex.current = barIndex;
+    if (!el || from === barIndex || typeof el.animate !== "function") return;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
+    // a gota: sai do item de origem, estica no meio do caminho e assenta
+    const distance = Math.min(Math.abs(barIndex - from), 3);
+    el.animate(
+      [
+        { transform: `translateX(${from * 100}%) scaleX(1)` },
+        {
+          transform: `translateX(${(from + barIndex) * 50}%) scaleX(${
+            1 + 0.22 * distance
+          }) scaleY(0.92)`,
+          offset: 0.45
+        },
+        { transform: `translateX(${barIndex * 100}%) scaleX(1)` }
+      ],
+      { duration: 380 + distance * 50, easing: "cubic-bezier(.3, .7, .2, 1)" }
+    );
+  }, [barIndex]);
 
   // ── quadrado da grade do "Mais" ──
   const tileRefs = useRef({});
@@ -452,46 +506,61 @@ const MobileNav = ({ onOpenProfile }) => {
   return (
     <>
       <div className={classes.barWrap}>
-        <span
-          className={classes.barIndicator}
-          style={{ left: pillLeft }}
-          aria-hidden="true"
-        />
-        <BottomNavigation
-          value={barIndex === barItems.length ? "more" : barIndex}
-          showLabels
+        <nav
           className={classes.bar}
-          component="nav"
           aria-label={i18n.t("mainDrawer.listItems.menu")}
         >
-          {barItems.map((item, index) => (
-            <BottomNavigationAction
-              key={item.to}
-              value={index}
-              label={item.short || item.label}
-              icon={<span className={classes.iconPill}>{item.icon}</span>}
-              className={classes.action}
-              onClick={() => {
-                setPressed(index);
-                go(item.to);
-              }}
-            />
-          ))}
-          <BottomNavigationAction
-            value="more"
-            label={t("more")}
-            icon={
-              <span className={classes.iconPill}>
-                <MoreHorizIcon />
-              </span>
-            }
-            className={classes.action}
+          <span
+            ref={indicatorRef}
+            className={classes.barIndicator}
+            style={{
+              width: `calc((100% - 10px) / ${slots})`,
+              transform: `translateX(${barIndex * 100}%)`
+            }}
+            aria-hidden="true"
+          />
+          {barItems.map((item, index) => {
+            const active = barIndex === index;
+            return (
+              <ButtonBase
+                key={item.to}
+                disableRipple
+                className={`${classes.action}${active ? ` ${classes.actionActive}` : ""}`}
+                aria-current={currentIndex === index ? "page" : undefined}
+                aria-label={item.label}
+                onClick={() => {
+                  if (barIndex === index && location.pathname === item.to) {
+                    return;
+                  }
+                  setPressed(index);
+                  goAfterPaint(item.to);
+                }}
+              >
+                <span className={classes.icon}>
+                  {active ? item.activeIcon : item.icon}
+                </span>
+                <span className={classes.label}>
+                  {item.short || item.label}
+                </span>
+              </ButtonBase>
+            );
+          })}
+          <ButtonBase
+            disableRipple
+            className={`${classes.action}${barIndex === barItems.length ? ` ${classes.actionActive}` : ""}`}
+            aria-label={t("more")}
+            aria-expanded={sheetOpen}
             onClick={() => {
               setPressed(barItems.length);
               setSheetOpen(true);
             }}
-          />
-        </BottomNavigation>
+          >
+            <span className={classes.icon}>
+              <MoreHorizIcon />
+            </span>
+            <span className={classes.label}>{t("more")}</span>
+          </ButtonBase>
+        </nav>
       </div>
 
       <BottomSheet

@@ -18,7 +18,8 @@ const TicketOptionsMenu = ({
   menuOpen,
   handleClose,
   anchorEl,
-  showTabGroups
+  showTabGroups,
+  extraItems = []
 }) => {
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [transferTicketModalOpen, setTransferTicketModalOpen] = useState(false);
@@ -87,6 +88,18 @@ const TicketOptionsMenu = ({
         open={menuOpen}
         onClose={handleClose}
       >
+        {/* ações que no celular saem do cabeçalho para caber o nome */}
+        {extraItems.map(item => (
+          <MenuItem
+            key={item.key}
+            onClick={() => {
+              handleClose();
+              item.onClick();
+            }}
+          >
+            {item.label}
+          </MenuItem>
+        ))}
         <MenuItem onClick={handleOpenScheduleModal}>
           {i18n.t("ticketOptionsMenu.schedule")}
         </MenuItem>

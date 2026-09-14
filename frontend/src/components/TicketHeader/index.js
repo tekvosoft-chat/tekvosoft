@@ -25,6 +25,17 @@ const useStyles = makeStyles(theme => ({
     flex: "none",
     marginLeft: theme.spacing(0.5),
     color: theme.palette.text.secondary
+  },
+  // celular: faixa do WhatsApp do iPhone, com voltar e ícones na cor da marca
+  phone: {
+    minHeight: 58,
+    paddingRight: 2,
+    "& $back": {
+      marginLeft: 2,
+      padding: "10px 4px 10px 10px",
+      color: theme.palette.tkv.brand.text,
+      "& svg": { fontSize: 24 }
+    }
   }
 }));
 
@@ -52,7 +63,10 @@ const TicketHeader = ({ loading, children, showBack = false }) => {
       {loading ? (
         <TicketHeaderSkeleton />
       ) : (
-        <Card square className={classes.ticketHeader}>
+        <Card
+          square
+          className={`${classes.ticketHeader}${showBack && isPhone ? ` ${classes.phone}` : ""}`}
+        >
           {showBack && isPhone && (
             <IconButton
               className={classes.back}
@@ -60,7 +74,7 @@ const TicketHeader = ({ loading, children, showBack = false }) => {
               aria-label={i18n.t("common.back")}
               size="small"
             >
-              <ArrowBackIosRoundedIcon fontSize="small" />
+              <ArrowBackIosRoundedIcon />
             </IconButton>
           )}
           {children}

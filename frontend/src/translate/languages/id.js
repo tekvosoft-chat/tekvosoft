@@ -178,6 +178,13 @@ const messages = {
           session: "Sesi"
         }
       },
+      trialBanner: {
+        daysLeft: "Uji coba gratis Anda berakhir dalam {{count}} hari",
+        tomorrow: "Uji coba gratis Anda berakhir besok",
+        today: "Uji coba gratis Anda berakhir hari ini",
+        ended: "Uji coba gratis Anda telah berakhir",
+        cta: "Berlangganan sekarang"
+      },
       mediaPreview: {
         files: "berkas",
         remove: "Hapus",
@@ -513,6 +520,10 @@ const messages = {
           annoucements: "Pengumuman",
           chats: "Chat Internal",
           chatsShort: "Obrolan",
+          ticketsShort: "Tiket",
+          search: "Cari",
+          online: "Daring",
+          noResults: "Tidak ditemukan",
           financeiro: "Finansial",
           logout: "Logout",
           management: "Management",
@@ -830,6 +841,16 @@ const messages = {
         title: "Pusat Bantuan"
       },
       about: {
+        headline: "Dibuat untuk melayani lebih baik, setiap hari",
+        product:
+          "Tekvosoft adalah platform layanan pelanggan WhatsApp yang menyatukan tim Anda di satu tempat: percakapan, antrean, chatbot, Kanban, dan obrolan internal.",
+        founder:
+          "Saya David Fernandes, berusia 22 tahun dan seorang wirausahawan di bidang teknologi.",
+        improving:
+          "Saya terus menyempurnakan Tekvosoft: setiap pembaruan membawa perbaikan dan fitur baru agar pekerjaan sehari-hari tim layanan lebih mudah.",
+        founderRole: "Pendiri Tekvosoft",
+        license: "Perangkat lunak bebas dengan lisensi AGPL-3.0.",
+        sourceCode: "Kode sumber",
         aboutthe: "Tentang",
         copyright: "� 2024 - Didukung oleh Tekvosoft",
         buttonclose: "Tutup",
@@ -923,6 +944,55 @@ const messages = {
         extensionBuildUnknownError: "Kesalahan build tidak diketahui."
       },
       settings: {
+        appearance: {
+          tab: "Tampilan",
+          title: "Tema warna",
+          subtitle:
+            "Pilih warna sistem untuk seluruh tim. Perubahan langsung terlihat di layar semua orang.",
+          mode: "Mode",
+          light: "Terang",
+          dark: "Gelap",
+          custom: "Kustom",
+          customDescription: "Gunakan warna merek Anda",
+          restore: "Kembalikan bawaan",
+          applied: "Tema diterapkan untuk seluruh tim",
+          restored: "Warna bawaan dikembalikan",
+          current: "Dipakai",
+          presets: {
+            tekvosoft: {
+              name: "Ungu Tekvosoft",
+              description: "Identitas bawaan: ungu cerah dan modern"
+            },
+            classicBlue: {
+              name: "Biru Klasik",
+              description: "Biru profesional dan tepercaya"
+            },
+            forestGreen: {
+              name: "Hijau Hutan",
+              description: "Hijau terinspirasi alam"
+            },
+            oceanTeal: {
+              name: "Hijau Samudra",
+              description: "Biru toska yang menyegarkan"
+            },
+            sunsetOrange: {
+              name: "Jingga Senja",
+              description: "Nuansa hangat jingga dan amber"
+            },
+            nightPurple: {
+              name: "Ungu Malam",
+              description: "Ungu pekat dan elegan"
+            },
+            roseRed: {
+              name: "Merah Muda",
+              description: "Merah muda tegas dan elegan"
+            },
+            cosmic: {
+              name: "Kosmik",
+              description: "Nila terinspirasi luar angkasa"
+            }
+          }
+        },
         restartBackend: {
           button: "Mulai Ulang Backend",
           restarting: "Memulai ulang…",
@@ -1150,6 +1220,7 @@ const messages = {
       messagesList: {
         header: {
           assignedTo: "Ditugaskan kepada:",
+          tapForInfo: "Ketuk untuk melihat info kontak",
           buttons: {
             return: "Kembali",
             resolve: "Selesaikan",
@@ -1160,6 +1231,19 @@ const messages = {
         openPaymentLink: "Buka tautan pembayaran"
       },
       messagesInput: {
+        phone: {
+          attach: "Lampirkan",
+          camera: "Kamera",
+          gallery: "Foto & video",
+          document: "Dokumen",
+          quickReplies: "Balasan cepat",
+          signature: "Tanda tangan",
+          on: "Aktif",
+          off: "Nonaktif",
+          recording: "Merekam",
+          discardAudio: "Hapus audio",
+          sendAudio: "Kirim audio"
+        },
         placeholderOpen: "Ketik pesan",
         placeholderClosed:
           "Buka kembali atau terima tiket ini untuk mengirim pesan.",
@@ -1173,6 +1257,30 @@ const messages = {
       },
 
       contactDrawer: {
+        phone: {
+          edit: "Edit",
+          call: "Telepon",
+          copy: "Salin",
+          copied: "Nomor disalin",
+          copyFailed: "Tidak dapat menyalin nomor",
+          schedule: "Jadwalkan",
+          notes: "Catatan",
+          email: "Email",
+          tags: "Tag",
+          none: "Tidak ada",
+          queue: "Antrean",
+          noQueue: "Tanpa antrean",
+          attendant: "Agen",
+          unassigned: "Belum ditugaskan",
+          connection: "Koneksi",
+          ticket: "Tiket",
+          status: {
+            open: "Sedang dilayani",
+            pending: "Menunggu",
+            closed: "Selesai",
+            group: "Grup"
+          }
+        },
         header: "Informasi Kontak",
         buttons: {
           edit: "Edit Kontak"
