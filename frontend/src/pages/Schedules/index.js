@@ -31,6 +31,8 @@ import Title from "../../components/Title";
 import api from "../../services/api";
 import { i18n } from "../../translate/i18n";
 import TableRowSkeleton from "../../components/TableRowSkeleton";
+import TableEmpty from "../../components/ui/TableEmpty";
+import EventIcon from "@material-ui/icons/Event";
 import ScheduleModal from "../../components/ScheduleModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import toastError from "../../errors/toastError";
@@ -92,8 +94,9 @@ const reducer = (state, action) => {
 const useStyles = makeStyles(theme => ({
   mainPaper: {
     flex: 1,
-    padding: theme.spacing(1),
-    overflowY: "scroll",
+    minHeight: 0,
+    padding: 0,
+    overflowY: "auto",
     ...theme.scrollbarStyles
   }
 }));
@@ -342,6 +345,21 @@ const Schedules = () => {
                   </TableCell>
                 </TableRow>
               ))}
+              <TableEmpty
+                show={!loading && schedules.length === 0}
+                colSpan={5}
+                icon={<EventIcon />}
+                title={
+                  searchParam
+                    ? i18n.t("common.emptySearchTitle")
+                    : i18n.t("common.emptyTitle")
+                }
+                description={
+                  searchParam
+                    ? i18n.t("common.emptySearchDescription")
+                    : i18n.t("common.emptyDescription")
+                }
+              />
               {loading && <TableRowSkeleton columns={4} />}
             </>
           </TableBody>

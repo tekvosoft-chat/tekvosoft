@@ -16,7 +16,7 @@ import HourglassEmptyIcon from "@material-ui/icons/HourglassEmpty";
 import CheckCircleIcon from "@material-ui/icons/CheckCircle";
 import TimerIcon from "@material-ui/icons/Timer";
 
-import { makeStyles } from "@material-ui/core/styles";
+import { makeStyles, useTheme } from "@material-ui/core/styles";
 import { grey, blue } from "@material-ui/core/colors";
 import { toast } from "react-toastify";
 
@@ -37,8 +37,15 @@ import { formatTimeInterval } from "../../helpers/formatTimeInterval.js";
 
 const useStyles = makeStyles(theme => ({
   container: {
-    paddingTop: theme.spacing(4),
-    paddingBottom: theme.spacing(4)
+    paddingTop: theme.spacing(3),
+    paddingBottom: theme.spacing(3),
+    [theme.breakpoints.down("xs")]: {
+      paddingTop: theme.spacing(2),
+      paddingLeft: theme.spacing(1.5),
+      paddingRight: theme.spacing(1.5),
+      // espaço para a navegação inferior não cobrir o fim da página
+      paddingBottom: `calc(${theme.palette.tkv.layout.bottomNavHeight}px + env(safe-area-inset-bottom, 0px) + ${theme.spacing(2)}px)`
+    }
   },
   fixedHeightPaper: {
     padding: theme.spacing(2),
@@ -73,85 +80,123 @@ const useStyles = makeStyles(theme => ({
     width: "100%",
     textAlign: "left"
   },
-  cardSolid: {
-    padding: theme.spacing(2),
+  /**
+   * Card de métrica.
+   *
+   * Antes existiam DOIS cards diferentes sem motivo: três roxos maciços e
+   * quatro cinzas com texto na cor da marca — que sobre cinza escuro ficava
+   * ilegível. Agora é um só, e o roxo aparece na dose certa: no quadradinho
+   * do ícone. O que puxa o olho passa a ser o número, que é a informação.
+   */
+  metricCard: {
     display: "flex",
-    overflow: "hidden",
-    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: theme.spacing(1.5),
+    padding: theme.spacing(2.25),
     height: "100%",
-    backgroundColor: theme.palette.primary.main,
-    color: theme.palette.primary.contrastText
+    minHeight: 116,
+    borderRadius: theme.palette.tkv.radius.lg,
+    border: `1px solid ${theme.palette.tkv.border}`,
+    backgroundColor: theme.palette.tkv.surface,
+    transition: "border-color .15s ease",
+    "&:hover": { borderColor: theme.palette.tkv.borderStrong }
   },
-  cardGray: {
-    padding: theme.spacing(2),
+  metricBody: {
+    minWidth: 0,
     display: "flex",
-    overflow: "hidden",
-    flexDirection: "row",
-    height: "100%",
-    color: theme.palette.primary.main
+    flexDirection: "column",
+    gap: theme.spacing(0.75)
   },
-  cardData: {
-    display: "block",
-    width: "100%",
-    zIndex: 1
+  metricLabel: {
+    fontSize: "0.8125rem",
+    fontWeight: 600,
+    lineHeight: 1.3,
+    color: theme.palette.text.secondary,
+    margin: 0
   },
-  cardIcon: {
-    width: 100,
-    color: theme.palette.primary.light,
-    position: "sticky",
-    opacity: 0.4,
-    right: 0
+  metricValue: {
+    fontSize: "1.875rem",
+    fontWeight: 700,
+    lineHeight: 1.1,
+    letterSpacing: "-0.02em",
+    color: theme.palette.text.primary,
+    margin: 0
   },
-  cardRingGraph: {
-    width: 100,
-    position: "sticky",
-    right: 0
+  metricIcon: {
+    flex: "none",
+    width: 44,
+    height: 44,
+    borderRadius: theme.palette.tkv.radius.md,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: theme.palette.tkv.brand.soft,
+    color: theme.palette.tkv.brand.main,
+    "& svg": { fontSize: 22 }
+  },
+  filterBar: {
+    display: "flex",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: theme.spacing(1.5),
+    padding: theme.spacing(1.75, 2),
+    borderRadius: theme.palette.tkv.radius.lg,
+    backgroundColor: theme.palette.tkv.surface,
+    border: `1px solid ${theme.palette.tkv.border}`
+  },
+  filterField: {
+    minWidth: 210,
+    margin: 0,
+    [theme.breakpoints.down("xs")]: { minWidth: 0, width: "100%" }
+  },
+  metricRing: {
+    flex: "none",
+    width: 60,
+    height: 60,
+    marginTop: -2
   }
 }));
 
-const InfoCard = ({ title, value, icon }) => {
+const MetricCard = ({ title, value, icon, graph }) => {
   const classes = useStyles();
 
   return (
-    <Grid item xs={12} sm={6} md={3}>
-      <Paper className={classes.cardGray} elevation={6}>
-        <div className={classes.cardData}>
-          <Typography component="h3" variant="h6" paragraph>
-            {title}
-          </Typography>
-          <Typography component="h1" variant="h4">
-            {value}
-          </Typography>
-        </div>
-        <div className={classes.cardIcon}>{icon}</div>
-      </Paper>
-    </Grid>
+    <Paper className={classes.metricCard} variant="outlined">
+      <div className={classes.metricBody}>
+        <Typography component="h3" className={classes.metricLabel}>
+          {title}
+        </Typography>
+        <Typography component="p" className={classes.metricValue}>
+          {value}
+        </Typography>
+      </div>
+      {graph ? (
+        <div className={classes.metricRing}>{graph}</div>
+      ) : (
+        icon && <div className={classes.metricIcon}>{icon}</div>
+      )}
+    </Paper>
   );
 };
 
-const InfoRingCard = ({ title, value, graph }) => {
-  const classes = useStyles();
-  return (
-    <Grid item xs={12} sm={4}>
-      <Paper className={classes.cardSolid} elevation={4}>
-        <div className={classes.cardData}>
-          <Typography component="h3" variant="h6" paragraph>
-            {title}
-          </Typography>
-          <Typography component="h1" variant="h4">
-            {value}
-          </Typography>
-        </div>
-        <div className={classes.cardRingGraph}>
-          <div style={{ width: "100px", height: "100px" }}>{graph}</div>
-        </div>
-      </Paper>
-    </Grid>
-  );
-};
+// Dois atalhos para manter as chamadas existentes iguais. A diferença entre
+// eles agora é só o que aparece à direita (ícone ou anel), não o visual.
+const InfoCard = props => (
+  <Grid item xs={6} sm={6} md={3}>
+    <MetricCard {...props} />
+  </Grid>
+);
+
+const InfoRingCard = props => (
+  <Grid item xs={12} sm={4}>
+    <MetricCard {...props} />
+  </Grid>
+);
 
 const Dashboard = () => {
   const classes = useStyles();
+  const theme = useTheme();
   const [period, setPeriod] = useState(0);
   const [currentUser, setCurrentUser] = useState({});
   const [dateFrom, setDateFrom] = useState(
@@ -228,12 +273,13 @@ const Dashboard = () => {
           {
             name: "Online",
             value: usersOnlineTotal,
-            color: "#00ff00"
+            color: theme.palette.tkv.semantic.success
           },
           {
             name: "Offline",
             value: usersOfflineTotal,
-            color: "#ff0000"
+            // cinza, não vermelho: estar offline não é erro
+            color: theme.palette.tkv.borderStrong
           }
         ]);
 
@@ -329,17 +375,26 @@ const Dashboard = () => {
     updateStatus();
   }, []);
 
+  /**
+   * Barra de período.
+   *
+   * Antes os três campos eram itens soltos do MESMO grid dos cards, então
+   * caíam no meio das métricas como se fossem mais um cartão — e ainda havia
+   * um item vazio de largura variável só para empurrar o layout. Agora é uma
+   * faixa própria: fica claro que aquilo filtra o que vem abaixo.
+   */
   function renderFilters() {
     return (
-      <>
-        <Grid item xs={12} sm={6} md={3}>
-          <FormControl className={classes.selectContainer}>
+      <Grid item xs={12}>
+        <Paper variant="outlined" className={classes.filterBar}>
+          <FormControl className={classes.filterField}>
             <InputLabel id="period-selector-label">
               {i18n.t("dashboard.filter.period")}
             </InputLabel>
             <Select
               labelId="period-selector-label"
               id="period-selector"
+              label={i18n.t("dashboard.filter.period")}
               value={period}
               onChange={e => handleChangePeriod(e.target.value)}
             >
@@ -361,39 +416,31 @@ const Dashboard = () => {
               </MenuItem>
             </Select>
           </FormControl>
-        </Grid>
-        {!period && (
-          <>
-            <Grid item xs={12} sm={6} md={3}>
+
+          {!period && (
+            <>
               <TextField
                 label={i18n.t("dashboard.date.start")}
                 type="datetime-local"
                 value={dateFrom}
                 onChange={e => setDateFrom(e.target.value)}
                 onBlur={fetchData}
-                className={classes.fullWidth}
-                InputLabelProps={{
-                  shrink: true
-                }}
+                className={classes.filterField}
+                InputLabelProps={{ shrink: true }}
               />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
               <TextField
                 label={i18n.t("dashboard.date.end")}
                 type="datetime-local"
                 value={dateTo}
                 onChange={e => setDateTo(e.target.value)}
                 onBlur={fetchData}
-                className={classes.fullWidth}
-                InputLabelProps={{
-                  shrink: true
-                }}
+                className={classes.filterField}
+                InputLabelProps={{ shrink: true }}
               />
-            </Grid>
-          </>
-        )}
-        <Grid item xs={12} sm={6} md={period ? 9 : 3} />
-      </>
+            </>
+          )}
+        </Paper>
+      </Grid>
     );
   }
 
@@ -433,14 +480,14 @@ const Dashboard = () => {
           <InfoCard
             title={i18n.t("dashboard.ticketsDone")}
             value={ticketsData.ticketStatistics?.totalClosed || 0}
-            icon={<CheckCircleIcon style={{ fontSize: 100 }} />}
+            icon={<CheckCircleIcon />}
           />
 
           {/* NOVOS CONTATOS */}
           <InfoCard
             title={i18n.t("dashboard.newContacts")}
             value={ticketsData.ticketStatistics?.newContacts || 0}
-            icon={<GroupAddIcon style={{ fontSize: 100 }} />}
+            icon={<GroupAddIcon />}
           />
 
           {/* T.M. DE ATENDIMENTO */}
@@ -449,7 +496,7 @@ const Dashboard = () => {
             value={formatTimeInterval(
               ticketsData.ticketStatistics?.avgServiceTime
             )}
-            icon={<TimerIcon style={{ fontSize: 100 }} />}
+            icon={<TimerIcon />}
           />
 
           {/* T.M. DE ESPERA */}
@@ -458,7 +505,7 @@ const Dashboard = () => {
             value={formatTimeInterval(
               ticketsData.ticketStatistics?.avgWaitTime
             )}
-            icon={<HourglassEmptyIcon style={{ fontSize: 100 }} />}
+            icon={<HourglassEmptyIcon />}
           />
 
           {/* DASHBOARD ATENDIMENTOS NO PERÍODO */}

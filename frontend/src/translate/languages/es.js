@@ -6,6 +6,12 @@ const messages = {
       },
       common: {
         search: "Buscar",
+        emptyTitle: "Aún no hay nada aquí",
+        emptyDescription:
+          "Los registros aparecerán en esta lista en cuanto existan.",
+        emptySearchTitle: "Sin resultados",
+        emptySearchDescription:
+          "Nada coincide con tu búsqueda. Prueba otro término.",
         filter: "Filtrar",
         edit: "Editar",
         delete: "Eliminar",
@@ -15,6 +21,7 @@ const messages = {
         confirmation: "Confirmación",
         areyousure: "¿Estás seguro?",
         close: "Cerrar",
+        back: "Volver",
         closed: "Cerrado",
         error: "Error",
         success: "Éxito",
@@ -300,6 +307,8 @@ const messages = {
           importMessage: "¿Quieres importar todos los contactos del teléfono?"
         },
         buttons: {
+          importCsv: "Importar desde archivo CSV",
+          exportCsv: "Exportar a CSV",
           import: "Importar Contactos",
           add: "Agregar Contacto"
         },
@@ -535,7 +544,9 @@ const messages = {
           logout: "Cerrar sesión",
           management: "Gerencia",
           kanban: "Kanban",
-          tasks: "Tareas"
+          tasks: "Tareas",
+          more: "Más",
+          menu: "Menú"
         },
         appBar: {
           i18n: {
@@ -567,7 +578,8 @@ const messages = {
         }
       },
       notifications: {
-        noTickets: "Ninguna notificación."
+        noTickets: "Ninguna notificación.",
+        volume: "Volumen de notificaciones"
       },
       quickMessages: {
         title: "Respuestas Rápidas",

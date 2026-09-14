@@ -3,12 +3,18 @@ const messages = {
     translations: {
       common: {
         search: "Cari",
+        emptyTitle: "Belum ada apa pun di sini",
+        emptyDescription: "Data akan muncul di daftar ini begitu tersedia.",
+        emptySearchTitle: "Tidak ada hasil",
+        emptySearchDescription:
+          "Tidak ada yang cocok dengan pencarian Anda. Coba kata lain.",
         edit: "Edit",
         delete: "Hapus",
         cancel: "Batal",
         save: "Simpan",
         confirm: "Konfirmasi",
         close: "Tutup",
+        back: "Kembali",
         error: "Kesalahan",
         success: "Sukses",
         actions: "Aksi",
@@ -241,6 +247,8 @@ const messages = {
           importMessage: "Apakah Anda ingin mengimpor semua kontak dari ponsel?"
         },
         buttons: {
+          importCsv: "Impor dari berkas CSV",
+          exportCsv: "Ekspor ke CSV",
           import: "Impor Kontak",
           add: "Tambah Kontak"
         },
@@ -486,7 +494,9 @@ const messages = {
           logout: "Logout",
           management: "Management",
           kanban: "Kanban",
-          tasks: "Tugas"
+          tasks: "Tugas",
+          more: "Lainnya",
+          menu: "Menu"
         },
         appBar: {
           i18n: {
@@ -519,7 +529,8 @@ const messages = {
         }
       },
       notifications: {
-        noTickets: "Tidak ada notifikasi."
+        noTickets: "Tidak ada notifikasi.",
+        volume: "Volume notifikasi"
       },
       quickMessages: {
         title: "Respon Cepat",

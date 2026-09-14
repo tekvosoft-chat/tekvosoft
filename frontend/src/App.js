@@ -4,8 +4,10 @@ import "react-toastify/dist/ReactToastify.css";
 import { QueryClient, QueryClientProvider } from "react-query";
 
 import { ptBR } from "@material-ui/core/locale";
-import { createTheme, ThemeProvider } from "@material-ui/core/styles";
-import { useMediaQuery } from "@material-ui/core";
+import { ThemeProvider } from "@material-ui/core/styles";
+import CssBaseline from "@material-ui/core/CssBaseline";
+import createAppTheme from "./theme/createAppTheme";
+import { BRAND_PURPLE, BRAND_PURPLE_DARK_MODE } from "./theme/tokens";
 import ColorModeContext from "./layout/themeContext";
 import { PhoneCallProvider } from "./context/PhoneCall/PhoneCallContext";
 import { SocketContext, socketManager } from "./context/Socket/SocketContext";
@@ -54,8 +56,10 @@ const App = () => {
   const [mode, setMode] = useState(
     preferredTheme ? preferredTheme : prefersDarkMode ? "dark" : "light"
   );
-  const [primaryColorLight, setPrimaryColorLight] = useState("#888");
-  const [primaryColorDark, setPrimaryColorDark] = useState("#888");
+  const [primaryColorLight, setPrimaryColorLight] = useState(BRAND_PURPLE);
+  const [primaryColorDark, setPrimaryColorDark] = useState(
+    BRAND_PURPLE_DARK_MODE
+  );
   const [appLogoLight, setAppLogoLight] = useState("");
   const [appLogoDark, setAppLogoDark] = useState("");
   const [appLogoFavicon, setAppLogoFavicon] = useState("");
@@ -104,91 +108,18 @@ const App = () => {
 
   const theme = useMemo(
     () =>
-      createTheme(
-        {
-          scrollbarStyles: {
-            "&::-webkit-scrollbar": {
-              width: "8px",
-              height: "8px"
-            },
-            "&::-webkit-scrollbar-thumb": {
-              boxShadow: "inset 0 0 6px rgba(0, 0, 0, 0.3)",
-              backgroundColor:
-                mode === "light" ? primaryColorLight : primaryColorDark
-            }
-          },
-          scrollbarStylesSoft: {
-            "&::-webkit-scrollbar": {
-              width: "8px"
-            },
-            "&::-webkit-scrollbar-thumb": {
-              backgroundColor: mode === "light" ? "#F3F3F3" : "#333333"
-            }
-          },
-          palette: {
-            type: mode,
-            primary: {
-              main: mode === "light" ? primaryColorLight : primaryColorDark
-            },
-            textPrimary:
-              mode === "light" ? primaryColorLight : primaryColorDark,
-            textCommon: mode === "light" ? "#000" : "#fff",
-            borderPrimary:
-              mode === "light" ? primaryColorLight : primaryColorDark,
-            background: {
-              default: mode === "light" ? "#fafafa" : "#303030",
-              paper: mode === "light" ? "#fff" : "#424242"
-            },
-            backgroundContrast: {
-              default: mode === "light" ? "#ddd" : "#888",
-              paper: mode === "light" ? "#ddd" : "#888",
-              border: mode === "light" ? "#aaa" : "#444"
-            },
-            dark: { main: mode === "light" ? "#333333" : "#666" },
-            light: { main: mode === "light" ? "#F3F3F3" : "#333333" },
-            chatBubbleFromMe: {
-              main: mode === "light" ? "#dcf8c6" : "#005c4b"
-            },
-            chatBubbleReceived: { main: mode === "light" ? "#fff" : "#024481" },
-            chatBackground: { main: mode === "light" ? "#f3f3f3" : "#333" },
-            tabHeaderBackground: mode === "light" ? "#EEE" : "#666",
-            optionsBackground: mode === "light" ? "#fafafa" : "#333",
-            options: mode === "light" ? "#fafafa" : "#666",
-            fontecor: mode === "light" ? primaryColorLight : primaryColorDark,
-            fancyBackground: mode === "light" ? "#fafafa" : "#333",
-            bordabox: mode === "light" ? "#eee" : "#333",
-            newmessagebox: mode === "light" ? "#eee" : "#333",
-            inputdigita: mode === "light" ? "#fff" : "#666",
-            contactdrawer: mode === "light" ? "#fff" : "#666",
-            announcements: mode === "light" ? "#ededed" : "#333",
-            login: mode === "light" ? "#fff" : "#1C1C1C",
-            announcementspopover: mode === "light" ? "#fff" : "#666",
-            chatlist: { main: mode === "light" ? "#dfdfdf" : "#555" },
-            boxlist: mode === "light" ? "#ededed" : "#666",
-            boxchatlist: mode === "light" ? "#ededed" : "#333",
-            total: mode === "light" ? "#fff" : "#222",
-            messageIcons: mode === "light" ? "grey" : "#F3F3F3",
-            inputBackground: mode === "light" ? "#FFFFFF" : "#333",
-            barraSuperior: mode === "light" ? primaryColorLight : "#666",
-            boxticket: mode === "light" ? "#EEE" : "#666",
-            campaigntab: mode === "light" ? "#ededed" : "#666"
-          },
-          mode,
-          appLogoLight,
-          appLogoDark,
-          appLogoFavicon,
-          appName,
-          calculatedLogoLight,
-          calculatedLogoDark,
-          calculatedLogo: () => {
-            if (mode === "light") {
-              return calculatedLogoLight();
-            }
-            return calculatedLogoDark();
-          }
-        },
-        locale
-      ),
+      createAppTheme({
+        mode,
+        primaryColor: mode === "light" ? primaryColorLight : primaryColorDark,
+        locale,
+        appLogoLight,
+        appLogoDark,
+        appLogoFavicon,
+        appName,
+        calculatedLogoLight,
+        calculatedLogoDark
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       appLogoLight,
       appLogoDark,
@@ -222,14 +153,14 @@ const App = () => {
   useEffect(() => {
     getPublicSetting("primaryColorLight")
       .then(color => {
-        setPrimaryColorLight(color || "#0000FF");
+        setPrimaryColorLight(color || BRAND_PURPLE);
       })
       .catch(error => {
         console.log("Error reading setting", error);
       });
     getPublicSetting("primaryColorDark")
       .then(color => {
-        setPrimaryColorDark(color || "#39ACE7");
+        setPrimaryColorDark(color || BRAND_PURPLE_DARK_MODE);
       })
       .catch(error => {
         console.log("Error reading setting", error);
@@ -283,6 +214,7 @@ const App = () => {
       <ColorModeContext.Provider value={{ colorMode }}>
         <PhoneCallProvider>
           <ThemeProvider theme={theme}>
+            <CssBaseline />
             <QueryClientProvider client={queryClient}>
               <SocketContext.Provider value={socketManager}>
                 <Routes />

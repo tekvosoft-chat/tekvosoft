@@ -17,6 +17,8 @@ import MainContainer from "../../components/MainContainer";
 import MainHeader from "../../components/MainHeader";
 import MainHeaderButtonsWrapper from "../../components/MainHeaderButtonsWrapper";
 import TableRowSkeleton from "../../components/TableRowSkeleton";
+import TableEmpty from "../../components/ui/TableEmpty";
+import AccountTreeOutlinedIcon from "@material-ui/icons/AccountTreeOutlined";
 import Title from "../../components/Title";
 import { i18nToast } from "../../helpers/i18nToast";
 import { i18n } from "../../translate/i18n";
@@ -30,8 +32,9 @@ import { SocketContext } from "../../context/Socket/SocketContext";
 const useStyles = makeStyles(theme => ({
   mainPaper: {
     flex: 1,
-    padding: theme.spacing(1),
-    overflowY: "scroll",
+    minHeight: 0,
+    padding: 0,
+    overflowY: "auto",
     ...theme.scrollbarStyles
   },
   customTableCell: {
@@ -262,6 +265,13 @@ const Queues = () => {
                   </TableCell>
                 </TableRow>
               ))}
+              <TableEmpty
+                show={!loading && queues.length === 0}
+                colSpan={5}
+                icon={<AccountTreeOutlinedIcon />}
+                title={i18n.t("common.emptyTitle")}
+                description={i18n.t("common.emptyDescription")}
+              />
               {loading && <TableRowSkeleton columns={4} />}
             </>
           </TableBody>

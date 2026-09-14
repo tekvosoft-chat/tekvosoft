@@ -62,8 +62,9 @@ import { wavoipAvailable } from "../../helpers/wavoipCallManager";
 const useStyles = makeStyles(theme => ({
   mainPaper: {
     flex: 1,
-    padding: theme.spacing(1),
-    overflowY: "scroll",
+    minHeight: 0,
+    padding: 0,
+    overflowY: "auto",
     ...theme.scrollbarStyles
   },
   customTableCell: {
@@ -469,7 +470,7 @@ const Connections = () => {
         </MainHeaderButtonsWrapper>
       </MainHeader>
       <Paper className={classes.mainPaper} variant="outlined">
-        <Table size="small">
+        <Table size="small" className="tkv-stack">
           <TableHead>
             <TableRow>
               <TableCell align="center">
@@ -500,24 +501,44 @@ const Connections = () => {
                 {whatsApps?.length > 0 &&
                   whatsApps.map(whatsApp => (
                     <TableRow key={whatsApp.id}>
-                      <TableCell align="center">{whatsApp.name}</TableCell>
-                      <TableCell align="center">
+                      <TableCell
+                        align="center"
+                        data-label={i18n.t("connections.table.name")}
+                      >
+                        {whatsApp.name}
+                      </TableCell>
+                      <TableCell
+                        align="center"
+                        data-label={i18n.t("connections.table.status")}
+                      >
                         {renderStatusToolTips(whatsApp)}
                       </TableCell>
-                      <TableCell align="center">
+                      <TableCell
+                        align="center"
+                        data-label={i18n.t("connections.table.session")}
+                      >
                         {renderActionButtons(whatsApp)}
                       </TableCell>
-                      <TableCell align="center">
+                      <TableCell
+                        align="center"
+                        data-label={i18n.t("connections.table.lastUpdate")}
+                      >
                         {format(parseISO(whatsApp.updatedAt), "dd/MM/yy HH:mm")}
                       </TableCell>
-                      <TableCell align="center">
+                      <TableCell
+                        align="center"
+                        data-label={i18n.t("connections.table.default")}
+                      >
                         {whatsApp.isDefault && (
                           <div className={classes.customTableCell}>
                             <CheckCircle style={{ color: green[500] }} />
                           </div>
                         )}
                       </TableCell>
-                      <TableCell align="center">
+                      <TableCell
+                        align="center"
+                        data-label={i18n.t("connections.table.actions")}
+                      >
                         <IconButton
                           size="small"
                           onClick={() => handleEditWhatsApp(whatsApp)}

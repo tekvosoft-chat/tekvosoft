@@ -7,7 +7,7 @@ export function SmallPie({ chartData }) {
   const theme = useTheme();
 
   return (
-    <div style={{ width: "100px", height: "100px" }}>
+    <div style={{ width: "100%", height: "100%" }}>
       <ResponsiveContainer>
         <PieChart>
           <Pie

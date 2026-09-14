@@ -6,6 +6,7 @@ import React, {
   useState
 } from "react";
 import { makeStyles } from "@material-ui/core/styles";
+import Tooltip from "@material-ui/core/Tooltip";
 import { useTheme } from "@material-ui/core/styles";
 import toastError from "../../errors/toastError";
 import Popover from "@material-ui/core/Popover";
@@ -224,16 +225,17 @@ export default function ChatPopover() {
 
   return (
     <div>
-      <IconButton
-        aria-describedby={id}
-        variant="contained"
-        color={invisible ? "default" : "inherit"}
-        onClick={handleClick}
-      >
-        <Badge color="secondary" variant="dot" invisible={invisible}>
-          <ForumIcon style={{ color: theme.palette.primary.contrastText }} />
-        </Badge>
-      </IconButton>
+      <Tooltip title={i18n.t("mainDrawer.listItems.chats")}>
+        <IconButton
+          aria-describedby={id}
+          aria-label={i18n.t("mainDrawer.listItems.chats")}
+          onClick={handleClick}
+        >
+          <Badge color="secondary" variant="dot" invisible={invisible}>
+            <ForumIcon />
+          </Badge>
+        </IconButton>
+      </Tooltip>
       <Popover
         id={id}
         open={open}

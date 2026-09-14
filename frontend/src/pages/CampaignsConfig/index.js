@@ -33,8 +33,9 @@ import ConfirmationModal from "../../components/ConfirmationModal";
 const useStyles = makeStyles(theme => ({
   mainPaper: {
     flex: 1,
-    padding: theme.spacing(1),
-    overflowY: "scroll",
+    minHeight: 0,
+    padding: 0,
+    overflowY: "auto",
     ...theme.scrollbarStyles
   },
   textRight: {

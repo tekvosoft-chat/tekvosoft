@@ -70,9 +70,18 @@ const useStyles = makeStyles(theme => ({
   backgroundLayer: {
     position: "absolute",
     inset: 0,
-    background: `linear-gradient(to right, ${theme.palette.background.default}, ${theme.palette.background.default}, ${theme.palette.primary.main}, ${theme.palette.background.default}, ${theme.palette.background.default})`,
-    backgroundColor: theme.palette.background.default,
-    backgroundSize: "200% 200%",
+    /* Antes era uma faixa horizontal da cor da marca atravessando a tela,
+       que virava um borrão roxo no meio e deixava o cartão de login boiando
+       sobre nada. Agora são clarões suaves em diagonal: a marca aparece,
+       mas o que tem contraste é o cartão. */
+    background: `
+      radial-gradient(circle at 12% 18%, ${theme.palette.tkv.brand.soft} 0%, transparent 45%),
+      radial-gradient(circle at 88% 12%, ${theme.palette.tkv.brand.softHover} 0%, transparent 40%),
+      radial-gradient(circle at 75% 88%, ${theme.palette.tkv.brand.soft} 0%, transparent 45%),
+      ${theme.palette.tkv.canvas}
+    `,
+    backgroundColor: theme.palette.tkv.canvas,
+    backgroundSize: "160% 160%",
     animation: "$gradientDrift 18s ease-in-out infinite",
     willChange: "background-position",
     "@media (prefers-reduced-motion: reduce)": {

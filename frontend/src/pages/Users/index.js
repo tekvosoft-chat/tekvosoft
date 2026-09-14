@@ -25,6 +25,8 @@ import Title from "../../components/Title";
 import api from "../../services/api";
 import { i18n } from "../../translate/i18n";
 import TableRowSkeleton from "../../components/TableRowSkeleton";
+import TableEmpty from "../../components/ui/TableEmpty";
+import PeopleAltOutlinedIcon from "@material-ui/icons/PeopleAltOutlined";
 import UserModal from "../../components/UserModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import toastError from "../../errors/toastError";
@@ -77,8 +79,9 @@ const reducer = (state, action) => {
 const useStyles = makeStyles(theme => ({
   mainPaper: {
     flex: 1,
-    padding: theme.spacing(1),
-    overflowY: "scroll",
+    minHeight: 0,
+    padding: 0,
+    overflowY: "auto",
     ...theme.scrollbarStyles
   }
 }));
@@ -238,7 +241,7 @@ const Users = () => {
         variant="outlined"
         onScroll={handleScroll}
       >
-        <Table size="small">
+        <Table size="small" className="tkv-stack">
           <TableHead>
             <TableRow>
               <TableCell align="center">ID</TableCell>
@@ -258,11 +261,31 @@ const Users = () => {
             <>
               {users.map(user => (
                 <TableRow key={user.id}>
-                  <TableCell align="center">{user.id}</TableCell>
-                  <TableCell align="center">{user.name}</TableCell>
-                  <TableCell align="center">{user.email}</TableCell>
-                  <TableCell align="center">{user.profile}</TableCell>
-                  <TableCell align="center">
+                  <TableCell align="center" data-label="ID">
+                    {user.id}
+                  </TableCell>
+                  <TableCell
+                    align="center"
+                    data-label={i18n.t("users.table.name")}
+                  >
+                    {user.name}
+                  </TableCell>
+                  <TableCell
+                    align="center"
+                    data-label={i18n.t("users.table.email")}
+                  >
+                    {user.email}
+                  </TableCell>
+                  <TableCell
+                    align="center"
+                    data-label={i18n.t("users.table.profile")}
+                  >
+                    {user.profile}
+                  </TableCell>
+                  <TableCell
+                    align="center"
+                    data-label={i18n.t("users.table.actions")}
+                  >
                     <IconButton
                       size="small"
                       onClick={() => handleEditUser(user)}
@@ -282,6 +305,21 @@ const Users = () => {
                   </TableCell>
                 </TableRow>
               ))}
+              <TableEmpty
+                show={!loading && users.length === 0}
+                colSpan={5}
+                icon={<PeopleAltOutlinedIcon />}
+                title={
+                  searchParam
+                    ? i18n.t("common.emptySearchTitle")
+                    : i18n.t("common.emptyTitle")
+                }
+                description={
+                  searchParam
+                    ? i18n.t("common.emptySearchDescription")
+                    : i18n.t("common.emptyDescription")
+                }
+              />
               {loading && <TableRowSkeleton columns={4} />}
             </>
           </TableBody>

@@ -1,4 +1,6 @@
 import React, { useState, useRef } from "react";
+import { i18n } from "../../translate/i18n";
+import Tooltip from "@material-ui/core/Tooltip";
 
 import Popover from "@material-ui/core/Popover";
 import IconButton from "@material-ui/core/IconButton";
@@ -26,7 +28,7 @@ const useStyles = makeStyles(theme => ({
     boxShadow: "none !important"
   },
   icons: {
-    color: theme.palette.primary.contrastText
+    color: "inherit"
   },
   customBadge: {
     backgroundColor: "#f44336",
@@ -55,16 +57,16 @@ const NotificationsVolume = ({ volume, setVolume }) => {
 
   return (
     <>
-      <IconButton
-        className={classes.icons}
-        onClick={handleClick}
-        ref={anchorEl}
-        aria-label="Open Notifications"
-        // color="inherit"
-        // color="secondary"
-      >
-        <VolumeUpIcon color="inherit" />
-      </IconButton>
+      <Tooltip title={i18n.t("notifications.volume")}>
+        <IconButton
+          className={classes.icons}
+          onClick={handleClick}
+          ref={anchorEl}
+          aria-label={i18n.t("notifications.volume")}
+        >
+          <VolumeUpIcon color="inherit" />
+        </IconButton>
+      </Tooltip>
       <Popover
         disableScrollLock
         open={isOpen}

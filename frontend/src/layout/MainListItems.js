@@ -1,5 +1,7 @@
 import React, { useContext, useEffect, useReducer, useState } from "react";
-import { Link as RouterLink, useHistory } from "react-router-dom";
+import { Link as RouterLink, useHistory, useLocation } from "react-router-dom";
+import clsx from "clsx";
+import Tooltip from "@material-ui/core/Tooltip";
 
 import ListItem from "@material-ui/core/ListItem";
 import ListItemIcon from "@material-ui/core/ListItemIcon";
@@ -49,15 +51,100 @@ import { loadJSON } from "../helpers/loadJSON";
 const gitinfo = loadJSON("/gitinfo.json");
 
 const useStyles = makeStyles(theme => ({
-  ListSubheader: {
-    height: 26,
-    marginTop: "-15px",
-    marginBottom: "-10px"
+  subheader: {
+    padding: theme.spacing(2, 2.5, 0.5),
+    lineHeight: "24px"
+  },
+
+  // ── item de navegação ──
+  item: {
+    borderRadius: theme.palette.tkv.radius.sm,
+    margin: theme.spacing(0.25, 1.5),
+    width: "auto",
+    padding: theme.spacing(0.875, 1.25),
+    color: theme.palette.text.secondary,
+    transition: "background-color .13s ease, color .13s ease",
+    "&:hover": {
+      backgroundColor: theme.palette.tkv.surfaceHover,
+      color: theme.palette.text.primary
+    }
+  },
+  itemActive: {
+    backgroundColor: theme.palette.tkv.brand.soft,
+    color: theme.palette.tkv.brand.main,
+    fontWeight: 600,
+    "&:hover": {
+      backgroundColor: theme.palette.tkv.brand.softHover,
+      color: theme.palette.tkv.brand.main
+    },
+    "& $itemIcon": { color: theme.palette.tkv.brand.main },
+    "& .MuiListItemText-primary": { fontWeight: 600 }
+  },
+  itemCollapsed: {
+    justifyContent: "center",
+    margin: theme.spacing(0.25, 1),
+    padding: theme.spacing(1.125, 0)
+  },
+  itemIcon: {
+    minWidth: 34,
+    color: "inherit",
+    "& svg": { fontSize: 21 }
+  },
+  itemIconCollapsed: {
+    minWidth: 0
+  },
+  itemText: {
+    margin: 0,
+    "& .MuiListItemText-primary": {
+      fontSize: "0.875rem",
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis"
+    }
+  },
+  subItem: {
+    marginLeft: theme.spacing(3),
+    "& $itemIcon svg": { fontSize: 19 }
+  },
+  buildInfo: {
+    fontSize: "0.6875rem",
+    padding: theme.spacing(1.5, 2.5),
+    textAlign: "center",
+    color: theme.palette.text.disabled,
+    fontWeight: 500
   }
 }));
 
+/**
+ * Estado recolhido da barra lateral.
+ *
+ * Vai por contexto e não por prop porque são dezoito chamadas de
+ * ListItemLink espalhadas pelo arquivo — passar prop em todas seria ruído
+ * sem benefício.
+ */
+const SidebarContext = React.createContext({ collapsed: false });
+
+/**
+ * Item de navegação.
+ *
+ * Duas correções de usabilidade aqui:
+ *
+ * 1. Estado ativo. Antes nada indicava em que página a pessoa estava — o menu
+ *    tinha dezoito itens idênticos. Agora o item da rota atual fica com fundo
+ *    e texto na cor da marca.
+ *
+ * 2. Recolhido. Antes o rótulo continuava sendo renderizado e era cortado no
+ *    meio pela largura de 72px, virando "A", "T", "R". Agora o texto some e o
+ *    nome aparece em tooltip ao passar o mouse.
+ */
 function ListItemLink(props) {
   const { icon, primary, to, className } = props;
+  const classes = useStyles();
+  const location = useLocation();
+  const { collapsed } = useContext(SidebarContext);
+
+  const active =
+    to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
 
   const renderLink = React.useMemo(
     () =>
@@ -67,12 +154,44 @@ function ListItemLink(props) {
     [to]
   );
 
+  const item = (
+    <ListItem
+      button
+      dense
+      component={renderLink}
+      aria-current={active ? "page" : undefined}
+      className={clsx(
+        classes.item,
+        active && classes.itemActive,
+        collapsed && classes.itemCollapsed,
+        className
+      )}
+    >
+      {icon ? (
+        <ListItemIcon
+          className={clsx(
+            classes.itemIcon,
+            collapsed && classes.itemIconCollapsed
+          )}
+        >
+          {icon}
+        </ListItemIcon>
+      ) : null}
+      {!collapsed && (
+        <ListItemText primary={primary} className={classes.itemText} />
+      )}
+    </ListItem>
+  );
+
   return (
     <li>
-      <ListItem button dense component={renderLink} className={className}>
-        {icon ? <ListItemIcon>{icon}</ListItemIcon> : null}
-        <ListItemText primary={primary} />
-      </ListItem>
+      {collapsed ? (
+        <Tooltip title={primary} placement="right">
+          {item}
+        </Tooltip>
+      ) : (
+        item
+      )}
     </li>
   );
 }
@@ -135,7 +254,7 @@ const reducer = (state, action) => {
 
 const MainListItems = props => {
   const classes = useStyles();
-  const { drawerClose, drawerOpen } = props;
+  const { drawerClose, drawerOpen, collapsed = !drawerOpen } = props;
   const { whatsApps } = useContext(WhatsAppsContext);
   const { user, handleLogout } = useContext(AuthContext);
   const [connectionWarning, setConnectionWarning] = useState(false);
@@ -247,244 +366,253 @@ const MainListItems = props => {
   };
 
   return (
-    <div onClick={drawerClose}>
-      <Can
-        role={user.profile}
-        perform={"drawer-service-items:view"}
-        style={{
-          overflowY: "scroll"
-        }}
-        no={() => (
-          <>
-            <ListSubheader
-              hidden={!drawerOpen}
-              style={{
-                position: "relative",
-                fontSize: "17px",
-                textAlign: "left",
-                paddingLeft: 20
-              }}
-              inset
-              color="inherit"
-            >
-              {i18n.t("mainDrawer.listItems.service")}
-            </ListSubheader>
+    <SidebarContext.Provider value={{ collapsed }}>
+      <div onClick={drawerClose}>
+        <Can
+          role={user.profile}
+          perform={"drawer-service-items:view"}
+          style={{
+            overflowY: "scroll"
+          }}
+          no={() => (
             <>
+              <ListSubheader
+                hidden={collapsed}
+                className={classes.subheader}
+                disableSticky
+                disableGutters
+              >
+                {i18n.t("mainDrawer.listItems.service")}
+              </ListSubheader>
+              <>
+                <ListItemLink
+                  to="/tickets"
+                  primary={i18n.t("mainDrawer.listItems.tickets")}
+                  icon={<WhatsAppIcon />}
+                />
+                <ListItemLink
+                  to="/todolist"
+                  primary={i18n.t("mainDrawer.listItems.tasks")}
+                  icon={<BorderColorIcon />}
+                />
+                <ListItemLink
+                  to="/quick-messages"
+                  primary={i18n.t("mainDrawer.listItems.quickMessages")}
+                  icon={<FlashOnIcon />}
+                />
+                <ListItemLink
+                  to="/contacts"
+                  primary={i18n.t("mainDrawer.listItems.contacts")}
+                  icon={<ContactPhoneOutlinedIcon />}
+                />
+                <ListItemLink
+                  to="/schedules"
+                  primary={i18n.t("mainDrawer.listItems.schedules")}
+                  icon={<EventIcon />}
+                />
+                <ListItemLink
+                  to="/tags"
+                  primary={i18n.t("mainDrawer.listItems.tags")}
+                  icon={<LocalOfferIcon />}
+                />
+                <ListItemLink
+                  to="/chats"
+                  primary={i18n.t("mainDrawer.listItems.chats")}
+                  icon={
+                    <Badge
+                      color="secondary"
+                      variant="dot"
+                      invisible={invisible}
+                    >
+                      <ForumIcon />
+                    </Badge>
+                  }
+                />
+                <ListItemLink
+                  to="/helps"
+                  primary={i18n.t("mainDrawer.listItems.helps")}
+                  icon={<HelpOutlineIcon />}
+                />
+              </>
+            </>
+          )}
+        />
+
+        <Can
+          role={user.profile}
+          perform={"drawer-admin-items:view"}
+          yes={() => (
+            <>
+              <Divider />
+              <ListSubheader
+                hidden={collapsed}
+                className={classes.subheader}
+                disableSticky
+                disableGutters
+              >
+                {i18n.t("mainDrawer.listItems.management")}
+              </ListSubheader>
               <ListItemLink
-                to="/tickets"
-                primary={i18n.t("mainDrawer.listItems.tickets")}
-                icon={<WhatsAppIcon />}
+                small
+                to="/"
+                primary="Dashboard"
+                icon={<DashboardOutlinedIcon />}
               />
+            </>
+          )}
+        />
+        <Can
+          role={user.profile}
+          perform="drawer-admin-items:view"
+          yes={() => (
+            <>
+              <Divider />
+              <ListSubheader
+                hidden={collapsed}
+                className={classes.subheader}
+                disableSticky
+                disableGutters
+              >
+                {i18n.t("mainDrawer.listItems.administration")}
+              </ListSubheader>
+
+              {showCampaigns && (
+                <>
+                  {/* Recolhida, a barra tem 72px: submenu aberto ali não
+                    caberia. Nesse estado o item vira atalho direto para a
+                    listagem, com o nome em tooltip. */}
+                  <Tooltip
+                    title={
+                      collapsed ? i18n.t("mainDrawer.listItems.campaigns") : ""
+                    }
+                    placement="right"
+                  >
+                    <ListItem
+                      button
+                      dense
+                      className={clsx(
+                        classes.item,
+                        collapsed && classes.itemCollapsed
+                      )}
+                      onClick={() =>
+                        collapsed
+                          ? history.push("/campaigns")
+                          : setOpenCampaignSubmenu(prev => !prev)
+                      }
+                    >
+                      <ListItemIcon
+                        className={clsx(
+                          classes.itemIcon,
+                          collapsed && classes.itemIconCollapsed
+                        )}
+                      >
+                        <EventAvailableIcon />
+                      </ListItemIcon>
+                      {!collapsed && (
+                        <>
+                          <ListItemText
+                            primary={i18n.t("mainDrawer.listItems.campaigns")}
+                            className={classes.itemText}
+                          />
+                          {openCampaignSubmenu ? (
+                            <ExpandLessIcon fontSize="small" />
+                          ) : (
+                            <ExpandMoreIcon fontSize="small" />
+                          )}
+                        </>
+                      )}
+                    </ListItem>
+                  </Tooltip>
+                  <Collapse
+                    in={openCampaignSubmenu && !collapsed}
+                    timeout="auto"
+                    unmountOnExit
+                  >
+                    <List component="div" disablePadding>
+                      <ListItemLink
+                        to="/campaigns"
+                        primary="Listagem"
+                        icon={<ListIcon />}
+                        className={classes.subItem}
+                      />
+                      <ListItemLink
+                        to="/contact-lists"
+                        primary="Listas de Contatos"
+                        icon={<PeopleIcon />}
+                        className={classes.subItem}
+                      />
+                      <ListItemLink
+                        to="/campaigns-config"
+                        primary="Configurações"
+                        icon={<SettingsOutlinedIcon />}
+                        className={classes.subItem}
+                      />
+                    </List>
+                  </Collapse>
+                </>
+              )}
+              {user.super && (
+                <ListItemLink
+                  to="/announcements"
+                  primary={i18n.t("mainDrawer.listItems.annoucements")}
+                  icon={<AnnouncementIcon />}
+                />
+              )}
               <ListItemLink
-                to="/todolist"
-                primary={i18n.t("mainDrawer.listItems.tasks")}
-                icon={<BorderColorIcon />}
-              />
-              <ListItemLink
-                to="/quick-messages"
-                primary={i18n.t("mainDrawer.listItems.quickMessages")}
-                icon={<FlashOnIcon />}
-              />
-              <ListItemLink
-                to="/contacts"
-                primary={i18n.t("mainDrawer.listItems.contacts")}
-                icon={<ContactPhoneOutlinedIcon />}
-              />
-              <ListItemLink
-                to="/schedules"
-                primary={i18n.t("mainDrawer.listItems.schedules")}
-                icon={<EventIcon />}
-              />
-              <ListItemLink
-                to="/tags"
-                primary={i18n.t("mainDrawer.listItems.tags")}
-                icon={<LocalOfferIcon />}
-              />
-              <ListItemLink
-                to="/chats"
-                primary={i18n.t("mainDrawer.listItems.chats")}
+                to="/connections"
+                primary={i18n.t("mainDrawer.listItems.connections")}
                 icon={
-                  <Badge color="secondary" variant="dot" invisible={invisible}>
-                    <ForumIcon />
+                  <Badge
+                    badgeContent={connectionWarning ? "!" : 0}
+                    color="error"
+                  >
+                    <SyncAltIcon />
                   </Badge>
                 }
               />
               <ListItemLink
-                to="/helps"
-                primary={i18n.t("mainDrawer.listItems.helps")}
-                icon={<HelpOutlineIcon />}
+                to="/queues"
+                primary={i18n.t("mainDrawer.listItems.queues")}
+                icon={<AccountTreeOutlinedIcon />}
               />
-            </>
-          </>
-        )}
-      />
-
-      <Can
-        role={user.profile}
-        perform={"drawer-admin-items:view"}
-        yes={() => (
-          <>
-            <Divider />
-            <ListSubheader
-              hidden={!drawerOpen}
-              style={{
-                position: "relative",
-                fontSize: "17px",
-                textAlign: "left",
-                paddingLeft: 20
-              }}
-              inset
-              color="inherit"
-            >
-              {i18n.t("mainDrawer.listItems.management")}
-            </ListSubheader>
-            <ListItemLink
-              small
-              to="/"
-              primary="Dashboard"
-              icon={<DashboardOutlinedIcon />}
-            />
-          </>
-        )}
-      />
-      <Can
-        role={user.profile}
-        perform="drawer-admin-items:view"
-        yes={() => (
-          <>
-            <Divider />
-            <ListSubheader
-              hidden={!drawerOpen}
-              style={{
-                position: "relative",
-                fontSize: "17px",
-                textAlign: "left",
-                paddingLeft: 20
-              }}
-              inset
-              color="inherit"
-            >
-              {i18n.t("mainDrawer.listItems.administration")}
-            </ListSubheader>
-
-            {showCampaigns && (
-              <>
-                <ListItem
-                  button
-                  onClick={() => setOpenCampaignSubmenu(prev => !prev)}
-                >
-                  <ListItemIcon>
-                    <EventAvailableIcon />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={i18n.t("mainDrawer.listItems.campaigns")}
-                  />
-                  {openCampaignSubmenu ? (
-                    <ExpandLessIcon />
-                  ) : (
-                    <ExpandMoreIcon />
-                  )}
-                </ListItem>
-                <Collapse
-                  style={{ paddingLeft: 15 }}
-                  in={openCampaignSubmenu}
-                  timeout="auto"
-                  unmountOnExit
-                >
-                  <List component="div" disablePadding>
-                    <ListItem onClick={() => history.push("/campaigns")} button>
-                      <ListItemIcon>
-                        <ListIcon />
-                      </ListItemIcon>
-                      <ListItemText primary="Listagem" />
-                    </ListItem>
-                    <ListItem
-                      onClick={() => history.push("/contact-lists")}
-                      button
-                    >
-                      <ListItemIcon>
-                        <PeopleIcon />
-                      </ListItemIcon>
-                      <ListItemText primary="Listas de Contatos" />
-                    </ListItem>
-                    <ListItem
-                      onClick={() => history.push("/campaigns-config")}
-                      button
-                    >
-                      <ListItemIcon>
-                        <SettingsOutlinedIcon />
-                      </ListItemIcon>
-                      <ListItemText primary="Configurações" />
-                    </ListItem>
-                  </List>
-                </Collapse>
-              </>
-            )}
-            {user.super && (
               <ListItemLink
-                to="/announcements"
-                primary={i18n.t("mainDrawer.listItems.annoucements")}
-                icon={<AnnouncementIcon />}
+                to="/users"
+                primary={i18n.t("mainDrawer.listItems.users")}
+                icon={<PeopleAltOutlinedIcon />}
               />
-            )}
-            <ListItemLink
-              to="/connections"
-              primary={i18n.t("mainDrawer.listItems.connections")}
-              icon={
-                <Badge badgeContent={connectionWarning ? "!" : 0} color="error">
-                  <SyncAltIcon />
-                </Badge>
-              }
-            />
-            <ListItemLink
-              to="/queues"
-              primary={i18n.t("mainDrawer.listItems.queues")}
-              icon={<AccountTreeOutlinedIcon />}
-            />
-            <ListItemLink
-              to="/users"
-              primary={i18n.t("mainDrawer.listItems.users")}
-              icon={<PeopleAltOutlinedIcon />}
-            />
-            <ListItemLink
-              to="/messages-api"
-              primary={i18n.t("mainDrawer.listItems.messagesAPI")}
-              icon={<CodeRoundedIcon />}
-            />
-            <ListItemLink
-              to="/financeiro"
-              primary={i18n.t("mainDrawer.listItems.financeiro")}
-              icon={<LocalAtmIcon />}
-            />
+              <ListItemLink
+                to="/messages-api"
+                primary={i18n.t("mainDrawer.listItems.messagesAPI")}
+                icon={<CodeRoundedIcon />}
+              />
+              <ListItemLink
+                to="/financeiro"
+                primary={i18n.t("mainDrawer.listItems.financeiro")}
+                icon={<LocalAtmIcon />}
+              />
 
-            <ListItemLink
-              to="/settings"
-              primary={i18n.t("mainDrawer.listItems.settings")}
-              icon={<SettingsOutlinedIcon />}
-            />
+              <ListItemLink
+                to="/settings"
+                primary={i18n.t("mainDrawer.listItems.settings")}
+                icon={<SettingsOutlinedIcon />}
+              />
 
-            {drawerOpen && (
-              <>
-                <Divider />
-                <Typography
-                  style={{
-                    fontSize: "12px",
-                    padding: "10px",
-                    textAlign: "right",
-                    fontWeight: "bold"
-                  }}
-                >
-                  {`${gitinfo.tagName || gitinfo.branchName + " " + gitinfo.commitHash}`}
-                  &nbsp;/&nbsp;
-                  {`${gitinfo.buildTimestamp}`}
-                </Typography>
-              </>
-            )}
-          </>
-        )}
-      />
-      <Divider />
-    </div>
+              {drawerOpen && (
+                <>
+                  <Divider />
+                  <Typography className={classes.buildInfo}>
+                    {`${gitinfo.tagName || gitinfo.branchName + " " + gitinfo.commitHash}`}
+                    &nbsp;/&nbsp;
+                    {`${gitinfo.buildTimestamp}`}
+                  </Typography>
+                </>
+              )}
+            </>
+          )}
+        />
+        <Divider />
+      </div>
+    </SidebarContext.Provider>
   );
 };
 

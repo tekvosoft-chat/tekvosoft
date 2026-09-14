@@ -22,7 +22,18 @@ import { i18n } from "../../translate/i18n";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { Can } from "../Can";
 import TicketsQueueSelect from "../TicketsQueueSelect";
-import { Box, Button } from "@material-ui/core";
+import {
+  Badge as MuiBadge,
+  Box,
+  Button,
+  IconButton,
+  Tooltip,
+  useMediaQuery
+} from "@material-ui/core";
+import { useTheme } from "@material-ui/core/styles";
+import AddRoundedIcon from "@material-ui/icons/AddRounded";
+import TuneRoundedIcon from "@material-ui/icons/TuneRounded";
+import BottomSheet from "../ui/BottomSheet";
 import { TagsFilter } from "../TagsFilter";
 import { UsersFilter } from "../UsersFilter";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -66,8 +77,35 @@ const useStyles = makeStyles(theme => ({
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    // background: "#fafafa",
-    padding: theme.spacing(1)
+    gap: theme.spacing(1),
+    padding: theme.spacing(1),
+    borderBottom: `1px solid ${theme.palette.tkv.border}`
+  },
+
+  // ── versão de celular da linha de opções ──
+  // Em 390px de largura, botão + interruptor "Todos" + seletor de filas não
+  // cabem: ou quebram em duas linhas, ou empurram a lista para fora da
+  // primeira dobra. Viram um botão de criar e um de filtros; o conteúdo dos
+  // filtros vai para um painel que sobe.
+  optionsMobile: {
+    display: "flex",
+    alignItems: "center",
+    gap: theme.spacing(1),
+    padding: theme.spacing(0.75, 1),
+    borderBottom: `1px solid ${theme.palette.tkv.border}`
+  },
+  optionsSpacer: { flex: 1 },
+  sheetSection: {
+    display: "flex",
+    flexDirection: "column",
+    gap: theme.spacing(1),
+    padding: theme.spacing(0.5, 1, 1)
+  },
+  filterBadge: {
+    "& .MuiBadge-badge": {
+      backgroundColor: theme.palette.tkv.brand.main,
+      color: theme.palette.tkv.brand.contrastText
+    }
   },
 
   serachInputWrapper: {
@@ -118,6 +156,9 @@ const TicketsManagerTabs = () => {
   const [newTicketModalOpen, setNewTicketModalOpen] = useState(false);
   const [showAllTickets, setShowAllTickets] = useState(false);
   const searchInputRef = useRef();
+  const theme = useTheme();
+  const isPhone = useMediaQuery(theme.breakpoints.down("xs"));
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const { user } = useContext(AuthContext);
   const { profile } = user;
 
@@ -258,8 +299,8 @@ const TicketsManagerTabs = () => {
           />
         </Tabs>
       </Paper>
-      <Paper square elevation={0} className={classes.ticketOptionsBox}>
-        {tab === "search" ? (
+      {(() => {
+        const searchField = (
           <div className={classes.serachInputWrapper}>
             <SearchIcon className={classes.searchIcon} />
             <InputBase
@@ -270,47 +311,119 @@ const TicketsManagerTabs = () => {
               onChange={handleSearch}
             />
           </div>
-        ) : (
-          <>
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={() => setNewTicketModalOpen(true)}
-            >
-              {i18n.t("ticketsManager.buttons.newTicket")}
-            </Button>
-            {tab === "open" && (
-              <Can
-                role={user.profile}
-                perform="tickets-manager:showall"
-                yes={() => (
-                  <FormControlLabel
-                    label={i18n.t("tickets.buttons.showAll")}
-                    labelPlacement="start"
-                    control={
-                      <Switch
-                        size="small"
-                        checked={showAllTickets}
-                        onChange={() =>
-                          setShowAllTickets(prevState => !prevState)
-                        }
-                        name="showAllTickets"
-                        color="primary"
-                      />
-                    }
+        );
+
+        const showAllSwitch = tab === "open" && (
+          <Can
+            role={user.profile}
+            perform="tickets-manager:showall"
+            yes={() => (
+              <FormControlLabel
+                label={i18n.t("tickets.buttons.showAll")}
+                labelPlacement="start"
+                control={
+                  <Switch
+                    size="small"
+                    checked={showAllTickets}
+                    onChange={() => setShowAllTickets(prevState => !prevState)}
+                    name="showAllTickets"
+                    color="primary"
                   />
-                )}
+                }
               />
             )}
-          </>
-        )}
-        <TicketsQueueSelect
-          style={{ marginLeft: 6 }}
-          selectedQueueIds={selectedQueueIds}
-          userQueues={user?.queues}
-          onChange={values => setSelectedQueueIds(values)}
-        />
-      </Paper>
+          />
+        );
+
+        const queueSelect = (
+          <TicketsQueueSelect
+            selectedQueueIds={selectedQueueIds}
+            userQueues={user?.queues}
+            onChange={values => setSelectedQueueIds(values)}
+          />
+        );
+
+        // Badge só quando há restrição de verdade: filas selecionadas que
+        // não são todas. "Todos" ligado é o estado padrão do admin — contá-lo
+        // faria o badge nascer com 1 em toda visita e ensinar a ignorá-lo.
+        const totalQueues = user?.queues?.length || 0;
+        const chosenQueues = selectedQueueIds?.length || 0;
+        const activeFilters =
+          totalQueues > 0 && chosenQueues > 0 && chosenQueues < totalQueues
+            ? 1
+            : 0;
+
+        if (isPhone) {
+          return (
+            <>
+              <div className={classes.optionsMobile}>
+                {tab === "search" ? (
+                  searchField
+                ) : (
+                  <>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      size="small"
+                      startIcon={<AddRoundedIcon />}
+                      onClick={() => setNewTicketModalOpen(true)}
+                    >
+                      {i18n.t("ticketsManager.buttons.newTicket")}
+                    </Button>
+                    <div className={classes.optionsSpacer} />
+                    <Tooltip title={i18n.t("common.filter")}>
+                      <IconButton
+                        size="small"
+                        onClick={() => setFiltersOpen(true)}
+                        aria-label={i18n.t("common.filter")}
+                      >
+                        <MuiBadge
+                          badgeContent={activeFilters}
+                          className={classes.filterBadge}
+                        >
+                          <TuneRoundedIcon />
+                        </MuiBadge>
+                      </IconButton>
+                    </Tooltip>
+                  </>
+                )}
+              </div>
+
+              <BottomSheet
+                open={filtersOpen}
+                onClose={() => setFiltersOpen(false)}
+                title={i18n.t("common.filter")}
+              >
+                <div className={classes.sheetSection}>
+                  {showAllSwitch}
+                  {queueSelect}
+                </div>
+              </BottomSheet>
+            </>
+          );
+        }
+
+        return (
+          <Paper square elevation={0} className={classes.ticketOptionsBox}>
+            {tab === "search" ? (
+              searchField
+            ) : (
+              <>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<AddRoundedIcon />}
+                  onClick={() => setNewTicketModalOpen(true)}
+                >
+                  {i18n.t("ticketsManager.buttons.newTicket")}
+                </Button>
+                {showAllSwitch}
+              </>
+            )}
+            {queueSelect}
+          </Paper>
+        );
+      })()}
       <TabPanel value={tab} name="open" className={classes.ticketsWrapper}>
         <Tabs
           value={tabOpen}

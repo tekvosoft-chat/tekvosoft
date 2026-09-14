@@ -23,6 +23,9 @@ import EditIcon from "@material-ui/icons/Edit";
 
 import api from "../../services/api";
 import TableRowSkeleton from "../../components/TableRowSkeleton";
+import TableEmpty from "../../components/ui/TableEmpty";
+import AddRoundedIcon from "@material-ui/icons/AddRounded";
+import ContactPhoneOutlinedIcon from "@material-ui/icons/ContactPhoneOutlined";
 import ContactModal from "../../components/ContactModal";
 import ConfirmationModal from "../../components/ConfirmationModal/";
 
@@ -97,8 +100,9 @@ const reducer = (state, action) => {
 const useStyles = makeStyles(theme => ({
   mainPaper: {
     flex: 1,
-    padding: theme.spacing(1),
-    overflowY: "scroll",
+    minHeight: 0,
+    padding: 0,
+    overflowY: "auto",
     ...theme.scrollbarStyles
   },
 
@@ -369,29 +373,35 @@ const Contacts = () => {
               )
             }}
           />
+          {/* Hierarquia das ações.
+              Antes eram quatro botões roxos idênticos disputando a atenção,
+              dois deles só com um ícone e sem rótulo nenhum — não dava para
+              saber o que faziam sem clicar. Agora só "Adicionar" é o botão
+              cheio (é a ação que se faz todo dia); importar e exportar viram
+              contornados, e os dois de ícone ganharam tooltip dizendo o que
+              são. */}
           {user?.profile === "admin" && (
             <>
+              <Tooltip title={i18n.t("contacts.buttons.importCsv")}>
+                <Button
+                  variant="outlined"
+                  onClick={() => importCsv()}
+                  aria-label={i18n.t("contacts.buttons.importCsv")}
+                >
+                  <FontAwesomeIcon icon={faCloudArrowUp} />
+                </Button>
+              </Tooltip>
+              <Tooltip title={i18n.t("contacts.buttons.exportCsv")}>
+                <Button
+                  variant="outlined"
+                  onClick={() => exportCsv()}
+                  aria-label={i18n.t("contacts.buttons.exportCsv")}
+                >
+                  <FontAwesomeIcon icon={faDownload} />
+                </Button>
+              </Tooltip>
               <Button
-                variant="contained"
-                color="primary"
-                onClick={() => importCsv()}
-              >
-                &nbsp;
-                <FontAwesomeIcon icon={faCloudArrowUp} />
-                &nbsp;
-              </Button>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => exportCsv()}
-              >
-                &nbsp;
-                <FontAwesomeIcon icon={faDownload} />
-                &nbsp;
-              </Button>
-              <Button
-                variant="contained"
-                color="primary"
+                variant="outlined"
                 onClick={() => setImportConfirmOpen(true)}
               >
                 {i18n.t("contacts.buttons.import")}
@@ -401,6 +411,7 @@ const Contacts = () => {
           <Button
             variant="contained"
             color="primary"
+            startIcon={<AddRoundedIcon />}
             onClick={handleOpenContactModal}
           >
             {i18n.t("contacts.buttons.add")}
@@ -507,6 +518,21 @@ const Contacts = () => {
                   </TableCell>
                 </TableRow>
               ))}
+              <TableEmpty
+                show={!loading && contacts.length === 0}
+                colSpan={5}
+                icon={<ContactPhoneOutlinedIcon />}
+                title={
+                  searchParam
+                    ? i18n.t("common.emptySearchTitle")
+                    : i18n.t("common.emptyTitle")
+                }
+                description={
+                  searchParam
+                    ? i18n.t("common.emptySearchDescription")
+                    : i18n.t("common.emptyDescription")
+                }
+              />
               {loading && <TableRowSkeleton avatar columns={3} />}
             </>
           </TableBody>

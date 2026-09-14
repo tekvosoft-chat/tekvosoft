@@ -1,4 +1,5 @@
 import React, { useEffect, useReducer, useState, useContext } from "react";
+import Tooltip from "@material-ui/core/Tooltip";
 import { makeStyles } from "@material-ui/core/styles";
 import { useTheme } from "@material-ui/core/styles";
 import toastError from "../../errors/toastError";
@@ -247,21 +248,21 @@ export default function AnnouncementsPopover() {
         open={showAnnouncementDialog}
         handleClose={() => setShowAnnouncementDialog(false)}
       />
-      <IconButton
-        variant="contained"
-        aria-describedby={id}
-        onClick={handleClick}
-      >
-        <Badge
-          color="secondary"
-          variant="dot"
-          invisible={invisible || announcements.length < 1}
+      <Tooltip title={i18n.t("mainDrawer.listItems.annoucements")}>
+        <IconButton
+          aria-describedby={id}
+          aria-label={i18n.t("mainDrawer.listItems.annoucements")}
+          onClick={handleClick}
         >
-          <AnnouncementIcon
-            style={{ color: theme.palette.primary.contrastText }}
-          />
-        </Badge>
-      </IconButton>
+          <Badge
+            color="secondary"
+            variant="dot"
+            invisible={invisible || announcements.length < 1}
+          >
+            <AnnouncementIcon />
+          </Badge>
+        </IconButton>
+      </Tooltip>
       <Popover
         id={id}
         open={open}

@@ -219,7 +219,7 @@ const Ticket = () => {
           })}
           onClick={() => setDrawerOpen(false)}
         ></div>
-        <TicketHeader loading={loading}>
+        <TicketHeader loading={loading} showBack>
           {renderTicketInfo()}
           <TicketActionButtons ticket={ticket} showTabGroups={showTabGroups} />
         </TicketHeader>

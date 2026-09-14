@@ -184,23 +184,51 @@ export function TicketCountersChart({ ticketCounters }) {
             }
             cursor={true}
           />
+          {/* Duas séries, dois papéis: "criados" é o volume que chega e leva
+              a cor da marca; "resolvidos" é o desfecho bom e leva o verde
+              semântico. Antes eram "blue"/"green" puros, que não conversavam
+              com o resto da interface. */}
+          <defs>
+            <linearGradient id="tkvCreated" x1="0" y1="0" x2="0" y2="1">
+              <stop
+                offset="0%"
+                stopColor={theme.palette.tkv.brand.main}
+                stopOpacity={0.28}
+              />
+              <stop
+                offset="100%"
+                stopColor={theme.palette.tkv.brand.main}
+                stopOpacity={0.02}
+              />
+            </linearGradient>
+            <linearGradient id="tkvClosed" x1="0" y1="0" x2="0" y2="1">
+              <stop
+                offset="0%"
+                stopColor={theme.palette.tkv.semantic.success}
+                stopOpacity={0.24}
+              />
+              <stop
+                offset="100%"
+                stopColor={theme.palette.tkv.semantic.success}
+                stopOpacity={0.02}
+              />
+            </linearGradient>
+          </defs>
           <Area
             type="monotone"
             dataKey="created"
-            stroke="blue"
-            strokeWidth={1}
-            fillOpacity={0.5}
-            fill="lightblue"
-            activeDot={{ r: 8 }}
+            stroke={theme.palette.tkv.brand.main}
+            strokeWidth={2}
+            fill="url(#tkvCreated)"
+            activeDot={{ r: 5, strokeWidth: 2 }}
           />
           <Area
             type="monotone"
             dataKey="closed"
-            stroke="green"
-            strokeWidth={1}
-            fillOpacity={0.5}
-            fill="lightgreen"
-            activeDot={{ r: 8 }}
+            stroke={theme.palette.tkv.semantic.success}
+            strokeWidth={2}
+            fill="url(#tkvClosed)"
+            activeDot={{ r: 5, strokeWidth: 2 }}
           />
         </AreaChart>
       </ResponsiveContainer>

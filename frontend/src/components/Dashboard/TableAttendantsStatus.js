@@ -80,20 +80,36 @@ export default function TableAttendantsStatus(props) {
   function renderList() {
     return attendants.map(a => (
       <TableRow key={a.id}>
-        <TableCell>{a.name}</TableCell>
-        <TableCell align="center" className={classes.pointer}>
+        <TableCell data-label={i18n.t("common.user")}>{a.name}</TableCell>
+        <TableCell
+          align="center"
+          className={classes.pointer}
+          data-label={i18n.t("common.rating")}
+        >
           <RatingBox rating={a.averageRating} />
         </TableCell>
-        <TableCell align="center">{a.totalTickets}</TableCell>
-        <TableCell align="center">{a.openTickets}</TableCell>
-        <TableCell align="center">{a.closedTickets}</TableCell>
-        <TableCell align="center">
+        <TableCell align="center" data-label={i18n.t("dashboard.totalTickets")}>
+          {a.totalTickets}
+        </TableCell>
+        <TableCell align="center" data-label={i18n.t("dashboard.ticketsOpen")}>
+          {a.openTickets}
+        </TableCell>
+        <TableCell align="center" data-label={i18n.t("dashboard.ticketsDone")}>
+          {a.closedTickets}
+        </TableCell>
+        <TableCell align="center" data-label={i18n.t("dashboard.avgWaitTime")}>
           {formatTimeInterval(a.avgWaitTime, 2)}
         </TableCell>
-        <TableCell align="center">
+        <TableCell
+          align="center"
+          data-label={i18n.t("dashboard.avgServiceTime")}
+        >
           {formatTimeInterval(a.avgServiceTime, 2)}
         </TableCell>
-        <TableCell align="center">
+        <TableCell
+          align="center"
+          data-label={i18n.t("dashboard.userCurrentStatus")}
+        >
           {a.online ? (
             <CheckCircleIcon className={classes.on} />
           ) : (
@@ -105,8 +121,8 @@ export default function TableAttendantsStatus(props) {
   }
 
   return !loading ? (
-    <TableContainer component={Paper}>
-      <Table>
+    <TableContainer component={Paper} variant="outlined">
+      <Table className="tkv-stack">
         <TableHead>
           <TableRow>
             <TableCell>{i18n.t("common.user")}</TableCell>

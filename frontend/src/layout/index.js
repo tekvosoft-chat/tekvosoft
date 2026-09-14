@@ -25,6 +25,7 @@ import SettingsEthernetIcon from "@material-ui/icons/SettingsEthernet";
 import CachedIcon from "@material-ui/icons/Cached";
 
 import MainListItems from "./MainListItems";
+import MobileNav from "./MobileNav";
 import NotificationsPopOver from "../components/NotificationsPopOver";
 import { Backendlogs } from "../components/Backendlogs";
 import { PhoneCall } from "../components/PhoneCall";
@@ -55,7 +56,9 @@ import GoogleAnalytics from "../components/GoogleAnalytics";
 import OnlyForSuperUser from "../components/OnlyForSuperUser";
 import NewTicketModal from "../components/NewTicketModal/index.js";
 
-const drawerWidth = 240;
+const drawerWidth = 264;
+const drawerWidthCollapsed = 72;
+const appBarHeight = 56;
 const DRAWER_STORAGE_KEY = "drawerOpen";
 
 function getStoredDrawerOpen() {
@@ -103,10 +106,10 @@ const useStyles = makeStyles(theme => ({
     borderRadius: 20,
     overflow: "hidden",
     cursor: "pointer",
-    backgroundColor:
-      theme.mode === "dark"
-        ? "rgba(0, 0, 0, 0.2)"
-        : "rgba(255, 255, 255, 0.15)",
+    backgroundColor: theme.palette.tkv.surfaceSunken,
+    border: `1px solid ${theme.palette.tkv.border}`,
+    transition: "background-color .15s ease",
+    "&:hover": { backgroundColor: theme.palette.tkv.surfaceHover },
     [theme.breakpoints.down("xs")]: {
       borderRadius: 20
     }
@@ -138,9 +141,9 @@ const useStyles = makeStyles(theme => ({
     }
   },
   userInfoName: {
-    color: theme.palette.primary.contrastText,
-    fontSize: 11,
-    lineHeight: "15px",
+    color: theme.palette.text.primary,
+    fontSize: 12,
+    lineHeight: "16px",
     fontWeight: 600,
     overflow: "hidden",
     textOverflow: "ellipsis",
@@ -148,31 +151,55 @@ const useStyles = makeStyles(theme => ({
     maxWidth: "100%"
   },
   userInfoCompany: {
-    color: theme.palette.primary.contrastText,
+    color: theme.palette.text.secondary,
     fontSize: 11,
     lineHeight: "15px",
-    opacity: 0.75,
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
     maxWidth: "100%"
   },
+  /**
+   * Barra de cima.
+   *
+   * Antes ela era pintada de roxo por cima da AppBar, o que tornava a faixa
+   * um bloco maciço da cor da marca e obrigava todo ícone ali dentro a ser
+   * branco. Agora o normal é herdar a superfície clara.
+   *
+   * O que NÃO se perde: quando um administrador está personificando outra
+   * empresa, a barra continua mudando de cor. Isso não era enfeite, era
+   * aviso de que você não está na sua própria conta — e some com facilidade
+   * demais se a gente deixar. Ganhou tom de alerta, que comunica melhor do
+   * que "azul secundário".
+   */
   toolbar: {
-    paddingRight: 24, // keep right padding when drawer closed
-    color:
-      localStorage.getItem("impersonated") === "true"
-        ? theme.palette.secondary.contrastText
-        : theme.palette.primary.contrastText,
-    background:
-      localStorage.getItem("impersonated") === "true"
-        ? theme.palette.secondary.main
-        : theme.palette.primary.main
+    paddingRight: theme.spacing(2),
+    paddingLeft: theme.spacing(2),
+    gap: theme.spacing(0.25),
+    // No celular são até sete ícones mais o avatar em 390px. Sem apertar o
+    // respiro de cada um, o último item fica cortado na borda da tela.
+    [theme.breakpoints.down("xs")]: {
+      paddingLeft: theme.spacing(1),
+      paddingRight: theme.spacing(0.5),
+      gap: 0,
+      "& .MuiIconButton-root": { padding: 6 },
+      "& .MuiSvgIcon-root": { fontSize: 21 }
+    },
+    ...(localStorage.getItem("impersonated") === "true"
+      ? {
+          backgroundColor: theme.palette.tkv.semantic.warningSoft,
+          color: theme.palette.tkv.semantic.warning,
+          boxShadow: `inset 0 -2px 0 ${theme.palette.tkv.semantic.warning}`
+        }
+      : {})
   },
   toolbarIcon: {
     display: "flex",
     alignItems: "center",
-    justifyContent: "space-between",
-    minHeight: "48px"
+    justifyContent: "center",
+    minHeight: appBarHeight,
+    padding: theme.spacing(0, 2),
+    flex: "none"
   },
   appBar: {
     zIndex: theme.zIndex.drawer + 1,
@@ -180,37 +207,49 @@ const useStyles = makeStyles(theme => ({
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.leavingScreen
     }),
+    // no celular não existe barra lateral: a de cima ocupa tudo
+    width: "100%",
+    marginLeft: 0,
     [theme.breakpoints.up("sm")]: {
-      marginLeft: theme.spacing(9),
-      width: `calc(100% - ${theme.spacing(9)}px)`
+      marginLeft: drawerWidthCollapsed,
+      width: `calc(100% - ${drawerWidthCollapsed}px)`
     }
   },
   appBarShift: {
-    marginLeft: drawerWidth,
-    width: `calc(100% - ${drawerWidth}px)`,
-    transition: theme.transitions.create(["width", "margin"], {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.enteringScreen
-    }),
-    [theme.breakpoints.down("sm")]: {
-      display: "none"
+    [theme.breakpoints.up("sm")]: {
+      marginLeft: drawerWidth,
+      width: `calc(100% - ${drawerWidth}px)`,
+      transition: theme.transitions.create(["width", "margin"], {
+        easing: theme.transitions.easing.sharp,
+        duration: theme.transitions.duration.enteringScreen
+      })
     }
   },
   menuButton: {
-    marginRight: 36,
-    color: theme.palette.primary.contrastText
+    marginRight: theme.spacing(1),
+    color: "inherit"
+  },
+  appBarLogo: {
+    height: 24,
+    width: "auto",
+    maxWidth: 104,
+    objectFit: "contain",
+    marginRight: theme.spacing(1),
+    // a logo clara é feita para fundo escuro; no modo claro a barra é roxa,
+    // então ela funciona nos dois casos
+    display: "block"
   },
   menuButtonHidden: {
     display: "none"
   },
   title: {
     flexGrow: 1,
-    fontSize: 14,
-    color: "white"
+    fontSize: 14
   },
   wsConnectionAlertButton: {
-    marginRight: theme.spacing(1.5),
-    color: theme.palette.primary.contrastText,
+    display: "inline-flex",
+    marginRight: theme.spacing(0.5),
+    color: theme.palette.tkv.semantic.warning,
     padding: theme.spacing(0.5)
   },
   wsConnectionAlertIcon: {
@@ -253,13 +292,14 @@ const useStyles = makeStyles(theme => ({
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.leavingScreen
     }),
-    width: theme.spacing(7),
+    width: drawerWidthCollapsed,
     [theme.breakpoints.up("sm")]: {
-      width: theme.spacing(9)
+      width: drawerWidthCollapsed
     }
   },
   appBarSpacer: {
-    minHeight: "48px"
+    minHeight: appBarHeight,
+    flex: "none"
   },
   content: {
     flex: 1,
@@ -329,6 +369,12 @@ const LoggedInLayout = ({ children, themeToggle }) => {
   const theme = useTheme();
   const greaterThenSm = useMediaQuery(theme.breakpoints.up("sm"));
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  // Três faixas de verdade, não duas:
+  //   telefone  (<600px)  -> sem barra lateral, navegação por baixo
+  //   tablet    (600-959) -> barra lateral só de ícones
+  //   desktop   (>=960)   -> barra lateral completa, a pessoa escolhe
+  const isPhone = useMediaQuery(theme.breakpoints.down("xs"));
+  const greaterThenMd = useMediaQuery(theme.breakpoints.up("md"));
   const { colorMode } = useContext(ColorModeContext);
 
   const [currentLanguage, setCurrentLanguage] = useState(i18n.language);
@@ -420,23 +466,27 @@ const LoggedInLayout = ({ children, themeToggle }) => {
   }, []);
 
   useEffect(() => {
-    if (greaterThenSm) {
-      setDrawerVariant("permanent");
-      setDrawerOpen(getStoredDrawerOpen());
+    if (isPhone) {
+      // No telefone a barra lateral nem é montada — quem navega é a
+      // MobileNav lá embaixo.
+      setDrawerOpen(false);
       return;
     }
 
-    setDrawerVariant("temporary");
-    setDrawerOpen(false);
-  }, [greaterThenSm]);
+    setDrawerVariant("permanent");
+    // No tablet a barra fica recolhida: 264px de menu comem metade da tela.
+    setDrawerOpen(greaterThenMd ? getStoredDrawerOpen() : false);
+  }, [isPhone, greaterThenMd]);
 
   useEffect(() => {
-    if (!greaterThenSm) {
+    // Só o desktop guarda a preferência; no tablet o recolhido é imposto e
+    // gravá-lo apagaria a escolha que a pessoa fez no computador.
+    if (!greaterThenMd) {
       return;
     }
 
     persistDrawerOpenState(drawerOpen);
-  }, [drawerOpen, greaterThenSm]);
+  }, [drawerOpen, greaterThenMd]);
 
   useEffect(() => {
     if (!socketManager?.subscribeWsConnectionIssue) {
@@ -558,44 +608,48 @@ const LoggedInLayout = ({ children, themeToggle }) => {
 
   return (
     <div className={classes.root}>
-      <Drawer
-        variant={drawerVariant}
-        className={drawerOpen ? classes.drawerPaper : classes.drawerPaperClose}
-        onClose={drawerClose}
-        classes={{
-          paper: clsx(
-            classes.drawerPaper,
-            !drawerOpen && classes.drawerPaperClose
-          )
-        }}
-        open={drawerOpen}
-      >
-        <div
-          className={classes.toolbarIcon}
-          onClick={handleDrawerToggle}
-          style={{ cursor: "pointer" }}
+      {!isPhone && (
+        <Drawer
+          variant={drawerVariant}
+          className={
+            drawerOpen ? classes.drawerPaper : classes.drawerPaperClose
+          }
+          onClose={drawerClose}
+          classes={{
+            paper: clsx(
+              classes.drawerPaper,
+              !drawerOpen && classes.drawerPaperClose
+            )
+          }}
+          open={drawerOpen}
         >
-          <img
-            className={
-              drawerOpen
-                ? classes.logo
-                : !isMobile
-                  ? classes.logoIcon
-                  : classes.hideLogo
-            }
-            alt="logo"
-          />
-        </div>
-        <Divider />
-        <List className={classes.containerWithScroll}>
-          <MainListItems
-            drawerClose={drawerClose}
-            drawerOpen={drawerOpen}
-            collapsed={!drawerOpen}
-          />
-        </List>
-        <Divider />
-      </Drawer>
+          <div
+            className={classes.toolbarIcon}
+            onClick={handleDrawerToggle}
+            style={{ cursor: "pointer" }}
+          >
+            <img
+              className={
+                drawerOpen
+                  ? classes.logo
+                  : !isMobile
+                    ? classes.logoIcon
+                    : classes.hideLogo
+              }
+              alt="logo"
+            />
+          </div>
+          <Divider />
+          <List className={classes.containerWithScroll}>
+            <MainListItems
+              drawerClose={drawerClose}
+              drawerOpen={drawerOpen}
+              collapsed={!drawerOpen}
+            />
+          </List>
+          <Divider />
+        </Drawer>
+      )}
       <UserModal
         open={userModalOpen}
         onClose={() => setUserModalOpen(false)}
@@ -611,15 +665,24 @@ const LoggedInLayout = ({ children, themeToggle }) => {
         color="primary"
       >
         <Toolbar variant="dense" className={classes.toolbar}>
-          <IconButton
-            edge="start"
-            variant="contained"
-            aria-label="open drawer"
-            onClick={handleDrawerToggle}
-            className={classes.menuButton}
-          >
-            {drawerOpen ? <ChevronLeftIcon /> : <MenuIcon />}
-          </IconButton>
+          {isPhone ? (
+            <img
+              className={classes.appBarLogo}
+              src={theme.calculatedLogo?.()}
+              alt={theme.appName || "Tekvosoft"}
+            />
+          ) : (
+            <IconButton
+              edge="start"
+              aria-label={
+                drawerOpen ? "Recolher menu lateral" : "Expandir menu lateral"
+              }
+              onClick={handleDrawerToggle}
+              className={classes.menuButton}
+            >
+              {drawerOpen ? <ChevronLeftIcon /> : <MenuIcon />}
+            </IconButton>
+          )}
 
           <Typography
             component="h2"
@@ -689,7 +752,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
               <div className={classes.profileAvatarSlot}>
                 <AccountCircle
                   className={classes.avatar}
-                  style={{ color: theme.palette.primary.contrastText }}
+                  style={{ color: theme.palette.tkv.brand.main }}
                 />
               </div>
             </div>
@@ -775,6 +838,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
         <OnlyForSuperUser user={currentUser} yes={() => <GoogleAnalytics />} />
         {children ? children : null}
       </main>
+      {isPhone && <MobileNav onOpenProfile={handleOpenUserModal} />}
     </div>
   );
 };

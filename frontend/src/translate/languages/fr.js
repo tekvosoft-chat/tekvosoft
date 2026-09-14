@@ -3,12 +3,19 @@ const messages = {
     translations: {
       common: {
         search: "Rechercher",
+        emptyTitle: "Rien ici pour l'instant",
+        emptyDescription:
+          "Les enregistrements apparaîtront dans cette liste dès qu'il y en aura.",
+        emptySearchTitle: "Aucun résultat",
+        emptySearchDescription:
+          "Rien ne correspond à votre recherche. Essayez un autre terme.",
         edit: "Éditer",
         delete: "Supprimer",
         cancel: "Annuler",
         save: "Enregistrer",
         confirm: "Confirmer",
         close: "Fermer",
+        back: "Retour",
         error: "Erreur",
         success: "Succès",
         actions: "Actions",
@@ -239,6 +246,8 @@ const messages = {
           importMessage: "Voulez-vous importer tous les contacts du téléphone ?"
         },
         buttons: {
+          importCsv: "Importer depuis un fichier CSV",
+          exportCsv: "Exporter en CSV",
           import: "Importer des Contacts",
           add: "Ajouter un Contact"
         },
@@ -470,7 +479,9 @@ const messages = {
           logout: "Déconnexion",
           management: "Gestion",
           kanban: "Kanban",
-          tasks: "Tâches"
+          tasks: "Tâches",
+          more: "Plus",
+          menu: "Menu"
         },
         appBar: {
           i18n: {
@@ -503,7 +514,8 @@ const messages = {
         }
       },
       notifications: {
-        noTickets: "Aucune notification."
+        noTickets: "Aucune notification.",
+        volume: "Volume des notifications"
       },
       quickMessages: {
         title: "Réponses Rapides",
