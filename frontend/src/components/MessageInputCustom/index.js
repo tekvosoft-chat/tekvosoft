@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext, useRef } from "react";
 import withWidth from "@material-ui/core/withWidth";
 import "emoji-mart/css/emoji-mart.css";
 import { Picker } from "emoji-mart";
+import { emojiMartI18n } from "../../helpers/emojiMartI18n";
 import MicRecorder from "mic-recorder-to-mp3";
 import clsx from "clsx";
 
@@ -56,10 +57,12 @@ import MediaPreview from "../ui/MediaPreview";
 import { AttachPanel, RecordingPanel } from "./PhoneComposer";
 import QuickRepliesModal from "../QuickRepliesModal";
 import ExpressionPanel from "./ExpressionPanel";
+import { announceSend } from "../MessagesList/sendFlight";
+import Popover from "@material-ui/core/Popover";
+import BottomSheet from "../ui/BottomSheet";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import ListItemIcon from "@material-ui/core/ListItemIcon";
-import Collapse from "@material-ui/core/Collapse";
 import InsertEmoticonRoundedIcon from "@material-ui/icons/InsertEmoticonRounded";
 import InsertDriveFileOutlinedIcon from "@material-ui/icons/InsertDriveFileOutlined";
 import PhotoLibraryOutlinedIcon from "@material-ui/icons/PhotoLibraryOutlined";
@@ -141,14 +144,19 @@ const useStyles = makeStyles(theme => ({
     marginBottom: 0,
     borderRadius: "50%",
     backgroundColor: theme.palette.tkv.chat.accent,
-    color: "#FFFFFF",
+    color: theme.palette.tkv.brand.contrastText,
     "&:hover": { backgroundColor: theme.palette.tkv.chat.accentHover },
     "&.Mui-disabled": {
       backgroundColor: theme.palette.tkv.chat.accent,
       opacity: 0.5,
-      color: "#FFFFFF"
+      color: theme.palette.tkv.brand.contrastText
     },
-    "& svg": { color: "#FFFFFF", fontSize: 22 }
+    "& svg": { color: theme.palette.tkv.brand.contrastText, fontSize: 22 },
+    [theme.breakpoints.down("xs")]: {
+      width: 46,
+      height: 46,
+      "& svg": { fontSize: 24 }
+    }
   },
 
   uploadInput: {
@@ -179,6 +187,14 @@ const useStyles = makeStyles(theme => ({
   plusRotate: {
     transition: "transform .2s ease"
   },
+  exprPopover: {
+    width: 420,
+    maxWidth: "calc(100vw - 32px)",
+    marginTop: -8,
+    borderRadius: 16,
+    overflow: "hidden",
+    boxShadow: "0 12px 40px rgba(12, 10, 20, 0.28)"
+  },
   attachMenu: {
     "& .MuiPaper-root": {
       borderRadius: 14,
@@ -206,20 +222,20 @@ const useStyles = makeStyles(theme => ({
     width: "100%",
     display: "flex",
     alignItems: "flex-end",
-    gap: 2,
-    padding: "6px 6px 8px"
+    gap: 0,
+    padding: "4px 4px 5px"
   },
   phoneIconButton: {
     flex: "none",
-    width: 44,
-    height: 44,
+    width: 46,
+    height: 46,
     padding: 0,
     color: theme.palette.tkv.brand.text,
-    "& svg": { fontSize: 26 }
+    "& svg": { fontSize: 28 }
   },
   plusIcon: {
     transition: "transform .25s cubic-bezier(.34, 1.56, .64, 1)",
-    fontSize: "30px !important"
+    fontSize: "32px !important"
   },
   plusOpen: { transform: "rotate(45deg)" },
   phoneInputWrapper: {
@@ -227,17 +243,17 @@ const useStyles = makeStyles(theme => ({
     minWidth: 0,
     display: "flex",
     alignItems: "center",
-    minHeight: 40,
-    margin: "2px 4px",
-    padding: "1px 2px 1px 14px",
-    borderRadius: 20,
+    minHeight: 42,
+    margin: "2px 2px",
+    padding: "0 2px 0 14px",
+    borderRadius: 21,
     backgroundColor: theme.palette.tkv.chat.input,
     boxShadow: `inset 0 0 0 1px ${theme.palette.tkv.border}`
   },
   pillAction: {
-    padding: 6,
+    padding: 7,
     color: theme.palette.tkv.brand.text,
-    "& svg": { fontSize: 22 }
+    "& svg": { fontSize: 25 }
   },
   roundBrand: {
     backgroundColor: theme.palette.tkv.brand.main,
@@ -380,6 +396,7 @@ const EmojiOptions = props => {
       {showEmoji ? (
         <div className={classes.emojiBox}>
           <Picker
+            i18n={emojiMartI18n()}
             perLine={16}
             showPreview={false}
             showSkinTones={false}
@@ -842,7 +859,11 @@ const CustomInput = props => {
                         }
                         className={classes.pillAction}
                         disabled={disableOption}
-                        onClick={onQuickReplies}
+                        onMouseDown={e => e.preventDefault()}
+                        onClick={e => {
+                          e.stopPropagation();
+                          onQuickReplies();
+                        }}
                       >
                         {quickIcon === "sticker" ? (
                           <InsertEmoticonRoundedIcon />
@@ -990,6 +1011,12 @@ const MessageInputCustom = props => {
   const [attachOpen, setAttachOpen] = useState(false);
   const [quickOpen, setQuickOpen] = useState(false);
   const [exprOpen, setExprOpen] = useState(false);
+  const exprAnchorRef = useRef(null);
+  // o painel só é montado na primeira vez que abre (o seletor de emoji pesa)
+  const [exprMounted, setExprMounted] = useState(false);
+  useEffect(() => {
+    if (exprOpen) setExprMounted(true);
+  }, [exprOpen]);
   const [attachAnchor, setAttachAnchor] = useState(null);
   const [quickVersion, setQuickVersion] = useState(0);
 
@@ -1263,6 +1290,10 @@ const MessageInputCustom = props => {
 
     handlePresenceUpdate(null);
 
+    // o balão sai da barra e voa até a conversa
+    if (editingMessage === null)
+      announceSend(inputMessage.trim(), inputRef.current);
+
     const url =
       editingMessage !== null
         ? `/messages/edit/${editingMessage.id}`
@@ -1390,15 +1421,18 @@ const MessageInputCustom = props => {
               ? theme.palette.tkv.brand.main
               : theme.palette.tkv.chat.accent
           }
-          accentText={
-            isPhone ? theme.palette.tkv.brand.contrastText : "#FFFFFF"
-          }
+          accentText={theme.palette.tkv.brand.contrastText}
           loading={loading}
           disabled={disableOption}
           progress={<LinearWithValueLabel progress={percentLoading} />}
           onClear={() => setMedias([])}
           onRemove={index =>
             setMedias(prev => prev.filter((_, i) => i !== index))
+          }
+          onReplace={(index, file) =>
+            setMedias(prev =>
+              prev.map((item, i) => (i === index ? file : item))
+            )
           }
           onSend={handleUploadMedia}
         />
@@ -1478,15 +1512,20 @@ const MessageInputCustom = props => {
             />
           </div>
         )}
-        <Collapse
-          in={exprOpen && !recording}
-          timeout={220}
-          style={{ width: "100%" }}
+        <BottomSheet
+          open={exprOpen && !recording}
+          onClose={() => setExprOpen(false)}
+          title={i18n.t("expressions.title")}
         >
-          {exprOpen && (
-            <ExpressionPanel ticketId={ticketId} disabled={disableOption} />
+          {exprMounted && (
+            <ExpressionPanel
+              ticketId={ticketId}
+              showEmoji
+              onEmoji={handleAddEmoji}
+              disabled={disableOption}
+            />
           )}
-        </Collapse>
+        </BottomSheet>
         <AttachPanel
           open={attachOpen && !recording}
           disabled={disableOption}
@@ -1499,24 +1538,28 @@ const MessageInputCustom = props => {
       </Paper>
     );
   } else {
+    const expressionPopover = (
+      <Popover
+        open={exprOpen && !recording && !!exprAnchorRef.current}
+        anchorEl={exprAnchorRef.current}
+        onClose={() => setExprOpen(false)}
+        anchorOrigin={{ vertical: "top", horizontal: "left" }}
+        transformOrigin={{ vertical: "bottom", horizontal: "left" }}
+        PaperProps={{ className: classes.exprPopover }}
+      >
+        <ExpressionPanel
+          ticketId={ticketId}
+          showEmoji
+          onEmoji={handleAddEmoji}
+          disabled={disableOption}
+        />
+      </Popover>
+    );
     return (
       <Paper square elevation={0} className={classes.mainWrapper}>
         {(replyingMessage && renderReplyingMessage(replyingMessage)) ||
           (editingMessage && renderReplyingMessage(editingMessage))}
-        <Collapse
-          in={exprOpen && !recording}
-          timeout={200}
-          style={{ width: "100%" }}
-        >
-          {exprOpen && (
-            <ExpressionPanel
-              ticketId={ticketId}
-              showEmoji
-              onEmoji={handleAddEmoji}
-              disabled={disableOption}
-            />
-          )}
-        </Collapse>
+
         <div className={classes.webBar}>
           <input
             multiple
@@ -1606,6 +1649,7 @@ const MessageInputCustom = props => {
           <Tooltip title={i18n.t("expressions.title")}>
             <span>
               <IconButton
+                ref={exprAnchorRef}
                 aria-label={i18n.t("expressions.title")}
                 className={`${classes.webIcon}${exprOpen ? ` ${classes.webIconOn}` : ""}`}
                 disabled={disableOption}
@@ -1644,6 +1688,7 @@ const MessageInputCustom = props => {
             handleStartRecording={handleStartRecording}
           />
         </div>
+        {expressionPopover}
         {quickRepliesModal}
       </Paper>
     );

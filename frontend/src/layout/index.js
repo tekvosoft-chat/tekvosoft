@@ -721,7 +721,11 @@ const LoggedInLayout = ({ children, themeToggle }) => {
         !data.user.impersonated &&
         data.user.id === +userId
       ) {
-        toastError("Sua conta foi acessada em outro computador.");
+        toastError(
+          data.action === "deactivated"
+            ? i18n.t("usersPage.deactivatedByAdmin")
+            : "Sua conta foi acessada em outro computador."
+        );
         setTimeout(() => {
           localStorage.clear();
           window.location.reload();

@@ -162,12 +162,30 @@ export const buildMediaGalleryData = (
   );
 };
 
+const AnnotateIcon = props => (
+  <svg
+    viewBox="0 0 24 24"
+    width="24"
+    height="24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="M12 20h9" />
+    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+  </svg>
+);
+
 const MediaGalleryLightbox = ({
   open,
   index,
   slides,
   onClose,
-  onViewIndexChange
+  onViewIndexChange,
+  onAnnotate
 }) => {
   const [currentIndex, setCurrentIndex] = useState(index || 0);
   const [rotationBySlide, setRotationBySlide] = useState({});
@@ -260,8 +278,17 @@ const MediaGalleryLightbox = ({
             onClick={() => rotateCurrentSlide(90)}
             disabled={!slides.length}
           />,
+          // desenhar, destacar e escrever por cima da foto
+          onAnnotate && slides[currentIndex]?.type !== "video" && (
+            <YarlIconButton
+              key="annotate"
+              label="Anotar"
+              icon={AnnotateIcon}
+              onClick={() => onAnnotate(slides[currentIndex])}
+            />
+          ),
           "close"
-        ]
+        ].filter(Boolean)
       }}
       plugins={[Video, Zoom, Download, Thumbnails, Captions]}
     />

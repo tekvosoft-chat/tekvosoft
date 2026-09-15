@@ -35,6 +35,7 @@ export const manifest = async (
     ],
     start_url: ".",
     display: "standalone",
+    orientation: "portrait",
     theme_color: "#000000",
     background_color: "#ffffff"
   };

@@ -244,6 +244,20 @@ const TicketsListCustom = props => {
     queueIds: JSON.stringify(selectedQueueIds)
   });
 
+  // voltou ao app: a lista é recarregada para não ficar com conversas velhas
+  useEffect(() => {
+    let hiddenAt = 0;
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        hiddenAt = Date.now();
+      } else if (hiddenAt && Date.now() - hiddenAt > 2000) {
+        refetchTickets();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [refetchTickets]);
+
   useEffect(() => {
     const queueIds = queues.map(q => q.id);
     const filteredTickets = tickets.filter(

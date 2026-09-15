@@ -7,7 +7,11 @@ import { ptBR } from "@material-ui/core/locale";
 import { ThemeProvider } from "@material-ui/core/styles";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import createAppTheme from "./theme/createAppTheme";
-import { BRAND_PURPLE, BRAND_PURPLE_DARK_MODE } from "./theme/tokens";
+import {
+  BRAND_PURPLE,
+  BRAND_PURPLE_DARK_MODE,
+  THEME_PRESETS
+} from "./theme/tokens";
 import ColorModeContext from "./layout/themeContext";
 import { PhoneCallProvider } from "./context/PhoneCall/PhoneCallContext";
 import { SocketContext, socketManager } from "./context/Socket/SocketContext";
@@ -16,6 +20,7 @@ import Favicon from "react-favicon";
 import { getBackendURL } from "./services/config";
 
 import Routes from "./routes";
+import PortraitLock from "./components/ui/PortraitLock";
 
 const queryClient = new QueryClient();
 const defaultLogoLight = "/vector/logo.png";
@@ -236,6 +241,12 @@ const App = () => {
           mode === "light"
             ? accountTheme?.light || primaryColorLight
             : accountTheme?.dark || primaryColorDark,
+        accentColor:
+          accountTheme?.accent ||
+          THEME_PRESETS.find(
+            p => p.id === (accountTheme?.preset || "tekvosoft")
+          )?.accent,
+        wallpaper: accountTheme?.wallpaper,
         locale,
         appLogoLight,
         appLogoDark,
@@ -361,6 +372,7 @@ const App = () => {
             <QueryClientProvider client={queryClient}>
               <SocketContext.Provider value={socketManager}>
                 <Routes />
+                <PortraitLock />
               </SocketContext.Provider>
             </QueryClientProvider>
           </ThemeProvider>

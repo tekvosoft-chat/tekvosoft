@@ -24,7 +24,6 @@ import ForumOutlinedIcon from "@material-ui/icons/ForumOutlined";
 import ViewWeekOutlinedIcon from "@material-ui/icons/ViewWeekOutlined";
 import ViewWeekIcon from "@material-ui/icons/ViewWeek";
 import EventIcon from "@material-ui/icons/Event";
-import LocalOfferIcon from "@material-ui/icons/LocalOffer";
 import HelpOutlineIcon from "@material-ui/icons/HelpOutline";
 import SyncAltIcon from "@material-ui/icons/SyncAlt";
 import AccountTreeOutlinedIcon from "@material-ui/icons/AccountTreeOutlined";
@@ -348,7 +347,6 @@ const MobileNav = ({ onOpenProfile }) => {
             icon: <ContactPhoneOutlinedIcon />
           },
           { to: "/schedules", label: t("schedules"), icon: <EventIcon /> },
-          { to: "/tags", label: t("tags"), icon: <LocalOfferIcon /> },
           { to: "/chats", label: t("chats"), icon: <ForumIcon /> },
           { to: "/helps", label: t("helps"), icon: <HelpOutlineIcon /> }
         ]

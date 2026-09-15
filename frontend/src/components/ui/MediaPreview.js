@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { makeStyles } from "@material-ui/core/styles";
 import IconButton from "@material-ui/core/IconButton";
+import Button from "@material-ui/core/Button";
+import CreateOutlinedIcon from "@material-ui/icons/CreateOutlined";
 import Typography from "@material-ui/core/Typography";
 import CloseRoundedIcon from "@material-ui/icons/CloseRounded";
 import SendIcon from "@material-ui/icons/Send";
@@ -9,6 +11,7 @@ import InsertDriveFileOutlinedIcon from "@material-ui/icons/InsertDriveFileOutli
 import AudiotrackOutlinedIcon from "@material-ui/icons/AudiotrackOutlined";
 
 import { i18n } from "../../translate/i18n";
+import DocumentAnnotator from "../DocumentAnnotator";
 
 /**
  * Prévia dos arquivos antes de enviar.
@@ -51,6 +54,20 @@ const useStyles = makeStyles(theme => {
       overflow: "hidden",
       textOverflow: "ellipsis",
       whiteSpace: "nowrap"
+    },
+    annotate: {
+      position: "absolute",
+      top: 10,
+      right: 10,
+      zIndex: 2,
+      borderRadius: 999,
+      padding: "4px 12px",
+      textTransform: "none",
+      fontWeight: 700,
+      color: "#FFFFFF",
+      backgroundColor: "rgba(0, 0, 0, 0.55)",
+      backdropFilter: "blur(6px)",
+      "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.7)" }
     },
     stage: {
       position: "relative",
@@ -171,9 +188,13 @@ const humanSize = bytes => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
+const isPdf = file =>
+  file?.type === "application/pdf" || /\.pdf$/i.test(file?.name || "");
+
 const MediaPreview = ({
   files,
   onRemove,
+  onReplace,
   onClear,
   onSend,
   loading,
@@ -185,6 +206,7 @@ const MediaPreview = ({
 }) => {
   const classes = useStyles();
   const [selected, setSelected] = useState(0);
+  const [annotating, setAnnotating] = useState(null);
 
   // endereços locais para exibir os arquivos sem enviá-los; liberados ao sair
   const urls = useMemo(
@@ -231,6 +253,23 @@ const MediaPreview = ({
       </div>
 
       <div className={classes.stage}>
+        {onReplace && !loading && (kind === "image" || isPdf(current)) && (
+          <Button
+            size="small"
+            className={classes.annotate}
+            startIcon={<CreateOutlinedIcon />}
+            onClick={() =>
+              setAnnotating({
+                index: selected,
+                url: URL.createObjectURL(current),
+                type: isPdf(current) ? "pdf" : "image",
+                name: current.name
+              })
+            }
+          >
+            {i18n.t("annotator.annotate")}
+          </Button>
+        )}
         {kind === "image" && (
           <img
             className={classes.stageMedia}
@@ -314,6 +353,19 @@ const MediaPreview = ({
           <SendIcon />
         </IconButton>
       </div>
+      {annotating && (
+        <DocumentAnnotator
+          open
+          src={annotating.url}
+          type={annotating.type}
+          fileName={annotating.name}
+          onClose={() => {
+            URL.revokeObjectURL(annotating.url);
+            setAnnotating(null);
+          }}
+          onSave={file => onReplace(annotating.index, file)}
+        />
+      )}
     </div>
   );
 };
@@ -321,6 +373,7 @@ const MediaPreview = ({
 MediaPreview.propTypes = {
   files: PropTypes.array.isRequired,
   onRemove: PropTypes.func,
+  onReplace: PropTypes.func,
   onClear: PropTypes.func.isRequired,
   onSend: PropTypes.func.isRequired,
   loading: PropTypes.bool,

@@ -1,25 +1,13 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  makeStyles,
-  Tooltip,
-  Typography
-} from "@material-ui/core";
-import { Close, GetApp } from "@material-ui/icons";
+import React, { useEffect, useRef, useState } from "react";
+import { makeStyles } from "@material-ui/core";
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
 import pdfjsWorker from "pdfjs-dist/build/pdf.worker.entry";
-import BoxLoader from "../ui/BoxLoader";
+import DocumentAnnotator from "../DocumentAnnotator";
+import { i18n } from "../../translate/i18n";
 
 GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 const MAX_UNRANGED_BYTES = 10 * 1024 * 1024; // 10 MB
-
-// True when the browser ships a built-in PDF viewer (Chrome 94+, FF 99+, Edge 94+).
-const BROWSER_HAS_PDF_VIEWER =
-  typeof navigator !== "undefined" && navigator.pdfViewerEnabled === true;
 
 const useStyles = makeStyles(() => ({
   // ── Thumbnail ──────────────────────────────────────────────────────────
@@ -66,61 +54,6 @@ const useStyles = makeStyles(() => ({
     padding: "6px 8px",
     fontSize: "0.75rem",
     color: "#666"
-  },
-  // ── Full-screen dialog ─────────────────────────────────────────────────
-  dialogTitle: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "8px 16px"
-  },
-  dialogTitleButtons: {
-    display: "flex",
-    alignItems: "center",
-    gap: 4
-  },
-  dialogContent: {
-    padding: "8px 0",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    backgroundColor: "#525659",
-    minHeight: "60vh",
-    overflowY: "auto"
-  },
-  dialogContentIframe: {
-    padding: 0,
-    height: "80vh",
-    overflow: "hidden"
-  },
-  pdfIframe: {
-    width: "100%",
-    height: "100%",
-    border: "none",
-    display: "block"
-  },
-  pageCanvas: {
-    display: "block",
-    maxWidth: "100%",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
-    margin: "8px auto",
-    backgroundColor: "#fff"
-  },
-  pagePlaceholder: {
-    // A4 aspect ratio placeholder keeps scrollbar accurate before a page renders.
-    width: "calc(100% - 32px)",
-    paddingTop: "141.4%",
-    margin: "8px auto",
-    backgroundColor: "#fff",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.4)"
-  },
-  spinnerWrap: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 200,
-    width: "100%",
-    color: "#fff"
   }
 }));
 
@@ -151,71 +84,6 @@ async function checkPdfUrl(url) {
     // Request failed → cannot confirm range support; block to avoid lockup.
     return { canLoad: false, supportsRange: false, fileSize: null };
   }
-}
-
-// ── Lazy per-page renderer ────────────────────────────────────────────────────
-// Renders a page only when it scrolls within 400 px of the viewport.
-// A placeholder with an A4 aspect ratio keeps the scrollbar accurate.
-function LazyPdfPage({ pdf, pageNum, classes }) {
-  const wrapperRef = useRef(null);
-  const canvasRef = useRef(null);
-  const renderTriggered = useRef(false);
-  const [done, setDone] = useState(false);
-
-  useEffect(() => {
-    const el = wrapperRef.current;
-    if (!el || !pdf) return;
-
-    const observer = new IntersectionObserver(
-      entries => {
-        if (!entries[0].isIntersecting || renderTriggered.current) return;
-        renderTriggered.current = true;
-        observer.disconnect();
-
-        let cancelled = false;
-        (async () => {
-          try {
-            const page = await pdf.getPage(pageNum);
-            if (cancelled) return;
-            const containerWidth = el.parentElement?.clientWidth || 700;
-            const viewport = page.getViewport({ scale: 1 });
-            const scale = Math.min(containerWidth / viewport.width, 2);
-            const scaledViewport = page.getViewport({ scale });
-            const canvas = canvasRef.current;
-            if (!canvas || cancelled) return;
-            canvas.width = scaledViewport.width;
-            canvas.height = scaledViewport.height;
-            await page.render({
-              canvasContext: canvas.getContext("2d"),
-              viewport: scaledViewport
-            }).promise;
-            if (!cancelled) setDone(true);
-          } catch {
-            // silent – placeholder stays
-          }
-        })();
-
-        return () => {
-          cancelled = true;
-        };
-      },
-      { rootMargin: "400px" } // start loading before the page enters view
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [pdf, pageNum]);
-
-  return (
-    <div ref={wrapperRef}>
-      {!done && <div className={classes.pagePlaceholder} />}
-      <canvas
-        ref={canvasRef}
-        className={classes.pageCanvas}
-        style={{ display: done ? "block" : "none" }}
-      />
-    </div>
-  );
 }
 
 // ── Thumbnail sub-component ───────────────────────────────────────────────────
@@ -289,10 +157,14 @@ function Thumbnail({ url, onOpen }) {
   return (
     <div className={classes.thumbnail} onClick={onOpen}>
       {status === "loading" && (
-        <div className={classes.thumbnailMessage}>Loading preview...</div>
+        <div className={classes.thumbnailMessage}>
+          {i18n.t("annotator.loadingPreview")}
+        </div>
       )}
       {status === "error" && (
-        <div className={classes.thumbnailMessage}>PDF preview unavailable</div>
+        <div className={classes.thumbnailMessage}>
+          {i18n.t("annotator.previewUnavailable")}
+        </div>
       )}
       <canvas
         ref={canvasRef}
@@ -302,144 +174,17 @@ function Thumbnail({ url, onOpen }) {
       {status === "done" && (
         <>
           <div className={classes.thumbnailFade} />
-          <div className={classes.thumbnailOverlay}>Click to open</div>
+          <div className={classes.thumbnailOverlay}>
+            {i18n.t("annotator.openAndAnnotate")}
+          </div>
         </>
       )}
     </div>
   );
 }
 
-// ── Full-viewer dialog ────────────────────────────────────────────────────────
-function PdfViewerDialog({ url, fileName, open, onClose }) {
-  const classes = useStyles();
-  const contentRef = useRef(null);
-  const pdfRef = useRef(null);
-  const [numPages, setNumPages] = useState(0);
-  const [viewerStatus, setViewerStatus] = useState("loading"); // loading | done | error
-
-  // When the browser has a native PDF viewer we skip PDF.js entirely.
-  useEffect(() => {
-    if (!open || BROWSER_HAS_PDF_VIEWER) return;
-
-    if (!url) {
-      setViewerStatus("error");
-      return;
-    }
-
-    let cancelled = false;
-    setViewerStatus("loading");
-    setNumPages(0);
-
-    (async () => {
-      try {
-        const pdf = await getDocument({
-          url,
-          disableAutoFetch: true, // don't bulk-download; fetch chunks on demand
-          rangeChunkSize: 65536 // 64 KB per range request
-        }).promise;
-        if (cancelled) {
-          pdf.destroy();
-          return;
-        }
-        pdfRef.current = pdf;
-        setNumPages(pdf.numPages);
-        setViewerStatus("done");
-      } catch (e) {
-        if (!cancelled) {
-          console.error("PdfViewer load error:", e);
-          setViewerStatus("error");
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      if (pdfRef.current) {
-        pdfRef.current.destroy();
-        pdfRef.current = null;
-      }
-    };
-  }, [open, url]);
-
-  const handleDownload = useCallback(() => {
-    const a = document.createElement("a");
-    const sep = url.includes("?") ? "&" : "?";
-    a.href = `${url}${sep}t=${Date.now()}`;
-    a.download = fileName || "document.pdf";
-    a.rel = "noopener noreferrer";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  }, [url, fileName]);
-
-  return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle disableTypography className={classes.dialogTitle}>
-        <Typography
-          variant="subtitle1"
-          noWrap
-          style={{ flex: 1, marginRight: 8 }}
-        >
-          {fileName || "PDF Document"}
-        </Typography>
-        <div className={classes.dialogTitleButtons}>
-          <Tooltip title="Download">
-            <IconButton size="small" onClick={handleDownload}>
-              <GetApp />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Close">
-            <IconButton size="small" onClick={onClose}>
-              <Close />
-            </IconButton>
-          </Tooltip>
-        </div>
-      </DialogTitle>
-
-      <DialogContent
-        className={
-          BROWSER_HAS_PDF_VIEWER
-            ? classes.dialogContentIframe
-            : classes.dialogContent
-        }
-        ref={contentRef}
-      >
-        {BROWSER_HAS_PDF_VIEWER ? (
-          <iframe
-            className={classes.pdfIframe}
-            src={`${url}${url.includes("?") ? "&" : "?"}inline=1`}
-            title={fileName || "PDF Document"}
-          />
-        ) : (
-          <>
-            {viewerStatus === "loading" && (
-              <div className={classes.spinnerWrap}>
-                <BoxLoader color="inherit" />
-              </div>
-            )}
-            {viewerStatus === "error" && (
-              <div className={classes.spinnerWrap}>
-                <Typography color="inherit">Failed to load PDF.</Typography>
-              </div>
-            )}
-            {viewerStatus === "done" &&
-              Array.from({ length: numPages }, (_, i) => i + 1).map(pageNum => (
-                <LazyPdfPage
-                  key={pageNum}
-                  pdf={pdfRef.current}
-                  pageNum={pageNum}
-                  classes={classes}
-                />
-              ))}
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 // ── Public component ──────────────────────────────────────────────────────────
-function PdfPreview({ url, fileName }) {
+function PdfPreview({ url, fileName, ticketId }) {
   const [open, setOpen] = useState(false);
   // null = pending, true = can load, false = blocked
   const [canLoad, setCanLoad] = useState(null);
@@ -466,12 +211,16 @@ function PdfPreview({ url, fileName }) {
   return (
     <>
       <Thumbnail url={url} onOpen={() => setOpen(true)} />
-      <PdfViewerDialog
-        url={url}
-        fileName={fileName}
-        open={open}
-        onClose={() => setOpen(false)}
-      />
+      {open && (
+        <DocumentAnnotator
+          open={open}
+          onClose={() => setOpen(false)}
+          src={url}
+          type="pdf"
+          fileName={fileName}
+          ticketId={ticketId}
+        />
+      )}
     </>
   );
 }

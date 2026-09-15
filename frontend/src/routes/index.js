@@ -13,7 +13,6 @@ import Financeiro from "../pages/Financeiro/";
 import Users from "../pages/Users";
 import Contacts from "../pages/Contacts/";
 import Queues from "../pages/Queues/";
-import Tags from "../pages/Tags/";
 import MessagesAPI from "../pages/MessagesAPI/";
 import Helps from "../pages/Helps/";
 import ContactLists from "../pages/ContactLists/";
@@ -87,7 +86,13 @@ const Routes = () => {
                   component={() => <Redirect to="/kanban" />}
                   isPrivate
                 />
-                <Route exact path="/tags" component={Tags} isPrivate />
+                {/* as etiquetas agora vivem só no Kanban (cada coluna é uma) */}
+                <Route
+                  exact
+                  path="/tags"
+                  component={() => <Redirect to="/kanban" />}
+                  isPrivate
+                />
                 <Route exact path="/contacts" component={Contacts} isPrivate />
                 <Route exact path="/helps" component={Helps} isPrivate />
                 <Route exact path="/users" component={Users} isPrivate />

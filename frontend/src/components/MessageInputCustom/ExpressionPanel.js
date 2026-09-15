@@ -4,6 +4,7 @@ import ButtonBase from "@material-ui/core/ButtonBase";
 import InputBase from "@material-ui/core/InputBase";
 import SearchRoundedIcon from "@material-ui/icons/SearchRounded";
 import { Picker } from "emoji-mart";
+import { emojiMartI18n } from "../../helpers/emojiMartI18n";
 
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
@@ -24,10 +25,12 @@ const useStyles = makeStyles(theme => {
       width: "100%",
       display: "flex",
       flexDirection: "column",
-      height: 340,
-      backgroundColor: t.chat.bar,
-      borderTop: `1px solid ${t.border}`,
-      [theme.breakpoints.down("xs")]: { height: 300 }
+      height: 400,
+      backgroundColor: t.surface,
+      [theme.breakpoints.down("xs")]: {
+        height: "calc(var(--vh, 100vh) * 0.6)",
+        backgroundColor: "transparent"
+      }
     },
     tabs: {
       flex: "none",
@@ -183,6 +186,7 @@ const ExpressionPanel = ({ ticketId, showEmoji, onEmoji, disabled }) => {
       <div className={classes.body}>
         {tab === "emoji" && (
           <Picker
+            i18n={emojiMartI18n()}
             perLine={10}
             showPreview={false}
             showSkinTones={false}

@@ -1497,6 +1497,8 @@ const messages = {
         ERR_WAPP_INVALID_CONTACT: "Dies ist keine gültige WhatsApp-Nummer.",
         ERR_WAPP_DOWNLOAD_MEDIA:
           "Medien von WhatsApp konnten nicht heruntergeladen werden. Überprüfen Sie die Verbindungsseite.",
+        ERR_USER_INACTIVE:
+          "Ihr Zugang ist deaktiviert. Wenden Sie sich an den Administrator Ihres Unternehmens.",
         ERR_INVALID_CREDENTIALS:
           "Authentifizierungsfehler. Bitte versuchen Sie es erneut.",
         ERR_SENDING_WAPP_MSG:

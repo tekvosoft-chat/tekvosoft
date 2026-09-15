@@ -16,6 +16,7 @@ import { useStyles } from "./style";
 
 import "emoji-mart/css/emoji-mart.css";
 import { Picker } from "emoji-mart";
+import { emojiMartI18n } from "../../helpers/emojiMartI18n";
 
 const mostUsedEmojis = ["👍", "❤️", "😂", "🎉", "😮", "😢", "🙏"];
 
@@ -116,9 +117,11 @@ const MessageOptionsMenu = ({
         onClose={setForwardModalOpen}
         ticketId={message.ticketId}
         messageId={message.id}
+        message={message}
       />
       <Dialog open={showEmoji} onClose={() => setShowEmoji(false)}>
         <Picker
+          i18n={emojiMartI18n()}
           perLine={16}
           showPreview={false}
           showSkinTones={false}

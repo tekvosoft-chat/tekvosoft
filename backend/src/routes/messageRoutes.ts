@@ -43,6 +43,13 @@ messageRoutes.get(
 );
 
 messageRoutes.get(
+  "/messages/:ticketId/previous",
+  isAuth,
+  isCompliant,
+  MessageController.previous
+);
+
+messageRoutes.get(
   "/messages/:messageId/history",
   isAuth,
   isCompliant,

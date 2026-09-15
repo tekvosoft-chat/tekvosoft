@@ -54,9 +54,20 @@ const toKey = base64 => {
   return Uint8Array.from([...raw].map(char => char.charCodeAt(0)));
 };
 
+// Sem service worker registrado, "serviceWorker.ready" nunca termina — e
+// quem esperava por ele (o sair da conta) ficava travado carregando.
+const withTimeout = (promise, ms = 1200) =>
+  Promise.race([
+    promise,
+    new Promise(resolve => setTimeout(() => resolve(null), ms))
+  ]);
+
 const currentSubscription = async () => {
-  const registration = await navigator.serviceWorker.ready;
-  return registration.pushManager.getSubscription();
+  const registration = await withTimeout(
+    navigator.serviceWorker.getRegistration()
+  );
+  if (!registration?.pushManager) return null;
+  return withTimeout(registration.pushManager.getSubscription());
 };
 
 const sendSubscription = async (subscription, silent) => {
@@ -121,9 +132,11 @@ export const forgetPushForUser = async () => {
   try {
     const subscription = await currentSubscription();
     if (subscription) {
-      await api.delete("/push/subscriptions", {
-        data: { endpoint: subscription.endpoint }
-      });
+      await withTimeout(
+        api.delete("/push/subscriptions", {
+          data: { endpoint: subscription.endpoint }
+        })
+      );
     }
   } catch (err) {
     // sem inscrição ou sem rede: nada a fazer

@@ -28,6 +28,8 @@ import { i18n } from "../../translate/i18n";
 import useAuth from "../../hooks/useAuth.js";
 
 import { SmallPie } from "./SmallPie";
+import SuperDashboard from "./SuperDashboard";
+import { AuthContext } from "../../context/Auth/AuthContext";
 import { TicketCountersChart } from "./TicketCountersChart";
 import { getTimezoneOffset } from "../../helpers/getTimezoneOffset.js";
 
@@ -240,7 +242,7 @@ const InfoRingCard = props => (
   </Grid>
 );
 
-const Dashboard = () => {
+const CompanyDashboard = ({ embedded = false }) => {
   const classes = useStyles();
   const theme = useTheme();
   const [period, setPeriod] = useState(0);
@@ -510,7 +512,11 @@ const Dashboard = () => {
 
   return (
     <div>
-      <Container maxWidth="lg" className={classes.container}>
+      <Container
+        maxWidth="lg"
+        className={classes.container}
+        style={embedded ? { padding: 0 } : undefined}
+      >
         <Grid container spacing={2} justifyContent="flex-start">
           <Grid item xs={12}>
             <div className={classes.sectionHead} style={{ marginTop: 0 }}>
@@ -615,6 +621,19 @@ const Dashboard = () => {
       </Container>
     </div>
   );
+};
+
+/**
+ * Dashboard: só administradores entram (usuários vão para os atendimentos).
+ * O super admin ganha o painel da plataforma, com o da própria empresa
+ * numa das abas.
+ */
+const Dashboard = () => {
+  const { user } = useContext(AuthContext);
+  if (user?.super) {
+    return <SuperDashboard companyDashboard={<CompanyDashboard embedded />} />;
+  }
+  return <CompanyDashboard />;
 };
 
 export default Dashboard;

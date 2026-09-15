@@ -34,10 +34,12 @@ import versionRoutes from "./versionRoutes";
 import i18nRoutes from "./i18nRoutes";
 import wavoipRoutes from "./wavoipRoutes";
 import dockerRoutes from "./dockerRoutes";
+import superRoutes from "./superRoutes";
 
 const routes = Router();
 
 routes.use(userRoutes);
+routes.use(superRoutes);
 routes.use("/auth", authRoutes);
 routes.use(settingRoutes);
 routes.use(contactRoutes);

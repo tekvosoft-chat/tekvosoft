@@ -1,6 +1,265 @@
 const messages = {
   en: {
     translations: {
+      annotator: {
+        title: "Document",
+        annotate: "Draw",
+        typeHere: "Type here",
+        tools: {
+          pan: "Move",
+          pen: "Draw",
+          highlight: "Highlight",
+          underline: "Underline",
+          strike: "Strike",
+          text: "Text",
+          eraser: "Eraser"
+        },
+        sizes: {
+          thin: "Thin",
+          medium: "Medium",
+          thick: "Thick"
+        },
+        undo: "Undo (Ctrl+Z)",
+        redo: "Redo (Ctrl+Shift+Z)",
+        clear: "Clear this page's annotations",
+        download: "Download",
+        downloadAnnotated: "Download with annotations",
+        send: "Send to chat",
+        sent: "Annotated file sent",
+        done: "Done",
+        error: "Could not open the file.",
+        loadingPreview: "Loading preview…",
+        previewUnavailable: "Preview unavailable",
+        openAndAnnotate: "Open and annotate"
+      },
+      superDashboard: {
+        title: "Platform dashboard",
+        live: "Live",
+        tabs: {
+          platform: "Overview",
+          companies: "Companies",
+          mine: "My company"
+        },
+        server: "Server",
+        cpu: "CPU",
+        cpuSub: "{{cores}} cores · load {{load}}",
+        ram: "RAM",
+        app: "app",
+        disk: "Disk space",
+        free: "{{size}} free",
+        database: "Database",
+        processSub: "Backend {{rss}} · up {{uptime}} · {{online}} online",
+        platform: "Platform usage",
+        companies: "Active companies",
+        ofTotal: "of {{total}} registered",
+        users: "Users",
+        onlineNow: "{{count}} online now",
+        connections: "Connections",
+        connected: "connected",
+        tickets: "Open tickets",
+        pending: "{{count}} waiting",
+        messagesToday: "Messages today",
+        last30: "{{count}} in 30 days",
+        storage: "Storage",
+        contacts: "{{count}} contacts",
+        activity: "Messages in the last 14 days",
+        sent: "Sent",
+        received: "Received",
+        ranking: "Usage by company",
+        metrics: {
+          messages30d: "Messages",
+          tickets30d: "Tickets",
+          storage: "Disk",
+          users: "Users"
+        },
+        clients: "Clients",
+        search: "Search company",
+        active: "Active",
+        blocked: "Blocked",
+        dueIn: "due in {{count}} day",
+        dueIn_plural: "due in {{count}} days",
+        overdue: "overdue by {{count}} day",
+        overdue_plural: "overdue by {{count}} days",
+        max: "max {{count}}",
+        onlineShort: "online",
+        openShort: "open",
+        messagesShort: "msgs 30d",
+        usersOf: "{{count}} user created",
+        usersOf_plural: "{{count}} users created",
+        online: "Online",
+        offline: "Offline",
+        inactive: "inactive",
+        userStats: "{{open}} open · {{sent}} msgs sent in 30 days",
+        newAdmin: "New administrator",
+        newAdminHint:
+          "The administrator creates and manages their company's users.",
+        adminCreated: "Administrator created",
+        create: "Create",
+        form: {
+          name: "Name",
+          email: "Email",
+          password: "Password"
+        }
+      },
+      contactSchedules: {
+        title: "Scheduled messages",
+        new: "Schedule",
+        empty: "No messages scheduled for this contact.",
+        pending: "{{count}} to send",
+        pending_plural: "{{count}} to send",
+        in: "goes out in {{time}}",
+        soon: "sending now",
+        sentAgo: "sent {{time}}",
+        failedAgo: "failed {{time}}",
+        all: "See all ({{count}})",
+        less: "Show less",
+        status: {
+          pending: "Scheduled",
+          sent: "Sent",
+          error: "Error"
+        }
+      },
+      financePage: {
+        title: "Billing",
+        subtitle: "Keep track of your subscription and invoices.",
+        days: "day",
+        days_plural: "days",
+        heroOk: "All good! {{count}} day until renewal",
+        heroOk_plural: "All good! {{count}} days until renewal",
+        heroToday: "Your subscription renews today",
+        heroSub: "Your access is guaranteed until {{date}}.",
+        heroOverdue: "Your subscription expired {{count}} day ago",
+        heroOverdue_plural: "Your subscription expired {{count}} days ago",
+        heroOverdueSub:
+          "Pay the open invoice to keep using it without interruptions.",
+        payNow: "Pay now",
+        statOpen: "Outstanding",
+        statPending: "To pay",
+        statPaid: "Paid",
+        history: "Invoices",
+        emptyTitle: "No invoices yet",
+        emptyText: "When there is an invoice, it will show up here.",
+        invoice: "Subscription",
+        number: "Invoice #{{id}}",
+        paid: "Paid",
+        dueToday: "Due today",
+        dueTomorrow: "Due tomorrow",
+        daysLeft: "{{count}} day left",
+        daysLeft_plural: "{{count}} days left",
+        overdueFor: "Overdue by {{count}} day",
+        overdueFor_plural: "Overdue by {{count}} days",
+        dueOn: "Due on {{date}}",
+        dueWas: "Was due on {{date}}",
+        pay: "Pay",
+        paidBtn: "Paid ✓"
+      },
+      forwardModal: {
+        title: "Forward message to",
+        search: "Search name or number",
+        recent: "Recent chats",
+        contacts: "Contacts",
+        empty: "No contacts found",
+        group: "Group",
+        remove: "Remove",
+        max: "You can forward to up to {{count}} chats",
+        caption: "Add a message",
+        send: "Forward",
+        sent: "Message forwarded",
+        sent_plural: "Message forwarded to {{count}} chats",
+        queue: "Queue: {{name}}",
+        queueHint: "Queue used when the contact has no open ticket",
+        media: {
+          image: "Photo",
+          video: "Video",
+          audio: "Audio",
+          document: "File",
+          sticker: "Sticker"
+        }
+      },
+      instances: {
+        summary: "{{connected}} of {{total}} connected",
+        new: "New connection",
+        noProfile: "Profile shows up once connected",
+        updated: "Updated {{time}}",
+        default: "Default connection",
+        channel: "Channel",
+        queues: "Queues",
+        lastUpdate: "Last update",
+        yes: "Yes",
+        no: "No",
+        status: {
+          CONNECTED: "Connected",
+          qrcode: "Waiting for QR code",
+          passkey_required: "Passkey required",
+          PAIRING: "Phone not responding",
+          TIMEOUT: "Phone not responding",
+          OPENING: "Connecting…",
+          DISCONNECTED: "Disconnected"
+        },
+        actions: {
+          scan: "Scan QR code",
+          retry: "Reconnect",
+          passkey: "Use passkey",
+          newQr: "New QR code",
+          resetPasskey: "Reset passkey",
+          disconnect: "Disconnect",
+          refresh: "Refresh session",
+          edit: "Settings",
+          privacy: "Privacy",
+          delete: "Delete"
+        }
+      },
+      orientation: {
+        title: "Rotate your phone",
+        text: "Tekvosoft is designed for portrait mode. Turn your device upright to continue."
+      },
+      ticketHeaderActions: {
+        resolve: "Resolve",
+        resolveHint: "Mark as done and close the ticket",
+        resolved: "Ticket resolved",
+        transfer: "Transfer",
+        transferHint: "Hand over to another queue or agent",
+        return: "Return to queue",
+        returnHint: "Goes back to Waiting, without an agent",
+        schedule: "Schedule message",
+        scheduleHint: "Schedule a message to this contact",
+        delete: "Delete ticket",
+        deleteHint: "Removes the ticket and its messages",
+        reopen: "Reopen",
+        more: "More actions"
+      },
+      usersPage: {
+        subtitle: "Who can sign in and handle chats for your company.",
+        filters: {
+          all: "All",
+          active: "Active",
+          inactive: "Inactive"
+        },
+        active: "Active",
+        inactive: "Inactive",
+        activateHint: "Allow this user to sign in",
+        deactivateHint: "Block access: the person is signed out right away",
+        selfHint: "You can't deactivate yourself",
+        activated: "{{name}} is active",
+        deactivated: "{{name}} was deactivated",
+        edit: "Edit",
+        delete: "Delete",
+        deactivatedByAdmin: "Your access was disabled by the administrator."
+      },
+      chatWallpaper: {
+        title: "Chat background",
+        subtitle:
+          "Drawn with the colors of the selected theme. Your message bubbles follow the palette too.",
+        sampleIn: "Hi! How are you? 😊",
+        sampleOut: "Great, how can I help?",
+        options: {
+          landscape: "Landscape",
+          waves: "Waves",
+          gradient: "Gradient",
+          doodle: "Doodles",
+          plain: "Plain"
+        }
+      },
       date: {
         yesterday: "Yesterday"
       },
@@ -1511,7 +1770,18 @@ const messages = {
         }
       },
       messagesList: {
+        history: {
+          load: "Recover message history",
+          more: "Load older messages",
+          none: "No previous messages with this contact",
+          ticket: "Previous ticket #{{id}}",
+          current: "Start of this ticket"
+        },
         reactions: {
+          react: "React",
+          copy: "Copy",
+          copied: "Message copied",
+          more: "More options",
           you: "You"
         },
         header: {
@@ -1698,6 +1968,8 @@ const messages = {
         ERR_WAPP_INVALID_CONTACT: "This is not a valid WhatsApp number.",
         ERR_WAPP_DOWNLOAD_MEDIA:
           "Could not download media from WhatsApp. Check the connections page.",
+        ERR_USER_INACTIVE:
+          "Your access is disabled. Contact your company administrator.",
         ERR_INVALID_CREDENTIALS: "Authentication error. Please try again.",
         ERR_SENDING_WAPP_MSG:
           "Error sending WhatsApp message. Check the connections page.",

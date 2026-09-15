@@ -7,7 +7,6 @@ import { makeStyles, Paper, Tabs, Tab, Button, Grid } from "@material-ui/core";
 import TabPanel from "../../components/TabPanel";
 
 import SchedulesForm from "../../components/SchedulesForm";
-import CompaniesManager from "../../components/CompaniesManager";
 import PlansManager from "../../components/PlansManager";
 import HelpsManager from "../../components/HelpsManager";
 import ContainersManager from "../../components/ContainersManager";
@@ -185,12 +184,6 @@ const SettingsCustom = () => {
             />
           )}
           {isSuper() ? (
-            <Tab
-              label={i18n.t("settings.Companies.title")}
-              value={"companies"}
-            />
-          ) : null}
-          {isSuper() ? (
             <Tab label={i18n.t("settings.Plans.title")} value={"plans"} />
           ) : null}
           {isSuper() ? (
@@ -288,13 +281,6 @@ const SettingsCustom = () => {
                     <ContainersManager />
                   </TabPanel>
                 )}
-                <TabPanel
-                  className={classes.container}
-                  value={tab}
-                  name={"companies"}
-                >
-                  <CompaniesManager />
-                </TabPanel>
                 <TabPanel
                   className={classes.container}
                   value={tab}

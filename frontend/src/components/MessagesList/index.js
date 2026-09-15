@@ -4,8 +4,11 @@ import React, {
   useReducer,
   useRef,
   useContext,
-  useMemo
+  useMemo,
+  useCallback,
+  useLayoutEffect
 } from "react";
+import { toast } from "react-toastify";
 
 import { isSameDay, parseISO, format } from "date-fns";
 import clsx from "clsx";
@@ -45,9 +48,8 @@ import {
 
 import WhatsMarked from "react-whatsmarked";
 import PdfPreview from "../PdfPreview";
+import DocumentAnnotator from "../DocumentAnnotator";
 import MessageOptionsMenu from "../MessageOptionsMenu";
-import whatsBackground from "../../assets/wa-background.png";
-import whatsBackgroundDark from "../../assets/wa-background-dark.png";
 import MediaGalleryLightbox, {
   buildMediaGalleryData
 } from "../MediaGalleryLightbox";
@@ -63,6 +65,16 @@ import { downloadFile } from "../../helpers/downloadFile";
 import { Mutex } from "async-mutex";
 import BoxLoader from "../ui/BoxLoader";
 import AudioBubble from "./AudioBubble";
+import ReactionBar from "./ReactionBar";
+import { SEND_FLIGHT_EVENT, flyBubble } from "./sendFlight";
+import MessageForwardModal from "../MessageForwardModal";
+import InsertEmoticonOutlinedIcon from "@material-ui/icons/InsertEmoticonOutlined";
+import HistoryRoundedIcon from "@material-ui/icons/HistoryRounded";
+import ButtonBase from "@material-ui/core/ButtonBase";
+import ReplyRoundedIcon from "@material-ui/icons/ReplyRounded";
+import FileCopyOutlinedIcon from "@material-ui/icons/FileCopyOutlined";
+import MoreHorizRoundedIcon from "@material-ui/icons/MoreHorizRounded";
+import ShortcutRoundedIcon from "@material-ui/icons/ForwardRounded";
 import { ReplyMessageContext } from "../../context/ReplyingMessage/ReplyingMessageContext";
 import {
   cachedMessages,
@@ -92,10 +104,10 @@ const useStyles = makeStyles(theme => ({
   },
 
   stickedMessages: {
-    backgroundImage:
-      theme.mode === "light"
-        ? `url(${whatsBackground})`
-        : `url(${whatsBackgroundDark})`,
+    backgroundColor: theme.palette.tkv.chat.wallpaper,
+    backgroundImage: theme.palette.tkv.chat.wallpaperImage,
+    backgroundSize: theme.palette.tkv.chat.wallpaperSize,
+    backgroundBlendMode: theme.palette.tkv.chat.wallpaperBlend,
     flexDirection: "column",
     flexGrow: 1,
     padding: "5px 20px 20px 20px",
@@ -124,14 +136,13 @@ const useStyles = makeStyles(theme => ({
   },
 
   messagesList: {
-    // Papel de parede e cor de fundo do WhatsApp oficial. A imagem de
-    // rabiscos saiu das telas de listagem, mas aqui ela é o ambiente certo:
-    // quem atende está conversando com alguém que vê exatamente isto.
+    // papel de parede do tema (Configurações > Aparência): fica parado
+    // enquanto as mensagens rolam por cima
     backgroundColor: theme.palette.tkv.chat.wallpaper,
-    backgroundImage:
-      theme.mode === "light"
-        ? `url(${whatsBackground})`
-        : `url(${whatsBackgroundDark})`,
+    backgroundImage: theme.palette.tkv.chat.wallpaperImage,
+    backgroundSize: theme.palette.tkv.chat.wallpaperSize,
+    backgroundPosition: "center bottom",
+    backgroundBlendMode: theme.palette.tkv.chat.wallpaperBlend,
     display: "flex",
     flexDirection: "column",
     flexGrow: 1,
@@ -162,7 +173,7 @@ const useStyles = makeStyles(theme => ({
     marginRight: 20,
     marginTop: 2,
     minWidth: 100,
-    maxWidth: "min(600px, 100%)",
+    maxWidth: "min(600px, calc(100% - 48px))",
     height: "auto",
     display: "block",
     position: "relative",
@@ -172,6 +183,7 @@ const useStyles = makeStyles(theme => ({
       top: 0,
       right: 0
     },
+    "&:hover [data-react-trigger]": { opacity: 1, transform: "scale(1)" },
 
     whiteSpace: "pre-wrap",
     backgroundColor: theme.palette.tkv.chat.bubbleIn,
@@ -674,9 +686,9 @@ const useStyles = makeStyles(theme => ({
     alignItems: "center",
     gap: 3,
     maxWidth: "calc(100% - 12px)",
-    height: 24,
-    padding: "0 7px",
-    borderRadius: 12,
+    height: 26,
+    padding: "0 8px",
+    borderRadius: 13,
     backgroundColor: theme.palette.tkv.chat.bubbleIn,
     border: `2px solid ${theme.palette.tkv.chat.wallpaper}`,
     boxShadow: "0 1px 2px rgba(11, 20, 26, 0.18)",
@@ -689,8 +701,10 @@ const useStyles = makeStyles(theme => ({
     right: 8
   },
   reactionEmoji: {
-    fontSize: 15,
-    lineHeight: 1
+    display: "inline-block",
+    fontSize: 16,
+    lineHeight: 1,
+    animation: "$reactionBounce .5s cubic-bezier(.34, 1.56, .64, 1) both"
   },
   reactionCount: {
     fontSize: "0.6875rem",
@@ -699,8 +713,101 @@ const useStyles = makeStyles(theme => ({
     marginLeft: 1
   },
   "@keyframes reactionPop": {
-    from: { transform: "scale(0.4)", opacity: 0 },
+    from: { transform: "scale(0.4) translateY(6px)", opacity: 0 },
     to: { transform: "scale(1)", opacity: 1 }
+  },
+  "@keyframes reactionBounce": {
+    "0%": { transform: "scale(0)" },
+    "60%": { transform: "scale(1.45) rotate(-8deg)" },
+    "100%": { transform: "scale(1) rotate(0)" }
+  },
+
+  historyButton: {
+    alignSelf: "center",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 8,
+    margin: "4px 0 12px",
+    padding: "8px 16px",
+    borderRadius: 999,
+    fontSize: "0.8125rem",
+    fontWeight: 700,
+    color: theme.palette.tkv.brand.text,
+    backgroundColor: theme.palette.tkv.chat.datePill,
+    boxShadow: theme.palette.tkv.chat.bubbleShadow,
+    animation: "$reactionPop .3s ease both",
+    "& svg": { fontSize: 18 }
+  },
+  ticketBoundary: {
+    alignSelf: "stretch",
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    margin: "18px 0 6px",
+    fontSize: "0.75rem",
+    fontWeight: 700,
+    color: theme.palette.tkv.chat.meta,
+    "&::before, &::after": {
+      content: '""',
+      flex: 1,
+      height: 1,
+      backgroundColor: theme.palette.tkv.chat.meta,
+      opacity: 0.35
+    },
+    "& span": {
+      padding: "4px 12px",
+      borderRadius: 999,
+      backgroundColor: theme.palette.tkv.chat.datePill,
+      boxShadow: theme.palette.tkv.chat.bubbleShadow
+    }
+  },
+
+  // rostinho ao lado da mensagem recebida (computador)
+  reactTrigger: {
+    position: "absolute",
+    top: "50%",
+    right: -40,
+    width: 30,
+    height: 30,
+    marginTop: -15,
+    padding: 0,
+    color: theme.palette.tkv.chat.icon,
+    backgroundColor: theme.palette.tkv.chat.datePill,
+    boxShadow: "0 1px 3px rgba(11, 20, 26, 0.18)",
+    opacity: 0,
+    transform: "scale(0.6)",
+    transition:
+      "opacity .15s ease, transform .2s cubic-bezier(.34, 1.56, .64, 1)",
+    "& svg": { fontSize: 19 },
+    "&:hover": {
+      backgroundColor: theme.palette.tkv.chat.datePill,
+      color: theme.palette.tkv.brand.text
+    },
+    // ponte invisível entre o balão e o botão, para o mouse não "cair"
+    "&::before": {
+      content: '""',
+      position: "absolute",
+      top: -6,
+      bottom: -6,
+      left: -14,
+      right: 0
+    }
+  },
+  reactTriggerOn: { opacity: 1, transform: "scale(1)" },
+  // mensagem que acabou de chegar ou sair entra com um leve "pulo"
+  justArrived: {
+    animation: "$messageIn .32s cubic-bezier(.34, 1.4, .64, 1) backwards"
+  },
+  "@keyframes messageIn": {
+    from: { opacity: 0, transform: "translateY(10px) scale(.96)" },
+    to: { opacity: 1, transform: "none" }
+  },
+  bubblePressed: {
+    transform: "scale(1.03)",
+    boxShadow: "0 8px 24px rgba(11, 20, 26, 0.22)",
+    transition:
+      "transform .2s cubic-bezier(.34, 1.56, .64, 1), box-shadow .2s ease",
+    zIndex: 3
   },
 
   // arrastar a mensagem para a direita responde (celular)
@@ -769,7 +876,13 @@ const reducer = (state, action) => {
       }
     });
 
-    return [...newMessages, ...state];
+    // Sempre em ordem de envio. Antes as mensagens que chegavam na recarga
+    // iam para o topo da lista: quando a conversa já tinha mensagens na tela
+    // (memória ou página anterior), as mais novas sumiam lá em cima.
+    return [...newMessages, ...state].sort((a, b) => {
+      const diff = new Date(a.createdAt) - new Date(b.createdAt);
+      return diff || String(a.id).localeCompare(String(b.id));
+    });
   }
 
   if (action.type === "ADD_MESSAGE") {
@@ -865,6 +978,49 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
   const canReply = !readOnly && !!replyContext?.setReplyingMessage;
   const swipeRef = useRef(null);
 
+  // barra de reações: {message, data, anchor, align, phone, el}
+  const [reactTarget, setReactTarget] = useState(null);
+  const [forwarding, setForwarding] = useState(null);
+  const [annotating, setAnnotating] = useState(null);
+  const longPressRef = useRef({ timer: null, fired: false });
+
+  const closeReactions = useCallback(() => setReactTarget(null), []);
+
+  const sendReaction = (message, emoji) => {
+    api
+      .post(`/messages/react/${message.id}`, {
+        ticketId: message.ticketId,
+        emoji
+      })
+      .catch(toastError);
+  };
+
+  // a última reação minha nesta mensagem (para marcar na barra)
+  const myReaction = message => {
+    const mine = (message?.replies || []).filter(
+      r => r?.mediaType === "reactionMessage" && r.fromMe
+    );
+    return mine.length ? mine[mine.length - 1].body || null : null;
+  };
+
+  const openReactions = (message, data, bubble, phone) => {
+    if (!bubble) return;
+    const rect = bubble.getBoundingClientRect();
+    setReactTarget({
+      message,
+      data,
+      phone,
+      el: bubble,
+      align: message.fromMe ? "right" : "left",
+      anchor: {
+        top: rect.top,
+        bottom: rect.bottom,
+        left: rect.left,
+        right: rect.right
+      }
+    });
+  };
+
   const replyTo = (message, element) => {
     replyContext.setReplyingMessage(message);
     element?.animate?.(
@@ -892,12 +1048,33 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
    * o balão para a direita (como no WhatsApp); no computador, com dois
    * cliques. Continua existindo o "Responder" no menu da mensagem.
    */
-  const replyGestures = message => {
+  const cancelLongPress = () => {
+    clearTimeout(longPressRef.current.timer);
+    longPressRef.current.timer = null;
+  };
+
+  const replyGestures = (message, data) => {
     if (!canReply || message.isDeleted) return {};
     return {
+      "data-bubble": "1",
+      onContextMenu: e => {
+        if (isPhone) e.preventDefault();
+      },
       onTouchStart: e => {
         if (e.touches.length !== 1) return;
         const touch = e.touches[0];
+        // segurar a mensagem abre as reações (celular)
+        const bubble = e.currentTarget;
+        cancelLongPress();
+        longPressRef.current.fired = false;
+        longPressRef.current.timer = setTimeout(() => {
+          longPressRef.current.timer = null;
+          longPressRef.current.fired = true;
+          swipeRef.current = null;
+          if (navigator.vibrate) navigator.vibrate(14);
+          window.getSelection?.()?.removeAllRanges();
+          openReactions(message, data, bubble, true);
+        }, 430);
         swipeRef.current = {
           x: touch.clientX,
           y: touch.clientY,
@@ -913,6 +1090,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
         const touch = e.touches[0];
         const dx = touch.clientX - swipe.x;
         const dy = touch.clientY - swipe.y;
+        if (Math.abs(dx) > 8 || Math.abs(dy) > 8) cancelLongPress();
         if (!swipe.axis) {
           if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
           swipe.axis = dx > 0 && Math.abs(dx) > Math.abs(dy) * 1.4 ? "x" : "y";
@@ -933,8 +1111,20 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
           swipe.buzzed = false;
         }
       },
-      onTouchEnd: () => finishSwipe(message),
-      onTouchCancel: () => finishSwipe(null),
+      onTouchEnd: e => {
+        cancelLongPress();
+        if (longPressRef.current.fired) {
+          // o toque que abriu as reações não vira clique (abrir foto etc.)
+          longPressRef.current.fired = false;
+          e.preventDefault();
+          return;
+        }
+        finishSwipe(message);
+      },
+      onTouchCancel: () => {
+        cancelLongPress();
+        finishSwipe(null);
+      },
       onDoubleClick: e => {
         if (!window.matchMedia?.("(pointer: fine)").matches) return;
         if (
@@ -973,6 +1163,71 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
   const [contactPresence, setContactPresence] = useState("available");
 
   const socketManager = useContext(SocketContext);
+
+  // histórico dos atendimentos anteriores do contato (carregado sob pedido)
+  const EMPTY_HISTORY = {
+    items: [],
+    tickets: 0,
+    nextBefore: null,
+    hasMore: false,
+    loading: false,
+    loaded: false
+  };
+  const [history, setHistory] = useState(EMPTY_HISTORY);
+  const historyAnchorRef = useRef(null);
+
+  useEffect(() => {
+    setHistory(EMPTY_HISTORY);
+    if (!ticketId) return undefined;
+    let alive = true;
+    api
+      .get(`/messages/${ticketId}/previous`, { params: { peek: true } })
+      .then(
+        ({ data }) =>
+          alive && setHistory(h => ({ ...h, tickets: data?.tickets || 0 }))
+      )
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticketId]);
+
+  const loadHistory = async () => {
+    if (history.loading) return;
+    const el = scrollRef.current;
+    historyAnchorRef.current = el ? el.scrollHeight - el.scrollTop : null;
+    setHistory(h => ({ ...h, loading: true }));
+    try {
+      const { data } = await api.get(`/messages/${ticketId}/previous`, {
+        params: { before: history.nextBefore || undefined }
+      });
+      if (currentTicketId.current !== ticketId) return;
+      setHistory(h => ({
+        ...h,
+        items: [...(data.messages || []), ...h.items],
+        nextBefore: data.nextBefore,
+        hasMore: !!data.hasMore,
+        loading: false,
+        loaded: true
+      }));
+      if (!data.messages?.length) {
+        toast.info(i18n.t("messagesList.history.none"), { autoClose: 1800 });
+      }
+    } catch (err) {
+      setHistory(h => ({ ...h, loading: false }));
+      toastError(err);
+    }
+  };
+
+  // mantém a posição de leitura quando o histórico entra por cima
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (el && historyAnchorRef.current !== null) {
+      el.scrollTop = el.scrollHeight - historyAnchorRef.current;
+      historyAnchorRef.current = null;
+    }
+  }, [history.items]);
 
   useEffect(() => {
     if (ticketId && messagesList.length)
@@ -1021,6 +1276,30 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
     };
   }
 
+  // Voltou para o app depois de um tempo: recarrega a conversa aberta. No
+  // celular o navegador pausa a conexão em segundo plano e mensagens que
+  // chegaram nesse meio tempo não apareciam.
+  const reloadLatestRef = useRef(null);
+  reloadLatestRef.current = () => {
+    if (ticketId) loadData();
+  };
+  useEffect(() => {
+    let hiddenAt = 0;
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        hiddenAt = Date.now();
+      } else if (hiddenAt && Date.now() - hiddenAt > 2000) {
+        reloadLatestRef.current?.();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("online", onVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("online", onVisibility);
+    };
+  }, []);
+
   function refreshMessagesList() {
     dispatch({ type: "RESET" });
     setNextId(null);
@@ -1055,8 +1334,12 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
 
     const socket = socketManager.GetSocket(companyId);
 
+    let connectedOnce = false;
     const onConnect = () => {
       socket.emit("joinChatBox", `${ticket.id}`);
+      // reconectou (rede caiu, app voltou do fundo): busca o que chegou
+      if (connectedOnce) reloadLatestRef.current?.();
+      connectedOnce = true;
     };
 
     socketManager.onConnect(onConnect);
@@ -1177,6 +1460,29 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
     };
   }, [ticketId, ticket, socketManager]);
 
+  // animação de envio: o fantasma do balão pousa no fim desta lista
+  useEffect(() => {
+    const onFlight = event => {
+      const { text, rect } = event.detail || {};
+      flyBubble({
+        text,
+        from: rect,
+        list: scrollRef.current,
+        background: theme.palette.tkv.chat.bubbleOut,
+        color: theme.palette.tkv.chat.text,
+        shadow: theme.palette.tkv.chat.bubbleShadow
+      });
+      if (scrollRef.current) {
+        scrollRef.current.scrollTo({
+          top: scrollRef.current.scrollHeight,
+          behavior: "smooth"
+        });
+      }
+    };
+    window.addEventListener(SEND_FLIGHT_EVENT, onFlight);
+    return () => window.removeEventListener(SEND_FLIGHT_EVENT, onFlight);
+  }, [theme]);
+
   const loadMore = async () => {
     await loadPageMutex.runExclusive(async () => {
       loadData(true);
@@ -1219,6 +1525,8 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
   };
 
   const handleScroll = e => {
+    // a barra de reações fica presa à posição da mensagem: rolou, fecha
+    if (reactTarget) closeReactions();
     const messagesList = e.currentTarget;
     const sticky = document.querySelector(`.${classes.stickedMessages}`);
     if (sticky && sticky.style.display !== "none") {
@@ -1483,7 +1791,11 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
       return (
         <>
           {isPdf && message.mediaUrl && (
-            <PdfPreview url={message.mediaUrl} fileName={fileName} />
+            <PdfPreview
+              url={message.mediaUrl}
+              fileName={fileName}
+              ticketId={readOnly ? undefined : ticketId}
+            />
           )}
           <div className={classes.downloadMedia}>
             <Button
@@ -1535,6 +1847,27 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
     }
   };
 
+  const timeline = history.items.length
+    ? [...history.items, ...messagesList]
+    : messagesList;
+
+  // aviso entre um atendimento e outro, dentro do histórico
+  const renderTicketBoundary = (message, index) => {
+    if (!history.items.length || index === 0) return null;
+    const previous = timeline[index - 1];
+    if (!previous || previous.ticketId === message.ticketId) return null;
+    const current = message.ticketId === ticket?.id;
+    return (
+      <div className={classes.ticketBoundary} key={`boundary-${message.id}`}>
+        <span>
+          {current
+            ? i18n.t("messagesList.history.current")
+            : i18n.t("messagesList.history.ticket", { id: message.ticketId })}
+        </span>
+      </div>
+    );
+  };
+
   const renderDailyTimestamps = (message, index) => {
     if (index === 0) {
       return (
@@ -1543,14 +1876,14 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
           key={`timestamp-${message.id}`}
         >
           <div className={classes.dailyTimestampText}>
-            {format(parseISO(messagesList[index].createdAt), "dd/MM/yyyy")}
+            {format(parseISO(timeline[index].createdAt), "dd/MM/yyyy")}
           </div>
         </span>
       );
     }
-    if (index < messagesList.length) {
-      let messageDay = parseISO(messagesList[index].createdAt);
-      let previousMessageDay = parseISO(messagesList[index - 1].createdAt);
+    if (index < timeline.length) {
+      let messageDay = parseISO(timeline[index].createdAt);
+      let previousMessageDay = parseISO(timeline[index - 1].createdAt);
 
       if (!isSameDay(messageDay, previousMessageDay)) {
         return (
@@ -1559,7 +1892,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
             key={`timestamp-${message.id}`}
           >
             <div className={classes.dailyTimestampText}>
-              {format(parseISO(messagesList[index].createdAt), "dd/MM/yyyy")}
+              {format(parseISO(timeline[index].createdAt), "dd/MM/yyyy")}
             </div>
           </span>
         );
@@ -1568,9 +1901,9 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
   };
 
   const renderMessageDivider = (message, index) => {
-    if (index < messagesList.length && index > 0) {
-      let messageUser = messagesList[index].fromMe;
-      let previousMessageUser = messagesList[index - 1].fromMe;
+    if (index < timeline.length && index > 0) {
+      let messageUser = timeline[index].fromMe;
+      let previousMessageUser = timeline[index - 1].fromMe;
 
       if (messageUser !== previousMessageUser) {
         return (
@@ -1644,9 +1977,16 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
   };
 
   const renderReplies = (replies, fromMe) => {
-    const reactions = (replies || []).filter(
-      reply => reply?.mediaType === "reactionMessage" && reply.body
-    );
+    // cada pessoa tem uma reação só: vale a última (vazia = tirou a reação)
+    const byPerson = new Map();
+    (replies || []).forEach(reply => {
+      if (reply?.mediaType !== "reactionMessage") return;
+      const who = reply.fromMe
+        ? "me"
+        : `c${reply.contactId || reply.contact?.id || reply.participant || reply.id}`;
+      byPerson.set(who, reply);
+    });
+    const reactions = [...byPerson.values()].filter(reply => reply.body);
     if (!reactions.length) return null;
 
     // agrupa o mesmo emoji: "❤️ 2" em vez de dois corações soltos
@@ -1679,8 +2019,12 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
               [classes.reactionsRight]: fromMe
             })}
           >
-            {groups.slice(0, 3).map(group => (
-              <span key={group.emoji} className={classes.reactionEmoji}>
+            {groups.slice(0, 3).map((group, i) => (
+              <span
+                key={group.emoji}
+                className={classes.reactionEmoji}
+                style={{ animationDelay: `${120 + i * 70}ms` }}
+              >
                 {group.emoji}
               </span>
             ))}
@@ -2125,7 +2469,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
 
   const renderMessages = () => {
     const stickedMessages = [];
-    const viewMessagesList = messagesList.map((message, index) => {
+    const viewMessagesList = timeline.map((message, index) => {
       if (message.mediaType === "reactionMessage") {
         return;
       }
@@ -2137,6 +2481,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
       if (!message.fromMe) {
         const messageFragment = (
           <React.Fragment key={message.id}>
+            {renderTicketBoundary(message, index)}
             {renderDailyTimestamps(message, index)}
             {renderMessageDivider(message, index)}
             <div
@@ -2144,11 +2489,15 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
               className={[
                 clsx(classes.messageContainer, classes.messageLeft, {
                   [classes.messageMediaSticker]: isSticker,
-                  [classes.swipeable]: isPhone && canReply
+                  [classes.swipeable]: isPhone && canReply,
+                  [classes.bubblePressed]:
+                    reactTarget?.phone && reactTarget.message.id === message.id,
+                  [classes.justArrived]:
+                    Date.now() - new Date(message.createdAt).getTime() < 6000
                 })
               ]}
               title={message.queueId && message.queue?.name}
-              {...replyGestures(message)}
+              {...replyGestures(message, data)}
             >
               {readOnly || (
                 <IconButton
@@ -2160,6 +2509,27 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                   onClick={e => handleOpenMessageOptionsMenu(e, message, data)}
                 >
                   <ExpandMore />
+                </IconButton>
+              )}
+              {!readOnly && !isPhone && !message.isDeleted && (
+                <IconButton
+                  size="small"
+                  data-react-trigger="1"
+                  aria-label={i18n.t("messagesList.reactions.react")}
+                  className={clsx(classes.reactTrigger, {
+                    [classes.reactTriggerOn]:
+                      reactTarget?.message?.id === message.id
+                  })}
+                  onClick={e =>
+                    openReactions(
+                      message,
+                      data,
+                      e.currentTarget.parentElement,
+                      false
+                    )
+                  }
+                >
+                  <InsertEmoticonOutlinedIcon />
                 </IconButton>
               )}
               {dataContext?.isForwarded && (
@@ -2258,6 +2628,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
       } else {
         return (
           <React.Fragment key={message.id}>
+            {renderTicketBoundary(message, index)}
             {renderDailyTimestamps(message, index)}
             {renderMessageDivider(message, index)}
             <div
@@ -2265,11 +2636,15 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
               className={[
                 clsx(classes.messageContainer, classes.messageRight, {
                   [classes.messageMediaSticker]: isSticker,
-                  [classes.swipeable]: isPhone && canReply
+                  [classes.swipeable]: isPhone && canReply,
+                  [classes.bubblePressed]:
+                    reactTarget?.phone && reactTarget.message.id === message.id,
+                  [classes.justArrived]:
+                    Date.now() - new Date(message.createdAt).getTime() < 6000
                 })
               ]}
               title={message.queueId && message.queue?.name}
-              {...replyGestures(message)}
+              {...replyGestures(message, data)}
             >
               {readOnly || (
                 <IconButton
@@ -2374,6 +2749,72 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
 
   return (
     <div className={classes.messagesListWrapper}>
+      <ReactionBar
+        open={!!reactTarget}
+        anchor={reactTarget?.anchor}
+        align={reactTarget?.align}
+        dim={!!reactTarget?.phone}
+        current={myReaction(reactTarget?.message)}
+        onClose={closeReactions}
+        onPick={emoji =>
+          reactTarget && sendReaction(reactTarget.message, emoji)
+        }
+        actions={
+          reactTarget?.phone
+            ? [
+                canReply && {
+                  key: "reply",
+                  label: i18n.t("messageOptionsMenu.reply"),
+                  icon: <ReplyRoundedIcon />,
+                  onClick: () => replyTo(reactTarget.message, reactTarget.el)
+                },
+                reactTarget.message.body &&
+                  !reactTarget.message.mediaUrl && {
+                    key: "copy",
+                    label: i18n.t("messagesList.reactions.copy"),
+                    icon: <FileCopyOutlinedIcon />,
+                    onClick: () =>
+                      navigator.clipboard
+                        ?.writeText(reactTarget.message.body)
+                        .then(() =>
+                          toast.success(
+                            i18n.t("messagesList.reactions.copied"),
+                            {
+                              autoClose: 1200
+                            }
+                          )
+                        )
+                        .catch(() => {})
+                  },
+                {
+                  key: "forward",
+                  label: i18n.t("messageOptionsMenu.forward"),
+                  icon: <ShortcutRoundedIcon />,
+                  onClick: () => setForwarding(reactTarget.message)
+                },
+                {
+                  key: "more",
+                  label: i18n.t("messagesList.reactions.more"),
+                  icon: <MoreHorizRoundedIcon />,
+                  onClick: () => {
+                    setAnchorEl(reactTarget.el);
+                    setSelectedMessage(reactTarget.message);
+                    setSelectedMessageData(reactTarget.data);
+                  }
+                }
+              ].filter(Boolean)
+            : []
+        }
+      />
+      {forwarding && (
+        <MessageForwardModal
+          modalOpen={!!forwarding}
+          onClose={() => setForwarding(null)}
+          ticketId={forwarding.ticketId}
+          messageId={forwarding.id}
+          message={forwarding}
+        />
+      )}
       <MessageOptionsMenu
         message={selectedMessage}
         data={selectedMessageData}
@@ -2387,6 +2828,25 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
         onScroll={handleScroll}
         ref={scrollRef}
       >
+        {!hasMore &&
+          !loading &&
+          messagesList.length > 0 &&
+          (history.loaded ? history.hasMore : history.tickets > 0) && (
+            <ButtonBase
+              className={classes.historyButton}
+              onClick={loadHistory}
+              disabled={history.loading}
+            >
+              {history.loading ? (
+                <BoxLoader size={18} color="currentColor" />
+              ) : (
+                <HistoryRoundedIcon />
+              )}
+              {history.loaded
+                ? i18n.t("messagesList.history.more")
+                : i18n.t("messagesList.history.load")}
+            </ButtonBase>
+          )}
         {messagesList.length > 0 ? renderMessages() : []}
         {contactPresence === "composing" && (
           <div className={classes.messageLeft}>
@@ -2442,7 +2902,24 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
         onClose={closeLightbox}
         index={lightboxIndex}
         slides={lightboxMedia.slides}
+        onAnnotate={slide => {
+          closeLightbox();
+          setAnnotating({
+            src: slide.src,
+            name: slide.download?.filename
+          });
+        }}
       />
+      {annotating && (
+        <DocumentAnnotator
+          open={!!annotating}
+          onClose={() => setAnnotating(null)}
+          src={annotating.src}
+          type="image"
+          fileName={annotating.name}
+          ticketId={readOnly ? undefined : ticketId}
+        />
+      )}
     </div>
   );
 };

@@ -12,6 +12,7 @@ import ShowUserService from "../services/UserServices/ShowUserService";
 import DeleteUserService from "../services/UserServices/DeleteUserService";
 import SimpleListService from "../services/UserServices/SimpleListService";
 import User from "../models/User";
+import Queue from "../models/Queue";
 import saveMediaToFile from "../helpers/saveMediaFile";
 
 type IndexQuery = {
@@ -105,6 +106,55 @@ export const update = async (
     action: "update",
     user
   });
+
+  return res.status(200).json(user);
+};
+
+/**
+ * Ativa ou desativa um usuário (só admin, da mesma empresa). Desativar
+ * derruba a sessão na hora: a versão do token muda e a tela dele sai.
+ */
+export const setActive = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { userId } = req.params;
+  const { companyId, id: requestUserId, profile } = req.user;
+  const active = req.body?.active !== false;
+
+  const requester = await User.findByPk(requestUserId);
+  if (profile !== "admin" && !requester?.super) {
+    throw new AppError("ERR_NO_PERMISSION", 403);
+  }
+  if (Number(userId) === Number(requestUserId)) {
+    throw new AppError("ERR_FORBIDDEN", 403);
+  }
+
+  const user = await User.findByPk(userId, {
+    include: [
+      { model: Queue, as: "queues", attributes: ["id", "name", "color"] }
+    ]
+  });
+  if (!user || (!requester?.super && user.companyId !== companyId)) {
+    throw new AppError("ERR_NO_USER_FOUND", 404);
+  }
+  if (user.super && !requester?.super) {
+    throw new AppError("ERR_FORBIDDEN", 403);
+  }
+
+  await user.update({
+    active,
+    tokenVersion: active ? user.tokenVersion : user.tokenVersion + 1
+  });
+
+  const io = getIO();
+  io.emit(`company-${user.companyId}-user`, { action: "update", user });
+  if (!active) {
+    io.to(`user-${user.id}`).emit(`company-${user.companyId}-auth`, {
+      action: "deactivated",
+      user: { id: user.id, email: user.email, companyId: user.companyId }
+    });
+  }
 
   return res.status(200).json(user);
 };

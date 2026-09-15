@@ -56,6 +56,7 @@ const ListUsersService = async ({
       "companyId",
       "profile",
       "profileImage",
+      "active",
       "createdAt"
     ],
     order: [["createdAt", "DESC"]],

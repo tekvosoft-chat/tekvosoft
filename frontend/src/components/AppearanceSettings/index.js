@@ -24,8 +24,15 @@ import {
   neutralDark,
   neutralLight,
   readableOn,
-  tintNeutrals
+  tintNeutrals,
+  whatsappDark,
+  whatsappLight
 } from "../../theme/tokens";
+import {
+  DEFAULT_WALLPAPER,
+  WALLPAPERS,
+  buildChatPalette
+} from "../../theme/chatPalette";
 
 /**
  * Configurações > Aparência.
@@ -251,6 +258,74 @@ const useStyles = makeStyles(theme => {
       boxShadow: theme.shadows[3],
       pointerEvents: "none"
     },
+    // fundo das conversas
+    section: {
+      display: "flex",
+      flexDirection: "column",
+      gap: theme.spacing(1.5)
+    },
+    wallGrid: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
+      gap: theme.spacing(1.5),
+      [theme.breakpoints.down("xs")]: {
+        gridTemplateColumns: "repeat(2, 1fr)",
+        gap: theme.spacing(1.25)
+      }
+    },
+    wallCard: {
+      position: "relative",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "stretch",
+      gap: 8,
+      padding: 8,
+      borderRadius: t.radius.lg,
+      border: `1px solid ${t.border}`,
+      backgroundColor: t.surface,
+      transition:
+        "border-color .15s ease, box-shadow .15s ease, transform .15s ease",
+      "&:hover": { borderColor: t.borderStrong, boxShadow: theme.shadows[3] },
+      "&:active": { transform: "scale(0.98)" }
+    },
+    wallCardActive: {
+      borderColor: t.brand.main,
+      boxShadow: `0 0 0 1px ${t.brand.main}`,
+      "&:hover": { borderColor: t.brand.main }
+    },
+    wallPreview: {
+      position: "relative",
+      height: 150,
+      borderRadius: t.radius.md,
+      overflow: "hidden",
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "flex-end",
+      gap: 6,
+      padding: 10,
+      backgroundPosition: "center bottom",
+      [theme.breakpoints.down("xs")]: { height: 132 }
+    },
+    wallBubble: {
+      maxWidth: "78%",
+      padding: "5px 9px",
+      borderRadius: 8,
+      fontSize: "0.6875rem",
+      lineHeight: 1.3,
+      boxShadow: "0 1px 0.5px rgba(11, 20, 26, 0.13)",
+      animation: "$pop .35s ease both"
+    },
+    wallName: {
+      fontSize: "0.8125rem",
+      fontWeight: 700,
+      color: theme.palette.text.primary,
+      textAlign: "left",
+      paddingLeft: 2
+    },
+    "@keyframes pop": {
+      from: { opacity: 0, transform: "translateY(6px) scale(.96)" },
+      to: { opacity: 1, transform: "none" }
+    },
     footer: {
       display: "flex",
       alignItems: "center",
@@ -344,13 +419,37 @@ const AppearanceSettings = () => {
     setSaving(false);
   };
 
+  const wallpaper = accountTheme?.wallpaper || DEFAULT_WALLPAPER;
+
   const choosePreset = preset => {
     if (activeId === preset.id && accountTheme) return;
     persist(
-      { preset: preset.id, light: preset.light, dark: preset.dark },
+      {
+        preset: preset.id,
+        light: preset.light,
+        dark: preset.dark,
+        wallpaper: accountTheme?.wallpaper
+      },
       accountTheme
     );
   };
+
+  // o fundo vale para o tema atual; sem tema salvo, parte do padrão
+  const chooseWallpaper = id => {
+    if (id === wallpaper) return;
+    const tekvosoft = THEME_PRESETS.find(p => p.id === "tekvosoft");
+    const current = accountTheme || {
+      preset: tekvosoft.id,
+      light: tekvosoft.light,
+      dark: tekvosoft.dark
+    };
+    persist({ ...current, wallpaper: id }, accountTheme);
+  };
+
+  const currentAccent =
+    accountTheme?.accent ||
+    THEME_PRESETS.find(p => p.id === activeId)?.accent ||
+    theme.palette.primary.main;
 
   return (
     <div className={classes.root}>
@@ -486,7 +585,10 @@ const AppearanceSettings = () => {
                     if (!customTimer.current) {
                       themeBeforeCustom.current = accountTheme;
                     }
-                    const next = deriveCustom(e.target.value);
+                    const next = {
+                      ...deriveCustom(e.target.value),
+                      wallpaper: accountTheme?.wallpaper
+                    };
                     colorMode.applyAccountTheme(next);
                     clearTimeout(customTimer.current);
                     customTimer.current = setTimeout(() => {
@@ -515,6 +617,88 @@ const AppearanceSettings = () => {
             </div>
           );
         })()}
+      </div>
+
+      <div className={classes.section}>
+        <div>
+          <Typography component="h2" className={classes.title}>
+            {i18n.t("chatWallpaper.title")}
+          </Typography>
+          <Typography className={classes.subtitle}>
+            {i18n.t("chatWallpaper.subtitle")}
+          </Typography>
+        </div>
+        <div className={classes.wallGrid} role="radiogroup">
+          {WALLPAPERS.map(id => {
+            const active = wallpaper === id;
+            const chat = buildChatPalette({
+              brand: theme.palette.primary.main,
+              accent: currentAccent,
+              isDark,
+              wallpaper: id,
+              base: isDark ? whatsappDark : whatsappLight
+            });
+            return (
+              <ButtonBase
+                key={id}
+                role="radio"
+                aria-checked={active}
+                className={`${classes.wallCard}${active ? ` ${classes.wallCardActive}` : ""}`}
+                onClick={() => chooseWallpaper(id)}
+                disabled={saving}
+              >
+                {active && (
+                  <span
+                    className={classes.check}
+                    aria-hidden="true"
+                    style={{
+                      "--card-accent": theme.palette.primary.main,
+                      "--card-accent-text": theme.palette.primary.contrastText
+                    }}
+                  >
+                    <CheckRoundedIcon />
+                  </span>
+                )}
+                <div
+                  className={classes.wallPreview}
+                  aria-hidden="true"
+                  style={{
+                    backgroundColor: chat.wallpaper,
+                    backgroundImage: chat.wallpaperImage,
+                    backgroundSize:
+                      chat.wallpaperSize === "auto" ? "180px" : "cover",
+                    backgroundBlendMode: chat.wallpaperBlend
+                  }}
+                >
+                  <span
+                    className={classes.wallBubble}
+                    style={{
+                      alignSelf: "flex-start",
+                      backgroundColor: chat.bubbleIn,
+                      color: chat.text
+                    }}
+                  >
+                    {i18n.t("chatWallpaper.sampleIn")}
+                  </span>
+                  <span
+                    className={classes.wallBubble}
+                    style={{
+                      alignSelf: "flex-end",
+                      backgroundColor: chat.bubbleOut,
+                      color: chat.text,
+                      animationDelay: "90ms"
+                    }}
+                  >
+                    {i18n.t("chatWallpaper.sampleOut")}
+                  </span>
+                </div>
+                <span className={classes.wallName}>
+                  {i18n.t(`chatWallpaper.options.${id}`)}
+                </span>
+              </ButtonBase>
+            );
+          })}
+        </div>
       </div>
 
       <div className={classes.footer}>

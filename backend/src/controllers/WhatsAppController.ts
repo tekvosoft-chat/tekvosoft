@@ -217,15 +217,26 @@ export const profilePicture = async (
     throw new AppError("ERR_NO_WAPP_FOUND", 404);
   }
 
+  // número e nome do perfil vêm da sessão aberta (sem ir à rede)
+  let wbot = null;
+  try {
+    wbot = getWbot(whatsapp.id);
+  } catch (error) {
+    wbot = null;
+  }
+  const number = wbot?.myJid ? String(wbot.myJid).split(/[:@]/)[0] : null;
+  const pushName = wbot?.user?.name || wbot?.user?.verifiedName || null;
+
   const cacheKey = `picurl_self:${whatsapp.id}`;
   const cached = await cacheLayer.get(cacheKey);
   if (cached) {
-    return res.status(200).json({ url: cached === "none" ? null : cached });
+    return res
+      .status(200)
+      .json({ url: cached === "none" ? null : cached, number, pushName });
   }
 
   let url: string | null = null;
   try {
-    const wbot = getWbot(whatsapp.id);
     if (wbot?.myJid) {
       url = (await wbot.profilePictureUrl(wbot.myJid, "image", 5000)) || null;
     }
@@ -233,12 +244,15 @@ export const profilePicture = async (
     url = null;
   }
 
-  await cacheLayer.set(
-    cacheKey,
-    url || "none",
-    "EX",
-    url ? 60 * 60 * 6 : 60 * 10
-  );
+  // sem sessão não guarda "sem foto": ao conectar, a foto aparece logo
+  if (wbot?.myJid) {
+    await cacheLayer.set(
+      cacheKey,
+      url || "none",
+      "EX",
+      url ? 60 * 60 * 6 : 60 * 10
+    );
+  }
 
-  return res.status(200).json({ url });
+  return res.status(200).json({ url, number, pushName });
 };

@@ -1510,6 +1510,8 @@ const messages = {
         ERR_WAPP_INVALID_CONTACT: "Ini bukan nomor WhatsApp yang valid.",
         ERR_WAPP_DOWNLOAD_MEDIA:
           "Tidak dapat mengunduh media dari WhatsApp. Periksa halaman koneksi.",
+        ERR_USER_INACTIVE:
+          "Akses Anda dinonaktifkan. Hubungi administrator perusahaan Anda.",
         ERR_INVALID_CREDENTIALS: "Kesalahan autentikasi. Silakan coba lagi.",
         ERR_SENDING_WAPP_MSG:
           "Kesalahan mengirim pesan WhatsApp. Periksa halaman koneksi.",

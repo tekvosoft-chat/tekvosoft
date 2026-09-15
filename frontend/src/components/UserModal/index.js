@@ -69,14 +69,15 @@ const UserSchema = Yup.object().shape({
 const UserModal = ({ open, onClose, userId }) => {
   const classes = useStyles();
 
+  const { user: loggedInUser } = useContext(AuthContext);
+
+  // o super admin só cria administradores; eles criam os usuários
   const initialState = {
     name: "",
     email: "",
     password: "",
-    profile: "user"
+    profile: loggedInUser?.super ? "admin" : "user"
   };
-
-  const { user: loggedInUser } = useContext(AuthContext);
 
   const [user, setUser] = useState(initialState);
   const [selectedQueueIds, setSelectedQueueIds] = useState([]);
@@ -218,9 +219,12 @@ const UserModal = ({ open, onClose, userId }) => {
                             <MenuItem value="admin">
                               {i18n.t("userModal.listItems.adminProfile")}
                             </MenuItem>
-                            <MenuItem value="user">
-                              {i18n.t("userModal.listItems.userProfile")}
-                            </MenuItem>
+                            {(!loggedInUser?.super ||
+                              user.profile === "user") && (
+                              <MenuItem value="user">
+                                {i18n.t("userModal.listItems.userProfile")}
+                              </MenuItem>
+                            )}
                           </Field>
                         </>
                       )}

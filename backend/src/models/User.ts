@@ -66,6 +66,10 @@ class User extends Model<User> {
   @Column
   super: boolean;
 
+  @Default(true)
+  @Column
+  active: boolean;
+
   @CreatedAt
   createdAt: Date;
 

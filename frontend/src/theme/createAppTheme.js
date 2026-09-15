@@ -39,10 +39,13 @@ import {
   whatsappDark,
   whatsappLight
 } from "./tokens";
+import { buildChatPalette } from "./chatPalette";
 
 export default function createAppTheme({
   mode = "light",
   primaryColor,
+  accentColor,
+  wallpaper,
   locale,
   appLogoLight,
   appLogoDark,
@@ -147,7 +150,14 @@ export default function createAppTheme({
           radius,
           layout,
           isDark,
-          chat: isDark ? whatsappDark : whatsappLight,
+          // conversa nas cores do tema, com o papel de parede escolhido
+          chat: buildChatPalette({
+            brand: primaryColor,
+            accent: accentColor,
+            isDark,
+            wallpaper,
+            base: isDark ? whatsappDark : whatsappLight
+          }),
           // superfícies
           canvas: n.canvas,
           surface: n.surface,

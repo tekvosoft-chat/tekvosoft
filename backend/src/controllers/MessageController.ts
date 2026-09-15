@@ -9,6 +9,7 @@ import User from "../models/User";
 import Whatsapp from "../models/Whatsapp";
 
 import ListMessagesService from "../services/MessageServices/ListMessagesService";
+import ListPreviousMessagesService from "../services/MessageServices/ListPreviousMessagesService";
 import {
   listStickers,
   searchGifs,
@@ -82,6 +83,34 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
   }
 
   return res.json({ count, messages, ticket, hasMore, nextId: responseNextId });
+};
+
+/** Mensagens dos atendimentos anteriores do mesmo contato. */
+export const previous = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { ticketId } = req.params;
+  const { before, peek } = req.query as { before?: string; peek?: string };
+  const { companyId, profile } = req.user;
+  const queues: number[] = [];
+
+  if (profile !== "admin") {
+    const user = await User.findByPk(req.user.id, {
+      include: [{ model: Queue, as: "queues" }]
+    });
+    user.queues.forEach(queue => queues.push(queue.id));
+  }
+
+  const result = await ListPreviousMessagesService({
+    ticketId,
+    companyId,
+    queues,
+    before,
+    peek: peek === "true"
+  });
+
+  return res.json(result);
 };
 
 export const historyByMessageId = async (
@@ -316,9 +345,10 @@ export const forward = async (
     throw new AppError("ERR_ACCESS_DENIED", 403);
   }
 
-  await ForwardMessageService(user, message, contact, queue);
+  const forwarded = await ForwardMessageService(user, message, contact, queue);
 
-  return res.send();
+  // o atendimento de destino: a tela usa para mandar a legenda em seguida
+  return res.json({ ticketId: forwarded?.ticketId ?? null });
 };
 
 export const send = async (req: Request, res: Response): Promise<Response> => {

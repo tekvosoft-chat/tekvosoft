@@ -4,7 +4,7 @@ import { has, isArray } from "lodash";
 
 import { toast } from "react-toastify";
 
-import { i18n } from "../../translate/i18n";
+import { i18n, syncMomentLocale } from "../../translate/i18n";
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
 import { SocketContext } from "../../context/Socket/SocketContext";
@@ -128,7 +128,7 @@ const useAuth = () => {
       }
     }
 
-    moment.locale("pt-br");
+    syncMomentLocale(i18n.language);
     const dueDate = data.user.company.dueDate;
     const hoje = moment(moment()).format("DD/MM/yyyy");
     const vencimento = moment(dueDate).format("DD/MM/yyyy");
@@ -227,7 +227,8 @@ const useAuth = () => {
       // este aparelho para de receber as notificações desta conta
       await forgetPushForUser();
       clearConversationCache();
-      await api.delete("/auth/logout");
+      // se o servidor não responder, a pessoa sai mesmo assim
+      await api.delete("/auth/logout").catch(() => {});
       clearAllCachedSettings();
       setIsAuth(false);
       setUser({});

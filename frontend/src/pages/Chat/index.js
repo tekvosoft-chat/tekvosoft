@@ -64,9 +64,10 @@ const useStyles = makeStyles(theme => {
       flex: 1,
       minHeight: 0,
       display: "flex",
-      padding: theme.spacing(3),
+      // colado ao menu lateral: a conversa usa a largura toda da tela
+      padding: theme.spacing(1.5, 2, 2, 1.5),
       backgroundColor: t.canvas,
-      [theme.breakpoints.down("sm")]: { padding: theme.spacing(2) },
+      [theme.breakpoints.down("sm")]: { padding: theme.spacing(1.5) },
       [theme.breakpoints.down("xs")]: { padding: 0 }
     },
     shell: {
@@ -74,8 +75,6 @@ const useStyles = makeStyles(theme => {
       minHeight: 0,
       minWidth: 0,
       display: "flex",
-      maxWidth: t.layout.contentMaxWidth,
-      margin: "0 auto",
       width: "100%",
       overflow: "hidden",
       borderRadius: t.radius.lg,

@@ -31,6 +31,8 @@ userRoutes.delete(
   UserController.updateProfileImage
 );
 
+userRoutes.put("/users/:userId/active", isAuth, UserController.setActive);
+
 userRoutes.delete("/users/:userId", isAuth, UserController.remove);
 
 export default userRoutes;

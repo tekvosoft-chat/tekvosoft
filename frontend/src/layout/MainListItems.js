@@ -19,7 +19,6 @@ import HelpOutlineIcon from "@material-ui/icons/HelpOutline";
 import CodeRoundedIcon from "@material-ui/icons/CodeRounded";
 import EventIcon from "@material-ui/icons/Event";
 
-import LocalOfferIcon from "@material-ui/icons/LocalOffer";
 import EventAvailableIcon from "@material-ui/icons/EventAvailable";
 import ExpandLessIcon from "@material-ui/icons/ExpandLess";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
@@ -531,11 +530,6 @@ const MainListItems = props => {
           to="/contacts"
           primary={i18n.t("mainDrawer.listItems.contacts")}
           icon={<ContactPhoneOutlinedIcon />}
-        />
-        <ListItemLink
-          to="/tags"
-          primary={i18n.t("mainDrawer.listItems.tags")}
-          icon={<LocalOfferIcon />}
         />
         <Can
           role={user.profile}

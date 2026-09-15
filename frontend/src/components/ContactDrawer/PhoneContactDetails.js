@@ -35,6 +35,7 @@ import { TagsContainer } from "../TagsContainer";
 import ContactModal from "../ContactModal";
 import ScheduleModal from "../ScheduleModal";
 import ContactMedia from "./ContactMedia";
+import ContactSchedules from "./ContactSchedules";
 import CloseRoundedIcon from "@material-ui/icons/CloseRounded";
 import EditOutlinedIcon from "@material-ui/icons/EditOutlined";
 
@@ -307,6 +308,7 @@ const PhoneContactDetails = ({
   const [panelEl, setPanelEl] = useState(null);
   const [editOpen, setEditOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [schedulesVersion, setSchedulesVersion] = useState(0);
   const [photoOpen, setPhotoOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
   const [tagsOpen, setTagsOpen] = useState(false);
@@ -451,6 +453,16 @@ const PhoneContactDetails = ({
               </div>
             )}
 
+            {contact?.id && (
+              <div className={classes.group}>
+                <ContactSchedules
+                  contactId={contact.id}
+                  reloadKey={schedulesVersion}
+                  onNew={() => setScheduleOpen(true)}
+                />
+              </div>
+            )}
+
             <div className={classes.group}>
               <Row
                 brand
@@ -549,7 +561,11 @@ const PhoneContactDetails = ({
       {scheduleOpen && (
         <ScheduleModal
           open={scheduleOpen}
-          onClose={() => setScheduleOpen(false)}
+          onClose={() => {
+            setScheduleOpen(false);
+            setSchedulesVersion(v => v + 1);
+          }}
+          reload={() => setSchedulesVersion(v => v + 1)}
           contactId={contact?.id}
         />
       )}

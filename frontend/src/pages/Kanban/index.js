@@ -285,7 +285,7 @@ const useStyles = makeStyles(theme => {
       fontSize: "0.6875rem",
       fontWeight: 700,
       backgroundColor: t.chat.accent,
-      color: "#FFFFFF"
+      color: t.brand.contrastText
     },
     cardMenu: {
       flex: "none",

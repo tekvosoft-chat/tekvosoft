@@ -1,6 +1,268 @@
 const messages = {
   es: {
     translations: {
+      annotator: {
+        title: "Documento",
+        annotate: "Dibujar",
+        typeHere: "Escribe aquí",
+        tools: {
+          pan: "Mover",
+          pen: "Dibujar",
+          highlight: "Resaltar",
+          underline: "Subrayar",
+          strike: "Tachar",
+          text: "Texto",
+          eraser: "Borrador"
+        },
+        sizes: {
+          thin: "Fino",
+          medium: "Medio",
+          thick: "Grueso"
+        },
+        undo: "Deshacer (Ctrl+Z)",
+        redo: "Rehacer (Ctrl+Shift+Z)",
+        clear: "Borrar las anotaciones de esta página",
+        download: "Descargar",
+        downloadAnnotated: "Descargar con anotaciones",
+        send: "Enviar al chat",
+        sent: "Archivo anotado enviado",
+        done: "Listo",
+        error: "No se pudo abrir el archivo.",
+        loadingPreview: "Cargando vista previa…",
+        previewUnavailable: "Vista previa no disponible",
+        openAndAnnotate: "Abrir y anotar"
+      },
+      superDashboard: {
+        title: "Panel de la plataforma",
+        live: "En vivo",
+        tabs: {
+          platform: "Resumen",
+          companies: "Empresas",
+          mine: "Mi empresa"
+        },
+        server: "Servidor",
+        cpu: "Procesador",
+        cpuSub: "{{cores}} núcleos · carga {{load}}",
+        ram: "Memoria RAM",
+        app: "app",
+        disk: "Espacio en disco",
+        free: "{{size}} libres",
+        database: "Base de datos",
+        processSub:
+          "Backend {{rss}} · activo hace {{uptime}} · {{online}} en línea",
+        platform: "Uso de la plataforma",
+        companies: "Empresas activas",
+        ofTotal: "de {{total}} registradas",
+        users: "Usuarios",
+        onlineNow: "{{count}} en línea ahora",
+        connections: "Conexiones",
+        connected: "conectadas",
+        tickets: "Atenciones abiertas",
+        pending: "{{count}} en espera",
+        messagesToday: "Mensajes hoy",
+        last30: "{{count}} en 30 días",
+        storage: "Almacenamiento",
+        contacts: "{{count}} contactos",
+        activity: "Mensajes en los últimos 14 días",
+        sent: "Enviados",
+        received: "Recibidos",
+        ranking: "Uso por empresa",
+        metrics: {
+          messages30d: "Mensajes",
+          tickets30d: "Atenciones",
+          storage: "Disco",
+          users: "Usuarios"
+        },
+        clients: "Clientes",
+        search: "Buscar empresa",
+        active: "Activa",
+        blocked: "Bloqueada",
+        dueIn: "vence en {{count}} día",
+        dueIn_plural: "vence en {{count}} días",
+        overdue: "vencida hace {{count}} día",
+        overdue_plural: "vencida hace {{count}} días",
+        max: "máx. {{count}}",
+        onlineShort: "en línea",
+        openShort: "abiertas",
+        messagesShort: "msgs 30d",
+        usersOf: "{{count}} usuario creado",
+        usersOf_plural: "{{count}} usuarios creados",
+        online: "En línea",
+        offline: "Desconectado",
+        inactive: "inactivo",
+        userStats: "{{open}} abiertas · {{sent}} msgs enviados en 30 días",
+        newAdmin: "Nuevo administrador",
+        newAdminHint:
+          "El administrador crea y gestiona los usuarios de su empresa.",
+        adminCreated: "Administrador creado",
+        create: "Crear",
+        form: {
+          name: "Nombre",
+          email: "Correo",
+          password: "Contraseña"
+        }
+      },
+      contactSchedules: {
+        title: "Programados",
+        new: "Programar",
+        empty: "No hay mensajes programados para este contacto.",
+        pending: "{{count}} por enviar",
+        pending_plural: "{{count}} por enviar",
+        in: "sale en {{time}}",
+        soon: "enviando ahora",
+        sentAgo: "enviado {{time}}",
+        failedAgo: "falló {{time}}",
+        all: "Ver todos ({{count}})",
+        less: "Mostrar menos",
+        status: {
+          pending: "Programado",
+          sent: "Enviado",
+          error: "Error"
+        }
+      },
+      financePage: {
+        title: "Finanzas",
+        subtitle: "Sigue tu suscripción y tus cobros.",
+        days: "día",
+        days_plural: "días",
+        heroOk: "¡Todo en orden! Falta {{count}} día para la renovación",
+        heroOk_plural:
+          "¡Todo en orden! Faltan {{count}} días para la renovación",
+        heroToday: "Tu suscripción se renueva hoy",
+        heroSub: "Tu acceso está garantizado hasta el {{date}}.",
+        heroOverdue: "Tu suscripción venció hace {{count}} día",
+        heroOverdue_plural: "Tu suscripción venció hace {{count}} días",
+        heroOverdueSub:
+          "Paga el cobro pendiente para seguir usándolo sin interrupciones.",
+        payNow: "Pagar ahora",
+        statOpen: "Pendiente",
+        statPending: "Por pagar",
+        statPaid: "Pagadas",
+        history: "Cobros",
+        emptyTitle: "Aún no hay cobros",
+        emptyText: "Cuando haya una factura, aparecerá aquí.",
+        invoice: "Mensualidad",
+        number: "Factura #{{id}}",
+        paid: "Pagada",
+        dueToday: "Vence hoy",
+        dueTomorrow: "Vence mañana",
+        daysLeft: "Falta {{count}} día",
+        daysLeft_plural: "Faltan {{count}} días",
+        overdueFor: "Venció hace {{count}} día",
+        overdueFor_plural: "Venció hace {{count}} días",
+        dueOn: "Vence el {{date}}",
+        dueWas: "Venció el {{date}}",
+        pay: "Pagar",
+        paidBtn: "Pagada ✓"
+      },
+      forwardModal: {
+        title: "Reenviar mensaje a",
+        search: "Buscar nombre o número",
+        recent: "Chats recientes",
+        contacts: "Contactos",
+        empty: "No se encontraron contactos",
+        group: "Grupo",
+        remove: "Quitar",
+        max: "Puedes reenviar hasta a {{count}} chats",
+        caption: "Añade un mensaje",
+        send: "Reenviar",
+        sent: "Mensaje reenviado",
+        sent_plural: "Mensaje reenviado a {{count}} chats",
+        queue: "Cola: {{name}}",
+        queueHint: "Cola usada cuando el contacto no tiene atención abierta",
+        media: {
+          image: "Foto",
+          video: "Video",
+          audio: "Audio",
+          document: "Archivo",
+          sticker: "Sticker"
+        }
+      },
+      instances: {
+        summary: "{{connected}} de {{total}} conectadas",
+        new: "Nueva conexión",
+        noProfile: "El perfil aparece al conectar",
+        updated: "Actualizado {{time}}",
+        default: "Conexión predeterminada",
+        channel: "Canal",
+        queues: "Colas",
+        lastUpdate: "Última actualización",
+        yes: "Sí",
+        no: "No",
+        status: {
+          CONNECTED: "Conectado",
+          qrcode: "Esperando código QR",
+          passkey_required: "Passkey necesaria",
+          PAIRING: "Sin señal del teléfono",
+          TIMEOUT: "Sin señal del teléfono",
+          OPENING: "Conectando…",
+          DISCONNECTED: "Desconectado"
+        },
+        actions: {
+          scan: "Leer código QR",
+          retry: "Reconectar",
+          passkey: "Usar passkey",
+          newQr: "Nuevo código QR",
+          resetPasskey: "Reiniciar passkey",
+          disconnect: "Desconectar",
+          refresh: "Rehacer conexión",
+          edit: "Configurar",
+          privacy: "Privacidad",
+          delete: "Eliminar"
+        }
+      },
+      orientation: {
+        title: "Gira el teléfono",
+        text: "Tekvosoft está pensado para usarse en vertical. Gira el dispositivo para continuar."
+      },
+      ticketHeaderActions: {
+        resolve: "Resolver",
+        resolveHint: "Marcar como terminado y cerrar la atención",
+        resolved: "Atención resuelta",
+        transfer: "Transferir",
+        transferHint: "Pasar a otra cola o agente",
+        return: "Devolver a la cola",
+        returnHint: "Vuelve a En espera, sin agente",
+        schedule: "Programar mensaje",
+        scheduleHint: "Programar un envío a este contacto",
+        delete: "Eliminar atención",
+        deleteHint: "Borra la atención y sus mensajes",
+        reopen: "Reabrir",
+        more: "Más acciones"
+      },
+      usersPage: {
+        subtitle: "Quién puede entrar y atender por tu empresa.",
+        filters: {
+          all: "Todos",
+          active: "Activos",
+          inactive: "Inactivos"
+        },
+        active: "Activo",
+        inactive: "Inactivo",
+        activateHint: "Permitir el acceso de este usuario",
+        deactivateHint:
+          "Bloquear el acceso: la persona sale del sistema al instante",
+        selfHint: "No puedes desactivarte a ti mismo",
+        activated: "{{name}} está activo",
+        deactivated: "{{name}} fue desactivado",
+        edit: "Editar",
+        delete: "Eliminar",
+        deactivatedByAdmin: "Tu acceso fue desactivado por el administrador."
+      },
+      chatWallpaper: {
+        title: "Fondo de las conversaciones",
+        subtitle:
+          "Dibujado con los colores del tema elegido. Tus burbujas de mensaje también siguen la paleta.",
+        sampleIn: "¡Hola! ¿Qué tal? 😊",
+        sampleOut: "Todo bien, ¿en qué puedo ayudar?",
+        options: {
+          landscape: "Paisaje",
+          waves: "Olas",
+          gradient: "Degradado",
+          doodle: "Garabatos",
+          plain: "Liso"
+        }
+      },
       date: {
         yesterday: "Ayer"
       },
@@ -1439,7 +1701,18 @@ const messages = {
         }
       },
       messagesList: {
+        history: {
+          load: "Recuperar historial de mensajes",
+          more: "Cargar mensajes más antiguos",
+          none: "No hay mensajes anteriores de este contacto",
+          ticket: "Atención anterior #{{id}}",
+          current: "Inicio de esta atención"
+        },
         reactions: {
+          react: "Reaccionar",
+          copy: "Copiar",
+          copied: "Mensaje copiado",
+          more: "Más opciones",
           you: "Tú"
         },
         header: {
@@ -1631,6 +1904,8 @@ const messages = {
         ERR_WAPP_INVALID_CONTACT: "Este no es un número de WhatsApp válido.",
         ERR_WAPP_DOWNLOAD_MEDIA:
           "No se pudo descargar medios de WhatsApp. Verifique la página de conexiones.",
+        ERR_USER_INACTIVE:
+          "Tu acceso está desactivado. Habla con el administrador de tu empresa.",
         ERR_INVALID_CREDENTIALS:
           "Error de autenticación. Por favor, inténtelo de nuevo.",
         ERR_SENDING_WAPP_MSG:
