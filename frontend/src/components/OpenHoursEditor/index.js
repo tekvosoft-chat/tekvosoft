@@ -22,8 +22,7 @@ import {
   Add as AddIcon,
   Delete as DeleteIcon,
   Event as EventIcon,
-  Schedule as ScheduleIcon,
-  Public as PublicIcon
+  Schedule as ScheduleIcon
 } from "@material-ui/icons";
 import { format, startOfWeek, addDays } from "date-fns";
 import { enUS, es, id, pt } from "date-fns/locale";

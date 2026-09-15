@@ -21,20 +21,13 @@ import { i18n } from "../../translate/i18n";
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
 import { AuthContext } from "../../context/Auth/AuthContext";
-import { IconButton, InputAdornment, FormControl } from "@material-ui/core";
+import { IconButton, InputAdornment } from "@material-ui/core";
 
 const useStyles = makeStyles(theme => ({
   root: {
     display: "flex",
     flexWrap: "wrap"
   },
-  multFieldLine: {
-    display: "flex",
-    "& > *:not(:last-child)": {
-      marginRight: theme.spacing(1)
-    }
-  },
-
   btnWrapper: {
     position: "relative"
   },

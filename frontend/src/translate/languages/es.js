@@ -5,6 +5,8 @@ const messages = {
         yesterday: "Ayer"
       },
       common: {
+        yesterday: "Ayer",
+        today: "Hoy",
         search: "Buscar",
         emptyTitle: "Aún no hay nada aquí",
         emptyDescription:
@@ -174,6 +176,7 @@ const messages = {
         ticketsOnPeriod: "Atenciones en el período",
         userCurrentStatus: "Estado (Actual)",
         filter: {
+          invalid: "Elige un período válido para filtrar.",
           period: "Período",
           custom: "Personalizado",
           last3days: "Últimos 3 días",
@@ -341,6 +344,8 @@ const messages = {
       contacts: {
         title: "Contactos",
         toasts: {
+          imported:
+            "Importación iniciada. Los contactos aparecerán en la lista en breve.",
           deleted: "Contacto eliminado con éxito"
         },
         searchPlaceholder: "Buscar...",
@@ -388,6 +393,11 @@ const messages = {
         success: "Contacto guardado con éxito."
       },
       queueModal: {
+        confirmationModal: {
+          deleteTitle: "¿Eliminar archivo?",
+          deleteMessage:
+            "El archivo adjunto será eliminado. No se puede deshacer."
+        },
         title: {
           add: "Agregar fila",
           edit: "Editar fila"
@@ -403,6 +413,7 @@ const messages = {
           token: "Token"
         },
         toasts: {
+          deleted: "Archivo eliminado",
           saved: "Cola guardada exitosamente"
         },
         buttons: {
@@ -538,6 +549,8 @@ const messages = {
           search: { title: "Búsqueda" }
         },
         search: {
+          filterByUsers: "Filtrar por usuarios",
+          filterByTags: "Filtrar por etiquetas",
           placeholder: "Buscar atención y mensajes"
         },
         buttons: {
@@ -1075,6 +1088,7 @@ const messages = {
         extensionBuildUnknownError: "Error de construcción desconocido."
       },
       settings: {
+        saving: "Guardando…",
         appearance: {
           tab: "Apariencia",
           title: "Tema de colores",
@@ -1508,6 +1522,7 @@ const messages = {
         paused: "Pausado"
       },
       privacyModal: {
+        success: "Privacidad actualizada",
         title: "Editar privacidad de Whatsapp",
         buttons: {
           cancel: "Cancelar",

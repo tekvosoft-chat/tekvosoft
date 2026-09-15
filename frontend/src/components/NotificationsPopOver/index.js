@@ -20,12 +20,9 @@ import useTickets from "../../hooks/useTickets";
 import alertSound from "../../assets/sound.mp3";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { SocketContext } from "../../context/Socket/SocketContext";
-import Favicon from "react-favicon";
 import useSettings from "../../hooks/useSettings";
 import { isNotificationSoundOn } from "../../hooks/useNotificationSound";
 import { isPushActive } from "../../services/push";
-
-const defaultLogoFavicon = "/vector/favicon.png";
 
 const useStyles = makeStyles(theme => ({
   tabContainer: {

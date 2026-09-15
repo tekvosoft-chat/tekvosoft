@@ -153,8 +153,8 @@ export default function PixPdvSettings(props) {
     <>
       <div>
         <p>
-          <b>PixPDV</b> é uma implementação para recebimento via PIX
-          através do parceiro PixPDV.
+          <b>PixPDV</b> é uma implementação para recebimento via PIX através do
+          parceiro PixPDV.
         </p>
       </div>
       {!showCreateForm && (

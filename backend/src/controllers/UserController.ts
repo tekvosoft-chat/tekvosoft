@@ -19,10 +19,6 @@ type IndexQuery = {
   pageNumber: string;
 };
 
-type ListQueryParams = {
-  companyId: string;
-};
-
 export const index = async (req: Request, res: Response): Promise<Response> => {
   const { searchParam, pageNumber } = req.query as IndexQuery;
   const { companyId, profile } = req.user;

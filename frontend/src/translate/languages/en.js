@@ -5,6 +5,8 @@ const messages = {
         yesterday: "Yesterday"
       },
       common: {
+        yesterday: "Yesterday",
+        today: "Today",
         search: "Search",
         emptyTitle: "Nothing here yet",
         emptyDescription:
@@ -176,6 +178,7 @@ const messages = {
         ticketsOnPeriod: "Tickets in the period",
         userCurrentStatus: "Current status",
         filter: {
+          invalid: "Choose a valid period to filter.",
           period: "Period",
           custom: "Custom",
           last3days: "Last 3 days",
@@ -340,6 +343,8 @@ const messages = {
       contacts: {
         title: "Contacts",
         toasts: {
+          imported:
+            "Import started. Contacts will show up in the list shortly.",
           deleted: "Contact successfully deleted!"
         },
         searchPlaceholder: "Search...",
@@ -387,6 +392,11 @@ const messages = {
         success: "Contact saved successfully."
       },
       queueModal: {
+        confirmationModal: {
+          deleteTitle: "Delete file?",
+          deleteMessage:
+            "The attached file will be removed. This can't be undone."
+        },
         title: {
           add: "Add Queue",
           edit: "Edit Queue"
@@ -402,6 +412,7 @@ const messages = {
           token: "Token"
         },
         toasts: {
+          deleted: "File removed",
           saved: "Queue saved successfully"
         },
         buttons: {
@@ -1072,6 +1083,7 @@ const messages = {
         extensionBuildUnknownError: "Unknown build error."
       },
       settings: {
+        saving: "Saving…",
         appearance: {
           tab: "Appearance",
           title: "Color theme",
@@ -1500,6 +1512,7 @@ const messages = {
         paused: "Paused"
       },
       privacyModal: {
+        success: "Privacy updated",
         title: "Edit Whatsapp Privacy",
         buttons: {
           cancel: "Cancel",

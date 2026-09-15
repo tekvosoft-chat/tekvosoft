@@ -21,13 +21,10 @@ import {
 } from "@material-ui/core";
 import SearchRoundedIcon from "@material-ui/icons/SearchRounded";
 import UnfoldMoreRoundedIcon from "@material-ui/icons/UnfoldMoreRounded";
-import { getInitials } from "../helpers/getInitials";
 
 import MenuIcon from "@material-ui/icons/Menu";
 import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
-import AccountCircle from "@material-ui/icons/AccountCircle";
 import SettingsEthernetIcon from "@material-ui/icons/SettingsEthernet";
-import CachedIcon from "@material-ui/icons/Cached";
 
 import MainListItems from "./MainListItems";
 import MobileNav from "./MobileNav";
@@ -44,7 +41,6 @@ import UserModal from "../components/UserModal";
 import AboutModal from "../components/AboutModal";
 import { AuthContext } from "../context/Auth/AuthContext";
 import BackdropLoading from "../components/BackdropLoading";
-import DarkMode from "../components/DarkMode";
 import { i18n } from "../translate/i18n";
 import { messages } from "../translate/languages";
 import toastError from "../errors/toastError";
@@ -57,10 +53,6 @@ import { useDate } from "../hooks/useDate";
 import useAuth from "../hooks/useAuth.js";
 
 import ColorModeContext from "../layout/themeContext";
-import Brightness4Icon from "@material-ui/icons/Brightness4";
-import Brightness7Icon from "@material-ui/icons/Brightness7";
-import LanguageIcon from "@material-ui/icons/Language";
-import { getBackendURL } from "../services/config";
 import NestedMenuItem from "material-ui-nested-menu-item";
 import GoogleAnalytics from "../components/GoogleAnalytics";
 import OnlyForSuperUser from "../components/OnlyForSuperUser";
@@ -580,7 +572,6 @@ const LoggedInLayout = ({ children, themeToggle }) => {
 
   const theme = useTheme();
   const greaterThenSm = useMediaQuery(theme.breakpoints.up("sm"));
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   // Três faixas de verdade, não duas:
   //   telefone  (<600px)  -> sem barra lateral, navegação por baixo
   //   tablet    (600-959) -> barra lateral só de ícones

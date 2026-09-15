@@ -14,7 +14,6 @@ import CustomTooltip from "./CustomTooltip";
 import Title from "./Title";
 import { getTimezoneOffset } from "../../helpers/getTimezoneOffset";
 import { getISOStringWithTimezone } from "../../helpers/getISOStringWithTimezone";
-import { numPad } from "../../helpers/numPad";
 
 function prepareChartData(emptyData, serie) {
   const ticketCreateData = JSON.parse(JSON.stringify(emptyData));

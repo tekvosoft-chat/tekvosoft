@@ -16,20 +16,14 @@ import {
   TextField,
   Switch,
   FormControlLabel,
-  FormControl,
-  FormGroup,
   Typography,
-  Tooltip,
-  Paper,
-  Grid,
-  Checkbox
+  Grid
 } from "@material-ui/core";
 
 import api from "../../services/api";
 import { i18n } from "../../translate/i18n";
 import toastError from "../../errors/toastError";
 import QueueSelect from "../QueueSelect";
-import HelpOutlineOutlinedIcon from "@material-ui/icons/HelpOutlineOutlined";
 
 import { SelectLanguage } from "../SelectLanguage";
 

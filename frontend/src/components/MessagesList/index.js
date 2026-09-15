@@ -14,7 +14,6 @@ import { blue } from "@material-ui/core/colors";
 import {
   Avatar,
   Button,
-  Divider,
   IconButton,
   makeStyles,
   Tooltip,

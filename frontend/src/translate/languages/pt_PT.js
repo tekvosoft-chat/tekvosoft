@@ -145,6 +145,9 @@ const messages = {
         token: "Token"
       },
       dashboard: {
+        filter: {
+          invalid: "Escolha um período válido para filtrar."
+        },
         sections: {
           now: "Agora",
           nowHint: "Situação em tempo real",
@@ -310,6 +313,8 @@ const messages = {
       contacts: {
         title: "Contactos",
         toasts: {
+          imported:
+            "Importação iniciada. Os contactos aparecem na lista dentro de instantes.",
           deleted: "Contacto excluído com sucesso!"
         },
         searchPlaceholder: "Pesquisar...",
@@ -356,6 +361,11 @@ const messages = {
         success: "Contacto salvo com sucesso."
       },
       queueModal: {
+        confirmationModal: {
+          deleteTitle: "Eliminar ficheiro?",
+          deleteMessage:
+            "O ficheiro anexado será removido. Esta ação não pode ser desfeita."
+        },
         title: {
           add: "Adicionar fila",
           edit: "Editar fila"
@@ -371,6 +381,7 @@ const messages = {
           token: "Token"
         },
         toasts: {
+          deleted: "Ficheiro removido",
           saved: "Fila salva com sucesso"
         },
         buttons: {
@@ -506,9 +517,9 @@ const messages = {
           search: { title: "Busca" }
         },
         search: {
-          placeholder: "Buscar atendimento e mensagens",
-          filterByTags: "Filtro por tags",
-          filterByUsers: "Filtro por usuários"
+          filterByUsers: "Filtrar por utilizadores",
+          filterByTags: "Filtrar por etiquetas",
+          placeholder: "Buscar atendimento e mensagens"
         },
         buttons: {
           showAll: "Todos"
@@ -1045,6 +1056,7 @@ const messages = {
         extensionBuildUnknownError: "Erro desconhecido na construção."
       },
       settings: {
+        saving: "A guardar…",
         appearance: {
           tab: "Aparência",
           title: "Tema de cores",
@@ -1443,6 +1455,7 @@ const messages = {
         paused: "Em pausa"
       },
       privacyModal: {
+        success: "Privacidade atualizada",
         title: "Editar Privacidade do WhatsApp",
         buttons: {
           cancel: "Cancelar",

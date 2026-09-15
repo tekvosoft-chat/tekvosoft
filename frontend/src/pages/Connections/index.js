@@ -15,8 +15,7 @@ import {
   Paper,
   Tooltip,
   Typography,
-  CircularProgress,
-  Checkbox
+  CircularProgress
 } from "@material-ui/core";
 import {
   Edit,

@@ -18,7 +18,6 @@ import { i18n } from "../../translate/i18n";
 import MediaPreview from "../../components/ui/MediaPreview";
 
 import AttachFileIcon from "@material-ui/icons/AttachFile";
-import CancelIcon from "@material-ui/icons/Cancel";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import { GetApp } from "@material-ui/icons";
 import toastError from "../../errors/toastError";

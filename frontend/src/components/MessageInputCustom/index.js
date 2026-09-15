@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
-import withWidth, { isWidthUp } from "@material-ui/core/withWidth";
+import withWidth from "@material-ui/core/withWidth";
 import "emoji-mart/css/emoji-mart.css";
 import { Picker } from "emoji-mart";
 import MicRecorder from "mic-recorder-to-mp3";
@@ -21,7 +21,6 @@ import AttachFileIcon from "@material-ui/icons/AttachFile";
 import IconButton from "@material-ui/core/IconButton";
 import MoodIcon from "@material-ui/icons/Mood";
 import SendIcon from "@material-ui/icons/Send";
-import CancelIcon from "@material-ui/icons/Cancel";
 import ClearIcon from "@material-ui/icons/Clear";
 import MicIcon from "@material-ui/icons/Mic";
 import CheckCircleOutlineIcon from "@material-ui/icons/CheckCircleOutline";
@@ -32,14 +31,7 @@ import PhotoCameraOutlinedIcon from "@material-ui/icons/PhotoCameraOutlined";
 import FlashOnRoundedIcon from "@material-ui/icons/FlashOnRounded";
 import SendRoundedIcon from "@material-ui/icons/SendRounded";
 import useMediaQuery from "@material-ui/core/useMediaQuery";
-import {
-  FormControlLabel,
-  Switch,
-  Tooltip,
-  InputAdornment,
-  Typography,
-  Popper
-} from "@material-ui/core";
+import { Tooltip, InputAdornment, Typography, Popper } from "@material-ui/core";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import { isString, isEmpty, isObject, has } from "lodash";
 
@@ -346,20 +338,6 @@ const EmojiOptions = props => {
         </div>
       ) : null}
     </>
-  );
-};
-
-const SignSwitch = props => {
-  const { setSignMessage, signMessage } = props;
-  const classes = useStyles({ signMessage });
-
-  return (
-    <IconButton
-      onClick={() => setSignMessage(!signMessage)}
-      className={classes.signatureIcon}
-    >
-      <FontAwesomeIcon icon={faSignature} />
-    </IconButton>
   );
 };
 
