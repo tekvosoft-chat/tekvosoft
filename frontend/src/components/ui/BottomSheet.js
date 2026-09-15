@@ -26,10 +26,15 @@ const useStyles = makeStyles(theme => ({
     // 88% da área VISÍVEL: no iOS, vh conta também a parte escondida atrás
     // da barra do Safari, e o painel passava do topo da tela
     maxHeight: "calc(var(--vh, 100vh) * 0.88)",
+    boxShadow: "0 -12px 40px rgba(12, 10, 20, 0.28)",
     display: "flex",
     flexDirection: "column",
     // respeita a barra de gestos dos aparelhos sem botão físico
     paddingBottom: "var(--safe-bottom, 0px)"
+  },
+  backdrop: {
+    backgroundColor: "rgba(12, 10, 20, 0.44)",
+    backdropFilter: "blur(3px)"
   },
   grabber: {
     flex: "none",
@@ -40,8 +45,8 @@ const useStyles = makeStyles(theme => ({
     cursor: "grab"
   },
   grabberBar: {
-    width: 40,
-    height: 4,
+    width: 44,
+    height: 5,
     borderRadius: theme.palette.tkv.radius.pill,
     backgroundColor: theme.palette.tkv.borderStrong
   },
@@ -92,8 +97,13 @@ const BottomSheet = ({
       onOpen={onOpen || (() => {})}
       disableSwipeToOpen
       disableDiscovery
+      // sobe um pouco mais devagar do que desce, como nos apps do celular
+      transitionDuration={{ enter: 320, exit: 220 }}
       classes={{ paper: classes.paper }}
-      ModalProps={{ keepMounted: true }}
+      ModalProps={{
+        keepMounted: true,
+        BackdropProps: { className: classes.backdrop }
+      }}
     >
       <div className={classes.grabber} aria-hidden="true">
         <div className={classes.grabberBar} />

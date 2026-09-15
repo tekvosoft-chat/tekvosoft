@@ -298,18 +298,17 @@ const NotificationsPopOver = props => {
     } else {
       document.title = theme.appName || "...";
     }
-    return (
-      <>
-        <Favicon
-          animated={true}
-          url={
-            theme?.appLogoFavicon ? theme.appLogoFavicon : defaultLogoFavicon
-          }
-          alertCount={notifications.length}
-          iconSize={195}
-        />
-      </>
-    );
+    // O número NÃO é desenhado em cima do ícone: isso trocava o ícone do
+    // app e, ao adicionar à tela de início, a logo ia junto com o "1".
+    // O contador usa o selo do sistema operacional, quando existe.
+    if (navigator.setAppBadge) {
+      if (notifications.length > 0) {
+        navigator.setAppBadge(notifications.length).catch(() => {});
+      } else {
+        navigator.clearAppBadge?.().catch(() => {});
+      }
+    }
+    return null;
   };
 
   return (

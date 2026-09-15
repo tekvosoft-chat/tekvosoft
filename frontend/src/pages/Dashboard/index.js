@@ -94,6 +94,14 @@ const useStyles = makeStyles(theme => ({
     padding: theme.spacing(2.25),
     height: "100%",
     minHeight: 116,
+    [theme.breakpoints.down("xs")]: {
+      padding: theme.spacing(1.5),
+      minHeight: 92,
+      gap: theme.spacing(1),
+      "& $metricValue": { fontSize: "1.5rem" },
+      "& $metricLabel": { fontSize: "0.75rem" },
+      "& $metricIcon": { width: 34, height: 34, "& svg": { fontSize: 18 } }
+    },
     borderRadius: theme.palette.tkv.radius.lg,
     border: `1px solid ${theme.palette.tkv.border}`,
     backgroundColor: theme.palette.tkv.surface,
@@ -152,7 +160,47 @@ const useStyles = makeStyles(theme => ({
     flex: "none",
     width: 60,
     height: 60,
-    marginTop: -2
+    marginTop: -2,
+    [theme.breakpoints.down("xs")]: { display: "none" }
+  },
+
+  // cabeçalho de cada bloco: título e, à direita, o que filtra o bloco
+  sectionHead: {
+    display: "flex",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: theme.spacing(1.5),
+    marginTop: theme.spacing(1)
+  },
+  sectionTitle: {
+    fontSize: "1.0625rem",
+    fontWeight: 700,
+    letterSpacing: "-0.01em",
+    color: theme.palette.text.primary
+  },
+  sectionHint: {
+    fontSize: "0.8125rem",
+    color: theme.palette.text.secondary
+  },
+  liveDot: {
+    display: "inline-block",
+    width: 8,
+    height: 8,
+    marginRight: 8,
+    borderRadius: "50%",
+    verticalAlign: "middle",
+    backgroundColor: theme.palette.tkv.semantic.success,
+    boxShadow: `0 0 0 4px ${theme.palette.tkv.semantic.successSoft}`
+  },
+  chartCard: {
+    padding: theme.spacing(2),
+    borderRadius: theme.palette.tkv.radius.lg,
+    border: `1px solid ${theme.palette.tkv.border}`,
+    backgroundColor: theme.palette.tkv.surface,
+    height: 280,
+    display: "flex",
+    flexDirection: "column"
   }
 }));
 
@@ -187,7 +235,7 @@ const InfoCard = props => (
 );
 
 const InfoRingCard = props => (
-  <Grid item xs={12} sm={4}>
+  <Grid item xs={4} sm={4}>
     <MetricCard {...props} />
   </Grid>
 );
@@ -384,7 +432,21 @@ const Dashboard = () => {
   function renderFilters() {
     return (
       <Grid item xs={12}>
-        <Paper variant="outlined" className={classes.filterBar}>
+        <div className={classes.sectionHead}>
+          <div>
+            <Typography component="h2" className={classes.sectionTitle}>
+              {i18n.t("dashboard.sections.period")}
+            </Typography>
+            <Typography className={classes.sectionHint}>
+              {i18n.t("dashboard.sections.periodHint")}
+            </Typography>
+          </div>
+        </div>
+        <Paper
+          variant="outlined"
+          className={classes.filterBar}
+          style={{ marginTop: 12 }}
+        >
           <FormControl className={classes.filterField}>
             <InputLabel id="period-selector-label">
               {i18n.t("dashboard.filter.period")}
@@ -449,7 +511,20 @@ const Dashboard = () => {
   return (
     <div>
       <Container maxWidth="lg" className={classes.container}>
-        <Grid container spacing={3} justifyContent="flex-start">
+        <Grid container spacing={2} justifyContent="flex-start">
+          <Grid item xs={12}>
+            <div className={classes.sectionHead} style={{ marginTop: 0 }}>
+              <div>
+                <Typography component="h2" className={classes.sectionTitle}>
+                  <span className={classes.liveDot} />
+                  {i18n.t("dashboard.sections.now")}
+                </Typography>
+                <Typography className={classes.sectionHint}>
+                  {i18n.t("dashboard.sections.nowHint")}
+                </Typography>
+              </div>
+            </div>
+          </Grid>
           {/* USUARIOS ONLINE */}
           <InfoRingCard
             title={i18n.t("dashboard.usersOnline")}
@@ -508,14 +583,26 @@ const Dashboard = () => {
 
           {/* DASHBOARD ATENDIMENTOS NO PERÍODO */}
           <Grid item xs={12}>
-            <Paper className={classes.fixedHeightPaper}>
+            <div className={classes.chartCard}>
               <TicketCountersChart
                 ticketCounters={ticketsData.ticketCounters}
               />
-            </Paper>
+            </div>
           </Grid>
 
-          {/* USER REPORT */}
+          {/* EQUIPE */}
+          <Grid item xs={12}>
+            <div className={classes.sectionHead}>
+              <div>
+                <Typography component="h2" className={classes.sectionTitle}>
+                  {i18n.t("dashboard.sections.team")}
+                </Typography>
+                <Typography className={classes.sectionHint}>
+                  {i18n.t("dashboard.sections.teamHint")}
+                </Typography>
+              </div>
+            </div>
+          </Grid>
           <Grid item xs={12}>
             {usersData.userReport?.length ? (
               <TableAttendantsStatus

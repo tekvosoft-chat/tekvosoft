@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter, Redirect, Switch } from "react-router-dom";
-import { ToastContainer } from "react-toastify";
+import { Slide, ToastContainer } from "react-toastify";
 
 import LoggedInLayout from "../layout";
 import Dashboard from "../pages/Dashboard/";
@@ -161,7 +161,16 @@ const Routes = () => {
               </LoggedInLayout>
             </WhatsAppsProvider>
           </Switch>
-          <ToastContainer autoClose={3000} />
+          <ToastContainer
+            position="top-right"
+            transition={Slide}
+            autoClose={2200}
+            hideProgressBar
+            newestOnTop
+            limit={3}
+            closeOnClick
+            draggable
+          />
         </TicketsContextProvider>
       </AuthProvider>
     </BrowserRouter>

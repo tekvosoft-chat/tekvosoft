@@ -122,6 +122,7 @@ const messages = {
           user: "Usuario"
         },
         table: {
+          storage: "Almacenamiento",
           campaigns: "Campañas",
           createdAt: "Creada el"
         },
@@ -146,6 +147,23 @@ const messages = {
         token: "Token"
       },
       dashboard: {
+        sections: {
+          now: "Ahora",
+          nowHint: "Situación en tiempo real",
+          period: "En el período",
+          periodHint: "Números del intervalo elegido",
+          team: "Equipo",
+          teamHint: "Desempeño de cada agente en el período"
+        },
+        team: {
+          online: "En línea",
+          offline: "Desconectado",
+          total: "Total",
+          open: "Abiertos",
+          closed: "Resueltos",
+          wait: "Espera",
+          service: "Atención"
+        },
         usersOnline: "Usuarios en línea",
         ticketsOpen: "Atenciones abiertas",
         ticketsDone: "Atenciones resueltas",
@@ -409,6 +427,14 @@ const messages = {
         }
       },
       userModal: {
+        photo: {
+          add: "Agregar foto",
+          change: "Cambiar foto",
+          remove: "Quitar",
+          hint: "JPG o PNG. Aparece en la barra superior, el menú y el chat interno.",
+          saved: "Foto actualizada",
+          removed: "Foto eliminada"
+        },
         title: {
           add: "Agregar usuario",
           edit: "Editar usuario"
@@ -938,6 +964,11 @@ const messages = {
         added: "Respuesta rápida creada",
         updated: "Respuesta rápida actualizada",
         deleted: "Respuesta rápida eliminada"
+      },
+      ticketActions: {
+        spy: "Espiar conversación",
+        close: "Cerrar conversación",
+        noQueue: "Sin cola"
       },
       about: {
         headline: "Hecha para atender mejor, todos los días",

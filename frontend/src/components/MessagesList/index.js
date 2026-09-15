@@ -134,7 +134,10 @@ const useStyles = makeStyles(theme => ({
     flexGrow: 1,
     padding: "20px 20px 20px 20px",
     overflowY: "scroll",
+    // o gesto de responder move o balão para o lado; a lista não acompanha
+    overflowX: "hidden",
     overscrollBehavior: "contain",
+    overscrollBehaviorX: "none",
     ...theme.scrollbarStyles,
     [theme.breakpoints.down("xs")]: {
       padding: "10px 8px 12px",
@@ -189,7 +192,9 @@ const useStyles = makeStyles(theme => ({
   },
 
   quotedContainerLeft: {
-    margin: "-3px -80px 6px -6px",
+    margin: "-1px -1px 6px -1px",
+    maxWidth: "100%",
+    minWidth: 0,
     overflow: "hidden",
     backgroundColor: theme.palette.tkv.chat.quoteIn,
     borderRadius: "7.5px",
@@ -198,13 +203,17 @@ const useStyles = makeStyles(theme => ({
     cursor: "pointer"
   },
 
+  // texto citado: até 3 linhas e quebra palavras longas (links, números)
   quotedMsg: {
     padding: 10,
-    // maxWidth: 300,
     width: "100%",
+    minWidth: 0,
     height: "auto",
-    display: "block",
+    display: "-webkit-box",
+    WebkitLineClamp: 3,
+    WebkitBoxOrient: "vertical",
     whiteSpace: "pre-wrap",
+    overflowWrap: "anywhere",
     overflow: "hidden"
   },
 
@@ -215,8 +224,10 @@ const useStyles = makeStyles(theme => ({
   },
 
   quotedThumbnail: {
-    maxWidth: "180px",
-    height: "90px"
+    flex: "none",
+    maxWidth: 72,
+    height: 72,
+    objectFit: "cover"
   },
 
   messageRight: {
@@ -255,7 +266,9 @@ const useStyles = makeStyles(theme => ({
   },
 
   quotedContainerRight: {
-    margin: "-3px -80px 6px -6px",
+    margin: "-1px -1px 6px -1px",
+    maxWidth: "100%",
+    minWidth: 0,
     overflowY: "hidden",
     backgroundColor: theme.palette.tkv.chat.quoteOut,
     borderRadius: "7.5px",
@@ -265,9 +278,14 @@ const useStyles = makeStyles(theme => ({
 
   quotedMsgRight: {
     padding: 10,
-    // maxWidth: 300,
+    minWidth: 0,
     height: "auto",
-    whiteSpace: "pre-wrap"
+    display: "-webkit-box",
+    WebkitLineClamp: 3,
+    WebkitBoxOrient: "vertical",
+    whiteSpace: "pre-wrap",
+    overflowWrap: "anywhere",
+    overflow: "hidden"
   },
 
   quotedSideColorRight: {
@@ -400,8 +418,17 @@ const useStyles = makeStyles(theme => ({
   },
 
   messageMediaSticker: {
-    backgroundColor: "unset",
-    boxShadow: "unset"
+    backgroundColor: "transparent",
+    boxShadow: "none",
+    minWidth: 0,
+    padding: 0,
+    "& $messageMedia": {
+      width: 160,
+      height: "auto",
+      maxWidth: "48vw",
+      borderRadius: 0,
+      backgroundColor: "transparent"
+    }
   },
 
   timestamp: {
@@ -804,6 +831,27 @@ const reducer = (state, action) => {
   if (action.type === "RESET") {
     return [];
   }
+};
+
+/**
+ * Figurinha (sticker) x imagem.
+ *
+ * A figurinha chega como imagem webp, e a marca de que é figurinha pode vir
+ * embrulhada (mensagem efêmera, "ver uma vez", encaminhada). Aqui a busca é
+ * em profundidade e, na falta da marca, o próprio arquivo .webp resolve —
+ * assim ela aparece solta no fundo, sem balão, como no WhatsApp.
+ */
+const detectSticker = (message, data) => {
+  const find = (node, depth = 0) => {
+    if (!node || typeof node !== "object" || depth > 5) return false;
+    if ("stickerMessage" in node) return true;
+    return Object.values(node).some(value => find(value, depth + 1));
+  };
+  if (find(data?.message)) return true;
+  return (
+    message?.mediaType === "image" &&
+    /\.webp($|\?)/i.test(message.mediaUrl || "")
+  );
 };
 
 const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
@@ -2065,7 +2113,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
       const data = JSON.parse(message.dataJson);
       const dataContext = getDataContextInfo(data);
       const messageError = getMessageErrorData(message);
-      const isSticker = data?.message && "stickerMessage" in data.message;
+      const isSticker = detectSticker(message, data);
       if (!message.fromMe) {
         const messageFragment = (
           <React.Fragment key={message.id}>

@@ -25,6 +25,7 @@ import toastError from "../../errors/toastError";
 import QueueSelect from "../QueueSelect";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { Can } from "../Can";
+import ProfileImageField from "./ProfileImageField";
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -146,6 +147,13 @@ const UserModal = ({ open, onClose, userId }) => {
           {({ touched, errors, isSubmitting }) => (
             <Form>
               <DialogContent dividers>
+                <ProfileImageField
+                  userId={userId}
+                  user={user}
+                  onChange={profileImage =>
+                    setUser(prev => ({ ...prev, profileImage }))
+                  }
+                />
                 <div className={classes.multFieldLine}>
                   <Field
                     as={TextField}

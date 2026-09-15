@@ -14,7 +14,7 @@ export const manifest = async (
     ico: "image/x-icon"
   };
 
-  let mimeFavicon = "image/svg+xml";
+  let mimeFavicon = "image/png";
 
   if (logoFavicon) {
     const extension = logoFavicon.split(".").pop();
@@ -28,7 +28,7 @@ export const manifest = async (
       {
         src: logoFavicon
           ? `/backend/public/${logoFavicon}`
-          : "/vector/favicon.svg",
+          : "/vector/favicon.png",
         sizes: "512x512 192x192 64x64 32x32 24x24 16x16",
         type: mimeFavicon
       }

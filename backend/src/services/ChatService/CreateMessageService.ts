@@ -32,7 +32,7 @@ export default async function CreateMessageService({
 
   await newMessage.reload({
     include: [
-      { model: User, as: "sender", attributes: ["id", "name"] },
+      { model: User, as: "sender", attributes: ["id", "name", "profileImage"] },
       {
         model: Chat,
         as: "chat",

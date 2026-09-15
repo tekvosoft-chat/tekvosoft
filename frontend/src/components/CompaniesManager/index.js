@@ -35,8 +35,49 @@ import { i18n } from "../../translate/i18n";
 import moment from "moment";
 
 import { AuthContext } from "../../context/Auth/AuthContext";
+import useMediaQuery from "@material-ui/core/useMediaQuery";
+import { useTheme } from "@material-ui/core/styles";
+import clsx from "clsx";
 
 const useStyles = makeStyles(theme => ({
+  // celular: uma tabela de nove colunas não cabe; cada empresa vira um cartão
+  companyCards: {
+    display: "flex",
+    flexDirection: "column",
+    gap: theme.spacing(1.5),
+    padding: theme.spacing(1, 0, 2)
+  },
+  companyCard: {
+    borderRadius: theme.palette.tkv.radius.lg,
+    border: `1px solid ${theme.palette.tkv.border}`,
+    backgroundColor: theme.palette.tkv.surface,
+    padding: theme.spacing(1.5)
+  },
+  companyCardHead: {
+    display: "flex",
+    alignItems: "center",
+    gap: theme.spacing(1),
+    marginBottom: theme.spacing(1)
+  },
+  companyName: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: "1rem",
+    fontWeight: 700,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap"
+  },
+  companyFacts: {
+    display: "grid",
+    gridTemplateColumns: "auto 1fr",
+    gap: "6px 12px",
+    margin: 0,
+    fontSize: "0.875rem",
+    "& dt": { color: theme.palette.text.secondary },
+    "& dd": { margin: 0, textAlign: "right", fontWeight: 500 }
+  },
+  companyBreak: { wordBreak: "break-all" },
   root: {
     width: "100%"
   },
@@ -449,9 +490,28 @@ export function CompanyForm(props) {
   );
 }
 
+const formatBytes = bytes => {
+  if (!bytes) return "0 MB";
+  const mb = bytes / (1024 * 1024);
+  if (mb >= 1024) return `${(mb / 1024).toFixed(2)} GB`;
+  if (mb >= 1) return `${mb.toFixed(1)} MB`;
+  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+};
+
 export function CompaniesManagerGrid(props) {
   const { records, onSelect } = props;
   const classes = useStyles();
+  const theme = useTheme();
+  const isPhone = useMediaQuery(theme.breakpoints.down("sm"));
+  const [storage, setStorage] = useState({});
+
+  // espaço em disco usado por cada empresa (mídias das conversas)
+  useEffect(() => {
+    api
+      .get("/companies/storage")
+      .then(({ data }) => setStorage(data || {}))
+      .catch(() => setStorage({}));
+  }, []);
   const { dateToClient } = useDate();
   const { getSetting } = useSettings();
   const [gracePeriod, setGracePeriod] = useState(5);
@@ -506,6 +566,45 @@ export function CompaniesManagerGrid(props) {
     return classes.active;
   };
 
+  if (isPhone) {
+    return (
+      <div className={classes.companyCards}>
+        {records.map(row => (
+          <div
+            key={row.id}
+            className={clsx(classes.companyCard, rowClass(row))}
+          >
+            <div className={classes.companyCardHead}>
+              <span className={classes.companyName}>{row.name || "-"}</span>
+              <IconButton size="small" onClick={() => onSelect(row)}>
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </div>
+            <dl className={classes.companyFacts}>
+              <dt>{i18n.t("companies.form.plan")}</dt>
+              <dd>{renderPlan(row)}</dd>
+              <dt>{i18n.t("common.status")}</dt>
+              <dd>{renderStatus(row)}</dd>
+              <dt>{i18n.t("common.dueDate")}</dt>
+              <dd>
+                {dateToClient(row.dueDate)}
+                {row.recurrence ? ` · ${row.recurrence}` : ""}
+              </dd>
+              <dt>{i18n.t("companiesManager.table.storage")}</dt>
+              <dd>{formatBytes(storage[row.id])}</dd>
+              <dt>{i18n.t("common.email")}</dt>
+              <dd className={classes.companyBreak}>{row.email || "-"}</dd>
+              <dt>{i18n.t("common.phone")}</dt>
+              <dd>{row.phone || "-"}</dd>
+              <dt>{i18n.t("companiesManager.table.campaigns")}</dt>
+              <dd>{renderCampaignsStatus(row)}</dd>
+            </dl>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <Paper className={classes.tableContainer}>
       <Table
@@ -530,6 +629,9 @@ export function CompaniesManagerGrid(props) {
               {i18n.t("companiesManager.table.createdAt")}
             </TableCell>
             <TableCell align="left">{i18n.t("common.dueDate")}</TableCell>
+            <TableCell align="left">
+              {i18n.t("companiesManager.table.storage")}
+            </TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -565,6 +667,9 @@ export function CompaniesManagerGrid(props) {
                 {dateToClient(row.dueDate)}
                 <br />
                 <span>{row.recurrence}</span>
+              </TableCell>
+              <TableCell align="left" style={{ color: "unset" }}>
+                {formatBytes(storage[row.id])}
               </TableCell>
             </TableRow>
           ))}

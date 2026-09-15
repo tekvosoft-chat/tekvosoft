@@ -33,6 +33,7 @@ import RecordingTimer from "../../components/MessageInputCustom/RecordingTimer";
 import MediaGalleryLightbox, {
   buildMediaGalleryData
 } from "../../components/MediaGalleryLightbox";
+import UserAvatar from "../../components/ui/UserAvatar";
 
 /**
  * Mensagens do chat interno.
@@ -96,8 +97,13 @@ const useStyles = makeStyles(theme => {
 
     bubbleRow: {
       display: "flex",
+      alignItems: "flex-end",
+      gap: 8,
       marginTop: 2
     },
+    // espaço fixo da foto: as mensagens seguidas da mesma pessoa continuam
+    // alinhadas, com a foto só na primeira
+    rowAvatar: { flex: "none", width: 30 },
     bubbleRowFirst: { marginTop: theme.spacing(1.25) },
     bubbleRowMine: { justifyContent: "flex-end" },
 
@@ -424,6 +430,15 @@ export default function ChatMessages({
     previewVideo.pause();
   };
 
+  // o corpo da mensagem de mídia é o nome do arquivo: não vira legenda
+  const captionOf = item => {
+    const text = (item.message || "").trim();
+    if (!item.mediaPath || !text) return item.message;
+    const file = decodeURIComponent(String(item.mediaPath).split("/").pop());
+    const looksLikeFile = /^[^\s]+\.[a-z0-9]{2,5}$/i.test(text);
+    return text === file || looksLikeFile ? "" : item.message;
+  };
+
   const checkMessageMedia = message => {
     const mediaUrl = message.mediaPath;
 
@@ -643,6 +658,11 @@ export default function ChatMessages({
               mine && classes.bubbleRowMine
             )}
           >
+            {!mine && (
+              <span className={classes.rowAvatar}>
+                {!sameRun && <UserAvatar user={item.sender} size={30} />}
+              </span>
+            )}
             <div
               className={clsx(
                 classes.bubble,
@@ -655,7 +675,7 @@ export default function ChatMessages({
                 <span className={classes.sender}>{item.sender?.name}</span>
               )}
               {item.mediaPath && checkMessageMedia(item)}
-              {item.message}
+              {captionOf(item)}
               <span className={classes.bubbleMeta}>
                 {Number.isNaN(created.getTime())
                   ? datetimeToClient(item.createdAt)

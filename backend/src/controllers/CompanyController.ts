@@ -16,6 +16,7 @@ import User from "../models/User";
 
 import CheckSettings from "../helpers/CheckSettings";
 import { OpenHoursData } from "../helpers/checkOpenHours";
+import CompaniesStorageService from "../services/CompanyService/CompaniesStorageService";
 
 type IndexQuery = {
   searchParam: string;
@@ -172,4 +173,13 @@ export const remove = async (
   const company = await DeleteCompanyService(id);
 
   return res.status(200).json(company);
+};
+
+/** Espaço em disco usado por cada empresa (mídias das conversas). */
+export const storage = async (
+  _req: Request,
+  res: Response
+): Promise<Response> => {
+  const usage = await CompaniesStorageService();
+  return res.status(200).json(usage);
 };

@@ -88,6 +88,7 @@ const messages = {
           user: "Benutzer"
         },
         table: {
+          storage: "Speicher",
           campaigns: "Kampagnen",
           createdAt: "Erstellt am"
         },
@@ -113,6 +114,23 @@ const messages = {
         token: "Token"
       },
       dashboard: {
+        sections: {
+          now: "Jetzt",
+          nowHint: "Status in Echtzeit",
+          period: "Im Zeitraum",
+          periodHint: "Zahlen für den gewählten Zeitraum",
+          team: "Team",
+          teamHint: "Leistung jedes Mitarbeiters im Zeitraum"
+        },
+        team: {
+          online: "Jetzt online",
+          offline: "Offline",
+          total: "Gesamt",
+          open: "Offen",
+          closed: "Gelöst",
+          wait: "Warten",
+          service: "Bearbeitung"
+        },
         charts: {
           perDay: {
             title: "Heutige Interaktionen: "
@@ -353,6 +371,14 @@ const messages = {
         }
       },
       userModal: {
+        photo: {
+          add: "Foto hinzufügen",
+          change: "Foto ändern",
+          remove: "Entfernen",
+          hint: "JPG oder PNG. Erscheint oben, im Menü und im internen Chat.",
+          saved: "Foto aktualisiert",
+          removed: "Foto entfernt"
+        },
         title: {
           add: "Benutzer hinzufügen",
           edit: "Benutzer bearbeiten"
@@ -874,6 +900,11 @@ const messages = {
         added: "Schnellantwort erstellt",
         updated: "Schnellantwort aktualisiert",
         deleted: "Schnellantwort gelöscht"
+      },
+      ticketActions: {
+        spy: "Gespräch ansehen",
+        close: "Gespräch schließen",
+        noQueue: "Keine Warteschlange"
       },
       about: {
         headline: "Gemacht, um jeden Tag besser zu betreuen",

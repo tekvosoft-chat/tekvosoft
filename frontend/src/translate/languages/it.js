@@ -89,6 +89,7 @@ const messages = {
           user: "Utente"
         },
         table: {
+          storage: "Spazio",
           campaigns: "Campagne",
           createdAt: "Creata il"
         },
@@ -113,6 +114,23 @@ const messages = {
         token: "Token"
       },
       dashboard: {
+        sections: {
+          now: "Adesso",
+          nowHint: "Situazione in tempo reale",
+          period: "Nel periodo",
+          periodHint: "Numeri dell'intervallo scelto",
+          team: "Team",
+          teamHint: "Rendimento di ogni operatore nel periodo"
+        },
+        team: {
+          online: "Online ora",
+          offline: "Offline",
+          total: "Totale",
+          open: "Aperti",
+          closed: "Risolti",
+          wait: "Attesa",
+          service: "Servizio"
+        },
         charts: {
           perDay: {
             title: "Interazioni di oggi: "
@@ -348,6 +366,14 @@ const messages = {
         }
       },
       userModal: {
+        photo: {
+          add: "Aggiungi foto",
+          change: "Cambia foto",
+          remove: "Rimuovi",
+          hint: "JPG o PNG. Appare in alto, nel menu e nella chat interna.",
+          saved: "Foto aggiornata",
+          removed: "Foto rimossa"
+        },
         title: {
           add: "Aggiungi utente",
           edit: "Modifica utente"
@@ -865,6 +891,11 @@ const messages = {
         added: "Risposta rapida creata",
         updated: "Risposta rapida aggiornata",
         deleted: "Risposta rapida eliminata"
+      },
+      ticketActions: {
+        spy: "Sbircia conversazione",
+        close: "Chiudi conversazione",
+        noQueue: "Nessuna coda"
       },
       about: {
         headline: "Pensata per assistere meglio, ogni giorno",

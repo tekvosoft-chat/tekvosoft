@@ -1,4 +1,6 @@
 import { Request, Response } from "express";
+import fs from "fs";
+import path from "path";
 import { getIO } from "../libs/socket";
 
 import AppError from "../errors/AppError";
@@ -10,6 +12,7 @@ import ShowUserService from "../services/UserServices/ShowUserService";
 import DeleteUserService from "../services/UserServices/DeleteUserService";
 import SimpleListService from "../services/UserServices/SimpleListService";
 import User from "../models/User";
+import saveMediaToFile from "../helpers/saveMediaFile";
 
 type IndexQuery = {
   searchParam: string;
@@ -149,4 +152,62 @@ export const list = async (req: Request, res: Response): Promise<Response> => {
   });
 
   return res.status(200).json(users);
+};
+
+/**
+ * Foto de perfil do usuário. Cada pessoa troca a sua; o administrador pode
+ * trocar a de qualquer um da empresa. O arquivo vai para a pasta pública, em
+ * media-persistant, e o banco guarda só o caminho.
+ */
+export const updateProfileImage = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { id: requestUserId, companyId, profile } = req.user;
+  const { userId } = req.params;
+  const file = req.file as Express.Multer.File;
+
+  const user = await User.findByPk(userId);
+
+  if (!user || user.companyId !== companyId) {
+    throw new AppError("ERR_NO_USER_FOUND", 404);
+  }
+
+  if (profile !== "admin" && +requestUserId !== user.id) {
+    throw new AppError("ERR_NO_PERMISSION", 403);
+  }
+
+  if (req.method === "DELETE") {
+    await user.update({ profileImage: null });
+  } else {
+    if (!file) {
+      throw new AppError("ERR_NO_FILE_UPLOADED", 400);
+    }
+    if (!/^image\//.test(file.mimetype)) {
+      throw new AppError("ERR_INVALID_FILE_TYPE", 400);
+    }
+
+    const savedPath = await saveMediaToFile(
+      {
+        data: fs.readFileSync(file.path),
+        mimetype: file.mimetype,
+        filename: `perfil-${user.id}${path.extname(file.originalname) || ".jpg"}`
+      },
+      {
+        destination: companyId,
+        persistant: true,
+        baseFolder: "media-persistant"
+      }
+    );
+    fs.unlinkSync(file.path);
+
+    await user.update({ profileImage: savedPath });
+  }
+
+  await user.reload({ attributes: ["id", "name", "profileImage"] });
+
+  const io = getIO();
+  io.emit(`company-${companyId}-user`, { action: "update", user });
+
+  return res.status(200).json({ profileImage: user.profileImage });
 };

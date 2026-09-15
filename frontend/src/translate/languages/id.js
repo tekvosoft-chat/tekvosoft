@@ -87,6 +87,7 @@ const messages = {
           user: "Pengguna"
         },
         table: {
+          storage: "Penyimpanan",
           campaigns: "Kampanye",
           createdAt: "Dibuat pada"
         },
@@ -112,6 +113,23 @@ const messages = {
         token: "Token"
       },
       dashboard: {
+        sections: {
+          now: "Sekarang",
+          nowHint: "Status waktu nyata",
+          period: "Dalam periode",
+          periodHint: "Angka untuk rentang yang dipilih",
+          team: "Tim",
+          teamHint: "Kinerja setiap agen dalam periode"
+        },
+        team: {
+          online: "Online sekarang",
+          offline: "Offline",
+          total: "Total",
+          open: "Terbuka",
+          closed: "Selesai",
+          wait: "Tunggu",
+          service: "Layanan"
+        },
         charts: {
           perDay: {
             title: "Interaksi Hari Ini: "
@@ -358,6 +376,14 @@ const messages = {
         }
       },
       userModal: {
+        photo: {
+          add: "Tambah foto",
+          change: "Ganti foto",
+          remove: "Hapus",
+          hint: "JPG atau PNG. Tampil di bilah atas, menu, dan obrolan internal.",
+          saved: "Foto diperbarui",
+          removed: "Foto dihapus"
+        },
         title: {
           add: "Tambah Pengguna",
           edit: "Edit Pengguna"
@@ -881,6 +907,11 @@ const messages = {
         added: "Balasan cepat dibuat",
         updated: "Balasan cepat diperbarui",
         deleted: "Balasan cepat dihapus"
+      },
+      ticketActions: {
+        spy: "Intip percakapan",
+        close: "Tutup percakapan",
+        noQueue: "Tanpa antrean"
       },
       about: {
         headline: "Dibuat untuk melayani lebih baik, setiap hari",

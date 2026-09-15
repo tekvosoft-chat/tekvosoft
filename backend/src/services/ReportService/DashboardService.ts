@@ -192,6 +192,7 @@ export async function userReport(companyId: number, start: Date, end: Date) {
     attributes: [
       "id",
       "name",
+      "profileImage",
       [fn("AVG", col("tickets.ticketTrakings.waitTime")), "avgWaitTime"],
       [fn("AVG", col("tickets.ticketTrakings.serviceTime")), "avgServiceTime"],
       [fn("COUNT", col("tickets.id")), "totalTickets"],

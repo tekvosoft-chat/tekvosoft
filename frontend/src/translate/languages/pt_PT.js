@@ -120,6 +120,7 @@ const messages = {
           user: "Utilizador"
         },
         table: {
+          storage: "Armazenamento",
           campaigns: "Campanhas",
           createdAt: "Criada Em"
         },
@@ -144,6 +145,23 @@ const messages = {
         token: "Token"
       },
       dashboard: {
+        sections: {
+          now: "Agora",
+          nowHint: "Situação em tempo real",
+          period: "No período",
+          periodHint: "Números do intervalo escolhido",
+          team: "Equipa",
+          teamHint: "Desempenho de cada atendente no período"
+        },
+        team: {
+          online: "Online agora",
+          offline: "Offline",
+          total: "Total",
+          open: "Abertos",
+          closed: "Resolvidos",
+          wait: "Espera",
+          service: "Atendimento"
+        },
         charts: {
           perDay: {
             title: "Atendimentos hoje: "
@@ -377,6 +395,14 @@ const messages = {
         }
       },
       userModal: {
+        photo: {
+          add: "Adicionar foto",
+          change: "Trocar foto",
+          remove: "Remover",
+          hint: "JPG ou PNG. Aparece no topo, no menu e no chat interno.",
+          saved: "Foto atualizada",
+          removed: "Foto removida"
+        },
         title: {
           add: "Adicionar utilizador",
           edit: "Editar utilizador"
@@ -908,6 +934,11 @@ const messages = {
         added: "Resposta rápida criada",
         updated: "Resposta rápida atualizada",
         deleted: "Resposta rápida eliminada"
+      },
+      ticketActions: {
+        spy: "Espreitar conversa",
+        close: "Encerrar conversa",
+        noQueue: "Sem fila"
       },
       about: {
         headline: "Feita para atender melhor, todos os dias",

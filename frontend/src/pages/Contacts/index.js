@@ -52,6 +52,10 @@ import {
   Select,
   Tooltip
 } from "@material-ui/core";
+import clsx from "clsx";
+import useMediaQuery from "@material-ui/core/useMediaQuery";
+import { useTheme } from "@material-ui/core/styles";
+import EmptyState from "../../components/ui/EmptyState";
 
 const reducer = (state, action) => {
   if (action.type === "LOAD_CONTACTS") {
@@ -106,6 +110,45 @@ const useStyles = makeStyles(theme => ({
     ...theme.scrollbarStyles
   },
 
+  /**
+   * Celular: cada contato vira um cartão, com o número embaixo do nome e os
+   * botões à direita. Antes era a mesma tabela do computador, e o WhatsApp
+   * e o lápis só apareciam arrastando a tabela para o lado.
+   */
+  phoneList: { display: "flex", flexDirection: "column" },
+  phoneRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: theme.spacing(1.5),
+    padding: theme.spacing(1.25, 1.5),
+    borderBottom: `1px solid ${theme.palette.tkv.border}`
+  },
+  phoneBody: { flex: 1, minWidth: 0 },
+  phoneName: {
+    fontSize: "0.9375rem",
+    fontWeight: 600,
+    color: theme.palette.text.primary,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap"
+  },
+  phoneMeta: {
+    fontSize: "0.8125rem",
+    color: theme.palette.text.secondary,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap"
+  },
+  phoneActions: { flex: "none", display: "flex", gap: 4 },
+  phoneAction: {
+    width: 40,
+    height: 40,
+    borderRadius: theme.palette.tkv.radius.sm
+  },
+  phoneWhats: {
+    color: theme.palette.tkv.semantic.success
+  },
+
   selectContainer: {
     width: "100%",
     textAlign: "left"
@@ -130,6 +173,8 @@ const useStyles = makeStyles(theme => ({
 
 const Contacts = () => {
   const classes = useStyles();
+  const theme = useTheme();
+  const isPhone = useMediaQuery(theme.breakpoints.down("xs"));
   const history = useHistory();
 
   const { user } = useContext(AuthContext);
@@ -423,104 +468,84 @@ const Contacts = () => {
         variant="outlined"
         onScroll={handleScroll}
       >
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell padding="checkbox" />
-              <TableCell className={classes.contactName}>
-                {i18n.t("contacts.table.name")}
-              </TableCell>
-              <TableCell align="center">
-                {i18n.t("contacts.table.whatsapp")}
-              </TableCell>
-              <TableCell align="center">
-                {i18n.t("contacts.table.email")}
-              </TableCell>
-              <TableCell align="center">
-                {i18n.t("contacts.table.actions")}
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            <>
-              {contacts.map(contact => (
-                <TableRow key={contact.id}>
-                  <TableCell style={{ paddingRight: 0 }}>
-                    {
-                      <Avatar
-                        style={{
-                          backgroundColor: generateColor(contact?.number),
-                          fontWeight: "bold",
-                          color: "white"
-                        }}
-                        src={contact.profilePicUrl}
+        {isPhone ? (
+          <div className={classes.phoneList}>
+            {contacts.map(contact => (
+              <div key={contact.id} className={classes.phoneRow}>
+                <Avatar
+                  style={{
+                    backgroundColor: generateColor(contact?.number),
+                    fontWeight: "bold",
+                    color: "white"
+                  }}
+                  src={contact.profilePicUrl}
+                >
+                  {getInitials(contact?.name)}
+                </Avatar>
+                <div className={classes.phoneBody}>
+                  <div className={classes.phoneName}>{contact.name}</div>
+                  <div className={classes.phoneMeta}>
+                    {contact.number}
+                    {contact.email ? ` · ${contact.email}` : ""}
+                  </div>
+                  <div className={classes.tagsdiv}>
+                    {contact.tags.map(tag => (
+                      <div
+                        key={tag.id}
+                        className={classes.tag}
+                        style={{ backgroundColor: tag.color }}
                       >
-                        {getInitials(contact?.name)}
-                      </Avatar>
-                    }
-                  </TableCell>
-                  <TableCell className={classes.contactName}>
-                    {contact.name}
-                    <div className={classes.tagsdiv}>
-                      {contact.tags.map(tag => (
-                        <Tooltip title={tag.name} placement="top" arrow>
-                          <div
-                            key={tag.id}
-                            className={classes.tag}
-                            style={{
-                              backgroundColor: tag.color
-                            }}
-                          >
-                            {tag.name}
-                          </div>
-                        </Tooltip>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell align="center">{contact.number}</TableCell>
-                  <TableCell align="center">{contact.email}</TableCell>
-                  <TableCell align="center">
-                    {!contact.isGroup && (
+                        {tag.name}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className={classes.phoneActions}>
+                  {!contact.isGroup && (
+                    <IconButton
+                      className={clsx(classes.phoneAction, classes.phoneWhats)}
+                      aria-label={i18n.t("contacts.table.whatsapp")}
+                      onClick={() =>
+                        window.mentionClick({
+                          contactId: contact.id,
+                          name: contact?.name,
+                          number: contact?.number
+                        })
+                      }
+                    >
+                      <WhatsAppIcon />
+                    </IconButton>
+                  )}
+                  <IconButton
+                    className={classes.phoneAction}
+                    aria-label={i18n.t("contactModal.title.edit")}
+                    onClick={() => hadleEditContact(contact.id)}
+                  >
+                    <EditIcon />
+                  </IconButton>
+                  <Can
+                    role={user.profile}
+                    perform="contacts-page:deleteContact"
+                    yes={() => (
                       <IconButton
-                        size="small"
-                        onClick={() =>
-                          window.mentionClick({
-                            contactId: contact.id,
-                            name: contact?.name,
-                            number: contact?.number
-                          })
-                        }
+                        className={classes.phoneAction}
+                        aria-label={i18n.t(
+                          "contacts.confirmationModal.deleteTitle"
+                        )}
+                        onClick={() => {
+                          setDeleteConfirmOpen(true);
+                          setDeletingContact(contact);
+                        }}
                       >
-                        <WhatsAppIcon />
+                        <DeleteOutlineIcon />
                       </IconButton>
                     )}
-                    <IconButton
-                      size="small"
-                      onClick={() => hadleEditContact(contact.id)}
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <Can
-                      role={user.profile}
-                      perform="contacts-page:deleteContact"
-                      yes={() => (
-                        <IconButton
-                          size="small"
-                          onClick={() => {
-                            setDeleteConfirmOpen(true);
-                            setDeletingContact(contact);
-                          }}
-                        >
-                          <DeleteOutlineIcon />
-                        </IconButton>
-                      )}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-              <TableEmpty
-                show={!loading && contacts.length === 0}
-                colSpan={5}
+                  />
+                </div>
+              </div>
+            ))}
+            {!loading && contacts.length === 0 && (
+              <EmptyState
                 icon={<ContactPhoneOutlinedIcon />}
                 title={
                   searchParam
@@ -533,10 +558,124 @@ const Contacts = () => {
                     : i18n.t("common.emptyDescription")
                 }
               />
-              {loading && <TableRowSkeleton avatar columns={3} />}
-            </>
-          </TableBody>
-        </Table>
+            )}
+          </div>
+        ) : (
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell padding="checkbox" />
+                <TableCell className={classes.contactName}>
+                  {i18n.t("contacts.table.name")}
+                </TableCell>
+                <TableCell align="center">
+                  {i18n.t("contacts.table.whatsapp")}
+                </TableCell>
+                <TableCell align="center">
+                  {i18n.t("contacts.table.email")}
+                </TableCell>
+                <TableCell align="center">
+                  {i18n.t("contacts.table.actions")}
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              <>
+                {contacts.map(contact => (
+                  <TableRow key={contact.id}>
+                    <TableCell style={{ paddingRight: 0 }}>
+                      {
+                        <Avatar
+                          style={{
+                            backgroundColor: generateColor(contact?.number),
+                            fontWeight: "bold",
+                            color: "white"
+                          }}
+                          src={contact.profilePicUrl}
+                        >
+                          {getInitials(contact?.name)}
+                        </Avatar>
+                      }
+                    </TableCell>
+                    <TableCell className={classes.contactName}>
+                      {contact.name}
+                      <div className={classes.tagsdiv}>
+                        {contact.tags.map(tag => (
+                          <Tooltip title={tag.name} placement="top" arrow>
+                            <div
+                              key={tag.id}
+                              className={classes.tag}
+                              style={{
+                                backgroundColor: tag.color
+                              }}
+                            >
+                              {tag.name}
+                            </div>
+                          </Tooltip>
+                        ))}
+                      </div>
+                    </TableCell>
+                    <TableCell align="center">{contact.number}</TableCell>
+                    <TableCell align="center">{contact.email}</TableCell>
+                    <TableCell align="center">
+                      {!contact.isGroup && (
+                        <IconButton
+                          size="small"
+                          onClick={() =>
+                            window.mentionClick({
+                              contactId: contact.id,
+                              name: contact?.name,
+                              number: contact?.number
+                            })
+                          }
+                        >
+                          <WhatsAppIcon />
+                        </IconButton>
+                      )}
+                      <IconButton
+                        size="small"
+                        onClick={() => hadleEditContact(contact.id)}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                      <Can
+                        role={user.profile}
+                        perform="contacts-page:deleteContact"
+                        yes={() => (
+                          <IconButton
+                            size="small"
+                            onClick={() => {
+                              setDeleteConfirmOpen(true);
+                              setDeletingContact(contact);
+                            }}
+                          >
+                            <DeleteOutlineIcon />
+                          </IconButton>
+                        )}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+                <TableEmpty
+                  show={!loading && contacts.length === 0}
+                  colSpan={5}
+                  icon={<ContactPhoneOutlinedIcon />}
+                  title={
+                    searchParam
+                      ? i18n.t("common.emptySearchTitle")
+                      : i18n.t("common.emptyTitle")
+                  }
+                  description={
+                    searchParam
+                      ? i18n.t("common.emptySearchDescription")
+                      : i18n.t("common.emptyDescription")
+                  }
+                />
+                {loading && <TableRowSkeleton avatar columns={3} />}
+              </>
+            </TableBody>
+          </Table>
+        )}
       </Paper>
     </MainContainer>
   );

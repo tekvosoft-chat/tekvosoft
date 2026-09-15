@@ -16,7 +16,6 @@ import {
   Tooltip,
   useTheme,
   useMediaQuery,
-  Avatar,
   ButtonBase,
   InputBase
 } from "@material-ui/core";
@@ -36,6 +35,7 @@ import useNotificationSound, {
   isNotificationSoundOn
 } from "../hooks/useNotificationSound";
 import { syncPush } from "../services/push";
+import UserAvatar from "../components/ui/UserAvatar";
 import TrialBanner, { getTrialStatus } from "../components/TrialBanner";
 import useAccountTheme from "../hooks/useAccountTheme";
 import NotificationsPopOver from "../components/NotificationsPopOver";
@@ -277,6 +277,11 @@ const useStyles = makeStyles(theme => ({
   },
   menuButtonHidden: {
     display: "none"
+  },
+  // celular: os atalhos de conversas, informativos e chat interno saem da
+  // barra (eles continuam montados, para os avisos e o som seguirem vindo)
+  hideOnPhone: {
+    [theme.breakpoints.down("xs")]: { display: "none" }
   },
   title: {
     flexGrow: 1,
@@ -953,9 +958,11 @@ const LoggedInLayout = ({ children, themeToggle }) => {
                   aria-controls="menu-appbar"
                 >
                   <span className={classes.userAvatarWrap}>
-                    <Avatar className={classes.userAvatar}>
-                      {getInitials(user?.name)}
-                    </Avatar>
+                    <UserAvatar
+                      user={user}
+                      size={34}
+                      className={classes.userAvatar}
+                    />
                     <span className={classes.onlineDot} aria-hidden="true" />
                   </span>
                   {drawerOpen && (
@@ -1051,11 +1058,17 @@ const LoggedInLayout = ({ children, themeToggle }) => {
 
           <PhoneCall />
 
-          {user.id && <NotificationsPopOver volume={volume} />}
+          <span className={classes.hideOnPhone}>
+            {user.id && <NotificationsPopOver volume={volume} />}
+          </span>
 
-          <AnnouncementsPopover />
+          <span className={classes.hideOnPhone}>
+            <AnnouncementsPopover />
+          </span>
 
-          <ChatPopover />
+          <span className={classes.hideOnPhone}>
+            <ChatPopover />
+          </span>
 
           <div className={classes.userInfoWrapper}>
             <div
@@ -1082,7 +1095,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
                 </Typography>
               </div>
               <div className={classes.profileAvatarSlot}>
-                <AccountCircle className={classes.avatar} />
+                <UserAvatar user={user} size={30} className={classes.avatar} />
               </div>
             </div>
             <Menu

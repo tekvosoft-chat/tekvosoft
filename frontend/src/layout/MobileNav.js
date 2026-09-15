@@ -175,12 +175,12 @@ const useStyles = makeStyles(theme => ({
     letterSpacing: "0.08em",
     textTransform: "uppercase",
     color: theme.palette.text.secondary,
-    padding: theme.spacing(1.5, 1, 1)
+    padding: theme.spacing(1.5, 0.5, 0.5)
   },
   grid: {
     display: "grid",
-    gridTemplateColumns: "repeat(3, 1fr)",
-    gap: theme.spacing(0.5)
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gap: 2
   },
   gridsWrap: { position: "relative" },
   // o quadrado da grade: sai do item atual e desliza até o item tocado
@@ -202,7 +202,7 @@ const useStyles = makeStyles(theme => ({
     alignItems: "center",
     justifyContent: "flex-start",
     gap: 6,
-    padding: theme.spacing(1.5, 0.5),
+    padding: theme.spacing(1.25, 0.25),
     borderRadius: theme.palette.tkv.radius.md,
     width: "100%",
     textAlign: "center",
@@ -222,18 +222,18 @@ const useStyles = makeStyles(theme => ({
     }
   },
   tileIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: theme.palette.tkv.radius.md,
+    width: 56,
+    height: 56,
+    borderRadius: 18,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: theme.palette.tkv.surfaceSunken,
     color: theme.palette.text.secondary,
-    "& svg": { fontSize: 22 }
+    "& svg": { fontSize: 27 }
   },
   tileLabel: {
-    fontSize: "0.6875rem",
+    fontSize: "0.75rem",
     fontWeight: 500,
     lineHeight: 1.25,
     color: theme.palette.text.secondary
@@ -400,9 +400,16 @@ const MobileNav = ({ onOpenProfile }) => {
       list.push({ label: t("administration"), items: admin });
     }
 
-    return list;
+    // o que já está na barra de baixo não se repete aqui
+    const inBar = barItems.map(item => item.to);
+    return list
+      .map(section => ({
+        ...section,
+        items: section.items.filter(item => !inBar.includes(item.to))
+      }))
+      .filter(section => section.items.length > 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAdmin, showCampaigns]);
+  }, [isAdmin, showCampaigns, barItems]);
 
   const isActive = to =>
     to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);

@@ -1,189 +1,230 @@
-import React, { useState, useEffect, useRef, useContext } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 
 import { useHistory, useParams } from "react-router-dom";
-import { parseISO, format, isSameDay } from "date-fns";
+import { parseISO } from "date-fns";
 import clsx from "clsx";
 
 import { makeStyles } from "@material-ui/core/styles";
-import { green, grey, red, blue } from "@material-ui/core/colors";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemText from "@material-ui/core/ListItemText";
-import ListItemAvatar from "@material-ui/core/ListItemAvatar";
-import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
-import Typography from "@material-ui/core/Typography";
 import Avatar from "@material-ui/core/Avatar";
+import Button from "@material-ui/core/Button";
 import Divider from "@material-ui/core/Divider";
-import Badge from "@material-ui/core/Badge";
-import Box from "@material-ui/core/Box";
+import IconButton from "@material-ui/core/IconButton";
+import Tooltip from "@material-ui/core/Tooltip";
+import Typography from "@material-ui/core/Typography";
+import ButtonBase from "@material-ui/core/ButtonBase";
+
+import WhatsAppIcon from "@material-ui/icons/WhatsApp";
+import AndroidIcon from "@material-ui/icons/Android";
+import VisibilityOutlinedIcon from "@material-ui/icons/VisibilityOutlined";
+import DoneRoundedIcon from "@material-ui/icons/DoneRounded";
+import CloseRoundedIcon from "@material-ui/icons/CloseRounded";
+import SyncAltRoundedIcon from "@material-ui/icons/SyncAltRounded";
+import AccountTreeOutlinedIcon from "@material-ui/icons/AccountTreeOutlined";
+import WhatsMarked from "react-whatsmarked";
+import { v4 as uuidv4 } from "uuid";
 
 import { i18n } from "../../translate/i18n";
 import { formatWhatsappContactName } from "../../helpers/formatWhatsappDisplay";
-
 import api from "../../services/api";
-import ButtonWithSpinner from "../ButtonWithSpinner";
-import WhatsMarked from "react-whatsmarked";
-import { Tooltip } from "@material-ui/core";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { TicketsContext } from "../../context/Tickets/TicketsContext";
 import toastError from "../../errors/toastError";
-import { v4 as uuidv4 } from "uuid";
-
-import RoomIcon from "@material-ui/icons/Room";
-import WhatsAppIcon from "@material-ui/icons/WhatsApp";
-import AndroidIcon from "@material-ui/icons/Android";
-import VisibilityIcon from "@material-ui/icons/Visibility";
 import TicketMessagesDialog from "../TicketMessagesDialog";
-import DoneIcon from "@material-ui/icons/Done";
-import ClearOutlinedIcon from "@material-ui/icons/ClearOutlined";
+import UserAvatar from "../ui/UserAvatar";
 import { generateColor } from "../../helpers/colorGenerator";
 import { getInitials } from "../../helpers/getInitials";
 import pastRelativeDate from "../../helpers/pastRelativeDate";
 import TagsLine from "../TagsLine";
 
-const useStyles = makeStyles(theme => ({
-  ticket: {
-    position: "relative",
-    height: 98,
-    paddingHorizontal: 10,
-    paddingVertical: 0,
-    paddingTop: 0,
-    paddingBottom: 0
-  },
-
-  pendingTicket: {
-    cursor: "unset"
-  },
-
-  noTicketsDiv: {
-    display: "flex",
-    height: "100px",
-    margin: 40,
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center"
-  },
-
-  noTicketsText: {
-    textAlign: "center",
-    color: "rgb(104, 121, 146)",
-    fontSize: "14px",
-    lineHeight: "1.4"
-  },
-
-  noTicketsTitle: {
-    textAlign: "center",
-    fontSize: "16px",
-    fontWeight: "600",
-    margin: "0px"
-  },
-
-  contactNameWrapper: {
-    display: "grid",
-    justifyContent: "space-between"
-  },
-
-  lastMessageTime: {
-    justifySelf: "flex-end",
-    textAlign: "right",
-    position: "relative",
-    top: -23,
-    fontSize: 12
-  },
-
-  closedBadge: {
-    alignSelf: "center",
-    justifySelf: "flex-end",
-    marginRight: 32,
-    marginLeft: "auto"
-  },
-
-  contactLastMessage: {},
-
-  newMessagesCount: {
-    alignSelf: "center",
-    marginRight: 0,
-    marginLeft: "auto",
-    top: -10,
-    right: 10
-  },
-
-  badgeStyle: {
-    color: "white",
-    backgroundColor: green[500],
-    right: 0,
-    top: 10
-  },
-
-  acceptButton: {
-    position: "absolute",
-    right: "108px"
-  },
-
-  ticketQueueColor: {
-    flex: "none",
-    width: "8px",
-    height: "100%",
-    position: "absolute",
-    top: "0%",
-    left: "0%"
-  },
-
-  ticketInfo: {
-    position: "relative",
-    top: 0
-  },
-
-  ticketInfo1: {
-    position: "relative",
-    top: 40,
-    right: 0
-  },
-  Radiusdot: {
-    "& .MuiBadge-badge": {
-      borderRadius: 2,
-      position: "inherit",
-      height: 16,
-      margin: 2,
-      padding: 3,
-      fontSize: 10
+/**
+ * Item da lista de atendimentos.
+ *
+ * O desenho antigo empilhava tudo com posições absolutas: os três botões da
+ * aba "Aguardando" ficavam com 23px, colados uns nos outros e por cima do
+ * texto. Aqui cada coisa tem o seu lugar em uma coluna: nome e horário,
+ * prévia da mensagem, etiquetas, e embaixo as informações do atendimento
+ * (conexão, fila, atendente) ou os botões de ação — grandes, separados e
+ * com o nome escrito.
+ */
+const useStyles = makeStyles(theme => {
+  const t = theme.palette.tkv;
+  return {
+    item: {
+      position: "relative",
+      display: "flex",
+      alignItems: "flex-start",
+      gap: theme.spacing(1.5),
+      width: "100%",
+      padding: theme.spacing(1.25, 1.5, 1.25, 2),
+      textAlign: "left",
+      cursor: "pointer",
+      transition: "background-color .15s ease",
+      "&:hover": { backgroundColor: t.surfaceHover }
     },
-    "& .MuiBadge-anchorOriginTopRightRectangle": {
-      transform: "scale(1) translate(0%, -40%)"
+    selected: {
+      backgroundColor: t.brand.textSoft,
+      "&:hover": { backgroundColor: t.brand.textSoft }
+    },
+    pending: { cursor: "default" },
+    queueStripe: {
+      position: "absolute",
+      left: 0,
+      top: 0,
+      bottom: 0,
+      width: 5
+    },
+    avatar: {
+      flex: "none",
+      width: 48,
+      height: 48,
+      color: "#FFFFFF",
+      fontWeight: 700
+    },
+    body: { flex: 1, minWidth: 0 },
+    topLine: {
+      display: "flex",
+      alignItems: "baseline",
+      gap: theme.spacing(1)
+    },
+    name: {
+      flex: 1,
+      minWidth: 0,
+      display: "flex",
+      alignItems: "center",
+      gap: 4,
+      fontSize: "0.9375rem",
+      fontWeight: 600,
+      color: theme.palette.text.primary,
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap",
+      "& svg": { fontSize: 15, color: theme.palette.text.secondary }
+    },
+    time: {
+      flex: "none",
+      fontSize: "0.75rem",
+      color: theme.palette.text.secondary
+    },
+    preview: {
+      display: "flex",
+      alignItems: "center",
+      gap: theme.spacing(1),
+      marginTop: 2
+    },
+    previewText: {
+      flex: 1,
+      minWidth: 0,
+      fontSize: "0.875rem",
+      color: theme.palette.text.secondary,
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap",
+      "& p": { margin: 0 }
+    },
+    unread: {
+      flex: "none",
+      minWidth: 22,
+      height: 22,
+      padding: "0 7px",
+      borderRadius: 11,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: "0.75rem",
+      fontWeight: 700,
+      backgroundColor: t.semantic.success,
+      color: "#FFFFFF"
+    },
+    presence: {
+      fontWeight: 600,
+      color: t.semantic.success
+    },
+    chips: {
+      display: "flex",
+      flexWrap: "wrap",
+      alignItems: "center",
+      gap: 6,
+      marginTop: 8
+    },
+    chip: {
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 4,
+      maxWidth: "100%",
+      height: 24,
+      padding: "0 9px",
+      borderRadius: t.radius.pill,
+      fontSize: "0.75rem",
+      fontWeight: 600,
+      backgroundColor: t.surfaceSunken,
+      color: theme.palette.text.secondary,
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap",
+      "& svg": { fontSize: 14, flex: "none" }
+    },
+    chipUser: {
+      paddingLeft: 3,
+      backgroundColor: t.brand.textSoft,
+      color: t.brand.text
+    },
+    chipQueue: { color: "#FFFFFF" },
+    actions: {
+      display: "flex",
+      alignItems: "center",
+      gap: theme.spacing(1),
+      marginTop: theme.spacing(1)
+    },
+    accept: {
+      flex: 1,
+      minHeight: 40,
+      fontWeight: 700,
+      borderRadius: t.radius.md
+    },
+    secondaryAction: {
+      flex: "none",
+      width: 40,
+      height: 40,
+      borderRadius: t.radius.md,
+      border: `1px solid ${t.border}`,
+      color: theme.palette.text.secondary
+    },
+    danger: {
+      color: t.semantic.danger,
+      borderColor: t.semantic.dangerSoft
+    },
+    openActions: {
+      flex: "none",
+      display: "flex",
+      flexDirection: "column",
+      gap: 6,
+      alignSelf: "center"
+    },
+    iconAction: {
+      width: 34,
+      height: 34,
+      borderRadius: t.radius.sm,
+      color: theme.palette.text.secondary
     }
-  },
-  presence: {
-    color: theme.mode === "light" ? "green" : "lightgreen",
-    fontWeight: "bold"
-  }
-}));
+  };
+});
 
 const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
   const classes = useStyles();
-
   const history = useHistory();
-  const [ticketUser, setTicketUser] = useState(null);
-  const [whatsAppName, setWhatsAppName] = useState(null);
-
-  const [openTicketMessageDialog, setOpenTicketMessageDialog] = useState(false);
   const { ticketId } = useParams();
   const isMounted = useRef(true);
   const { setCurrentTicket } = useContext(TicketsContext);
   const { user } = useContext(AuthContext);
   const { profile } = user;
 
+  const [openTicketMessageDialog, setOpenTicketMessageDialog] = useState(false);
+
   useEffect(() => {
-    if (ticket.userId && ticket.user) {
-      setTicketUser(ticket.user.name);
-    }
-
-    if (ticket.whatsappId && ticket.whatsapp) {
-      setWhatsAppName(ticket.whatsapp.name);
-    }
-
     return () => {
       isMounted.current = false;
     };
-  }, [ticket]);
+  }, []);
 
   const handleCloseTicket = async id => {
     try {
@@ -200,420 +241,208 @@ const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
 
   const handleAcceptTicket = async id => {
     try {
-      await api.put(`/tickets/${id}`, {
-        status: "open",
-        userId: user?.id
-      });
+      await api.put(`/tickets/${id}`, { status: "open", userId: user?.id });
     } catch (err) {
       toastError(err);
     }
-
     history.push(`/tickets/${ticket.uuid}`);
     setTabOpen("open");
   };
 
-  const handleSelectTicket = ticket => {
+  const handleSelectTicket = () => {
     const code = uuidv4();
     const { id, uuid } = ticket;
     setCurrentTicket({ id, uuid, code });
   };
 
-  const renderTicketInfo = () => {
-    if (ticketUser && ticket.status !== "pending") {
-      return (
-        <>
-          <Badge
-            className={classes.Radiusdot}
-            badgeContent={`${ticketUser}`}
-            //color="primary"
-            style={{
-              backgroundColor: "#3498db",
-              height: 18,
-              padding: 5,
-              position: "inherit",
-              borderRadius: 7,
-              color: "#fff",
-              top: -6,
-              marginRight: 3
-            }}
-          />
+  const isPending = ticket.status === "pending";
+  const canAct = groupActionButtons || !ticket.isGroup;
+  const queueColor = ticket.queue?.color || "#7C7C7C";
 
-          {ticket.whatsappId && (
-            <Badge
-              className={classes.Radiusdot}
-              badgeContent={`${whatsAppName}`}
-              style={{
-                backgroundColor: "#7d79f2",
-                height: 18,
-                padding: 5,
-                position: "inherit",
-                borderRadius: 7,
-                color: "white",
-                top: -6,
-                marginRight: 3
-              }}
-            />
-          )}
-
-          {ticket.queue?.name !== null && (
-            <Badge
-              className={classes.Radiusdot}
-              style={{
-                backgroundColor: ticket.queue?.color || "#7C7C7C",
-                height: 18,
-                padding: 5,
-                position: "inherit",
-                borderRadius: 7,
-                color: "white",
-                top: -6,
-                marginRight: 3
-              }}
-              badgeContent={ticket.queue?.name || "Sem fila"}
-              //color="primary"
-            />
-          )}
-          {ticket.status === "open" && (
-            <Tooltip title="Fechar Conversa">
-              <ClearOutlinedIcon
-                onClick={() => handleCloseTicket(ticket.id)}
-                fontSize="small"
-                style={{
-                  color: "#fff",
-                  backgroundColor: red[700],
-                  cursor: "pointer",
-                  //margin: '0 5 0 5',
-                  padding: 2,
-                  height: 23,
-                  width: 23,
-                  fontSize: 12,
-                  borderRadius: 50,
-                  position: "absolute",
-                  right: 0,
-                  top: -8
-                }}
-              />
-            </Tooltip>
-          )}
-          {profile === "admin" && (
-            <Tooltip title="Espiar Conversa">
-              <VisibilityIcon
-                onClick={e => {
-                  e.stopPropagation();
-                  setOpenTicketMessageDialog(true);
-                }}
-                fontSize="small"
-                style={{
-                  padding: 2,
-                  height: 23,
-                  width: 23,
-                  fontSize: 12,
-                  color: "#fff",
-                  cursor: "pointer",
-                  backgroundColor: blue[700],
-                  borderRadius: 50,
-                  position: "absolute",
-                  right: 28,
-                  top: -8
-                }}
-              />
-            </Tooltip>
-          )}
-          {ticket.chatbot && (
-            <Tooltip title="Chatbot">
-              <AndroidIcon
-                fontSize="small"
-                style={{ color: grey[700], marginRight: 5 }}
-              />
-            </Tooltip>
-          )}
-        </>
-      );
-    } else {
-      return (
-        <>
-          {ticket.whatsappId && (
-            <Badge
-              className={classes.Radiusdot}
-              badgeContent={`${whatsAppName}`}
-              style={{
-                backgroundColor: "#7d79f2",
-                height: 18,
-                padding: 5,
-                position: "inherit",
-                borderRadius: 7,
-                color: "white",
-                top: -6,
-                marginRight: 3
-              }}
-            />
-          )}
-
-          {ticket.queue?.name !== null && (
-            <Badge
-              className={classes.Radiusdot}
-              style={{
-                backgroundColor: ticket.queue?.color || "#7C7C7C",
-                height: 18,
-                padding: 5,
-                paddingHorizontal: 12,
-                position: "inherit",
-                borderRadius: 7,
-                color: "white",
-                top: -6,
-                marginRight: 2
-              }}
-              badgeContent={ticket.queue?.name || "Sem fila"}
-              //color=
-            />
-          )}
-          {ticket.status === "pending" &&
-            (groupActionButtons || !ticket.isGroup) && (
-              <Tooltip title="Fechar Conversa">
-                <ClearOutlinedIcon
-                  onClick={() => handleCloseTicket(ticket.id)}
-                  fontSize="small"
-                  style={{
-                    color: "#fff",
-                    backgroundColor: red[700],
-                    cursor: "pointer",
-                    margin: "0 5 0 5",
-                    padding: 2,
-                    right: 48,
-                    height: 23,
-                    width: 23,
-                    fontSize: 12,
-                    borderRadius: 50,
-                    top: -8,
-                    position: "absolute"
-                  }}
-                />
-              </Tooltip>
-            )}
-          {ticket.chatbot && (
-            <Tooltip title="Chatbot">
-              <AndroidIcon
-                fontSize="small"
-                style={{ color: grey[700], marginRight: 5 }}
-              />
-            </Tooltip>
-          )}
-          {ticket.status === "open" &&
-            (groupActionButtons || !ticket.isGroup) && (
-              <Tooltip title="Fechar Conversa">
-                <ClearOutlinedIcon
-                  onClick={() => handleCloseTicket(ticket.id)}
-                  fontSize="small"
-                  style={{
-                    color: red[700],
-                    cursor: "pointer",
-                    marginRight: 5,
-                    right: 49,
-                    top: -8,
-                    position: "absolute"
-                  }}
-                />
-              </Tooltip>
-            )}
-          {ticket.status === "pending" &&
-            (groupActionButtons || !ticket.isGroup) && (
-              <Tooltip title="Aceitar Conversa">
-                <DoneIcon
-                  onClick={() => handleAcceptTicket(ticket.id)}
-                  fontSize="small"
-                  style={{
-                    color: "#fff",
-                    backgroundColor: green[700],
-                    cursor: "pointer",
-                    //margin: '0 5 0 5',
-                    padding: 2,
-                    height: 23,
-                    width: 23,
-                    fontSize: 12,
-                    borderRadius: 50,
-                    right: 25,
-                    top: -8,
-                    position: "absolute"
-                  }}
-                />
-              </Tooltip>
-            )}
-
-          {profile === "admin" && (groupActionButtons || !ticket.isGroup) && (
-            <Tooltip title="Espiar Conversa">
-              <VisibilityIcon
-                onClick={e => {
-                  e.stopPropagation();
-                  setOpenTicketMessageDialog(true);
-                }}
-                fontSize="small"
-                style={{
-                  padding: 2,
-                  height: 23,
-                  width: 23,
-                  fontSize: 12,
-                  color: "#fff",
-                  cursor: "pointer",
-                  backgroundColor: blue[700],
-                  borderRadius: 50,
-                  right: 0,
-                  top: -8,
-                  position: "absolute"
-                }}
-              />
-            </Tooltip>
-          )}
-        </>
-      );
-    }
-  };
+  const chips = (
+    <div className={classes.chips}>
+      {ticket.user?.name && !isPending && (
+        <span className={clsx(classes.chip, classes.chipUser)}>
+          <UserAvatar user={ticket.user} size={18} />
+          {ticket.user.name}
+        </span>
+      )}
+      {ticket.whatsapp?.name && (
+        <span className={classes.chip}>
+          <SyncAltRoundedIcon />
+          {ticket.whatsapp.name}
+        </span>
+      )}
+      <span
+        className={clsx(classes.chip, classes.chipQueue)}
+        style={{ backgroundColor: queueColor }}
+      >
+        <AccountTreeOutlinedIcon />
+        {ticket.queue?.name || i18n.t("ticketActions.noQueue")}
+      </span>
+      {ticket.chatbot && (
+        <span className={classes.chip}>
+          <AndroidIcon />
+          Chatbot
+        </span>
+      )}
+      <TagsLine ticket={ticket} />
+    </div>
+  );
 
   return (
-    <div key={`ticket-${ticket.id}`} className={classes.ticketContainer}>
+    <div key={`ticket-${ticket.id}`}>
       <TicketMessagesDialog
         open={openTicketMessageDialog}
         handleClose={() => setOpenTicketMessageDialog(false)}
         ticketId={ticket.id}
-      ></TicketMessagesDialog>
-      <ListItem
-        dense
-        button
-        onClick={e => {
-          if (
-            (groupActionButtons || !ticket.isGroup) &&
-            ticket.status === "pending"
-          )
-            return;
-          handleSelectTicket(ticket);
-        }}
-        selected={ticketId && +ticketId === ticket.id}
-        className={clsx(classes.ticket, {
-          [classes.pendingTicket]: ticket.status === "pending"
+      />
+      <ButtonBase
+        component="div"
+        className={clsx(classes.item, {
+          [classes.pending]: isPending && canAct,
+          [classes.selected]: ticketId && +ticketId === ticket.id
         })}
+        onClick={() => {
+          if (isPending && canAct) return;
+          handleSelectTicket();
+        }}
       >
         <Tooltip
           arrow
           placement="right"
-          title={ticket.queue?.name || "Sem fila"}
+          title={ticket.queue?.name || i18n.t("ticketActions.noQueue")}
         >
           <span
-            style={{ backgroundColor: ticket.queue?.color || "#7C7C7C" }}
-            className={classes.ticketQueueColor}
-          ></span>
+            className={classes.queueStripe}
+            style={{ backgroundColor: queueColor }}
+          />
         </Tooltip>
-        <ListItemAvatar>
-          <Avatar
-            style={{
-              backgroundColor: generateColor(ticket?.contact?.number),
-              color: "white",
-              fontWeight: "bold"
-            }}
-            src={ticket?.contact?.profilePicUrl}
-          >
-            {getInitials(ticket?.contact?.name || "")}
-          </Avatar>
-        </ListItemAvatar>
-        <ListItemText
-          style={{ paddingBottom: 10 }}
-          disableTypography
-          primary={
-            <span className={classes.contactNameWrapper}>
-              <Typography
-                noWrap
-                component="span"
-                variant="body2"
-                color="textPrimary"
-              >
-                {ticket.channel === "whatsapp" && (
-                  <Tooltip title={`Atribuido à ${ticketUser}`}>
-                    <WhatsAppIcon
-                      fontSize="inherit"
-                      style={{ color: grey[700] }}
-                    />
-                  </Tooltip>
-                )}{" "}
-                {formatWhatsappContactName(ticket.contact, ticket)}
-              </Typography>
-            </span>
-          }
-          secondary={
-            <span className={classes.contactNameWrapper}>
-              <Typography
-                className={classes.contactLastMessage}
-                noWrap
-                component="span"
-                variant="body2"
-                color="textSecondary"
-              >
-                {["composing", "recording"].includes(ticket?.presence) ? (
-                  <span className={classes.presence}>
-                    {i18n.t(`presence.${ticket.presence}`)}
-                  </span>
-                ) : (
-                  <>
-                    {ticket.lastMessage?.includes("data:image/png;base64") ? (
-                      <div>Localização</div>
-                    ) : (
-                      <WhatsMarked oneline>
-                        {ticket.lastMessage.startsWith('{"ticketzvCard"')
-                          ? "🪪"
-                          : ticket.lastMessage.split("\n")[0]}
-                      </WhatsMarked>
-                    )}
-                  </>
-                )}
-              </Typography>
-              <TagsLine ticket={ticket} />
-              <ListItemSecondaryAction style={{ left: 73 }}>
-                <Box className={classes.ticketInfo1}>{renderTicketInfo()}</Box>
-              </ListItemSecondaryAction>
-            </span>
-          }
-        />
-        <ListItemSecondaryAction style={{}}>
-          {ticket.status === "closed" && (
-            <Badge
-              className={classes.Radiusdot}
-              badgeContent={i18n.t("common.closed")}
-              //color="primary"
-              style={{
-                backgroundColor: ticket.queue?.color || "#ff0000",
-                height: 18,
-                padding: 5,
-                paddingHorizontal: 12,
-                borderRadius: 7,
-                color: "white",
-                top: -28,
-                marginRight: 5
-              }}
-            />
-          )}
 
-          {ticket.lastMessage && (
-            <>
-              <Typography
-                className={classes.lastMessageTime}
-                component="span"
-                variant="body2"
-                color="textSecondary"
-              >
+        <Avatar
+          className={classes.avatar}
+          style={{ backgroundColor: generateColor(ticket?.contact?.number) }}
+          src={ticket?.contact?.profilePicUrl}
+        >
+          {getInitials(ticket?.contact?.name || "")}
+        </Avatar>
+
+        <div className={classes.body}>
+          <div className={classes.topLine}>
+            <span className={classes.name}>
+              {ticket.channel === "whatsapp" && <WhatsAppIcon />}
+              {formatWhatsappContactName(ticket.contact, ticket)}
+            </span>
+            {ticket.updatedAt && (
+              <span className={classes.time}>
                 {pastRelativeDate(parseISO(ticket.updatedAt))}
-              </Typography>
+              </span>
+            )}
+          </div>
 
-              <Badge
-                className={classes.newMessagesCount}
-                badgeContent={
-                  ticket.unreadMessages ? ticket.unreadMessages : null
-                }
-                classes={{
-                  badge: classes.badgeStyle
+          <div className={classes.preview}>
+            <span className={classes.previewText}>
+              {["composing", "recording"].includes(ticket?.presence) ? (
+                <span className={classes.presence}>
+                  {i18n.t(`presence.${ticket.presence}`)}
+                </span>
+              ) : ticket.lastMessage?.includes("data:image/png;base64") ? (
+                "📍 Localização"
+              ) : (
+                <WhatsMarked oneline>
+                  {(ticket.lastMessage || "").startsWith('{"ticketzvCard"')
+                    ? "🪪"
+                    : (ticket.lastMessage || "").split("\n")[0]}
+                </WhatsMarked>
+              )}
+            </span>
+            {ticket.unreadMessages > 0 && (
+              <span className={classes.unread}>{ticket.unreadMessages}</span>
+            )}
+          </div>
+
+          {chips}
+
+          {isPending && canAct && (
+            <div className={classes.actions}>
+              <Button
+                variant="contained"
+                color="primary"
+                className={classes.accept}
+                startIcon={<DoneRoundedIcon />}
+                onClick={e => {
+                  e.stopPropagation();
+                  handleAcceptTicket(ticket.id);
                 }}
-              />
-              <br />
-            </>
+              >
+                {i18n.t("messagesList.header.buttons.accept")}
+              </Button>
+              {profile === "admin" && (
+                <Tooltip title={i18n.t("ticketActions.spy")}>
+                  <IconButton
+                    className={classes.secondaryAction}
+                    aria-label={i18n.t("ticketActions.spy")}
+                    onClick={e => {
+                      e.stopPropagation();
+                      setOpenTicketMessageDialog(true);
+                    }}
+                  >
+                    <VisibilityOutlinedIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
+              <Tooltip title={i18n.t("ticketActions.close")}>
+                <IconButton
+                  className={clsx(classes.secondaryAction, classes.danger)}
+                  aria-label={i18n.t("ticketActions.close")}
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleCloseTicket(ticket.id);
+                  }}
+                >
+                  <CloseRoundedIcon />
+                </IconButton>
+              </Tooltip>
+            </div>
           )}
-        </ListItemSecondaryAction>
-      </ListItem>
-      <Divider variant="inset" component="li" />
+        </div>
+
+        {!isPending && canAct && (
+          <div className={classes.openActions}>
+            {profile === "admin" && (
+              <Tooltip title={i18n.t("ticketActions.spy")}>
+                <IconButton
+                  size="small"
+                  className={classes.iconAction}
+                  aria-label={i18n.t("ticketActions.spy")}
+                  onClick={e => {
+                    e.stopPropagation();
+                    setOpenTicketMessageDialog(true);
+                  }}
+                >
+                  <VisibilityOutlinedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+            {ticket.status === "open" && (
+              <Tooltip title={i18n.t("ticketActions.close")}>
+                <IconButton
+                  size="small"
+                  className={clsx(classes.iconAction, classes.danger)}
+                  aria-label={i18n.t("ticketActions.close")}
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleCloseTicket(ticket.id);
+                  }}
+                >
+                  <CloseRoundedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+          </div>
+        )}
+      </ButtonBase>
+      <Divider component="div" />
     </div>
   );
 };

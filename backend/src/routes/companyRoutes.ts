@@ -7,6 +7,13 @@ import * as CompanyController from "../controllers/CompanyController";
 const companyRoutes = express.Router();
 
 companyRoutes.get("/companies/list", isAuth, isSuper, CompanyController.list);
+
+companyRoutes.get(
+  "/companies/storage",
+  isAuth,
+  isSuper,
+  CompanyController.storage
+);
 companyRoutes.get("/companies", isAuth, isSuper, CompanyController.index);
 companyRoutes.get("/companies/:id", isAuth, CompanyController.show);
 companyRoutes.post("/companies", isAuth, isSuper, CompanyController.store);

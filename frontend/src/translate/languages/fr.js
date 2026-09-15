@@ -89,6 +89,7 @@ const messages = {
           user: "Utilisateur"
         },
         table: {
+          storage: "Stockage",
           campaigns: "Campagnes",
           createdAt: "Créée le"
         },
@@ -114,6 +115,23 @@ const messages = {
         token: "Jeton"
       },
       dashboard: {
+        sections: {
+          now: "En ce moment",
+          nowHint: "Situation en temps réel",
+          period: "Sur la période",
+          periodHint: "Chiffres de l'intervalle choisi",
+          team: "Équipe",
+          teamHint: "Performance de chaque agent sur la période"
+        },
+        team: {
+          online: "En ligne",
+          offline: "Hors ligne",
+          total: "Total",
+          open: "Ouverts",
+          closed: "Résolus",
+          wait: "Attente",
+          service: "Service"
+        },
         charts: {
           perDay: {
             title: "Interventions aujourd'hui : "
@@ -350,6 +368,14 @@ const messages = {
         }
       },
       userModal: {
+        photo: {
+          add: "Ajouter une photo",
+          change: "Changer la photo",
+          remove: "Retirer",
+          hint: "JPG ou PNG. Affichée en haut, dans le menu et le chat interne.",
+          saved: "Photo mise à jour",
+          removed: "Photo retirée"
+        },
         title: {
           add: "Ajouter un utilisateur",
           edit: "Modifier l'utilisateur"
@@ -871,6 +897,11 @@ const messages = {
         added: "Réponse rapide créée",
         updated: "Réponse rapide mise à jour",
         deleted: "Réponse rapide supprimée"
+      },
+      ticketActions: {
+        spy: "Aperçu de la conversation",
+        close: "Fermer la conversation",
+        noQueue: "Sans file"
       },
       about: {
         headline: "Conçue pour mieux servir, chaque jour",

@@ -122,6 +122,7 @@ const messages = {
           user: "User"
         },
         table: {
+          storage: "Storage",
           campaigns: "Campaigns",
           createdAt: "Created At"
         },
@@ -147,6 +148,23 @@ const messages = {
         token: "Token"
       },
       dashboard: {
+        sections: {
+          now: "Right now",
+          nowHint: "Real-time status",
+          period: "In the period",
+          periodHint: "Numbers for the selected range",
+          team: "Team",
+          teamHint: "Each agent's performance in the period"
+        },
+        team: {
+          online: "Online now",
+          offline: "Offline",
+          total: "Total",
+          open: "Open",
+          closed: "Resolved",
+          wait: "Wait",
+          service: "Service"
+        },
         usersOnline: "Users online",
         ticketsWaiting: "Tickets waiting",
         ticketsOpen: "Open tickets",
@@ -408,6 +426,14 @@ const messages = {
         }
       },
       userModal: {
+        photo: {
+          add: "Add photo",
+          change: "Change photo",
+          remove: "Remove",
+          hint: "JPG or PNG. Shown in the top bar, menu and internal chat.",
+          saved: "Photo updated",
+          removed: "Photo removed"
+        },
         title: {
           add: "Add User",
           edit: "Edit User"
@@ -936,6 +962,11 @@ const messages = {
         added: "Quick reply created",
         updated: "Quick reply updated",
         deleted: "Quick reply deleted"
+      },
+      ticketActions: {
+        spy: "Peek conversation",
+        close: "Close conversation",
+        noQueue: "No queue"
       },
       about: {
         headline: "Built to help you serve better, every day",

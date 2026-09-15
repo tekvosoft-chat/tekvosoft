@@ -50,6 +50,19 @@ class User extends Model<User> {
   @Column
   profile: string;
 
+  /**
+   * Foto de perfil. No banco fica só o caminho do arquivo; para quem lê,
+   * sai o endereço completo, como acontece com a mídia das mensagens.
+   */
+  @Column(DataType.STRING)
+  get profileImage(): string | null {
+    const value = this.getDataValue("profileImage");
+    if (!value) return null;
+    return value.match(/^https?:\/\//)
+      ? value
+      : `${process.env.BACKEND_URL}/public/${value}`;
+  }
+
   @Column
   super: boolean;
 

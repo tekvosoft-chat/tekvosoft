@@ -15,6 +15,7 @@ const ShowUserService = async (
       "email",
       "companyId",
       "profile",
+      "profileImage",
       "super",
       "tokenVersion"
     ],
