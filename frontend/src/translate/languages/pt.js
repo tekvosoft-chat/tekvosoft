@@ -585,6 +585,12 @@ const messages = {
         }
       },
       mainDrawer: {
+        sections: {
+          service: "Atendimento",
+          audience: "Contatos",
+          management: "Gestão",
+          system: "Sistema"
+        },
         listItems: {
           dashboard: "Dashboard",
           connections: "Conexões",
@@ -979,6 +985,20 @@ const messages = {
         close: "Encerrar conversa",
         noQueue: "Sem fila"
       },
+      expressions: {
+        title: "Emoji, figurinhas e GIFs",
+        emoji: "Emoji",
+        stickers: "Figurinhas",
+        gifs: "GIFs",
+        searchGifs: "Buscar GIFs",
+        noStickers:
+          "As figurinhas que chegarem nas conversas aparecem aqui para você reenviar.",
+        noGifs: "Nenhum GIF encontrado.",
+        gifsNotConfigured:
+          "Para usar GIFs, adicione a chave do GIPHY em Configurações > Opções > Serviços externos.",
+        sendSticker: "Enviar figurinha",
+        sendGif: "Enviar GIF"
+      },
       about: {
         headline: "Feita para atender melhor, todos os dias",
         product:
@@ -1007,6 +1027,24 @@ const messages = {
         licensesourcecode: "Código fonte do Tekvosoft"
       },
       schedules: {
+        calendar: {
+          subtitle: "Veja no calendário quando cada mensagem será enviada.",
+          today: "Hoje",
+          list: "Lista",
+          month: "Mês",
+          all: "Todos",
+          pending: "Agendada",
+          sent: "Enviada",
+          error: "Com erro",
+          more: "mais",
+          noEvents: "Nenhum agendamento neste mês.",
+          noEventsDay: "Nada agendado neste dia",
+          scheduleThisDay: "Agendar neste dia",
+          previous: "Mês anterior",
+          next: "Próximo mês",
+          count: "{{count}} agendamento",
+          count_plural: "{{count}} agendamentos"
+        },
         title: "Agendamentos",
         confirmationModal: {
           deleteTitle: "Você tem certeza que quer excluir este Agendamento?",
@@ -1084,6 +1122,90 @@ const messages = {
         extensionBuildUnknownError: "Erro desconhecido na construção."
       },
       settings: {
+        giphyApiKey: {
+          title: "Chave do GIPHY (GIFs)"
+        },
+        hints: {
+          giphyKey:
+            "Chave grátis criada em developers.giphy.com. Com ela, a equipe busca e envia GIFs pelo chat.",
+          groups: {
+            general: "Como o atendimento funciona no dia a dia.",
+            timeouts:
+              "O que o sistema faz sozinho quando uma conversa fica parada. Tempos em minutos; 0 desliga.",
+            officeHours:
+              "Horário de funcionamento e o que acontece com as mensagens que chegam fora dele.",
+            groups: "Como tratar as conversas de grupos do WhatsApp.",
+            confidenciality:
+              "O que cada atendente enxerga das conversas de outras filas.",
+            api: "Chave para sistemas externos consultarem os contatos pela API.",
+            externalServices:
+              "Inteligência artificial para transcrever áudios e a chave do GIPHY para enviar GIFs.",
+            serveradmin:
+              "Opções da instalação inteira: valem para todas as empresas."
+          },
+          ratings:
+            "Ao encerrar o atendimento, o cliente recebe um pedido para dar uma nota ao atendimento.",
+          calls:
+            "Quando o cliente liga pelo WhatsApp: ignorar a ligação ou responder avisando que não atendemos por chamada.",
+          chatbotAutoExit:
+            "Se o cliente digitar algo que não é uma opção do menu, a conversa sai do chatbot e segue para a fila.",
+          quickMessages:
+            "Respostas rápidas compartilhadas com toda a empresa ou só de cada usuário.",
+          tagsMode:
+            "Onde as tags ficam: no atendimento (acabam quando ele é encerrado), no contato (acompanham a pessoa) ou nos dois.",
+          numericIcons:
+            "No menu do chatbot, mostra as opções como 1️⃣ 2️⃣ 3️⃣ em vez de números comuns.",
+          ticketAccepted:
+            "Enviada ao cliente quando um atendente aceita a conversa. Deixe em branco para não enviar.",
+          transfer:
+            "Enviada ao cliente quando a conversa é transferida. Deixe em branco para não enviar.",
+          ratingsTimeout:
+            "Quanto tempo o cliente tem para responder a avaliação. Depois disso, o pedido expira.",
+          autoReopen:
+            "Se o cliente escrever de novo dentro desse tempo após o encerramento, o mesmo atendimento é reaberto. 0 desliga.",
+          noQueueTimeout:
+            "Conversas aguardando sem fila por mais tempo que isso recebem a ação escolhida ao lado. 0 desliga.",
+          noQueueTimeoutAction:
+            "O que fazer com a conversa sem fila que ficou parada: encerrar ou mandar para uma fila.",
+          openTicketTimeout:
+            "Conversas em atendimento sem nenhuma mensagem por esse tempo recebem a ação escolhida ao lado. 0 desliga.",
+          openTicketTimeoutAction:
+            "O que fazer com a conversa em atendimento que ficou parada: devolver para a fila ou encerrar.",
+          chatbotTimeout:
+            "Se o cliente parar de responder o chatbot por esse tempo, a ação escolhida ao lado é aplicada. 0 desliga.",
+          chatbotTimeoutAction:
+            "O que fazer quando o cliente abandona o chatbot: encerrar ou mandar para uma fila.",
+          officeHours:
+            "Liga o controle de horário de funcionamento, com horários da empresa inteira ou de cada fila.",
+          outOfHours:
+            "O que acontece com as mensagens que chegam fora do horário: ficam aguardando ou o atendimento é encerrado.",
+          ignoreGroups:
+            "Ativado, as mensagens de grupos do WhatsApp não viram atendimento.",
+          soundGroups: "Toca o aviso sonoro também para mensagens de grupos.",
+          groupsTab:
+            "Separa as conversas de grupos em uma aba própria em Atendimentos.",
+          messageVisibility:
+            "Respeitar fila da mensagem: cada atendente só vê as mensagens trocadas nas filas dele. Respeitar fila do ticket: vê todo o histórico do atendimento.",
+          keepQueueAndUser:
+            "Ativado, o atendimento encerrado guarda a fila e o atendente. Desativado, os dois são removidos ao encerrar.",
+          apiToken:
+            "Chave usada por sistemas externos para consultar os contatos pela API. Gere, copie e guarde em local seguro.",
+          aiProvider:
+            "Serviço de inteligência artificial que faz a transcrição dos áudios.",
+          aiKey: "Chave de acesso do serviço escolhido ao lado.",
+          audioTranscriptions:
+            "Transforma os áudios recebidos em texto, que aparece junto do áudio na conversa.",
+          allowSignup:
+            "Permite que novas empresas criem conta sozinhas pela página de cadastro.",
+          multithread:
+            "Roda as conexões do WhatsApp em processos separados. Ajuda em servidores com muitas conexões.",
+          uploadLimit:
+            "Tamanho máximo, em MB, dos arquivos que a equipe envia.",
+          downloadLimit:
+            "Tamanho máximo, em MB, dos arquivos recebidos que o sistema baixa. Acima disso, o cliente é avisado.",
+          gracePeriod:
+            "Por quantos dias uma empresa ainda usa o sistema depois do vencimento, antes de ser bloqueada."
+        },
         saving: "Salvando…",
         appearance: {
           tab: "Aparência",
@@ -1439,6 +1561,16 @@ const messages = {
       },
 
       contactDrawer: {
+        media: {
+          title: "Mídia, links e docs",
+          media: "Mídia",
+          docs: "Docs",
+          links: "Links",
+          empty_media: "Nenhuma foto ou vídeo trocado com este contato.",
+          empty_docs: "Nenhum documento trocado com este contato.",
+          empty_links: "Nenhum link trocado com este contato.",
+          loadMore: "Carregar mais"
+        },
         phone: {
           edit: "Editar",
           call: "Ligar",

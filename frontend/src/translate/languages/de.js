@@ -514,6 +514,12 @@ const messages = {
         }
       },
       mainDrawer: {
+        sections: {
+          service: "Service",
+          audience: "Kontakte",
+          management: "Verwaltung",
+          system: "System"
+        },
         listItems: {
           dashboard: "Dashboard",
           connections: "Verbindungen",
@@ -906,6 +912,20 @@ const messages = {
         close: "Gespräch schließen",
         noQueue: "Keine Warteschlange"
       },
+      expressions: {
+        title: "Emoji, Sticker und GIFs",
+        emoji: "Emoji",
+        stickers: "Sticker",
+        gifs: "GIFs",
+        searchGifs: "GIFs suchen",
+        noStickers:
+          "Sticker aus Gesprächen erscheinen hier zum erneuten Senden.",
+        noGifs: "Keine GIFs gefunden.",
+        gifsNotConfigured:
+          "Für GIFs den GIPHY-Schlüssel unter Einstellungen > Optionen > Externe Dienste eintragen.",
+        sendSticker: "Sticker senden",
+        sendGif: "GIF senden"
+      },
       about: {
         headline: "Gemacht, um jeden Tag besser zu betreuen",
         product:
@@ -934,6 +954,24 @@ const messages = {
         licensesourcecode: "Quellcode von Tekvosoft"
       },
       schedules: {
+        calendar: {
+          subtitle: "Sieh im Kalender, wann jede Nachricht gesendet wird.",
+          today: "Heute",
+          list: "Liste",
+          month: "Monat",
+          all: "Alle",
+          pending: "Geplant",
+          sent: "Gesendet",
+          error: "Fehler",
+          more: "weitere",
+          noEvents: "Keine Planungen in diesem Monat.",
+          noEventsDay: "An diesem Tag nichts geplant",
+          scheduleThisDay: "An diesem Tag planen",
+          previous: "Vorheriger Monat",
+          next: "Nächster Monat",
+          count: "{{count}} Planung",
+          count_plural: "{{count}} Planungen"
+        },
         title: "Planungen",
         confirmationModal: {
           deleteTitle:
@@ -1316,6 +1354,16 @@ const messages = {
         edited: "Bearbeitet"
       },
       contactDrawer: {
+        media: {
+          title: "Medien, Links und Doks",
+          media: "Medien",
+          docs: "Doks",
+          links: "Links",
+          empty_media: "Keine Fotos oder Videos mit diesem Kontakt.",
+          empty_docs: "Keine Dokumente mit diesem Kontakt.",
+          empty_links: "Keine Links mit diesem Kontakt.",
+          loadMore: "Mehr laden"
+        },
         phone: {
           edit: "Bearbeiten",
           call: "Anrufen",

@@ -509,6 +509,12 @@ const messages = {
         }
       },
       mainDrawer: {
+        sections: {
+          service: "Assistenza",
+          audience: "Contatti",
+          management: "Gestione",
+          system: "Sistema"
+        },
         listItems: {
           dashboard: "Dashboard",
           connections: "Connessioni",
@@ -897,6 +903,20 @@ const messages = {
         close: "Chiudi conversazione",
         noQueue: "Nessuna coda"
       },
+      expressions: {
+        title: "Emoji, sticker e GIF",
+        emoji: "Emoji",
+        stickers: "Sticker",
+        gifs: "GIF",
+        searchGifs: "Cerca GIF",
+        noStickers:
+          "Gli sticker ricevuti nelle conversazioni compaiono qui per reinviarli.",
+        noGifs: "Nessuna GIF trovata.",
+        gifsNotConfigured:
+          "Per usare le GIF, aggiungi la chiave GIPHY in Impostazioni > Opzioni > Servizi esterni.",
+        sendSticker: "Invia sticker",
+        sendGif: "Invia GIF"
+      },
       about: {
         headline: "Pensata per assistere meglio, ogni giorno",
         product:
@@ -925,6 +945,25 @@ const messages = {
         licensesourcecode: "Codice sorgente di Tekvosoft"
       },
       schedules: {
+        calendar: {
+          subtitle:
+            "Guarda nel calendario quando verrà inviato ogni messaggio.",
+          today: "Oggi",
+          list: "Elenco",
+          month: "Mese",
+          all: "Tutti",
+          pending: "Programmato",
+          sent: "Inviato",
+          error: "Errore",
+          more: "altri",
+          noEvents: "Nessuna programmazione questo mese.",
+          noEventsDay: "Niente in programma questo giorno",
+          scheduleThisDay: "Programma in questo giorno",
+          previous: "Mese precedente",
+          next: "Mese successivo",
+          count: "{{count}} programmazione",
+          count_plural: "{{count}} programmazioni"
+        },
         title: "Pianificazioni",
         confirmationModal: {
           deleteTitle: "Sei sicuro di voler eliminare questa Pianificazione?",
@@ -1309,6 +1348,16 @@ const messages = {
         edited: "Modificata"
       },
       contactDrawer: {
+        media: {
+          title: "Media, link e documenti",
+          media: "Media",
+          docs: "Documenti",
+          links: "Link",
+          empty_media: "Nessuna foto o video con questo contatto.",
+          empty_docs: "Nessun documento con questo contatto.",
+          empty_links: "Nessun link con questo contatto.",
+          loadMore: "Carica altri"
+        },
         phone: {
           edit: "Modifica",
           call: "Chiama",

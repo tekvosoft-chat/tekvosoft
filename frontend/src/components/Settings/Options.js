@@ -85,8 +85,33 @@ const useStyles = makeStyles(theme => ({
     height: 20
   },
 
+  // cabeçalho de cada grupo de opções
   groupTitle: {
-    marginBottom: 0
+    margin: theme.spacing(2, 0, 0.25),
+    fontSize: "1.0625rem",
+    fontWeight: 700,
+    color: theme.palette.text.primary
+  },
+  groupHint: {
+    fontSize: "0.875rem",
+    color: theme.palette.text.secondary
+  },
+  // cada opção é um cartão: controle em cima, explicação embaixo
+  fieldCard: {
+    height: "100%",
+    boxSizing: "border-box",
+    display: "flex",
+    flexDirection: "column",
+    gap: theme.spacing(1),
+    padding: theme.spacing(1.5, 2, 2),
+    borderRadius: theme.palette.tkv.radius.lg,
+    border: `1px solid ${theme.palette.tkv.border}`,
+    backgroundColor: theme.palette.tkv.surface
+  },
+  hint: {
+    fontSize: "0.8125rem",
+    lineHeight: 1.45,
+    color: theme.palette.text.secondary
   },
 
   uploadInput: {
@@ -112,6 +137,7 @@ export default function Options(props) {
   const [groupsTab, setGroupsTab] = useState("disabled");
   const [apiToken, setApiToken] = useState("");
   const [openAiKey, setOpenAiKey] = useState("");
+  const [giphyApiKey, setGiphyApiKey] = useState("");
   const [aiProvider, setAiProvider] = useState("openai");
   const [audioTranscriptions, setAudioTranscriptions] = useState("disabled");
   const [useMultiThreadedWbot, setUseMultiThreadedWbot] = useState("disabled");
@@ -246,6 +272,9 @@ export default function Options(props) {
 
       const openAiKey = settings.find(s => s.key === "openAiKey");
       setOpenAiKey(openAiKey?.value || "");
+
+      const giphyApiKey = settings.find(s => s.key === "giphyApiKey");
+      setGiphyApiKey(giphyApiKey?.value || "");
 
       const aiProvider = settings.find(s => s.key === "aiProvider");
       setAiProvider(aiProvider?.value || "openai");
@@ -503,683 +532,868 @@ export default function Options(props) {
           <h2 className={classes.groupTitle}>
             {i18n.t("settings.group.general")}
           </h2>
+          <Typography className={classes.groupHint}>
+            {i18n.t("settings.hints.groups.general")}
+          </Typography>
         </Grid>
 
         <Grid xs={12} sm={6} md={4} item>
-          <FormControl className={classes.selectContainer}>
-            <InputLabel id="ratings-label">
-              {i18n.t("settings.validations.title")}
-            </InputLabel>
-            <Select
-              labelId="ratings-label"
-              value={userRating}
-              onChange={async e => {
-                handleChangeUserRating(e.target.value);
-              }}
-            >
-              <MenuItem value={"disabled"}>
-                {i18n.t("settings.validations.options.disabled")}
-              </MenuItem>
-              <MenuItem value={"enabled"}>
-                {i18n.t("settings.validations.options.enabled")}
-              </MenuItem>
-            </Select>
-          </FormControl>
+          <div className={classes.fieldCard}>
+            <FormControl className={classes.selectContainer}>
+              <InputLabel id="ratings-label">
+                {i18n.t("settings.validations.title")}
+              </InputLabel>
+              <Select
+                labelId="ratings-label"
+                value={userRating}
+                onChange={async e => {
+                  handleChangeUserRating(e.target.value);
+                }}
+              >
+                <MenuItem value={"disabled"}>
+                  {i18n.t("settings.validations.options.disabled")}
+                </MenuItem>
+                <MenuItem value={"enabled"}>
+                  {i18n.t("settings.validations.options.enabled")}
+                </MenuItem>
+              </Select>
+            </FormControl>
+            <Typography className={classes.hint}>
+              {i18n.t("settings.hints.ratings")}
+            </Typography>
+          </div>
         </Grid>
 
         <Grid xs={12} sm={6} md={4} item>
-          <FormControl className={classes.selectContainer}>
-            <InputLabel id="call-type-label">
-              {i18n.t("settings.VoiceAndVideoCalls.title")}
-            </InputLabel>
-            <Select
-              labelId="call-type-label"
-              value={callType}
-              onChange={async e => {
-                handleCallType(e.target.value);
-              }}
-            >
-              <MenuItem value={"disabled"}>
-                {i18n.t("settings.VoiceAndVideoCalls.options.disabled")}
-              </MenuItem>
-              <MenuItem value={"enabled"}>
-                {i18n.t("settings.VoiceAndVideoCalls.options.enabled")}
-              </MenuItem>
-            </Select>
-          </FormControl>
+          <div className={classes.fieldCard}>
+            <FormControl className={classes.selectContainer}>
+              <InputLabel id="call-type-label">
+                {i18n.t("settings.VoiceAndVideoCalls.title")}
+              </InputLabel>
+              <Select
+                labelId="call-type-label"
+                value={callType}
+                onChange={async e => {
+                  handleCallType(e.target.value);
+                }}
+              >
+                <MenuItem value={"disabled"}>
+                  {i18n.t("settings.VoiceAndVideoCalls.options.disabled")}
+                </MenuItem>
+                <MenuItem value={"enabled"}>
+                  {i18n.t("settings.VoiceAndVideoCalls.options.enabled")}
+                </MenuItem>
+              </Select>
+            </FormControl>
+            <Typography className={classes.hint}>
+              {i18n.t("settings.hints.calls")}
+            </Typography>
+          </div>
         </Grid>
 
         <Grid xs={12} sm={6} md={4} item>
-          <FormControl className={classes.selectContainer}>
-            <InputLabel id="group-type-label">
-              {i18n.t("settings.AutomaticChatbotOutput.title")}
-            </InputLabel>
-            <Select
-              labelId="chatbot-autoexit"
-              value={chatbotAutoExit}
-              onChange={async e => {
-                handleChatbotAutoExit(e.target.value);
-              }}
-            >
-              <MenuItem value={"disabled"}>
-                {i18n.t("settings.AutomaticChatbotOutput.options.disabled")}
-              </MenuItem>
-              <MenuItem value={"enabled"}>
-                {i18n.t("settings.AutomaticChatbotOutput.options.enabled")}
-              </MenuItem>
-            </Select>
-          </FormControl>
+          <div className={classes.fieldCard}>
+            <FormControl className={classes.selectContainer}>
+              <InputLabel id="group-type-label">
+                {i18n.t("settings.AutomaticChatbotOutput.title")}
+              </InputLabel>
+              <Select
+                labelId="chatbot-autoexit"
+                value={chatbotAutoExit}
+                onChange={async e => {
+                  handleChatbotAutoExit(e.target.value);
+                }}
+              >
+                <MenuItem value={"disabled"}>
+                  {i18n.t("settings.AutomaticChatbotOutput.options.disabled")}
+                </MenuItem>
+                <MenuItem value={"enabled"}>
+                  {i18n.t("settings.AutomaticChatbotOutput.options.enabled")}
+                </MenuItem>
+              </Select>
+            </FormControl>
+            <Typography className={classes.hint}>
+              {i18n.t("settings.hints.chatbotAutoExit")}
+            </Typography>
+          </div>
         </Grid>
 
         <Grid xs={12} sm={6} md={4} item>
-          <FormControl className={classes.selectContainer}>
-            <InputLabel id="quickmessages-label">
-              {i18n.t("settings.QuickMessages.title")}
-            </InputLabel>
-            <Select
-              labelId="quickmessages-label"
-              value={quickMessages}
-              onChange={async e => {
-                handleQuickMessages(e.target.value);
-              }}
-            >
-              <MenuItem value={"company"}>
-                {i18n.t("settings.QuickMessages.options.enabled")}
-              </MenuItem>
-              <MenuItem value={"individual"}>
-                {i18n.t("settings.QuickMessages.options.disabled")}
-              </MenuItem>
-            </Select>
-          </FormControl>
+          <div className={classes.fieldCard}>
+            <FormControl className={classes.selectContainer}>
+              <InputLabel id="quickmessages-label">
+                {i18n.t("settings.QuickMessages.title")}
+              </InputLabel>
+              <Select
+                labelId="quickmessages-label"
+                value={quickMessages}
+                onChange={async e => {
+                  handleQuickMessages(e.target.value);
+                }}
+              >
+                <MenuItem value={"company"}>
+                  {i18n.t("settings.QuickMessages.options.enabled")}
+                </MenuItem>
+                <MenuItem value={"individual"}>
+                  {i18n.t("settings.QuickMessages.options.disabled")}
+                </MenuItem>
+              </Select>
+            </FormControl>
+            <Typography className={classes.hint}>
+              {i18n.t("settings.hints.quickMessages")}
+            </Typography>
+          </div>
         </Grid>
 
         <Grid xs={12} sm={6} md={4} item>
-          <FormControl className={classes.selectContainer}>
-            <InputLabel id="tags-mode-label">
-              {i18n.t("settings.TagsMode.title")}
-            </InputLabel>
-            <Select
-              labelId="tags-mode-label"
-              value={tagsMode}
-              onChange={async e => {
-                handleSetting("tagsMode", e.target.value, setTagsMode);
-              }}
-            >
-              <MenuItem value={"ticket"}>
-                {i18n.t("settings.TagsMode.options.ticket")}
-              </MenuItem>
-              <MenuItem value={"contact"}>
-                {i18n.t("settings.TagsMode.options.contact")}
-              </MenuItem>
-              <MenuItem value={"both"}>
-                {i18n.t("settings.TagsMode.options.both")}
-              </MenuItem>
-            </Select>
-          </FormControl>
+          <div className={classes.fieldCard}>
+            <FormControl className={classes.selectContainer}>
+              <InputLabel id="tags-mode-label">
+                {i18n.t("settings.TagsMode.title")}
+              </InputLabel>
+              <Select
+                labelId="tags-mode-label"
+                value={tagsMode}
+                onChange={async e => {
+                  handleSetting("tagsMode", e.target.value, setTagsMode);
+                }}
+              >
+                <MenuItem value={"ticket"}>
+                  {i18n.t("settings.TagsMode.options.ticket")}
+                </MenuItem>
+                <MenuItem value={"contact"}>
+                  {i18n.t("settings.TagsMode.options.contact")}
+                </MenuItem>
+                <MenuItem value={"both"}>
+                  {i18n.t("settings.TagsMode.options.both")}
+                </MenuItem>
+              </Select>
+            </FormControl>
+            <Typography className={classes.hint}>
+              {i18n.t("settings.hints.tagsMode")}
+            </Typography>
+          </div>
         </Grid>
 
         <Grid xs={12} sm={6} md={4} item>
-          <FormControl className={classes.selectContainer}>
-            <InputLabel id="shownumericicons-label">
-              {i18n.t("settings.ShowNumericEmoticons.title")}
-            </InputLabel>
-            <Select
-              labelId="shownumericicons-label"
-              value={showNumericIcons}
-              onChange={async e => {
-                handleSetting(
-                  "showNumericIcons",
-                  e.target.value,
-                  setShowNumericIcons
-                );
-              }}
-            >
-              <MenuItem value={"disabled"}>
-                {i18n.t("common.disabled")}
-              </MenuItem>
-              <MenuItem value={"enabled"}>{i18n.t("common.enabled")}</MenuItem>
-            </Select>
-          </FormControl>
+          <div className={classes.fieldCard}>
+            <FormControl className={classes.selectContainer}>
+              <InputLabel id="shownumericicons-label">
+                {i18n.t("settings.ShowNumericEmoticons.title")}
+              </InputLabel>
+              <Select
+                labelId="shownumericicons-label"
+                value={showNumericIcons}
+                onChange={async e => {
+                  handleSetting(
+                    "showNumericIcons",
+                    e.target.value,
+                    setShowNumericIcons
+                  );
+                }}
+              >
+                <MenuItem value={"disabled"}>
+                  {i18n.t("common.disabled")}
+                </MenuItem>
+                <MenuItem value={"enabled"}>
+                  {i18n.t("common.enabled")}
+                </MenuItem>
+              </Select>
+            </FormControl>
+            <Typography className={classes.hint}>
+              {i18n.t("settings.hints.numericIcons")}
+            </Typography>
+          </div>
         </Grid>
 
         <Grid xs={12} sm={12} md={6} item>
-          <FormControl className={classes.selectContainer}>
-            <TextField
-              id="ticket-accepted-message-field"
-              label={i18n.t("settings.ticketAcceptedMessage.title")}
-              placeholder={i18n.t("settings.ticketAcceptedMessage.placeholder")}
-              variant="standard"
-              multiline
-              rows={4}
-              value={ticketAcceptedMessage}
-              onChange={e => {
-                setTicketAcceptedMessage(e.target.value);
-              }}
-              onBlur={e => {
-                handleSetting("ticketAcceptedMessage", ticketAcceptedMessage);
-              }}
-            />
-            <span>
-              {i18n.t("settings.mustacheVariables.title")}{" "}
-              {"{{firstname}} {{name}} {{user}} {{queue}}"}
-            </span>
-          </FormControl>
+          <div className={classes.fieldCard}>
+            <FormControl className={classes.selectContainer}>
+              <TextField
+                id="ticket-accepted-message-field"
+                label={i18n.t("settings.ticketAcceptedMessage.title")}
+                placeholder={i18n.t(
+                  "settings.ticketAcceptedMessage.placeholder"
+                )}
+                variant="standard"
+                multiline
+                rows={4}
+                value={ticketAcceptedMessage}
+                onChange={e => {
+                  setTicketAcceptedMessage(e.target.value);
+                }}
+                onBlur={e => {
+                  handleSetting("ticketAcceptedMessage", ticketAcceptedMessage);
+                }}
+              />
+              <span>
+                {i18n.t("settings.mustacheVariables.title")}{" "}
+                {"{{firstname}} {{name}} {{user}} {{queue}}"}
+              </span>
+            </FormControl>
+            <Typography className={classes.hint}>
+              {i18n.t("settings.hints.ticketAccepted")}
+            </Typography>
+          </div>
         </Grid>
 
         <Grid xs={12} sm={12} md={6} item>
-          <FormControl className={classes.selectContainer}>
-            <TextField
-              id="transfer-message-field"
-              label={i18n.t("settings.transferMessage.title")}
-              placeholder={i18n.t("settings.transferMessage.placeholder")}
-              variant="standard"
-              multiline
-              rows={4}
-              value={transferMessage}
-              onChange={e => {
-                setTransferMessage(e.target.value);
-              }}
-              onBlur={e => {
-                handleSetting("transferMessage", transferMessage);
-              }}
-            />
-            <span>
-              {i18n.t("settings.mustacheVariables.title")}{" "}
-              {"{{firstname}} {{name}} {{user}} {{queue}}"}
-            </span>
-          </FormControl>
+          <div className={classes.fieldCard}>
+            <FormControl className={classes.selectContainer}>
+              <TextField
+                id="transfer-message-field"
+                label={i18n.t("settings.transferMessage.title")}
+                placeholder={i18n.t("settings.transferMessage.placeholder")}
+                variant="standard"
+                multiline
+                rows={4}
+                value={transferMessage}
+                onChange={e => {
+                  setTransferMessage(e.target.value);
+                }}
+                onBlur={e => {
+                  handleSetting("transferMessage", transferMessage);
+                }}
+              />
+              <span>
+                {i18n.t("settings.mustacheVariables.title")}{" "}
+                {"{{firstname}} {{name}} {{user}} {{queue}}"}
+              </span>
+            </FormControl>
+            <Typography className={classes.hint}>
+              {i18n.t("settings.hints.transfer")}
+            </Typography>
+          </div>
         </Grid>
 
         <Grid item xs={12}>
           <h2 className={classes.groupTitle}>
             {i18n.t("settings.group.timeouts")}
           </h2>
+          <Typography className={classes.groupHint}>
+            {i18n.t("settings.hints.groups.timeouts")}
+          </Typography>
         </Grid>
         <Grid xs={12} sm={6} md={4} item>
-          <FormControl className={classes.selectContainer}>
-            <TextField
-              id="ratings-timeout-field"
-              label="Timeout para avaliação (minutos)"
-              variant="standard"
-              name="ratingsTimeout"
-              type="number"
-              value={ratingsTimeout}
-              onChange={e => {
-                setRatingsTimeout(e.target.value);
-              }}
-              onBlur={async _ => {
-                await handleRatingsTimeout(ratingsTimeout);
-              }}
-            />
-          </FormControl>
-        </Grid>
-
-        <Grid xs={12} sm={6} md={4} item>
-          <FormControl className={classes.selectContainer}>
-            <TextField
-              id="autoreopen-timeout-field"
-              label="Timeout para reabertura automática (minutos)"
-              variant="standard"
-              name="autoReopenTimeout"
-              type="number"
-              value={autoReopenTimeout}
-              onChange={e => {
-                setAutoReopenTimeout(e.target.value);
-              }}
-              onBlur={async _ => {
-                await handleAutoReopenTimeout(autoReopenTimeout);
-              }}
-            />
-          </FormControl>
+          <div className={classes.fieldCard}>
+            <FormControl className={classes.selectContainer}>
+              <TextField
+                id="ratings-timeout-field"
+                label="Timeout para avaliação (minutos)"
+                variant="standard"
+                name="ratingsTimeout"
+                type="number"
+                value={ratingsTimeout}
+                onChange={e => {
+                  setRatingsTimeout(e.target.value);
+                }}
+                onBlur={async _ => {
+                  await handleRatingsTimeout(ratingsTimeout);
+                }}
+              />
+            </FormControl>
+            <Typography className={classes.hint}>
+              {i18n.t("settings.hints.ratingsTimeout")}
+            </Typography>
+          </div>
         </Grid>
 
         <Grid xs={12} sm={6} md={4} item>
-          <FormControl className={classes.selectContainer}>
-            <TextField
-              id="noqueue-timeout-field"
-              label="Timeout para ticket sem fila (minutos)"
-              variant="standard"
-              name="noQueueTimeout"
-              type="number"
-              value={noQueueTimeout}
-              onChange={e => {
-                setNoQueueTimeout(e.target.value);
-              }}
-              onBlur={async _ => {
-                await handleSetting("noQueueTimeout", noQueueTimeout);
-              }}
-            />
-          </FormControl>
+          <div className={classes.fieldCard}>
+            <FormControl className={classes.selectContainer}>
+              <TextField
+                id="autoreopen-timeout-field"
+                label="Timeout para reabertura automática (minutos)"
+                variant="standard"
+                name="autoReopenTimeout"
+                type="number"
+                value={autoReopenTimeout}
+                onChange={e => {
+                  setAutoReopenTimeout(e.target.value);
+                }}
+                onBlur={async _ => {
+                  await handleAutoReopenTimeout(autoReopenTimeout);
+                }}
+              />
+            </FormControl>
+            <Typography className={classes.hint}>
+              {i18n.t("settings.hints.autoReopen")}
+            </Typography>
+          </div>
         </Grid>
 
         <Grid xs={12} sm={6} md={4} item>
-          <FormControl className={classes.selectContainer}>
-            <InputLabel id="noqueue-timeout-action-label">
-              Ação para timeout de ticket sem fila
-            </InputLabel>
-            <Select
-              labelId="open-timeout-action-label"
-              value={noQueueTimeoutAction}
-              onChange={async e => {
-                handleSetting(
-                  "noQueueTimeoutAction",
-                  e.target.value,
-                  setNoQueueTimeoutAction
-                );
-              }}
-            >
-              <MenuItem value={"0"}>Fechar</MenuItem>
-              {queues.map(queue => (
-                <MenuItem key={queue.id} value={queue.id}>
-                  Transferir para {queue.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <div className={classes.fieldCard}>
+            <FormControl className={classes.selectContainer}>
+              <TextField
+                id="noqueue-timeout-field"
+                label="Timeout para ticket sem fila (minutos)"
+                variant="standard"
+                name="noQueueTimeout"
+                type="number"
+                value={noQueueTimeout}
+                onChange={e => {
+                  setNoQueueTimeout(e.target.value);
+                }}
+                onBlur={async _ => {
+                  await handleSetting("noQueueTimeout", noQueueTimeout);
+                }}
+              />
+            </FormControl>
+            <Typography className={classes.hint}>
+              {i18n.t("settings.hints.noQueueTimeout")}
+            </Typography>
+          </div>
         </Grid>
 
         <Grid xs={12} sm={6} md={4} item>
-          <FormControl className={classes.selectContainer}>
-            <TextField
-              id="openticket-timeout-field"
-              label="Timeout para ticket em atendimento (minutos)"
-              variant="standard"
-              name="openTicketTimeout"
-              type="number"
-              value={openTicketTimeout}
-              onChange={e => {
-                setOpenTicketTimeout(e.target.value);
-              }}
-              onBlur={async _ => {
-                await handleSetting("openTicketTimeout", openTicketTimeout);
-              }}
-            />
-          </FormControl>
+          <div className={classes.fieldCard}>
+            <FormControl className={classes.selectContainer}>
+              <InputLabel id="noqueue-timeout-action-label">
+                Ação para timeout de ticket sem fila
+              </InputLabel>
+              <Select
+                labelId="open-timeout-action-label"
+                value={noQueueTimeoutAction}
+                onChange={async e => {
+                  handleSetting(
+                    "noQueueTimeoutAction",
+                    e.target.value,
+                    setNoQueueTimeoutAction
+                  );
+                }}
+              >
+                <MenuItem value={"0"}>Fechar</MenuItem>
+                {queues.map(queue => (
+                  <MenuItem key={queue.id} value={queue.id}>
+                    Transferir para {queue.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Typography className={classes.hint}>
+              {i18n.t("settings.hints.noQueueTimeoutAction")}
+            </Typography>
+          </div>
         </Grid>
 
         <Grid xs={12} sm={6} md={4} item>
-          <FormControl className={classes.selectContainer}>
-            <InputLabel id="opentimeout-action-label">
-              Ação para timeout de ticket aberto
-            </InputLabel>
-            <Select
-              labelId="open-timeout-action-label"
-              value={openTicketTimeoutAction}
-              onChange={async e => {
-                handleSetting(
-                  "openTicketTimeoutAction",
-                  e.target.value,
-                  setOpenTicketTimeoutAction
-                );
-              }}
-            >
-              <MenuItem value={"pending"}>Retornar para a fila</MenuItem>
-              <MenuItem value={"closed"}>Fechar atendimento</MenuItem>
-            </Select>
-          </FormControl>
+          <div className={classes.fieldCard}>
+            <FormControl className={classes.selectContainer}>
+              <TextField
+                id="openticket-timeout-field"
+                label="Timeout para ticket em atendimento (minutos)"
+                variant="standard"
+                name="openTicketTimeout"
+                type="number"
+                value={openTicketTimeout}
+                onChange={e => {
+                  setOpenTicketTimeout(e.target.value);
+                }}
+                onBlur={async _ => {
+                  await handleSetting("openTicketTimeout", openTicketTimeout);
+                }}
+              />
+            </FormControl>
+            <Typography className={classes.hint}>
+              {i18n.t("settings.hints.openTicketTimeout")}
+            </Typography>
+          </div>
         </Grid>
 
         <Grid xs={12} sm={6} md={4} item>
-          <FormControl className={classes.selectContainer}>
-            <TextField
-              id="chatbot-timeout-field"
-              label={i18n.t("settings.chatbotTicketTimeout")}
-              variant="standard"
-              name="chatbotTicketTimeout"
-              type="number"
-              value={chatbotTicketTimeout}
-              onChange={e => {
-                setChatbotTicketTimeout(e.target.value);
-              }}
-              onBlur={async _ => {
-                await handleSetting(
-                  "chatbotTicketTimeout",
-                  chatbotTicketTimeout
-                );
-              }}
-            />
-          </FormControl>
+          <div className={classes.fieldCard}>
+            <FormControl className={classes.selectContainer}>
+              <InputLabel id="opentimeout-action-label">
+                Ação para timeout de ticket aberto
+              </InputLabel>
+              <Select
+                labelId="open-timeout-action-label"
+                value={openTicketTimeoutAction}
+                onChange={async e => {
+                  handleSetting(
+                    "openTicketTimeoutAction",
+                    e.target.value,
+                    setOpenTicketTimeoutAction
+                  );
+                }}
+              >
+                <MenuItem value={"pending"}>Retornar para a fila</MenuItem>
+                <MenuItem value={"closed"}>Fechar atendimento</MenuItem>
+              </Select>
+            </FormControl>
+            <Typography className={classes.hint}>
+              {i18n.t("settings.hints.openTicketTimeoutAction")}
+            </Typography>
+          </div>
         </Grid>
 
         <Grid xs={12} sm={6} md={4} item>
-          <FormControl className={classes.selectContainer}>
-            <InputLabel id="chatbot-ticket-timeout-action-label">
-              {i18n.t("settings.chatbotTicketTimeoutAction")}
-            </InputLabel>
-            <Select
-              labelId="chatbot-ticket-timeout-action-label"
-              value={chatbotTicketTimeoutAction}
-              onChange={async e => {
-                handleSetting(
-                  "chatbotTicketTimeoutAction",
-                  e.target.value,
-                  setChatbotTicketTimeoutAction
-                );
-              }}
-            >
-              <MenuItem value={"0"}>{i18n.t("common.close")}</MenuItem>
-              {queues.map(queue => (
-                <MenuItem key={queue.id} value={queue.id}>
-                  {i18n.t("common.transferTo")} {queue.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <div className={classes.fieldCard}>
+            <FormControl className={classes.selectContainer}>
+              <TextField
+                id="chatbot-timeout-field"
+                label={i18n.t("settings.chatbotTicketTimeout")}
+                variant="standard"
+                name="chatbotTicketTimeout"
+                type="number"
+                value={chatbotTicketTimeout}
+                onChange={e => {
+                  setChatbotTicketTimeout(e.target.value);
+                }}
+                onBlur={async _ => {
+                  await handleSetting(
+                    "chatbotTicketTimeout",
+                    chatbotTicketTimeout
+                  );
+                }}
+              />
+            </FormControl>
+            <Typography className={classes.hint}>
+              {i18n.t("settings.hints.chatbotTimeout")}
+            </Typography>
+          </div>
+        </Grid>
+
+        <Grid xs={12} sm={6} md={4} item>
+          <div className={classes.fieldCard}>
+            <FormControl className={classes.selectContainer}>
+              <InputLabel id="chatbot-ticket-timeout-action-label">
+                {i18n.t("settings.chatbotTicketTimeoutAction")}
+              </InputLabel>
+              <Select
+                labelId="chatbot-ticket-timeout-action-label"
+                value={chatbotTicketTimeoutAction}
+                onChange={async e => {
+                  handleSetting(
+                    "chatbotTicketTimeoutAction",
+                    e.target.value,
+                    setChatbotTicketTimeoutAction
+                  );
+                }}
+              >
+                <MenuItem value={"0"}>{i18n.t("common.close")}</MenuItem>
+                {queues.map(queue => (
+                  <MenuItem key={queue.id} value={queue.id}>
+                    {i18n.t("common.transferTo")} {queue.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Typography className={classes.hint}>
+              {i18n.t("settings.hints.chatbotTimeoutAction")}
+            </Typography>
+          </div>
         </Grid>
 
         <Grid item xs={12}>
           <h2 className={classes.groupTitle}>
             {i18n.t("settings.group.officeHours")}
           </h2>
+          <Typography className={classes.groupHint}>
+            {i18n.t("settings.hints.groups.officeHours")}
+          </Typography>
         </Grid>
         <Grid xs={12} sm={6} md={4} item>
-          <FormControl className={classes.selectContainer}>
-            <InputLabel id="schedule-type-label">
-              {i18n.t("settings.OfficeManagement.title")}
-            </InputLabel>
-            <Select
-              labelId="schedule-type-label"
-              value={scheduleType}
-              onChange={async e => {
-                handleScheduleType(e.target.value);
-              }}
-            >
-              <MenuItem value={"disabled"}>
-                {i18n.t("settings.OfficeManagement.options.disabled")}
-              </MenuItem>
-              <MenuItem value={"queue"}>
-                {i18n.t(
-                  "settings.OfficeManagement.options.ManagementByDepartment"
-                )}
-              </MenuItem>
-              <MenuItem value={"company"}>
-                {i18n.t(
-                  "settings.OfficeManagement.options.ManagementByCompany"
-                )}
-              </MenuItem>
-            </Select>
-          </FormControl>
+          <div className={classes.fieldCard}>
+            <FormControl className={classes.selectContainer}>
+              <InputLabel id="schedule-type-label">
+                {i18n.t("settings.OfficeManagement.title")}
+              </InputLabel>
+              <Select
+                labelId="schedule-type-label"
+                value={scheduleType}
+                onChange={async e => {
+                  handleScheduleType(e.target.value);
+                }}
+              >
+                <MenuItem value={"disabled"}>
+                  {i18n.t("settings.OfficeManagement.options.disabled")}
+                </MenuItem>
+                <MenuItem value={"queue"}>
+                  {i18n.t(
+                    "settings.OfficeManagement.options.ManagementByDepartment"
+                  )}
+                </MenuItem>
+                <MenuItem value={"company"}>
+                  {i18n.t(
+                    "settings.OfficeManagement.options.ManagementByCompany"
+                  )}
+                </MenuItem>
+              </Select>
+            </FormControl>
+            <Typography className={classes.hint}>
+              {i18n.t("settings.hints.officeHours")}
+            </Typography>
+          </div>
         </Grid>
 
         <Grid xs={12} sm={6} md={4} item>
-          <FormControl className={classes.selectContainer}>
-            <InputLabel id="out-of-hours-action-label">
-              {i18n.t("settings.outOfHoursAction.title")}
-            </InputLabel>
-            <Select
-              labelId="out-of-hours-action-label"
-              value={outOfHoursAction}
-              onChange={async e => {
-                await handleSetting(
-                  "outOfHoursAction",
-                  e.target.value,
-                  setOutOfHoursAction
-                );
-              }}
-            >
-              <MenuItem value={"pending"}>
-                {i18n.t("settings.outOfHoursAction.options.pending")}
-              </MenuItem>
-              <MenuItem value={"closed"}>
-                {i18n.t("settings.outOfHoursAction.options.closed")}
-              </MenuItem>
-            </Select>
-          </FormControl>
+          <div className={classes.fieldCard}>
+            <FormControl className={classes.selectContainer}>
+              <InputLabel id="out-of-hours-action-label">
+                {i18n.t("settings.outOfHoursAction.title")}
+              </InputLabel>
+              <Select
+                labelId="out-of-hours-action-label"
+                value={outOfHoursAction}
+                onChange={async e => {
+                  await handleSetting(
+                    "outOfHoursAction",
+                    e.target.value,
+                    setOutOfHoursAction
+                  );
+                }}
+              >
+                <MenuItem value={"pending"}>
+                  {i18n.t("settings.outOfHoursAction.options.pending")}
+                </MenuItem>
+                <MenuItem value={"closed"}>
+                  {i18n.t("settings.outOfHoursAction.options.closed")}
+                </MenuItem>
+              </Select>
+            </FormControl>
+            <Typography className={classes.hint}>
+              {i18n.t("settings.hints.outOfHours")}
+            </Typography>
+          </div>
         </Grid>
 
         <Grid item xs={12}>
           <h2 className={classes.groupTitle}>
             {i18n.t("settings.group.groups")}
           </h2>
+          <Typography className={classes.groupHint}>
+            {i18n.t("settings.hints.groups.groups")}
+          </Typography>
         </Grid>
         <Grid xs={12} sm={6} md={4} item>
-          <FormControl className={classes.selectContainer}>
-            <InputLabel id="group-type-label">
-              {i18n.t("settings.IgnoreGroupMessages.title")}
-            </InputLabel>
-            <Select
-              labelId="group-type-label"
-              value={CheckMsgIsGroup}
-              onChange={async e => {
-                handleGroupType(e.target.value);
-              }}
-            >
-              <MenuItem value={"disabled"}>
-                {i18n.t("settings.IgnoreGroupMessages.options.disabled")}
-              </MenuItem>
-              <MenuItem value={"enabled"}>
-                {i18n.t("settings.IgnoreGroupMessages.options.enabled")}
-              </MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-
-        <Grid xs={12} sm={6} md={4} item>
-          <FormControl className={classes.selectContainer}>
-            <InputLabel id="sound-group-notifications-label">
-              {i18n.t("settings.soundGroupNotifications.title")}
-            </InputLabel>
-            <Select
-              labelId="sound-group-notifications-label"
-              value={soundGroupNotifications}
-              onChange={async e => {
-                await handleSetting(
-                  "soundGroupNotifications",
-                  e.target.value,
-                  setSoundGroupNotifications
-                );
-              }}
-            >
-              <MenuItem value={"disabled"}>
-                {i18n.t("settings.soundGroupNotifications.options.disabled")}
-              </MenuItem>
-              <MenuItem value={"enabled"}>
-                {i18n.t("settings.soundGroupNotifications.options.enabled")}
-              </MenuItem>
-            </Select>
-          </FormControl>
+          <div className={classes.fieldCard}>
+            <FormControl className={classes.selectContainer}>
+              <InputLabel id="group-type-label">
+                {i18n.t("settings.IgnoreGroupMessages.title")}
+              </InputLabel>
+              <Select
+                labelId="group-type-label"
+                value={CheckMsgIsGroup}
+                onChange={async e => {
+                  handleGroupType(e.target.value);
+                }}
+              >
+                <MenuItem value={"disabled"}>
+                  {i18n.t("settings.IgnoreGroupMessages.options.disabled")}
+                </MenuItem>
+                <MenuItem value={"enabled"}>
+                  {i18n.t("settings.IgnoreGroupMessages.options.enabled")}
+                </MenuItem>
+              </Select>
+            </FormControl>
+            <Typography className={classes.hint}>
+              {i18n.t("settings.hints.ignoreGroups")}
+            </Typography>
+          </div>
         </Grid>
 
         <Grid xs={12} sm={6} md={4} item>
-          <FormControl className={classes.selectContainer}>
-            <InputLabel id="groups-tab-label">
-              {i18n.t("settings.groupsTab.title")}
-            </InputLabel>
-            <Select
-              labelId="groups-tab-label"
-              value={groupsTab}
-              disabled={CheckMsgIsGroup === "enabled"}
-              onChange={async e => {
-                await handleSetting("groupsTab", e.target.value, setGroupsTab);
-              }}
-            >
-              <MenuItem value={"enabled"}>
-                {i18n.t("settings.groupsTab.options.enabled")}
-              </MenuItem>
-              <MenuItem value={"disabled"}>
-                {i18n.t("settings.groupsTab.options.disabled")}
-              </MenuItem>
-            </Select>
-          </FormControl>
+          <div className={classes.fieldCard}>
+            <FormControl className={classes.selectContainer}>
+              <InputLabel id="sound-group-notifications-label">
+                {i18n.t("settings.soundGroupNotifications.title")}
+              </InputLabel>
+              <Select
+                labelId="sound-group-notifications-label"
+                value={soundGroupNotifications}
+                onChange={async e => {
+                  await handleSetting(
+                    "soundGroupNotifications",
+                    e.target.value,
+                    setSoundGroupNotifications
+                  );
+                }}
+              >
+                <MenuItem value={"disabled"}>
+                  {i18n.t("settings.soundGroupNotifications.options.disabled")}
+                </MenuItem>
+                <MenuItem value={"enabled"}>
+                  {i18n.t("settings.soundGroupNotifications.options.enabled")}
+                </MenuItem>
+              </Select>
+            </FormControl>
+            <Typography className={classes.hint}>
+              {i18n.t("settings.hints.soundGroups")}
+            </Typography>
+          </div>
+        </Grid>
+
+        <Grid xs={12} sm={6} md={4} item>
+          <div className={classes.fieldCard}>
+            <FormControl className={classes.selectContainer}>
+              <InputLabel id="groups-tab-label">
+                {i18n.t("settings.groupsTab.title")}
+              </InputLabel>
+              <Select
+                labelId="groups-tab-label"
+                value={groupsTab}
+                disabled={CheckMsgIsGroup === "enabled"}
+                onChange={async e => {
+                  await handleSetting(
+                    "groupsTab",
+                    e.target.value,
+                    setGroupsTab
+                  );
+                }}
+              >
+                <MenuItem value={"enabled"}>
+                  {i18n.t("settings.groupsTab.options.enabled")}
+                </MenuItem>
+                <MenuItem value={"disabled"}>
+                  {i18n.t("settings.groupsTab.options.disabled")}
+                </MenuItem>
+              </Select>
+            </FormControl>
+            <Typography className={classes.hint}>
+              {i18n.t("settings.hints.groupsTab")}
+            </Typography>
+          </div>
         </Grid>
 
         <Grid item xs={12}>
           <h2 className={classes.groupTitle}>
             {i18n.t("settings.group.confidenciality")}
           </h2>
+          <Typography className={classes.groupHint}>
+            {i18n.t("settings.hints.groups.confidenciality")}
+          </Typography>
         </Grid>
 
         <Grid xs={12} sm={6} md={4} item>
-          <FormControl className={classes.selectContainer}>
-            <InputLabel id="message-visibility-label">
-              {i18n.t("settings.messageVisibility.title")}
-            </InputLabel>
-            <Select
-              labelId="message-visibility-label"
-              value={messageVisibility}
-              onChange={async e => {
-                await handleSetting(
-                  "messageVisibility",
-                  e.target.value,
-                  setMessageVisibility
-                );
-              }}
-            >
-              <MenuItem value={"message"}>
-                {i18n.t(
-                  "settings.messageVisibility.options.respectMessageQueue"
-                )}
-              </MenuItem>
-              <MenuItem value={"ticket"}>
-                {i18n.t(
-                  "settings.messageVisibility.options.respectTicketQueue"
-                )}
-              </MenuItem>
-            </Select>
-          </FormControl>
+          <div className={classes.fieldCard}>
+            <FormControl className={classes.selectContainer}>
+              <InputLabel id="message-visibility-label">
+                {i18n.t("settings.messageVisibility.title")}
+              </InputLabel>
+              <Select
+                labelId="message-visibility-label"
+                value={messageVisibility}
+                onChange={async e => {
+                  await handleSetting(
+                    "messageVisibility",
+                    e.target.value,
+                    setMessageVisibility
+                  );
+                }}
+              >
+                <MenuItem value={"message"}>
+                  {i18n.t(
+                    "settings.messageVisibility.options.respectMessageQueue"
+                  )}
+                </MenuItem>
+                <MenuItem value={"ticket"}>
+                  {i18n.t(
+                    "settings.messageVisibility.options.respectTicketQueue"
+                  )}
+                </MenuItem>
+              </Select>
+            </FormControl>
+            <Typography className={classes.hint}>
+              {i18n.t("settings.hints.messageVisibility")}
+            </Typography>
+          </div>
         </Grid>
 
         <Grid xs={12} sm={6} md={4} item>
-          <FormControl className={classes.selectContainer}>
-            <InputLabel id="keep-queue-and-user-label">
-              {i18n.t("settings.keepQueueAndUser.title")}
-            </InputLabel>
-            <Select
-              labelId="keep-queue-and-user-label"
-              value={keepUserAndQueue}
-              onChange={async e => {
-                await handleSetting(
-                  "keepUserAndQueue",
-                  e.target.value,
-                  setKeepUserAndQueue
-                );
-              }}
-            >
-              <MenuItem value={"enabled"}>
-                {i18n.t("settings.keepQueueAndUser.options.enabled")}
-              </MenuItem>
-              <MenuItem value={"disabled"}>
-                {i18n.t("settings.keepQueueAndUser.options.disabled")}
-              </MenuItem>
-            </Select>
-          </FormControl>
+          <div className={classes.fieldCard}>
+            <FormControl className={classes.selectContainer}>
+              <InputLabel id="keep-queue-and-user-label">
+                {i18n.t("settings.keepQueueAndUser.title")}
+              </InputLabel>
+              <Select
+                labelId="keep-queue-and-user-label"
+                value={keepUserAndQueue}
+                onChange={async e => {
+                  await handleSetting(
+                    "keepUserAndQueue",
+                    e.target.value,
+                    setKeepUserAndQueue
+                  );
+                }}
+              >
+                <MenuItem value={"enabled"}>
+                  {i18n.t("settings.keepQueueAndUser.options.enabled")}
+                </MenuItem>
+                <MenuItem value={"disabled"}>
+                  {i18n.t("settings.keepQueueAndUser.options.disabled")}
+                </MenuItem>
+              </Select>
+            </FormControl>
+            <Typography className={classes.hint}>
+              {i18n.t("settings.hints.keepQueueAndUser")}
+            </Typography>
+          </div>
         </Grid>
 
         <Grid item xs={12}>
           <h2 className={classes.groupTitle}>{i18n.t("settings.group.api")}</h2>
+          <Typography className={classes.groupHint}>
+            {i18n.t("settings.hints.groups.api")}
+          </Typography>
         </Grid>
 
         <Grid xs={12} sm={6} md={4} item>
-          <FormControl className={classes.selectContainer}>
-            <TextField
-              id="primary-color-light-field"
-              label="API Token"
-              variant="standard"
-              value={apiToken}
-              InputProps={{
-                endAdornment: (
-                  <>
-                    {apiToken && (
-                      <>
+          <div className={classes.fieldCard}>
+            <FormControl className={classes.selectContainer}>
+              <TextField
+                id="primary-color-light-field"
+                label="API Token"
+                variant="standard"
+                value={apiToken}
+                InputProps={{
+                  endAdornment: (
+                    <>
+                      {apiToken && (
+                        <>
+                          <IconButton
+                            size="small"
+                            color="default"
+                            onClick={() => {
+                              copyApiToken();
+                            }}
+                          >
+                            <FontAwesomeIcon icon={faCopy} />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            color="default"
+                            onClick={() => {
+                              deleteApiToken();
+                            }}
+                          >
+                            <Delete />
+                          </IconButton>
+                        </>
+                      )}
+                      {!apiToken && (
                         <IconButton
                           size="small"
                           color="default"
                           onClick={() => {
-                            copyApiToken();
+                            generateApiToken();
                           }}
                         >
-                          <FontAwesomeIcon icon={faCopy} />
+                          <FontAwesomeIcon icon={faGears} />
                         </IconButton>
-                        <IconButton
-                          size="small"
-                          color="default"
-                          onClick={() => {
-                            deleteApiToken();
-                          }}
-                        >
-                          <Delete />
-                        </IconButton>
-                      </>
-                    )}
-                    {!apiToken && (
-                      <IconButton
-                        size="small"
-                        color="default"
-                        onClick={() => {
-                          generateApiToken();
-                        }}
-                      >
-                        <FontAwesomeIcon icon={faGears} />
-                      </IconButton>
-                    )}
-                  </>
-                )
-              }}
-            />
-          </FormControl>
+                      )}
+                    </>
+                  )
+                }}
+              />
+            </FormControl>
+            <Typography className={classes.hint}>
+              {i18n.t("settings.hints.apiToken")}
+            </Typography>
+          </div>
         </Grid>
 
         <Grid item xs={12}>
           <h2 className={classes.groupTitle}>
             {i18n.t("settings.group.externalServices")}
           </h2>
+          <Typography className={classes.groupHint}>
+            {i18n.t("settings.hints.groups.externalServices")}
+          </Typography>
         </Grid>
 
         <Grid xs={12} sm={6} md={4} item>
-          <FormControl className={classes.selectContainer}>
-            <InputLabel id="ai-provider-label">
-              {i18n.t("settings.AIProvider.title")}
-            </InputLabel>
-            <Select
-              labelId="ai-provider-label"
-              value={aiProvider}
-              onChange={async e => {
-                handleSetting("aiProvider", e.target.value, setAiProvider);
-              }}
-            >
-              <MenuItem value="openai">OpenAI</MenuItem>
-              <MenuItem value="groq">Groq</MenuItem>
-            </Select>
-          </FormControl>
+          <div className={classes.fieldCard}>
+            <FormControl className={classes.selectContainer}>
+              <InputLabel id="ai-provider-label">
+                {i18n.t("settings.AIProvider.title")}
+              </InputLabel>
+              <Select
+                labelId="ai-provider-label"
+                value={aiProvider}
+                onChange={async e => {
+                  handleSetting("aiProvider", e.target.value, setAiProvider);
+                }}
+              >
+                <MenuItem value="openai">OpenAI</MenuItem>
+                <MenuItem value="groq">Groq</MenuItem>
+              </Select>
+            </FormControl>
+            <Typography className={classes.hint}>
+              {i18n.t("settings.hints.aiProvider")}
+            </Typography>
+          </div>
         </Grid>
 
         <Grid xs={12} sm={12} md={8} item>
-          <FormControl className={classes.selectContainer}>
-            <TextField
-              id="openai-key-field"
-              label="AI Key"
-              variant="standard"
-              value={openAiKey}
-              onChange={e => {
-                setOpenAiKey(e.target.value);
-              }}
-              onBlur={async _ => {
-                await handleSetting("openAiKey", openAiKey);
-              }}
-            />
-          </FormControl>
+          <div className={classes.fieldCard}>
+            <FormControl className={classes.selectContainer}>
+              <TextField
+                id="openai-key-field"
+                label="AI Key"
+                variant="standard"
+                value={openAiKey}
+                onChange={e => {
+                  setOpenAiKey(e.target.value);
+                }}
+                onBlur={async _ => {
+                  await handleSetting("openAiKey", openAiKey);
+                }}
+              />
+            </FormControl>
+            <Typography className={classes.hint}>
+              {i18n.t("settings.hints.aiKey")}
+            </Typography>
+          </div>
+        </Grid>
+
+        <Grid xs={12} sm={12} md={8} item>
+          <div className={classes.fieldCard}>
+            <FormControl className={classes.selectContainer}>
+              <TextField
+                id="giphy-key-field"
+                label={i18n.t("settings.giphyApiKey.title")}
+                variant="standard"
+                type="password"
+                value={giphyApiKey}
+                onChange={e => setGiphyApiKey(e.target.value)}
+                onBlur={() => handleSetting("giphyApiKey", giphyApiKey.trim())}
+              />
+            </FormControl>
+            <Typography className={classes.hint}>
+              {i18n.t("settings.hints.giphyKey")}
+            </Typography>
+          </div>
         </Grid>
 
         <Grid xs={12} sm={6} md={4} item>
-          <FormControl className={classes.selectContainer}>
-            <InputLabel id="audio-transcriptions-label">
-              {i18n.t("settings.AudioTranscriptions.title")}
-            </InputLabel>
-            <Select
-              labelId="audio-transcriptions-label"
-              value={audioTranscriptions}
-              onChange={async e => {
-                handleSetting(
-                  "audioTranscriptions",
-                  e.target.value,
-                  setAudioTranscriptions
-                );
-              }}
-            >
-              <MenuItem value="disabled">{i18n.t("common.disabled")}</MenuItem>
-              <MenuItem value="enabled">{i18n.t("common.enabled")}</MenuItem>
-            </Select>
-          </FormControl>
+          <div className={classes.fieldCard}>
+            <FormControl className={classes.selectContainer}>
+              <InputLabel id="audio-transcriptions-label">
+                {i18n.t("settings.AudioTranscriptions.title")}
+              </InputLabel>
+              <Select
+                labelId="audio-transcriptions-label"
+                value={audioTranscriptions}
+                onChange={async e => {
+                  handleSetting(
+                    "audioTranscriptions",
+                    e.target.value,
+                    setAudioTranscriptions
+                  );
+                }}
+              >
+                <MenuItem value="disabled">
+                  {i18n.t("common.disabled")}
+                </MenuItem>
+                <MenuItem value="enabled">{i18n.t("common.enabled")}</MenuItem>
+              </Select>
+            </FormControl>
+            <Typography className={classes.hint}>
+              {i18n.t("settings.hints.audioTranscriptions")}
+            </Typography>
+          </div>
         </Grid>
 
         <OnlyForSuperUser
@@ -1190,6 +1404,9 @@ export default function Options(props) {
                 <h2 className={classes.groupTitle}>
                   {i18n.t("settings.group.serveradmin")}
                 </h2>
+                <Typography className={classes.groupHint}>
+                  {i18n.t("settings.hints.groups.serveradmin")}
+                </Typography>
               </Grid>
 
               <Grid xs={12} sm={6} md={4} item>
@@ -1208,107 +1425,132 @@ export default function Options(props) {
               </Grid>
 
               <Grid xs={12} sm={6} md={4} item>
-                <FormControl className={classes.selectContainer}>
-                  <InputLabel id="group-type-label">
-                    {i18n.t("settings.AllowRegistration.title")}
-                  </InputLabel>
-                  <Select
-                    labelId="allow-signup"
-                    value={allowSignup}
-                    onChange={async e => {
-                      handleAllowSignup(e.target.value);
-                    }}
-                  >
-                    <MenuItem value={"disabled"}>
-                      {i18n.t("settings.AllowRegistration.options.disabled")}
-                    </MenuItem>
-                    <MenuItem value={"enabled"}>
-                      {i18n.t("settings.AllowRegistration.options.enabled")}
-                    </MenuItem>
-                  </Select>
-                </FormControl>
+                <div className={classes.fieldCard}>
+                  <FormControl className={classes.selectContainer}>
+                    <InputLabel id="group-type-label">
+                      {i18n.t("settings.AllowRegistration.title")}
+                    </InputLabel>
+                    <Select
+                      labelId="allow-signup"
+                      value={allowSignup}
+                      onChange={async e => {
+                        handleAllowSignup(e.target.value);
+                      }}
+                    >
+                      <MenuItem value={"disabled"}>
+                        {i18n.t("settings.AllowRegistration.options.disabled")}
+                      </MenuItem>
+                      <MenuItem value={"enabled"}>
+                        {i18n.t("settings.AllowRegistration.options.enabled")}
+                      </MenuItem>
+                    </Select>
+                  </FormControl>
+                  <Typography className={classes.hint}>
+                    {i18n.t("settings.hints.allowSignup")}
+                  </Typography>
+                </div>
               </Grid>
 
               <Grid xs={12} sm={6} md={4} item>
-                <FormControl className={classes.selectContainer}>
-                  <InputLabel id="multithread-label">
-                    {i18n.t("settings.MultiThreadedWbot.title")}
-                  </InputLabel>
-                  <Select
-                    labelId="multithread-select"
-                    value={useMultiThreadedWbot}
-                    onChange={async e => {
-                      handleSetting(
-                        "useMultiThreadedWbot",
-                        e.target.value,
-                        setUseMultiThreadedWbot
-                      );
-                    }}
-                  >
-                    <MenuItem value={"disabled"}>
-                      {i18n.t("settings.MultiThreadedWbot.options.disabled")}
-                    </MenuItem>
-                    <MenuItem value={"enabled"}>
-                      {i18n.t("settings.MultiThreadedWbot.options.enabled")}
-                    </MenuItem>
-                  </Select>
-                </FormControl>
+                <div className={classes.fieldCard}>
+                  <FormControl className={classes.selectContainer}>
+                    <InputLabel id="multithread-label">
+                      {i18n.t("settings.MultiThreadedWbot.title")}
+                    </InputLabel>
+                    <Select
+                      labelId="multithread-select"
+                      value={useMultiThreadedWbot}
+                      onChange={async e => {
+                        handleSetting(
+                          "useMultiThreadedWbot",
+                          e.target.value,
+                          setUseMultiThreadedWbot
+                        );
+                      }}
+                    >
+                      <MenuItem value={"disabled"}>
+                        {i18n.t("settings.MultiThreadedWbot.options.disabled")}
+                      </MenuItem>
+                      <MenuItem value={"enabled"}>
+                        {i18n.t("settings.MultiThreadedWbot.options.enabled")}
+                      </MenuItem>
+                    </Select>
+                  </FormControl>
+                  <Typography className={classes.hint}>
+                    {i18n.t("settings.hints.multithread")}
+                  </Typography>
+                </div>
               </Grid>
 
               <Grid xs={12} sm={6} md={4} item>
-                <FormControl className={classes.selectContainer}>
-                  <TextField
-                    id="upload-limit-field"
-                    label={i18n.t("settings.FileUploadLimit.title")}
-                    variant="standard"
-                    name="uploadLimit"
-                    value={uploadLimit}
-                    onChange={e => {
-                      setUploadLimit(e.target.value);
-                    }}
-                    onBlur={async _ => {
-                      await handleSetting("uploadLimit", uploadLimit);
-                    }}
-                  />
-                </FormControl>
+                <div className={classes.fieldCard}>
+                  <FormControl className={classes.selectContainer}>
+                    <TextField
+                      id="upload-limit-field"
+                      label={i18n.t("settings.FileUploadLimit.title")}
+                      variant="standard"
+                      name="uploadLimit"
+                      value={uploadLimit}
+                      onChange={e => {
+                        setUploadLimit(e.target.value);
+                      }}
+                      onBlur={async _ => {
+                        await handleSetting("uploadLimit", uploadLimit);
+                      }}
+                    />
+                  </FormControl>
+                  <Typography className={classes.hint}>
+                    {i18n.t("settings.hints.uploadLimit")}
+                  </Typography>
+                </div>
               </Grid>
 
               <Grid xs={12} sm={6} md={4} item>
-                <FormControl className={classes.selectContainer}>
-                  <TextField
-                    id="appname-field"
-                    label={i18n.t("settings.FileDownloadLimit.title")}
-                    variant="standard"
-                    name="appName"
-                    value={downloadLimit}
-                    inputRef={downloadLimitInput}
-                    onChange={e => {
-                      setDownloadLimit(e.target.value);
-                    }}
-                    onBlur={async _ => {
-                      await handleDownloadLimit(downloadLimit);
-                    }}
-                  />
-                </FormControl>
+                <div className={classes.fieldCard}>
+                  <FormControl className={classes.selectContainer}>
+                    <TextField
+                      id="appname-field"
+                      label={i18n.t("settings.FileDownloadLimit.title")}
+                      variant="standard"
+                      name="appName"
+                      value={downloadLimit}
+                      inputRef={downloadLimitInput}
+                      onChange={e => {
+                        setDownloadLimit(e.target.value);
+                      }}
+                      onBlur={async _ => {
+                        await handleDownloadLimit(downloadLimit);
+                      }}
+                    />
+                  </FormControl>
+                  <Typography className={classes.hint}>
+                    {i18n.t("settings.hints.downloadLimit")}
+                  </Typography>
+                </div>
               </Grid>
 
               <Grid xs={12} sm={6} md={4} item>
-                <FormControl className={classes.selectContainer}>
-                  <TextField
-                    id="grace-period-field"
-                    label={i18n.t("settings.GracePeriod.title")}
-                    variant="standard"
-                    name="gracePeriod"
-                    type="number"
-                    value={gracePeriod}
-                    onChange={e => {
-                      setGracePeriod(e.target.value);
-                    }}
-                    onBlur={async _ => {
-                      await handleSetting("gracePeriod", gracePeriod);
-                    }}
-                  />
-                </FormControl>
+                <div className={classes.fieldCard}>
+                  <FormControl className={classes.selectContainer}>
+                    <TextField
+                      id="grace-period-field"
+                      label={i18n.t("settings.GracePeriod.title")}
+                      variant="standard"
+                      name="gracePeriod"
+                      type="number"
+                      value={gracePeriod}
+                      onChange={e => {
+                        setGracePeriod(e.target.value);
+                      }}
+                      onBlur={async _ => {
+                        await handleSetting("gracePeriod", gracePeriod);
+                      }}
+                    />
+                  </FormControl>
+                  <Typography className={classes.hint}>
+                    {i18n.t("settings.hints.gracePeriod")}
+                  </Typography>
+                </div>
               </Grid>
 
               <Grid xs={12} item>

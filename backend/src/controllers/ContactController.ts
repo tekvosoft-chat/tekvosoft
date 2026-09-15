@@ -7,6 +7,9 @@ import { getIO } from "../libs/socket";
 import ListContactsService from "../services/ContactServices/ListContactsService";
 import CreateContactService from "../services/ContactServices/CreateContactService";
 import ShowContactService from "../services/ContactServices/ShowContactService";
+import ListContactMediaService, {
+  ContactMediaKind
+} from "../services/ContactServices/ListContactMediaService";
 import UpdateContactService from "../services/ContactServices/UpdateContactService";
 import DeleteContactService from "../services/ContactServices/DeleteContactService";
 import FindOrCreateContactService from "../services/ContactServices/FindOrCreateContactService";
@@ -400,4 +403,25 @@ export const exportCsv = async (
   );
 
   return res;
+};
+
+/** Mídias, documentos e links trocados com o contato (dados do contato). */
+export const media = async (req: Request, res: Response): Promise<Response> => {
+  const { contactId } = req.params;
+  const { companyId } = req.user;
+  const kind = ["media", "docs", "links"].includes(String(req.query.kind))
+    ? (req.query.kind as ContactMediaKind)
+    : "media";
+  const pageNumber = Number(req.query.pageNumber) || 1;
+
+  const contact = await ShowContactService(contactId, companyId);
+
+  const result = await ListContactMediaService({
+    contactId: contact.id,
+    companyId,
+    kind,
+    pageNumber
+  });
+
+  return res.status(200).json(result);
 };

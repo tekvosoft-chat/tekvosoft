@@ -28,7 +28,8 @@ import { TagsContainer } from "../TagsContainer";
 import useSettings from "../../hooks/useSettings";
 import PhoneContactDetails from "./PhoneContactDetails";
 
-const drawerWidth = 320;
+// um pouco mais larga, como a coluna de dados do WhatsApp Web
+const drawerWidth = 380;
 
 const useStyles = makeStyles(theme => ({
   drawer: {
@@ -157,89 +158,17 @@ const ContactDrawer = ({
           paper: classes.drawerPaper
         }}
       >
-        <div className={classes.header}>
-          <IconButton onClick={handleDrawerClose}>
-            <CloseIcon />
-          </IconButton>
-          <Typography style={{ justifySelf: "center" }}>
-            {i18n.t("contactDrawer.header")}
-          </Typography>
-        </div>
         {loading ? (
           <ContactDrawerSkeleton classes={classes} />
         ) : (
-          <div className={classes.content}>
-            <div className={classes.contactHeader}>
-              <CardHeader
-                onClick={() => {}}
-                style={{ cursor: "pointer", width: "100%", padding: 0 }}
-                titleTypographyProps={{ noWrap: true }}
-                subheaderTypographyProps={{ noWrap: true }}
-                avatar={
-                  <Avatar
-                    src={contact.profilePicUrl}
-                    alt="contact_image"
-                    style={{
-                      width: 60,
-                      height: 60,
-                      backgroundColor: generateColor(contact?.number),
-                      color: "white",
-                      fontWeight: "bold"
-                    }}
-                  >
-                    {getInitials(formattedContactName)}
-                  </Avatar>
-                }
-                title={
-                  <>
-                    <Typography>{formattedContactName}</Typography>
-                  </>
-                }
-                subheader={
-                  <>
-                    <Typography style={{ fontSize: 12 }}>
-                      {formatWhatsappContactNumber(contact)}
-                    </Typography>
-                    <Typography style={{ fontSize: 12 }}>
-                      <Link href={`mailto:${contact.email}`}>
-                        {contact.email}
-                      </Link>
-                    </Typography>
-                  </>
-                }
-              />
-            </div>
-            {showTags && <TagsContainer contact={contact} />}
-            {contact?.extraInfo?.length > 0 && (
-              <div className={classes.contactExtraInfo}>
-                <Typography variant="subtitle1">
-                  {i18n.t("contactModal.form.extraInfo")}
-                </Typography>
-                {contact?.extraInfo?.map(info => (
-                  <WhatsMarked>{`*${info?.name}:* ${info?.value}`}</WhatsMarked>
-                ))}
-              </div>
-            )}
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={() => setModalOpen(!openForm)}
-              style={{ fontSize: 12, marginTop: 8 }}
-            >
-              {i18n.t("contactDrawer.buttons.edit")}
-            </Button>
-            <Paper square variant="outlined" className={classes.contactDetails}>
-              <Typography variant="subtitle1" style={{ marginBottom: 10 }}>
-                {i18n.t("ticketOptionsMenu.appointmentsModal.title")}
-              </Typography>
-              <TicketNotes ticket={ticket} />
-            </Paper>
-            <ContactModal
-              open={modalOpen}
-              onClose={() => setModalOpen(false)}
-              contactId={contact.id}
-            ></ContactModal>
-          </div>
+          <PhoneContactDetails
+            variant="desktop"
+            open={open}
+            onClose={handleDrawerClose}
+            contact={contact}
+            ticket={ticket}
+            showTags={showTags}
+          />
         )}
       </Drawer>
     </>

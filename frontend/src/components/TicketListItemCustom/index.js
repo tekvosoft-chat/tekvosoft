@@ -34,6 +34,10 @@ import { generateColor } from "../../helpers/colorGenerator";
 import { getInitials } from "../../helpers/getInitials";
 import pastRelativeDate from "../../helpers/pastRelativeDate";
 import TagsLine from "../TagsLine";
+import {
+  prefetchMessages,
+  rememberTicket
+} from "../../helpers/conversationCache";
 
 /**
  * Item da lista de atendimentos.
@@ -249,6 +253,7 @@ const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
   };
 
   const handleSelectTicket = () => {
+    rememberTicket(ticket);
     const code = uuidv4();
     const { id, uuid } = ticket;
     setCurrentTicket({ id, uuid, code });
@@ -302,6 +307,11 @@ const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
           [classes.pending]: isPending && canAct,
           [classes.selected]: ticketId && +ticketId === ticket.id
         })}
+        onPointerDown={() => {
+          if (isPending && canAct) return;
+          rememberTicket(ticket);
+          prefetchMessages(ticket.id);
+        }}
         onClick={() => {
           if (isPending && canAct) return;
           handleSelectTicket();

@@ -61,7 +61,7 @@ const TicketOptionsMenu = ({
 
   const handleOpenScheduleModal = () => {
     handleClose();
-    setContactId(ticket.contact.id);
+    setContactId(ticket.contact?.id);
     setScheduleModalOpen(true);
   };
 
@@ -121,7 +121,7 @@ const TicketOptionsMenu = ({
       <ConfirmationModal
         title={`${i18n.t("ticketOptionsMenu.confirmationModal.title")} #${
           ticket.id
-        } ${ticket.contact.name}?`}
+        } ${ticket.contact?.name}?`}
         open={confirmationOpen}
         onClose={setConfirmationOpen}
         onConfirm={handleDeleteTicket}

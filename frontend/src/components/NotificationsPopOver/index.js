@@ -145,6 +145,7 @@ const NotificationsPopOver = props => {
     const onCompanyAppMessageNotificationsPopover = data => {
       if (
         data.action === "create" &&
+        !data.message.fromMe &&
         !data.message.read &&
         (data.ticket.userId === user?.id ||
           (!data.ticket.userId &&

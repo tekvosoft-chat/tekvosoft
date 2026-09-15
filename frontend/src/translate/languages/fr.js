@@ -512,6 +512,12 @@ const messages = {
         }
       },
       mainDrawer: {
+        sections: {
+          service: "Service",
+          audience: "Contacts",
+          management: "Gestion",
+          system: "Système"
+        },
         listItems: {
           dashboard: "Tableau de bord",
           connections: "Connexions",
@@ -903,6 +909,20 @@ const messages = {
         close: "Fermer la conversation",
         noQueue: "Sans file"
       },
+      expressions: {
+        title: "Emoji, stickers et GIF",
+        emoji: "Emoji",
+        stickers: "Stickers",
+        gifs: "GIF",
+        searchGifs: "Rechercher des GIF",
+        noStickers:
+          "Les stickers reçus dans les conversations apparaissent ici pour les renvoyer.",
+        noGifs: "Aucun GIF trouvé.",
+        gifsNotConfigured:
+          "Pour utiliser les GIF, ajoutez la clé GIPHY dans Paramètres > Options > Services externes.",
+        sendSticker: "Envoyer le sticker",
+        sendGif: "Envoyer le GIF"
+      },
       about: {
         headline: "Conçue pour mieux servir, chaque jour",
         product:
@@ -931,6 +951,25 @@ const messages = {
         licensesourcecode: "Code source de Tekvosoft"
       },
       schedules: {
+        calendar: {
+          subtitle:
+            "Voyez dans le calendrier quand chaque message sera envoyé.",
+          today: "Aujourd'hui",
+          list: "Liste",
+          month: "Mois",
+          all: "Tous",
+          pending: "Planifié",
+          sent: "Envoyé",
+          error: "Échec",
+          more: "de plus",
+          noEvents: "Aucune planification ce mois-ci.",
+          noEventsDay: "Rien de prévu ce jour",
+          scheduleThisDay: "Planifier ce jour",
+          previous: "Mois précédent",
+          next: "Mois suivant",
+          count: "{{count}} planification",
+          count_plural: "{{count}} planifications"
+        },
         title: "Planifications",
         confirmationModal: {
           deleteTitle:
@@ -1314,6 +1353,16 @@ const messages = {
         edited: "Modifié"
       },
       contactDrawer: {
+        media: {
+          title: "Médias, liens et docs",
+          media: "Médias",
+          docs: "Docs",
+          links: "Liens",
+          empty_media: "Aucune photo ni vidéo avec ce contact.",
+          empty_docs: "Aucun document avec ce contact.",
+          empty_links: "Aucun lien avec ce contact.",
+          loadMore: "Charger plus"
+        },
         phone: {
           edit: "Modifier",
           call: "Appeler",

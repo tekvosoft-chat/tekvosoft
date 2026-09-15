@@ -355,7 +355,10 @@ const TicketsListCustom = props => {
       ) {
         dispatch({
           type: "UPDATE_TICKET_UNREAD_MESSAGES",
-          payload: data.ticket
+          // mensagem enviada pela equipe não soma no contador de não lidas
+          payload: data.message?.fromMe
+            ? { ...data.ticket, unreadMessages: 0 }
+            : data.ticket
         });
       }
     };

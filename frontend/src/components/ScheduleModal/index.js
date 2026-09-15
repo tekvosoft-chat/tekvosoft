@@ -68,7 +68,8 @@ const ScheduleModal = ({
   scheduleId,
   contactId,
   cleanContact,
-  reload
+  reload,
+  defaultSendAt
 }) => {
   const classes = useStyles();
   const history = useHistory();
@@ -118,6 +119,11 @@ const ScheduleModal = ({
             });
           }
 
+          // aberto a partir de um dia do calendário: já sugere esse dia
+          if (!scheduleId && defaultSendAt) {
+            setSchedule(prevState => ({ ...prevState, sendAt: defaultSendAt }));
+          }
+
           if (!scheduleId) return;
 
           const { data } = await api.get(`/schedules/${scheduleId}`);
@@ -134,7 +140,7 @@ const ScheduleModal = ({
         toastError(err);
       }
     }
-  }, [scheduleId, contactId, open, user]);
+  }, [scheduleId, contactId, open, user, defaultSendAt]);
 
   const handleClose = () => {
     onClose();

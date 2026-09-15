@@ -9,6 +9,12 @@ import User from "../models/User";
 import Whatsapp from "../models/Whatsapp";
 
 import ListMessagesService from "../services/MessageServices/ListMessagesService";
+import {
+  listStickers,
+  searchGifs,
+  sendGif,
+  sendSticker
+} from "../services/MessageServices/ExpressionsService";
 import ShowTicketService from "../services/TicketServices/ShowTicketService";
 import DeleteWhatsAppMessage from "../services/WbotServices/DeleteWhatsAppMessage";
 import SendWhatsAppMedia from "../services/WbotServices/SendWhatsAppMedia";
@@ -395,4 +401,46 @@ export const send = async (req: Request, res: Response): Promise<Response> => {
     }
     throw new AppError("ERR_INTERNAL", 500);
   }
+};
+
+/** Figurinhas já usadas nas conversas da empresa. */
+export const stickers = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { companyId } = req.user;
+  return res.json({ stickers: await listStickers(companyId) });
+};
+
+/** Busca de GIFs (GIPHY) com a chave das configurações. */
+export const gifs = async (req: Request, res: Response): Promise<Response> => {
+  const { companyId } = req.user;
+  const query = String(req.query.q || "").slice(0, 60);
+  const offset = Number(req.query.offset) || 0;
+  return res.json(await searchGifs(companyId, query, offset));
+};
+
+/** Envia uma figurinha (messageId) ou um GIF (gifId) para o atendimento. */
+export const sendExpression = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { ticketId } = req.params;
+  const { companyId } = req.user;
+  const { stickerMessageId, gifId } = req.body || {};
+
+  const ticket = await ShowTicketService(ticketId, companyId);
+  if (ticket.channel !== "whatsapp") {
+    throw new AppError("ERR_CHANNEL_NOT_SUPPORTED", 400);
+  }
+
+  if (stickerMessageId) {
+    await sendSticker(ticket, String(stickerMessageId), companyId);
+  } else if (gifId) {
+    await sendGif(ticket, String(gifId), companyId);
+  } else {
+    throw new AppError("ERR_SYNTAX", 400);
+  }
+
+  return res.send();
 };

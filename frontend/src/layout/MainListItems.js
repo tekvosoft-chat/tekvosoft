@@ -102,6 +102,15 @@ const useStyles = makeStyles(theme => ({
   menuDivider: {
     margin: theme.spacing(1, 1.5)
   },
+  sectionLabel: {
+    padding: theme.spacing(1.75, 2.25, 0.5),
+    fontSize: "0.6875rem",
+    fontWeight: 700,
+    letterSpacing: "0.08em",
+    textTransform: "uppercase",
+    color: theme.palette.text.disabled,
+    whiteSpace: "nowrap"
+  },
   moreToggle: {
     color: theme.palette.text.secondary,
     "& .MuiListItemText-primary": { fontWeight: 500 }
@@ -276,21 +285,6 @@ const MainListItems = props => {
   const { user, handleLogout } = useContext(AuthContext);
   const [connectionWarning, setConnectionWarning] = useState(false);
   const [openCampaignSubmenu, setOpenCampaignSubmenu] = useState(false);
-  const [openMore, setOpenMore] = useState(() => {
-    try {
-      return localStorage.getItem("tkv:sidebarMore") === "1";
-    } catch (e) {
-      return false;
-    }
-  });
-  const toggleMore = () =>
-    setOpenMore(prev => {
-      try {
-        localStorage.setItem("tkv:sidebarMore", prev ? "0" : "1");
-      } catch (e) {}
-      return !prev;
-    });
-  const [openKanbanSubmenu, setOpenKanbanSubmenu] = useState(false);
 
   const [showCampaigns, setShowCampaigns] = useState(false);
   const history = useHistory();
@@ -298,7 +292,6 @@ const MainListItems = props => {
   const [pageNumber, setPageNumber] = useState(1);
   const [searchParam] = useState("");
   const [chats, dispatch] = useReducer(reducer, []);
-  const [version, setVersion] = useState("v N/A");
 
   const socketManager = useContext(SocketContext);
 
@@ -391,14 +384,8 @@ const MainListItems = props => {
     }
   };
 
-  const handleClickLogout = () => {
-    //handleCloseMenu();
-    handleLogout();
-  };
-
   const query = props.query || "";
   const searching = !!query.trim();
-  const moreOpen = searching || openMore;
 
   const campaignsBlock = showCampaigns && (
     <>
@@ -476,23 +463,44 @@ const MainListItems = props => {
   );
 
   /**
-   * Organização do menu (referência enviada pelo David):
+   * Organização do menu, pelo que a pessoa vai fazer:
    *
-   *   do dia a dia      Atendimentos, Kanban, Chat Interno
-   *   ──────────
-   *   cadastros         Contatos, Tags, Respostas Rápidas, Agendamentos
-   *   gestão (admin)    Dashboard, Conexões, Filas & Chatbot, Usuários,
-   *                     Campanhas
-   *   ˅ Mais            o que se abre de vez em quando: Informativos, API,
-   *                     Financeiro, Configurações, Ajuda
+   *   (topo)         Dashboard — a visão geral abre o dia do gestor
+   *   ATENDIMENTO    Atendimentos, Kanban, Chat Interno, Agendamentos
+   *   CONTATOS       Contatos, Tags, Campanhas
+   *   GESTÃO         Conexões, Filas & Chatbot, Usuários, Informativos
+   *   SISTEMA        API, Financeiro, Configurações, Ajuda
    *
-   * Sem os títulos "Atendimento / Gerência / Administração": as divisórias
-   * já separam, e os títulos custavam uma linha cada. As permissões são as
-   * mesmas de antes — o que era só de admin continua só de admin.
+   * Antes Agendamentos ficava junto de Tags, o Dashboard no meio das
+   * configurações e metade do menu escondida em "Mais". Os títulos somem
+   * com o menu recolhido (vira uma linha) e durante a busca. As permissões
+   * são as mesmas: o que era só de admin continua só de admin.
    */
+  const Section = ({ label }) =>
+    searching ? null : collapsed ? (
+      <Divider className={classes.menuDivider} />
+    ) : (
+      <Typography component="div" className={classes.sectionLabel}>
+        {label}
+      </Typography>
+    );
+
   return (
     <SidebarContext.Provider value={{ collapsed, query }}>
       <div onClick={drawerClose} className={classes.menuRoot}>
+        <Can
+          role={user.profile}
+          perform="drawer-admin-items:view"
+          yes={() => (
+            <ListItemLink
+              to="/"
+              primary={i18n.t("mainDrawer.listItems.dashboard")}
+              icon={<DashboardOutlinedIcon />}
+            />
+          )}
+        />
+
+        <Section label={i18n.t("mainDrawer.sections.service")} />
         <ListItemLink
           to="/tickets"
           primary={i18n.t("mainDrawer.listItems.tickets")}
@@ -512,9 +520,13 @@ const MainListItems = props => {
             </Badge>
           }
         />
+        <ListItemLink
+          to="/schedules"
+          primary={i18n.t("mainDrawer.listItems.schedules")}
+          icon={<EventIcon />}
+        />
 
-        {!searching && <Divider className={classes.menuDivider} />}
-
+        <Section label={i18n.t("mainDrawer.sections.audience")} />
         <ListItemLink
           to="/contacts"
           primary={i18n.t("mainDrawer.listItems.contacts")}
@@ -525,10 +537,10 @@ const MainListItems = props => {
           primary={i18n.t("mainDrawer.listItems.tags")}
           icon={<LocalOfferIcon />}
         />
-        <ListItemLink
-          to="/schedules"
-          primary={i18n.t("mainDrawer.listItems.schedules")}
-          icon={<EventIcon />}
+        <Can
+          role={user.profile}
+          perform="drawer-admin-items:view"
+          yes={() => campaignsBlock || null}
         />
 
         <Can
@@ -536,11 +548,7 @@ const MainListItems = props => {
           perform="drawer-admin-items:view"
           yes={() => (
             <>
-              <ListItemLink
-                to="/"
-                primary={i18n.t("mainDrawer.listItems.dashboard")}
-                icon={<DashboardOutlinedIcon />}
-              />
+              <Section label={i18n.t("mainDrawer.sections.management")} />
               <ListItemLink
                 to="/connections"
                 primary={i18n.t("mainDrawer.listItems.connections")}
@@ -563,95 +571,45 @@ const MainListItems = props => {
                 primary={i18n.t("mainDrawer.listItems.users")}
                 icon={<PeopleAltOutlinedIcon />}
               />
-              {campaignsBlock}
+              {user.super && (
+                <ListItemLink
+                  to="/announcements"
+                  primary={i18n.t("mainDrawer.listItems.annoucements")}
+                  icon={<AnnouncementIcon />}
+                />
+              )}
+
+              <Section label={i18n.t("mainDrawer.sections.system")} />
+              <ListItemLink
+                to="/messages-api"
+                primary={i18n.t("mainDrawer.listItems.messagesAPI")}
+                icon={<CodeRoundedIcon />}
+              />
+              <ListItemLink
+                to="/financeiro"
+                primary={i18n.t("mainDrawer.listItems.financeiro")}
+                icon={<LocalAtmIcon />}
+              />
+              <ListItemLink
+                to="/settings"
+                primary={i18n.t("mainDrawer.listItems.settings")}
+                icon={<SettingsOutlinedIcon />}
+              />
             </>
           )}
         />
-
-        {/* "Mais": itens de uso ocasional, recolhidos. Na busca abre sozinho. */}
-        {!searching && (
-          <Tooltip
-            title={collapsed ? i18n.t("mainDrawer.listItems.more") : ""}
-            placement="right"
-          >
-            <ListItem
-              button
-              dense
-              className={clsx(
-                classes.item,
-                classes.moreToggle,
-                collapsed && classes.itemCollapsed
-              )}
-              onClick={e => {
-                e.stopPropagation();
-                toggleMore();
-              }}
-              aria-expanded={moreOpen}
-            >
-              <ListItemIcon
-                className={clsx(
-                  classes.itemIcon,
-                  collapsed && classes.itemIconCollapsed
-                )}
-              >
-                {moreOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-              </ListItemIcon>
-              {!collapsed && (
-                <ListItemText
-                  primary={i18n.t("mainDrawer.listItems.more")}
-                  className={classes.itemText}
-                />
-              )}
-            </ListItem>
-          </Tooltip>
+        <ListItemLink
+          to="/helps"
+          primary={i18n.t("mainDrawer.listItems.helps")}
+          icon={<HelpOutlineIcon />}
+        />
+        {drawerOpen && !searching && user.profile === "admin" && (
+          <Typography className={classes.buildInfo}>
+            {`${gitinfo.tagName || gitinfo.branchName + " " + gitinfo.commitHash}`}
+            &nbsp;/&nbsp;
+            {`${gitinfo.buildTimestamp}`}
+          </Typography>
         )}
-
-        <Collapse in={moreOpen} timeout="auto">
-          <List component="div" disablePadding>
-            <Can
-              role={user.profile}
-              perform="drawer-admin-items:view"
-              yes={() => (
-                <>
-                  {user.super && (
-                    <ListItemLink
-                      to="/announcements"
-                      primary={i18n.t("mainDrawer.listItems.annoucements")}
-                      icon={<AnnouncementIcon />}
-                    />
-                  )}
-                  <ListItemLink
-                    to="/messages-api"
-                    primary={i18n.t("mainDrawer.listItems.messagesAPI")}
-                    icon={<CodeRoundedIcon />}
-                  />
-                  <ListItemLink
-                    to="/financeiro"
-                    primary={i18n.t("mainDrawer.listItems.financeiro")}
-                    icon={<LocalAtmIcon />}
-                  />
-                  <ListItemLink
-                    to="/settings"
-                    primary={i18n.t("mainDrawer.listItems.settings")}
-                    icon={<SettingsOutlinedIcon />}
-                  />
-                </>
-              )}
-            />
-            <ListItemLink
-              to="/helps"
-              primary={i18n.t("mainDrawer.listItems.helps")}
-              icon={<HelpOutlineIcon />}
-            />
-            {drawerOpen && !searching && user.profile === "admin" && (
-              <Typography className={classes.buildInfo}>
-                {`${gitinfo.tagName || gitinfo.branchName + " " + gitinfo.commitHash}`}
-                &nbsp;/&nbsp;
-                {`${gitinfo.buildTimestamp}`}
-              </Typography>
-            )}
-          </List>
-        </Collapse>
       </div>
     </SidebarContext.Provider>
   );

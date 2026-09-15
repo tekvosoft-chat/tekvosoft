@@ -29,13 +29,22 @@ import { AuthContext } from "../../context/Auth/AuthContext";
 import { TagsContainer } from "../TagsContainer";
 import { SocketContext } from "../../context/Socket/SocketContext";
 import useSettings from "../../hooks/useSettings";
+import { cachedTicket, rememberTicket } from "../../helpers/conversationCache";
 
 const useStyles = makeStyles(theme => ({
   root: {
     display: "flex",
     height: "100%",
     position: "relative",
-    overflow: "hidden"
+    overflow: "hidden",
+    // celular: a conversa entra deslizando da direita, como no WhatsApp
+    [theme.breakpoints.down("xs")]: {
+      animation: "$slideIn .24s cubic-bezier(.2, .8, .2, 1)"
+    }
+  },
+  "@keyframes slideIn": {
+    from: { transform: "translateX(38%)", opacity: 0.4 },
+    to: { transform: "translateX(0)", opacity: 1 }
   },
 
   // faixa de tags: fixa no desktop, recolhível no celular
@@ -141,7 +150,15 @@ const Ticket = () => {
   }, []);
 
   useEffect(() => {
-    setLoading(true);
+    // veio da lista: mostra na hora e atualiza com o servidor em seguida
+    const cached = cachedTicket(ticketId);
+    if (cached) {
+      setContact(cached.contact || {});
+      setTicket(cached);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
     const delayDebounceFn = setTimeout(() => {
       const fetchTicket = async () => {
         try {
@@ -158,6 +175,7 @@ const Ticket = () => {
 
           setContact(data.contact);
           setTicket(data);
+          rememberTicket(data);
           setLoading(false);
         } catch (err) {
           setLoading(false);
@@ -165,7 +183,7 @@ const Ticket = () => {
         }
       };
       fetchTicket();
-    }, 500);
+    }, 0);
     return () => clearTimeout(delayDebounceFn);
   }, [ticketId, user, history]);
 

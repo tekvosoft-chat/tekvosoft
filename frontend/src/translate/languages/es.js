@@ -588,6 +588,12 @@ const messages = {
         }
       },
       mainDrawer: {
+        sections: {
+          service: "Atención",
+          audience: "Contactos",
+          management: "Gestión",
+          system: "Sistema"
+        },
         listItems: {
           dashboard: "Tablero",
           connections: "Conexiones",
@@ -983,6 +989,20 @@ const messages = {
         close: "Cerrar conversación",
         noQueue: "Sin cola"
       },
+      expressions: {
+        title: "Emoji, stickers y GIFs",
+        emoji: "Emoji",
+        stickers: "Stickers",
+        gifs: "GIFs",
+        searchGifs: "Buscar GIFs",
+        noStickers:
+          "Los stickers que lleguen en las conversaciones aparecen aquí para reenviarlos.",
+        noGifs: "No se encontraron GIFs.",
+        gifsNotConfigured:
+          "Para usar GIFs, agrega la clave de GIPHY en Configuración > Opciones > Servicios externos.",
+        sendSticker: "Enviar sticker",
+        sendGif: "Enviar GIF"
+      },
       about: {
         headline: "Hecha para atender mejor, todos los días",
         product:
@@ -1011,6 +1031,24 @@ const messages = {
         licensesourcecode: "Código fuente de Tekvosoft"
       },
       schedules: {
+        calendar: {
+          subtitle: "Mira en el calendario cuándo se enviará cada mensaje.",
+          today: "Hoy",
+          list: "Lista",
+          month: "Mes",
+          all: "Todos",
+          pending: "Programada",
+          sent: "Enviada",
+          error: "Con error",
+          more: "más",
+          noEvents: "No hay programaciones este mes.",
+          noEventsDay: "Nada programado este día",
+          scheduleThisDay: "Programar en este día",
+          previous: "Mes anterior",
+          next: "Mes siguiente",
+          count: "{{count}} programación",
+          count_plural: "{{count}} programaciones"
+        },
         title: "Agendamentos",
         confirmationModal: {
           deleteTitle: "¿Está seguro de que desea eliminar esta programación?",
@@ -1444,6 +1482,16 @@ const messages = {
         forwarded: "Reenviado"
       },
       contactDrawer: {
+        media: {
+          title: "Multimedia, enlaces y docs",
+          media: "Multimedia",
+          docs: "Docs",
+          links: "Enlaces",
+          empty_media: "No hay fotos ni videos con este contacto.",
+          empty_docs: "No hay documentos con este contacto.",
+          empty_links: "No hay enlaces con este contacto.",
+          loadMore: "Cargar más"
+        },
         phone: {
           edit: "Editar",
           call: "Llamar",

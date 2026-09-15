@@ -12,6 +12,7 @@ import { clearAllCachedSettings } from "../../helpers/settingsCache";
 import moment from "moment";
 import { decodeToken } from "react-jwt";
 import { forgetPushForUser } from "../../services/push";
+import { clearConversationCache } from "../../helpers/conversationCache";
 
 let apiInterceptorsRegistered = false;
 
@@ -225,6 +226,7 @@ const useAuth = () => {
 
       // este aparelho para de receber as notificações desta conta
       await forgetPushForUser();
+      clearConversationCache();
       await api.delete("/auth/logout");
       clearAllCachedSettings();
       setIsAuth(false);

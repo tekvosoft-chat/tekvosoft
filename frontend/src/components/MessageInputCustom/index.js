@@ -55,6 +55,15 @@ import { isMobile } from "../../helpers/isMobile";
 import MediaPreview from "../ui/MediaPreview";
 import { AttachPanel, RecordingPanel } from "./PhoneComposer";
 import QuickRepliesModal from "../QuickRepliesModal";
+import ExpressionPanel from "./ExpressionPanel";
+import Menu from "@material-ui/core/Menu";
+import MenuItem from "@material-ui/core/MenuItem";
+import ListItemIcon from "@material-ui/core/ListItemIcon";
+import Collapse from "@material-ui/core/Collapse";
+import InsertEmoticonRoundedIcon from "@material-ui/icons/InsertEmoticonRounded";
+import InsertDriveFileOutlinedIcon from "@material-ui/icons/InsertDriveFileOutlined";
+import PhotoLibraryOutlinedIcon from "@material-ui/icons/PhotoLibraryOutlined";
+import CheckRoundedIcon from "@material-ui/icons/CheckRounded";
 import { SocketContext } from "../../context/Socket/SocketContext";
 
 const Mp3Recorder = new MicRecorder({ bitRate: 128 });
@@ -144,6 +153,47 @@ const useStyles = makeStyles(theme => ({
 
   uploadInput: {
     display: "none"
+  },
+
+  /**
+   * Computador: a barra do WhatsApp Web. "+" abre o menu de anexos (com
+   * respostas rápidas e assinatura), o rosto abre emoji, figurinhas e GIFs,
+   * e à direita fica o microfone, que vira enviar quando há texto.
+   */
+  webBar: {
+    width: "100%",
+    display: "flex",
+    alignItems: "flex-end",
+    gap: 4,
+    padding: "8px 12px 10px"
+  },
+  webIcon: {
+    flex: "none",
+    width: 44,
+    height: 44,
+    padding: 0,
+    color: theme.palette.tkv.chat.icon,
+    "& svg": { fontSize: 26 }
+  },
+  webIconOn: { color: theme.palette.tkv.brand.text },
+  plusRotate: {
+    transition: "transform .2s ease"
+  },
+  attachMenu: {
+    "& .MuiPaper-root": {
+      borderRadius: 14,
+      minWidth: 230,
+      padding: "4px 0"
+    },
+    "& .MuiMenuItem-root": {
+      gap: 4,
+      minHeight: 44,
+      fontSize: "0.9375rem"
+    },
+    "& .MuiListItemIcon-root": {
+      minWidth: 36,
+      color: theme.palette.tkv.brand.text
+    }
   },
 
   /**
@@ -391,12 +441,15 @@ const ActionButtons = props => {
     handleUploadAudio,
     handleStartRecording,
     disableOption,
-    phone
+    phone,
+    web
   } = props;
   const classes = useStyles();
   const roundClass = phone
     ? `${classes.roundAction} ${classes.roundBrand}`
-    : classes.roundAction;
+    : web
+      ? classes.webIcon
+      : classes.roundAction;
   if (inputMessage) {
     return (
       <IconButton
@@ -484,7 +537,8 @@ const CustomInput = props => {
     phone,
     onQuickReplies,
     onFocusInput,
-    quickVersion
+    quickVersion,
+    quickIcon
   } = props;
   const classes = useStyles();
   const [quickMessages, setQuickMessages] = useState([]);
@@ -781,12 +835,20 @@ const CustomInput = props => {
                   phone ? (
                     <InputAdornment position="end">
                       <IconButton
-                        aria-label={i18n.t("messagesInput.phone.quickReplies")}
+                        aria-label={
+                          quickIcon === "sticker"
+                            ? i18n.t("expressions.stickers")
+                            : i18n.t("messagesInput.phone.quickReplies")
+                        }
                         className={classes.pillAction}
                         disabled={disableOption}
                         onClick={onQuickReplies}
                       >
-                        <FlashOnRoundedIcon />
+                        {quickIcon === "sticker" ? (
+                          <InsertEmoticonRoundedIcon />
+                        ) : (
+                          <FlashOnRoundedIcon />
+                        )}
                       </IconButton>
                     </InputAdornment>
                   ) : (
@@ -927,6 +989,8 @@ const MessageInputCustom = props => {
   const isPhone = useMediaQuery(theme.breakpoints.down("xs"));
   const [attachOpen, setAttachOpen] = useState(false);
   const [quickOpen, setQuickOpen] = useState(false);
+  const [exprOpen, setExprOpen] = useState(false);
+  const [attachAnchor, setAttachAnchor] = useState(null);
   const [quickVersion, setQuickVersion] = useState(0);
 
   const [medias, setMedias] = useState([]);
@@ -1004,6 +1068,7 @@ const MessageInputCustom = props => {
     return () => {
       setShowEmoji(false);
       setAttachOpen(false);
+      setExprOpen(false);
       setMedias([]);
       setReplyingMessage(null);
       setEditingMessage(null);
@@ -1036,8 +1101,17 @@ const MessageInputCustom = props => {
 
   // celular: o painel do "+" abre no lugar do teclado, como no WhatsApp
   const toggleAttach = () => {
+    setExprOpen(false);
     setAttachOpen(open => {
       if (!open) inputRef.current?.blur();
+      return !open;
+    });
+  };
+
+  const toggleExpressions = () => {
+    setAttachOpen(false);
+    setExprOpen(open => {
+      if (!open && isPhone) inputRef.current?.blur();
       return !open;
     });
   };
@@ -1370,8 +1444,12 @@ const MessageInputCustom = props => {
               handleChangeMedias={handleChangeMedias}
               handlePresenceUpdate={handlePresenceUpdate}
               disableOption={disableOption}
-              onQuickReplies={handleQuickReplies}
-              onFocusInput={() => setAttachOpen(false)}
+              onQuickReplies={toggleExpressions}
+              quickIcon="sticker"
+              onFocusInput={() => {
+                setAttachOpen(false);
+                setExprOpen(false);
+              }}
               quickVersion={quickVersion}
             />
 
@@ -1400,6 +1478,15 @@ const MessageInputCustom = props => {
             />
           </div>
         )}
+        <Collapse
+          in={exprOpen && !recording}
+          timeout={220}
+          style={{ width: "100%" }}
+        >
+          {exprOpen && (
+            <ExpressionPanel ticketId={ticketId} disabled={disableOption} />
+          )}
+        </Collapse>
         <AttachPanel
           open={attachOpen && !recording}
           disabled={disableOption}
@@ -1416,36 +1503,115 @@ const MessageInputCustom = props => {
       <Paper square elevation={0} className={classes.mainWrapper}>
         {(replyingMessage && renderReplyingMessage(replyingMessage)) ||
           (editingMessage && renderReplyingMessage(editingMessage))}
-        <div className={classes.newMessageBox}>
-          {isMobile() || (
-            <EmojiOptions
+        <Collapse
+          in={exprOpen && !recording}
+          timeout={200}
+          style={{ width: "100%" }}
+        >
+          {exprOpen && (
+            <ExpressionPanel
+              ticketId={ticketId}
+              showEmoji
+              onEmoji={handleAddEmoji}
               disabled={disableOption}
-              handleAddEmoji={handleAddEmoji}
-              showEmoji={showEmoji}
-              setShowEmoji={setShowEmoji}
             />
           )}
-
-          <FileInput
-            disableOption={disableOption}
-            handleChangeMedias={handleChangeMedias}
+        </Collapse>
+        <div className={classes.webBar}>
+          <input
+            multiple
+            type="file"
+            id="upload-button"
+            disabled={disableOption}
+            className={classes.uploadInput}
+            onChange={handleChangeMedias}
           />
-
-          <IconSwitch
-            setter={setSignMessage}
-            value={signMessage}
-            icon={faSignature}
-            tooltip={i18n.t("messagesInput.signMessage")}
+          <input
+            multiple
+            type="file"
+            id="gallery-button"
+            accept="image/*,video/*"
+            disabled={disableOption}
+            className={classes.uploadInput}
+            onChange={handleChangeMedias}
           />
-
-          <Tooltip title={i18n.t("quickReplies.title")}>
+          <Tooltip title={i18n.t("messagesInput.phone.attach")}>
             <span>
               <IconButton
-                aria-label={i18n.t("quickReplies.title")}
+                aria-label="upload"
+                className={classes.webIcon}
                 disabled={disableOption}
-                onClick={handleQuickReplies}
+                onClick={e => setAttachAnchor(e.currentTarget)}
               >
-                <FlashOnRoundedIcon className={classes.sendMessageIcons} />
+                <AddRoundedIcon
+                  className={classes.plusRotate}
+                  style={{
+                    transform: attachAnchor ? "rotate(45deg)" : "none"
+                  }}
+                />
+              </IconButton>
+            </span>
+          </Tooltip>
+          <Menu
+            className={classes.attachMenu}
+            anchorEl={attachAnchor}
+            open={!!attachAnchor}
+            onClose={() => setAttachAnchor(null)}
+            getContentAnchorEl={null}
+            anchorOrigin={{ vertical: "top", horizontal: "left" }}
+            transformOrigin={{ vertical: "bottom", horizontal: "left" }}
+          >
+            <MenuItem
+              component="label"
+              htmlFor="upload-button"
+              onClick={() => setAttachAnchor(null)}
+            >
+              <ListItemIcon>
+                <InsertDriveFileOutlinedIcon />
+              </ListItemIcon>
+              {i18n.t("messagesInput.phone.document")}
+            </MenuItem>
+            <MenuItem
+              component="label"
+              htmlFor="gallery-button"
+              onClick={() => setAttachAnchor(null)}
+            >
+              <ListItemIcon>
+                <PhotoLibraryOutlinedIcon />
+              </ListItemIcon>
+              {i18n.t("messagesInput.phone.gallery")}
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                setAttachAnchor(null);
+                handleQuickReplies();
+              }}
+            >
+              <ListItemIcon>
+                <FlashOnRoundedIcon />
+              </ListItemIcon>
+              {i18n.t("quickReplies.title")}
+            </MenuItem>
+            <MenuItem onClick={() => setSignMessage(!signMessage)}>
+              <ListItemIcon>
+                <FontAwesomeIcon icon={faSignature} />
+              </ListItemIcon>
+              <span style={{ flex: 1 }}>
+                {i18n.t("messagesInput.signMessage")}
+              </span>
+              {signMessage && <CheckRoundedIcon fontSize="small" />}
+            </MenuItem>
+          </Menu>
+
+          <Tooltip title={i18n.t("expressions.title")}>
+            <span>
+              <IconButton
+                aria-label={i18n.t("expressions.title")}
+                className={`${classes.webIcon}${exprOpen ? ` ${classes.webIconOn}` : ""}`}
+                disabled={disableOption}
+                onClick={toggleExpressions}
+              >
+                <InsertEmoticonRoundedIcon />
               </IconButton>
             </span>
           </Tooltip>
@@ -1456,16 +1622,17 @@ const MessageInputCustom = props => {
             ticketStatus={(isGroup && "open") || ticketStatus}
             inputMessage={inputMessage}
             setInputMessage={setInputMessage}
-            // handleChangeInput={handleChangeInput}
             handleSendMessage={handleSendMessage}
             handleInputPaste={handleInputPaste}
             handleChangeMedias={handleChangeMedias}
             handlePresenceUpdate={handlePresenceUpdate}
             disableOption={disableOption}
             quickVersion={quickVersion}
+            onFocusInput={() => setExprOpen(false)}
           />
 
           <ActionButtons
+            web
             inputMessage={inputMessage}
             loading={loading}
             recording={recording}

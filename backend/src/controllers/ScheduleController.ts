@@ -14,10 +14,12 @@ type IndexQuery = {
   contactId?: number | string;
   userId?: number | string;
   pageNumber?: string | number;
+  startDate?: string;
+  endDate?: string;
 };
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
-  const { contactId, userId, pageNumber, searchParam } =
+  const { contactId, userId, pageNumber, searchParam, startDate, endDate } =
     req.query as IndexQuery;
   const { companyId } = req.user;
 
@@ -26,7 +28,9 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
     contactId,
     userId,
     pageNumber,
-    companyId
+    companyId,
+    startDate,
+    endDate
   });
 
   return res.json({ schedules, count, hasMore });

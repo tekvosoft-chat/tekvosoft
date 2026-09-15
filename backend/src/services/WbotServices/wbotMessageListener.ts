@@ -1815,13 +1815,21 @@ const handleMessage = async (
       "protocolMessage"
     ].includes(msgType);
 
+    // Só conta como não lida a mensagem que o cliente mandou de verdade:
+    // reação, edição e aviso de protocolo não são mensagem nova.
+    const countsAsUnread =
+      !msg.key.fromMe &&
+      !["reactionMessage", "editedMessage", "protocolMessage"].includes(
+        msgType
+      );
+
     const { ticket, justCreated } = await FindOrCreateTicketService(
       contact,
       wbot.id!,
       companyId,
       {
         groupContact,
-        incrementUnread: !msg.key.fromMe,
+        incrementUnread: countsAsUnread,
         findOnly,
         queue: queueId
           ? (await Queue.findByPk(queueId)) || defaultQueue
@@ -1831,6 +1839,12 @@ const handleMessage = async (
 
     if (!ticket) {
       return;
+    }
+
+    // Respondeu (inclusive pelo celular): a conversa foi lida, como no
+    // WhatsApp. Sem isso o contador continuava alto depois da resposta.
+    if (msg.key.fromMe && ticket.unreadMessages > 0) {
+      await ticket.update({ unreadMessages: 0 }, { silent: true });
     }
 
     // voltar para o menu inicial

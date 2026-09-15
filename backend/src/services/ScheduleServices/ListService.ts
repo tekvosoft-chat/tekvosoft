@@ -9,6 +9,9 @@ interface Request {
   userId?: number | string;
   companyId?: number;
   pageNumber?: string | number;
+  // calendário: agendamentos com envio dentro do intervalo (ISO)
+  startDate?: string;
+  endDate?: string;
 }
 
 interface Response {
@@ -22,10 +25,14 @@ const ListService = async ({
   contactId = "",
   userId = "",
   pageNumber = "1",
-  companyId
+  companyId,
+  startDate,
+  endDate
 }: Request): Promise<Response> => {
   let whereCondition = {};
-  const limit = 20;
+  const byRange = !!(startDate && endDate);
+  // no calendário o mês inteiro vem de uma vez
+  const limit = byRange ? 1000 : 20;
   const offset = limit * (+pageNumber - 1);
 
   if (searchParam) {
@@ -70,13 +77,28 @@ const ListService = async ({
     }
   };
 
+  if (byRange) {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())) {
+      whereCondition = {
+        ...whereCondition,
+        sendAt: { [Op.between]: [start, end] }
+      };
+    }
+  }
+
   const { count, rows: schedules } = await Schedule.findAndCountAll({
     where: whereCondition,
     limit,
     offset,
-    order: [["createdAt", "DESC"]],
+    order: byRange ? [["sendAt", "ASC"]] : [["createdAt", "DESC"]],
     include: [
-      { model: Contact, as: "contact", attributes: ["id", "name"] },
+      {
+        model: Contact,
+        as: "contact",
+        attributes: ["id", "name", "number", "profilePicUrl"]
+      },
       { model: User, as: "user", attributes: ["id", "name"] }
     ]
   });

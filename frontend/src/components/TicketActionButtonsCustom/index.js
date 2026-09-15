@@ -154,8 +154,8 @@ const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
           {wavoipAvailable() &&
             phoneContext &&
             !phoneContext.currentCall &&
-            ticket.whatsapp.wavoip?.token &&
-            !ticket.contact.isGroup && (
+            ticket.whatsapp?.wavoip?.token &&
+            !ticket.contact?.isGroup && (
               <Tooltip title={i18n.t("messagesList.header.buttons.call")}>
                 <IconButton onClick={handleCall}>
                   <Call />
@@ -166,8 +166,8 @@ const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
           {wavoipAvailable() &&
             phoneContext &&
             phoneContext.currentCall &&
-            phoneContext.currentCall.contact.id === ticket.contact.id &&
-            phoneContext.currentCall.whatsapp.id === ticket.whatsapp.id && (
+            phoneContext.currentCall.contact.id === ticket.contact?.id &&
+            phoneContext.currentCall.whatsapp.id === ticket.whatsapp?.id && (
               <Tooltip title={i18n.t("messagesList.header.buttons.endCall")}>
                 <IconButton onClick={phoneContext.disconnect}>
                   <CallEnd />

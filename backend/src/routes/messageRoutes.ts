@@ -18,6 +18,23 @@ messageRoutes.post(
   MessageController.forward
 );
 
+// antes de /messages/:ticketId, senão "stickers" vira um id de atendimento
+messageRoutes.get(
+  "/messages/stickers",
+  isAuth,
+  isCompliant,
+  MessageController.stickers
+);
+
+messageRoutes.get("/gifs/search", isAuth, isCompliant, MessageController.gifs);
+
+messageRoutes.post(
+  "/messages/:ticketId/expression",
+  isAuth,
+  isCompliant,
+  MessageController.sendExpression
+);
+
 messageRoutes.get(
   "/messages/:ticketId",
   isAuth,

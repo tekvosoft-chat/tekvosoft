@@ -119,10 +119,9 @@ const useStyles = makeStyles(theme => ({
     border: "1px solid rgba(255, 255, 255, 0.22)",
     transition: "background-color .15s ease",
     "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.22)" },
-    [theme.breakpoints.down("xs")]: {
-      borderRadius: 20
-    },
-    [theme.breakpoints.up("sm")]: { display: "none" }
+    borderRadius: "50%",
+    padding: 0,
+    minWidth: 0
   },
   profileAvatarSlot: {
     width: 40,
@@ -133,22 +132,9 @@ const useStyles = makeStyles(theme => ({
     flexShrink: 0,
     borderRadius: "0 20px 20px 0"
   },
+  // no topo fica só a foto (nome e empresa estão no cartão do menu lateral)
   userInfoPanel: {
-    display: "none",
-    [theme.breakpoints.up("sm")]: {
-      display: "flex",
-      flex: 1,
-      minWidth: 0,
-      maxWidth: 120,
-      flexDirection: "column",
-      justifyContent: "center",
-      height: 40,
-      paddingLeft: 14,
-      paddingRight: 8,
-      borderRadius: "20px 0 0 20px",
-      boxSizing: "border-box",
-      overflow: "hidden"
-    }
+    display: "none"
   },
   userInfoName: {
     color: theme.palette.text.primary,
@@ -270,10 +256,11 @@ const useStyles = makeStyles(theme => ({
   menuButtonHidden: {
     display: "none"
   },
-  // celular: os atalhos de conversas, informativos e chat interno saem da
-  // barra (eles continuam montados, para os avisos e o som seguirem vindo)
+  // Atalhos de conversas, informativos e chat interno saíram da barra (no
+  // celular e no computador). Continuam montados: os avisos, o som e o
+  // contador do app seguem funcionando por trás.
   hideOnPhone: {
-    [theme.breakpoints.down("xs")]: { display: "none" }
+    display: "none"
   },
   title: {
     flexGrow: 1,
@@ -1086,7 +1073,15 @@ const LoggedInLayout = ({ children, themeToggle }) => {
                 </Typography>
               </div>
               <div className={classes.profileAvatarSlot}>
-                <UserAvatar user={user} size={30} className={classes.avatar} />
+                <UserAvatar
+                  user={user}
+                  size={34}
+                  className={classes.avatar}
+                  style={{
+                    backgroundColor: "rgba(255, 255, 255, 0.92)",
+                    color: theme.palette.tkv.brand.main
+                  }}
+                />
               </div>
             </div>
             <Menu

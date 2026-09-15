@@ -64,6 +64,10 @@ import { Mutex } from "async-mutex";
 import BoxLoader from "../ui/BoxLoader";
 import AudioBubble from "./AudioBubble";
 import { ReplyMessageContext } from "../../context/ReplyingMessage/ReplyingMessageContext";
+import {
+  cachedMessages,
+  rememberMessages
+} from "../../helpers/conversationCache";
 
 // seta de responder (branca), usada no gesto de arrastar a mensagem
 const REPLY_ICON = `url("data:image/svg+xml,${encodeURIComponent(
@@ -970,38 +974,48 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
 
   const socketManager = useContext(SocketContext);
 
+  useEffect(() => {
+    if (ticketId && messagesList.length)
+      rememberMessages(ticketId, messagesList);
+  }, [messagesList, ticketId]);
+
   function loadData(incrementPage = false) {
     if (incrementPage && !nextId) {
       return;
     }
 
-    setLoading(true);
+    // com mensagens guardadas desta conversa, não mostra o carregando
+    if (incrementPage || !cachedMessages(ticketId)) setLoading(true);
     const thisNextId = incrementPage ? nextId : undefined;
-    const delayDebounceFn = setTimeout(() => {
-      const fetchMessages = async () => {
-        if (ticketId === undefined) return;
-        try {
-          const { data } = await api.get("/messages/" + ticketId, {
-            params: { nextId: thisNextId, markAsRead }
-          });
+    const delayDebounceFn = setTimeout(
+      () => {
+        const fetchMessages = async () => {
+          if (ticketId === undefined) return;
+          try {
+            const { data } = await api.get("/messages/" + ticketId, {
+              params: { nextId: thisNextId, markAsRead }
+            });
 
-          if (currentTicketId.current === ticketId) {
-            dispatch({ type: "LOAD_MESSAGES", payload: data.messages });
-            setHasMore(data.hasMore);
-            setNextId(data.nextId || null);
+            if (currentTicketId.current === ticketId) {
+              dispatch({ type: "LOAD_MESSAGES", payload: data.messages });
+              setHasMore(data.hasMore);
+              setNextId(data.nextId || null);
+              setLoading(false);
+            }
+
+            if (!incrementPage && data.messages.length > 1) {
+              scrollToBottom();
+            }
+          } catch (err) {
             setLoading(false);
+            toastError(err);
           }
-
-          if (!incrementPage && data.messages.length > 1) {
-            scrollToBottom();
-          }
-        } catch (err) {
-          setLoading(false);
-          toastError(err);
-        }
-      };
-      fetchMessages();
-    }, 500);
+        };
+        fetchMessages();
+        // primeira página na hora; só a rolagem para cima espera um pouco
+      },
+      incrementPage ? 300 : 0
+    );
     return () => {
       clearTimeout(delayDebounceFn);
     };
@@ -1019,6 +1033,13 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
     setContactPresence("available");
 
     currentTicketId.current = ticketId;
+
+    const cached = cachedMessages(ticketId);
+    if (cached) {
+      dispatch({ type: "LOAD_MESSAGES", payload: cached });
+      setLoading(false);
+      scrollToBottom();
+    }
 
     await loadPageMutex.runExclusive(async () => {
       loadData();

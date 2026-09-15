@@ -527,6 +527,12 @@ const messages = {
         }
       },
       mainDrawer: {
+        sections: {
+          service: "Layanan",
+          audience: "Kontak",
+          management: "Manajemen",
+          system: "Sistem"
+        },
         listItems: {
           dashboard: "Dasbor",
           connections: "Koneksi",
@@ -913,6 +919,20 @@ const messages = {
         close: "Tutup percakapan",
         noQueue: "Tanpa antrean"
       },
+      expressions: {
+        title: "Emoji, stiker, dan GIF",
+        emoji: "Emoji",
+        stickers: "Stiker",
+        gifs: "GIF",
+        searchGifs: "Cari GIF",
+        noStickers:
+          "Stiker dari percakapan muncul di sini untuk dikirim ulang.",
+        noGifs: "GIF tidak ditemukan.",
+        gifsNotConfigured:
+          "Untuk memakai GIF, tambahkan kunci GIPHY di Pengaturan > Opsi > Layanan eksternal.",
+        sendSticker: "Kirim stiker",
+        sendGif: "Kirim GIF"
+      },
       about: {
         headline: "Dibuat untuk melayani lebih baik, setiap hari",
         product:
@@ -941,6 +961,24 @@ const messages = {
         licensesourcecode: "Kode sumber Tekvosoft"
       },
       schedules: {
+        calendar: {
+          subtitle: "Lihat di kalender kapan setiap pesan akan dikirim.",
+          today: "Hari ini",
+          list: "Daftar",
+          month: "Bulan",
+          all: "Semua",
+          pending: "Terjadwal",
+          sent: "Terkirim",
+          error: "Gagal",
+          more: "lagi",
+          noEvents: "Tidak ada jadwal bulan ini.",
+          noEventsDay: "Tidak ada jadwal di hari ini",
+          scheduleThisDay: "Jadwalkan di hari ini",
+          previous: "Bulan sebelumnya",
+          next: "Bulan berikutnya",
+          count: "{{count}} jadwal",
+          count_plural: "{{count}} jadwal"
+        },
         title: "Jadwal",
         confirmationModal: {
           deleteTitle: "Hapus",
@@ -1333,6 +1371,16 @@ const messages = {
       },
 
       contactDrawer: {
+        media: {
+          title: "Media, tautan, dan dokumen",
+          media: "Media",
+          docs: "Dokumen",
+          links: "Tautan",
+          empty_media: "Belum ada foto atau video dengan kontak ini.",
+          empty_docs: "Belum ada dokumen dengan kontak ini.",
+          empty_links: "Belum ada tautan dengan kontak ini.",
+          loadMore: "Muat lebih banyak"
+        },
         phone: {
           edit: "Edit",
           call: "Telepon",

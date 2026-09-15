@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "react-toastify";
 import { Lightbox } from "react-modal-image";
 
@@ -33,6 +34,9 @@ import { TicketNotes } from "../TicketNotes";
 import { TagsContainer } from "../TagsContainer";
 import ContactModal from "../ContactModal";
 import ScheduleModal from "../ScheduleModal";
+import ContactMedia from "./ContactMedia";
+import CloseRoundedIcon from "@material-ui/icons/CloseRounded";
+import EditOutlinedIcon from "@material-ui/icons/EditOutlined";
 
 /**
  * "Dados do contato" no celular, no desenho do WhatsApp do iPhone: tela
@@ -214,7 +218,55 @@ const useStyles = makeStyles(theme => {
     expand: {
       padding: "4px 12px 12px",
       borderTop: `1px solid ${t.border}`
-    }
+    },
+
+    // computador: dentro da gaveta, no desenho do WhatsApp Web
+    desktop: {
+      position: "relative",
+      height: "100%",
+      backgroundColor: t.surface,
+      "& $topBar": {
+        gridTemplateColumns: "48px 1fr 48px",
+        minHeight: 60,
+        borderBottom: `1px solid ${t.border}`,
+        "& $topTitle": { textAlign: "left", fontWeight: 500 }
+      },
+      "& $scroll": { padding: 0 },
+      "& $hero": { padding: "28px 16px 20px" },
+      "& $avatar": { width: 132, height: 132 },
+      "& $name": { fontSize: "1.375rem", fontWeight: 500 },
+      "& $actions": {
+        display: "flex",
+        justifyContent: "center",
+        gap: 16,
+        padding: "0 16px 20px",
+        marginBottom: 0,
+        borderBottom: `8px solid ${t.canvas}`
+      },
+      "& $actionCard": {
+        width: 76,
+        padding: 0,
+        gap: 6,
+        backgroundColor: "transparent",
+        fontSize: "0.8125rem",
+        color: theme.palette.text.secondary,
+        "& svg": {
+          boxSizing: "content-box",
+          padding: 14,
+          borderRadius: "50%",
+          fontSize: 22,
+          color: t.brand.text,
+          border: `1px solid ${t.border}`
+        }
+      },
+      "& $group": {
+        marginBottom: 0,
+        borderRadius: 0,
+        borderBottom: `8px solid ${t.canvas}`
+      },
+      "& $groupTitle": { padding: "14px 16px 4px" }
+    },
+    iconBtn: { color: theme.palette.text.secondary }
   };
 });
 
@@ -242,8 +294,17 @@ const Row = ({ icon, label, value, onClick, chevron, open, brand }) => {
   );
 };
 
-const PhoneContactDetails = ({ open, onClose, contact, ticket, showTags }) => {
+const PhoneContactDetails = ({
+  open,
+  onClose,
+  contact,
+  ticket,
+  showTags,
+  variant = "phone"
+}) => {
   const classes = useStyles();
+  const desktop = variant === "desktop";
+  const [panelEl, setPanelEl] = useState(null);
   const [editOpen, setEditOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [photoOpen, setPhotoOpen] = useState(false);
@@ -276,30 +337,61 @@ const PhoneContactDetails = ({ open, onClose, contact, ticket, showTags }) => {
           onClose={() => setPhotoOpen(false)}
         />
       )}
-      <Slide direction="left" in={open} mountOnEnter unmountOnExit>
+      <Slide
+        direction="left"
+        in={open}
+        mountOnEnter
+        unmountOnExit
+        timeout={desktop ? 0 : undefined}
+      >
         <div
-          className={classes.panel}
+          ref={setPanelEl}
+          className={
+            desktop ? `${classes.panel} ${classes.desktop}` : classes.panel
+          }
           role="dialog"
           aria-label={i18n.t("contactDrawer.header")}
         >
-          <div className={classes.topBar}>
-            <IconButton
-              className={classes.back}
-              onClick={onClose}
-              aria-label={i18n.t("common.back")}
-            >
-              <ArrowBackIosRoundedIcon />
-            </IconButton>
-            <Typography className={classes.topTitle} component="h2">
-              {i18n.t("contactDrawer.header")}
-            </Typography>
-            <ButtonBase
-              className={classes.edit}
-              onClick={() => setEditOpen(true)}
-            >
-              {t("edit")}
-            </ButtonBase>
-          </div>
+          {desktop ? (
+            <div className={classes.topBar}>
+              <IconButton
+                className={classes.iconBtn}
+                onClick={onClose}
+                aria-label={i18n.t("common.close")}
+              >
+                <CloseRoundedIcon />
+              </IconButton>
+              <Typography className={classes.topTitle} component="h2">
+                {i18n.t("contactDrawer.header")}
+              </Typography>
+              <IconButton
+                className={classes.iconBtn}
+                onClick={() => setEditOpen(true)}
+                aria-label={t("edit")}
+              >
+                <EditOutlinedIcon />
+              </IconButton>
+            </div>
+          ) : (
+            <div className={classes.topBar}>
+              <IconButton
+                className={classes.back}
+                onClick={onClose}
+                aria-label={i18n.t("common.back")}
+              >
+                <ArrowBackIosRoundedIcon />
+              </IconButton>
+              <Typography className={classes.topTitle} component="h2">
+                {i18n.t("contactDrawer.header")}
+              </Typography>
+              <ButtonBase
+                className={classes.edit}
+                onClick={() => setEditOpen(true)}
+              >
+                {t("edit")}
+              </ButtonBase>
+            </div>
+          )}
 
           <div className={classes.scroll}>
             <div className={classes.hero}>
@@ -347,6 +439,17 @@ const PhoneContactDetails = ({ open, onClose, contact, ticket, showTags }) => {
                 {t("schedule")}
               </ButtonBase>
             </div>
+
+            {contact?.id && (
+              <div className={classes.group}>
+                <ContactMedia
+                  contactId={contact.id}
+                  galleryHost={node =>
+                    panelEl ? createPortal(node, panelEl) : null
+                  }
+                />
+              </div>
+            )}
 
             <div className={classes.group}>
               <Row
