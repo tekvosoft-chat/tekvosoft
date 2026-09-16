@@ -206,7 +206,6 @@ const messages = {
       },
       loginShowcase: {
         title: "Todo o atendimento da sua empresa em um lugar só",
-        text: "WhatsApp, equipe e clientes conversando no mesmo painel — com Kanban, agendamentos e relatórios."
       },
       annotator: {
         title: "Documento",
