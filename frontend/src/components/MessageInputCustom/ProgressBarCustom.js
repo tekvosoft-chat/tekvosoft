@@ -1,44 +1,36 @@
-import * as React from "react";
+import React from "react";
 import LinearProgress from "@material-ui/core/LinearProgress";
-import Typography from "@material-ui/core/Typography";
-import Box from "@material-ui/core/Box";
+import { makeStyles } from "@material-ui/core/styles";
 
-function LinearProgressWithLabel(props) {
-  return (
-    <Box sx={{ display: "flex", alignItems: "center" }}>
-      <Box sx={{ width: "100%", mr: 1 }}>
-        <LinearProgress
-          variant="determinate"
-          {...props}
-          style={{ position: "initial", backgroundColor: "mediumseagreen" }}
-        />
-      </Box>
-      <Box sx={{ minWidth: 35 }}>
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          style={{ color: "#fff", position: "absolute" }}
-        >{`${Math.round(props.value)}%`}</Typography>
-      </Box>
-    </Box>
-  );
-}
+// barra fina de envio (antes: 50px de altura, verde, cruzando a tela)
+const useStyles = makeStyles(theme => ({
+  root: { display: "flex", alignItems: "center", gap: 10, width: "100%" },
+  bar: {
+    flex: 1,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: theme.palette.tkv.border
+  },
+  fill: { borderRadius: 2, backgroundColor: theme.palette.tkv.brand.main },
+  label: {
+    minWidth: 34,
+    textAlign: "right",
+    fontSize: 12,
+    fontWeight: 600,
+    color: theme.palette.text.secondary
+  }
+}));
 
 export default function LinearWithValueLabel({ progress }) {
-  //const [progress, setProgress] = React.useState(0);
-
-  React.useEffect(() => {
-    /*const timer = setInterval(() => {
-      setProgress((prevProgress) => (prevProgress >= 99 ? 99 : prevProgress + 10));
-    }, 420);
-    return () => {
-      clearInterval(timer);
-    };*/
-  }, [progress]);
-
+  const classes = useStyles();
   return (
-    <Box sx={{ width: "100%" }}>
-      <LinearProgressWithLabel value={progress} style={{ height: 50 }} />
-    </Box>
+    <div className={classes.root}>
+      <LinearProgress
+        variant="determinate"
+        value={progress}
+        classes={{ root: classes.bar, bar: classes.fill }}
+      />
+      <span className={classes.label}>{`${Math.round(progress)}%`}</span>
+    </div>
   );
 }

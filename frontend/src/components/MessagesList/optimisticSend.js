@@ -8,10 +8,17 @@
  */
 export const SENDING_EVENT = "tkv:message-sending";
 export const FAILED_EVENT = "tkv:message-failed";
+export const PROGRESS_EVENT = "tkv:message-progress";
 
 let seq = 0;
 
-export const announceSending = ({ ticketId, body, quotedMsg, inputEl }) => {
+export const announceSending = ({
+  ticketId,
+  body,
+  quotedMsg,
+  inputEl,
+  media
+}) => {
   const id = `pending-${Date.now().toString(36)}-${(seq += 1)}`;
   const rect = inputEl?.getBoundingClientRect?.();
   window.dispatchEvent(
@@ -21,6 +28,8 @@ export const announceSending = ({ ticketId, body, quotedMsg, inputEl }) => {
         ticketId,
         body,
         quotedMsg: quotedMsg || null,
+        // foto/vídeo: { url (objectURL local), type: "image" | "video" }
+        media: media || null,
         from: rect
           ? {
               left: rect.left,
@@ -35,11 +44,39 @@ export const announceSending = ({ ticketId, body, quotedMsg, inputEl }) => {
   return id;
 };
 
+/** Andamento do upload de uma mídia (0–100). */
+export const announceProgress = (id, progress) =>
+  window.dispatchEvent(
+    new CustomEvent(PROGRESS_EVENT, { detail: { id, progress } })
+  );
+
 export const announceFailed = id =>
   window.dispatchEvent(new CustomEvent(FAILED_EVENT, { detail: { id } }));
 
-export const pendingMessage = ({ id, ticketId, body, quotedMsg }) => {
+export const pendingMessage = ({ id, ticketId, body, quotedMsg, media }) => {
   const now = new Date().toISOString();
+  if (media?.url) {
+    // a foto/vídeo aparece na conversa na hora, com o anel de envio por cima
+    return {
+      id,
+      clientKey: id,
+      pending: true,
+      uploadProgress: 0,
+      ticketId,
+      fromMe: true,
+      body: "",
+      mediaType: media.type,
+      mediaUrl: media.url,
+      ack: 0,
+      read: true,
+      isDeleted: false,
+      quotedMsg,
+      dataJson: null,
+      createdAt: now,
+      updatedAt: now,
+      replies: []
+    };
+  }
   return {
     id,
     clientKey: id,
@@ -65,7 +102,21 @@ const normalize = text =>
     .trim();
 
 /** A mensagem confirmada corresponde a este balão provisório? */
-export const matchesPending = (pending, message) =>
+export const matchesPending = (pending, message) => {
+  if (pending?.pending && pending.mediaUrl) {
+    // mídia: a confirmação é a próxima mídia minha do mesmo tipo, criada
+    // depois do envio (as fotos antigas da conversa não contam)
+    return (
+      !!message?.fromMe &&
+      !!message.mediaUrl &&
+      message.mediaType === pending.mediaType &&
+      new Date(message.createdAt) >= new Date(pending.createdAt) - 10000
+    );
+  }
+  return matchesText(pending, message);
+};
+
+const matchesText = (pending, message) =>
   pending?.pending &&
   message?.fromMe &&
   message.mediaType !== "reactionMessage" &&

@@ -59,6 +59,7 @@ import QuickRepliesModal from "../QuickRepliesModal";
 import ExpressionPanel from "./ExpressionPanel";
 import {
   announceFailed,
+  announceProgress,
   announceSending
 } from "../MessagesList/optimisticSend";
 import Popover from "@material-ui/core/Popover";
@@ -1145,14 +1146,78 @@ const MessageInputCustom = props => {
     setInputMessage(prevState => prevState + emoji);
   };
 
+  // comprime a foto antes de subir (vídeo e outros vão como estão)
+  const prepareMedia = file =>
+    new Promise(resolve => {
+      if (file?.type?.split("/")[0] !== "image" || /gif$/i.test(file.type)) {
+        resolve(file);
+        return;
+      }
+      // eslint-disable-next-line no-new
+      new Compressor(file, {
+        quality: 0.7,
+        success: result => resolve(result),
+        error: () => resolve(file)
+      });
+    });
+
+  /**
+   * Celular: foto e vídeo vão direto, como no WhatsApp. A mídia entra na
+   * conversa na hora (com o anel de envio) e vai subindo em segundo plano —
+   * sem tela de prévia no meio do caminho.
+   */
+  const sendMediaDirect = files => {
+    files.forEach(file => {
+      const type = file.type.split("/")[0];
+      const url = URL.createObjectURL(file);
+      const pendingId = announceSending({
+        ticketId,
+        body: "",
+        inputEl: inputRef.current,
+        media: { url, type }
+      });
+      prepareMedia(file)
+        .then(media => {
+          const formData = new FormData();
+          formData.append("fromMe", true);
+          formData.append("medias", media, media.name || file.name);
+          formData.append("body", media.name || file.name);
+          return api.post(`/messages/${ticketId}`, formData, {
+            onUploadProgress: event => {
+              if (!event.total) return;
+              announceProgress(
+                pendingId,
+                Math.round((event.loaded * 100) / event.total)
+              );
+            }
+          });
+        })
+        .catch(err => {
+          announceFailed(pendingId);
+          toastError(err);
+        })
+        .finally(() => setTimeout(() => URL.revokeObjectURL(url), 120000));
+    });
+  };
+
   const handleChangeMedias = e => {
     if (!e.target.files) {
       return;
     }
 
     const selectedMedias = Array.from(e.target.files);
-    setMedias(selectedMedias);
+    // deixa escolher o mesmo arquivo de novo depois
+    e.target.value = "";
     setAttachOpen(false);
+    if (
+      isPhone &&
+      selectedMedias.length > 0 &&
+      selectedMedias.every(file => /^(image|video)\//.test(file.type))
+    ) {
+      sendMediaDirect(selectedMedias);
+      return;
+    }
+    setMedias(selectedMedias);
   };
 
   // celular: o painel do "+" abre no lugar do teclado, como no WhatsApp
@@ -1210,37 +1275,16 @@ const MessageInputCustom = props => {
     const formData = new FormData();
     formData.append("fromMe", true);
 
-    medias.forEach(async (media, idx) => {
-      const file = media;
-
-      if (!file) {
-        return;
-      }
-
-      if (media?.type.split("/")[0] == "image") {
-        new Compressor(file, {
-          quality: 0.7,
-
-          async success(media) {
-            //const formData = new FormData();
-            // The third parameter is required for server
-            //formData.append('file', result, result.name);
-
-            formData.append("medias", media, media.name);
-            formData.append("body", media.name);
-          },
-          error(err) {
-            alert("erro");
-            console.log(err.message);
-          }
-        });
-      } else {
-        formData.append("medias", media);
-        formData.append("body", media.name);
-      }
+    // antes: compressão sem esperar + setTimeout de 2 s torcendo para dar tempo
+    const prepared = await Promise.all(
+      medias.filter(Boolean).map(prepareMedia)
+    );
+    prepared.forEach(media => {
+      formData.append("medias", media, media.name);
+      formData.append("body", media.name);
     });
 
-    setTimeout(async () => {
+    await (async () => {
       try {
         await api
           .post(`/messages/${ticketId}`, formData, {
@@ -1263,7 +1307,7 @@ const MessageInputCustom = props => {
       } catch (err) {
         toastError(err);
       }
-    }, 2000);
+    })();
   };
 
   const handlePresenceUpdate = presence => {

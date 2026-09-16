@@ -68,6 +68,7 @@ import AudioBubble from "./AudioBubble";
 import ReactionBar from "./ReactionBar";
 import {
   FAILED_EVENT,
+  PROGRESS_EVENT,
   SENDING_EVENT,
   flyFromComposer,
   matchesPending,
@@ -160,7 +161,13 @@ const useStyles = makeStyles(theme => ({
     overscrollBehaviorX: "none",
     ...theme.scrollbarStyles,
     [theme.breakpoints.down("xs")]: {
+      // topo e barra de digitar flutuam por cima (Ticket): a lista começa
+      // abaixo de um e termina acima da outra
       padding: "10px 8px 12px",
+      paddingTop: "calc(var(--chat-top, 0px) + 10px)",
+      paddingBottom: "calc(var(--chat-bottom, 0px) + 12px)",
+      scrollPaddingTop: "var(--chat-top, 0px)",
+      scrollPaddingBottom: "var(--chat-bottom, 0px)",
       "-webkit-overflow-scrolling": "touch"
     }
   },
@@ -498,6 +505,40 @@ const useStyles = makeStyles(theme => ({
     }
   },
   mediaWrap: { position: "relative", display: "block" },
+  uploadRing: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    width: 56,
+    height: 56,
+    margin: "-28px 0 0 -28px",
+    zIndex: 3,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: "50%",
+    backgroundColor: "rgba(12, 10, 20, 0.45)",
+    backdropFilter: "blur(4px)",
+    pointerEvents: "none",
+    animation: "$ringIn .25s ease",
+    "& svg": { transform: "rotate(-90deg)" }
+  },
+  uploadRingTrack: {
+    fill: "none",
+    stroke: "rgba(255,255,255,0.25)",
+    strokeWidth: 3
+  },
+  uploadRingBar: {
+    fill: "none",
+    stroke: "#fff",
+    strokeWidth: 3,
+    strokeLinecap: "round",
+    transition: "stroke-dashoffset .25s ease"
+  },
+  "@keyframes ringIn": {
+    from: { opacity: 0, transform: "scale(.6)" },
+    to: { opacity: 1, transform: "none" }
+  },
   // 3. encaminhar: seta fora do balão, aparece ao passar o mouse
   forwardTrigger: {
     position: "absolute",
@@ -977,6 +1018,13 @@ const keepClientKey = (previous, next) => {
 const reducer = (state, action) => {
   if (action.type === "ADD_PENDING") {
     return [...state, action.payload];
+  }
+
+  if (action.type === "PENDING_PROGRESS") {
+    const { id, progress } = action.payload;
+    return state.map(m =>
+      m.id === id ? { ...m, uploadProgress: progress } : m
+    );
   }
 
   if (action.type === "REMOVE_PENDING") {
@@ -1647,19 +1695,24 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
       if (!detail.id || detail.ticketId !== currentTicketId.current) return;
       flightRef.current = { id: detail.id, from: detail.from };
       dispatch({ type: "ADD_PENDING", payload: pendingMessage(detail) });
-      // sem confirmação em 25 s, o provisório sai (a real chega pela recarga)
+      // sem confirmação em 25 s, o provisório sai (a real chega pela recarga);
+      // mídia pesada demora mais para subir
       timers.push(
         setTimeout(
           () => dispatch({ type: "REMOVE_PENDING", payload: detail.id }),
-          25000
+          detail.media ? 180000 : 25000
         )
       );
     };
+    const onProgress = event =>
+      dispatch({ type: "PENDING_PROGRESS", payload: event.detail || {} });
     const onFailed = event =>
       dispatch({ type: "REMOVE_PENDING", payload: event.detail?.id });
     window.addEventListener(SENDING_EVENT, onSending);
     window.addEventListener(FAILED_EVENT, onFailed);
+    window.addEventListener(PROGRESS_EVENT, onProgress);
     return () => {
+      window.removeEventListener(PROGRESS_EVENT, onProgress);
       window.removeEventListener(SENDING_EVENT, onSending);
       window.removeEventListener(FAILED_EVENT, onFailed);
       timers.forEach(clearTimeout);
@@ -1800,6 +1853,28 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
     }
 
     previewVideo.pause();
+  };
+
+  // anel de envio sobre a foto/vídeo que ainda está subindo
+  const renderUploadRing = message => {
+    const progress = Math.max(4, Math.min(100, message.uploadProgress || 0));
+    const r = 18;
+    const c = 2 * Math.PI * r;
+    return (
+      <div className={classes.uploadRing} aria-label={`${progress}%`}>
+        <svg width="48" height="48" viewBox="0 0 48 48">
+          <circle cx="24" cy="24" r={r} className={classes.uploadRingTrack} />
+          <circle
+            cx="24"
+            cy="24"
+            r={r}
+            className={classes.uploadRingBar}
+            strokeDasharray={c}
+            strokeDashoffset={c - (progress / 100) * c}
+          />
+        </svg>
+      </div>
+    );
   };
 
   const checkMessageMedia = (message, data, isSticker = false) => {
@@ -3010,6 +3085,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                 </span>
               </div>
               {message.mediaUrl && checkMessageMedia(message, data, isSticker)}
+              {message.pending && message.mediaUrl && renderUploadRing(message)}
               {renderReplies(message.replies, true)}
               {messageError && (
                 <div

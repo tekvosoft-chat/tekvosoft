@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import { useParams, useHistory } from "react-router-dom";
 
 import { toast } from "react-toastify";
@@ -13,6 +13,7 @@ import {
   useMediaQuery,
   useTheme
 } from "@material-ui/core";
+import { alpha } from "@material-ui/core/styles";
 import LocalOfferOutlinedIcon from "@material-ui/icons/LocalOfferOutlined";
 
 import ContactDrawer from "../ContactDrawer";
@@ -84,8 +85,35 @@ const useStyles = makeStyles(theme => ({
 
   // celular: a conversa ocupa a tela de ponta a ponta, sem moldura
   mainWrapperPhone: {
+    position: "relative",
     border: "none",
     borderRadius: 0
+  },
+  // celular: topo e barra de digitar flutuam sobre a conversa, em vidro fosco
+  // levemente transparente; as mensagens passam por trás deles
+  phoneTop: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 6,
+    "& > .MuiCard-root, & > .MuiPaper-root": {
+      backgroundColor: alpha(theme.palette.tkv.surface, 0.82),
+      backdropFilter: "saturate(1.6) blur(16px)",
+      WebkitBackdropFilter: "saturate(1.6) blur(16px)"
+    }
+  },
+  phoneBottom: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 6,
+    "& > .MuiPaper-root": {
+      backgroundColor: alpha(theme.palette.tkv.chat.bar, 0.8),
+      backdropFilter: "saturate(1.6) blur(16px)",
+      WebkitBackdropFilter: "saturate(1.6) blur(16px)"
+    }
   },
 
   mainWrapperShift: {
@@ -120,6 +148,9 @@ const Ticket = () => {
   const { user } = useContext(AuthContext);
 
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const wrapperRef = useRef(null);
+  const topRef = useRef(null);
+  const bottomRef = useRef(null);
   const theme = useTheme();
   const isPhone = useMediaQuery(theme.breakpoints.down("xs"));
   // No celular a faixa de tags ocupava uma linha inteira entre o cabeçalho e
@@ -235,6 +266,32 @@ const Ticket = () => {
     setDrawerOpen(false);
   };
 
+  // celular: a lista de mensagens reserva o espaço do topo e da barra que
+  // flutuam por cima dela (as alturas mudam: tags, resposta, painéis…)
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!isPhone || !wrapper || typeof ResizeObserver === "undefined") {
+      wrapper?.style.removeProperty("--chat-top");
+      wrapper?.style.removeProperty("--chat-bottom");
+      return undefined;
+    }
+    const measure = () => {
+      wrapper.style.setProperty(
+        "--chat-top",
+        `${topRef.current?.offsetHeight || 0}px`
+      );
+      wrapper.style.setProperty(
+        "--chat-bottom",
+        `${bottomRef.current?.offsetHeight || 0}px`
+      );
+    };
+    const observer = new ResizeObserver(measure);
+    if (topRef.current) observer.observe(topRef.current);
+    if (bottomRef.current) observer.observe(bottomRef.current);
+    measure();
+    return () => observer.disconnect();
+  }, [isPhone, loading]);
+
   const renderTicketInfo = () => {
     if (ticket.user !== undefined) {
       return (
@@ -256,7 +313,13 @@ const Ticket = () => {
           isGroup={ticket.isGroup}
           markAsRead={true}
         ></MessagesList>
-        <MessageInput ticket={ticket} showTabGroups />
+        <div
+          ref={bottomRef}
+          className={isPhone ? classes.phoneBottom : undefined}
+          style={isPhone ? undefined : { display: "contents" }}
+        >
+          <MessageInput ticket={ticket} showTabGroups />
+        </div>
       </>
     );
   };
@@ -264,6 +327,7 @@ const Ticket = () => {
   return (
     <div className={classes.root} id="drawer-container">
       <Paper
+        ref={wrapperRef}
         variant="outlined"
         elevation={0}
         className={clsx(classes.mainWrapper, {
@@ -277,38 +341,47 @@ const Ticket = () => {
           })}
           onClick={() => setDrawerOpen(false)}
         ></div>
-        <TicketHeader loading={loading} showBack>
-          {renderTicketInfo()}
-          {isPhone && (
-            <Tooltip title="Tags">
-              <IconButton
-                size="small"
-                className={classes.tagsToggle}
-                onClick={() => setTagsOpen(open => !open)}
-                aria-expanded={tagsOpen}
-                aria-label="Tags"
-              >
-                <Badge
-                  badgeContent={
-                    (tagsMode === "contact" ? contact?.tags : ticket?.tags)
-                      ?.length || 0
-                  }
+        <div
+          ref={topRef}
+          className={isPhone ? classes.phoneTop : undefined}
+          style={isPhone ? undefined : { display: "contents" }}
+        >
+          <TicketHeader loading={loading} showBack>
+            {renderTicketInfo()}
+            {isPhone && (
+              <Tooltip title="Tags">
+                <IconButton
+                  size="small"
+                  className={classes.tagsToggle}
+                  onClick={() => setTagsOpen(open => !open)}
+                  aria-expanded={tagsOpen}
+                  aria-label="Tags"
                 >
-                  <LocalOfferOutlinedIcon />
-                </Badge>
-              </IconButton>
-            </Tooltip>
-          )}
-          <TicketActionButtons ticket={ticket} showTabGroups={showTabGroups} />
-        </TicketHeader>
-        {(!isPhone || tagsOpen) && (
-          <Paper square elevation={0} className={classes.tagsBar}>
-            <TagsContainer
-              ticket={["ticket", "both"].includes(tagsMode) && ticket}
-              contact={tagsMode === "contact" && contact}
+                  <Badge
+                    badgeContent={
+                      (tagsMode === "contact" ? contact?.tags : ticket?.tags)
+                        ?.length || 0
+                    }
+                  >
+                    <LocalOfferOutlinedIcon />
+                  </Badge>
+                </IconButton>
+              </Tooltip>
+            )}
+            <TicketActionButtons
+              ticket={ticket}
+              showTabGroups={showTabGroups}
             />
-          </Paper>
-        )}
+          </TicketHeader>
+          {(!isPhone || tagsOpen) && (
+            <Paper square elevation={0} className={classes.tagsBar}>
+              <TagsContainer
+                ticket={["ticket", "both"].includes(tagsMode) && ticket}
+                contact={tagsMode === "contact" && contact}
+              />
+            </Paper>
+          )}
+        </div>
         <ReplyMessageProvider>
           <EditMessageProvider>{renderMessagesList()}</EditMessageProvider>
         </ReplyMessageProvider>
