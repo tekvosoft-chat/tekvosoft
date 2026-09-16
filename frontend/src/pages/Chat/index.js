@@ -245,7 +245,12 @@ const useStyles = makeStyles(theme => {
       minWidth: 0,
       minHeight: 0,
       display: "flex",
-      flexDirection: "column"
+      flexDirection: "column",
+      animation: "$enter .26s ease both"
+    },
+    "@keyframes enter": {
+      from: { opacity: 0, transform: "translateX(12px)" },
+      to: { opacity: 1, transform: "none" }
     },
     conversationHeader: {
       flex: "none",
@@ -806,7 +811,7 @@ function Chat(props) {
     const isOwner = currentChat.ownerId === user.id;
 
     return (
-      <section className={classes.conversation}>
+      <section className={classes.conversation} key={currentChat.id}>
         <header className={classes.conversationHeader}>
           {!isWide && (
             <IconButton

@@ -55,11 +55,25 @@ const useStyles = makeStyles(theme => ({
     padding: theme.spacing(1.25, 1),
     borderRadius: theme.palette.tkv.radius.md,
     textAlign: "left",
-    transition: "background-color .12s ease",
-    "&:hover": { backgroundColor: theme.palette.tkv.surfaceHover },
+    transition: "background-color .12s ease, transform .12s ease",
+    animation: "$slideIn .28s ease both",
+    "&:hover": {
+      backgroundColor: theme.palette.tkv.surfaceHover,
+      transform: "translateX(2px)"
+    },
+    "&:active": { transform: "scale(0.98)" },
     "&:hover $menuButton, &:focus-within $menuButton": { opacity: 1 }
   },
+  "@keyframes slideIn": {
+    from: { opacity: 0, transform: "translateY(6px)" },
+    to: { opacity: 1, transform: "none" }
+  },
+  "@keyframes pulse": {
+    "0%": { boxShadow: `0 0 0 0 ${theme.palette.tkv.brand.main}` },
+    "100%": { boxShadow: "0 0 0 8px transparent" }
+  },
   itemActive: {
+    boxShadow: `inset 3px 0 0 ${theme.palette.tkv.brand.main}`,
     backgroundColor: theme.palette.tkv.brand.soft,
     "&:hover": { backgroundColor: theme.palette.tkv.brand.softHover }
   },
@@ -70,9 +84,12 @@ const useStyles = makeStyles(theme => ({
     fontSize: "0.875rem",
     fontWeight: 700,
     backgroundColor: theme.palette.tkv.brand.soft,
-    color: theme.palette.tkv.brand.main
+    color: theme.palette.tkv.brand.main,
+    transition: "border-radius .2s ease, transform .2s ease"
   },
   avatarActive: {
+    borderRadius: 14,
+    transform: "scale(1.04)",
     backgroundColor: theme.palette.tkv.brand.main,
     color: theme.palette.tkv.brand.contrastText
   },
@@ -128,7 +145,8 @@ const useStyles = makeStyles(theme => ({
     fontSize: "0.6875rem",
     fontWeight: 700,
     backgroundColor: theme.palette.tkv.brand.main,
-    color: theme.palette.tkv.brand.contrastText
+    color: theme.palette.tkv.brand.contrastText,
+    animation: "$pulse 1.6s ease-out infinite"
   },
   menuSpacer: { flex: "none", width: 30 },
   menuButton: {

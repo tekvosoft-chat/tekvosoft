@@ -77,6 +77,10 @@ const useStyles = makeStyles(theme => {
       overflowY: "auto",
       overscrollBehavior: "contain",
       padding: theme.spacing(2, 3, 1),
+      scrollBehavior: "smooth",
+      // pontilhado bem leve no fundo, para não ficar chapado
+      backgroundImage: `radial-gradient(${t.border} 1px, transparent 1px)`,
+      backgroundSize: "22px 22px",
       ...theme.scrollbarStyles,
       [theme.breakpoints.down("xs")]: { padding: theme.spacing(1.5, 1, 1) }
     },
@@ -91,7 +95,9 @@ const useStyles = makeStyles(theme => {
       letterSpacing: "0.02em",
       color: theme.palette.text.secondary,
       backgroundColor: t.surface,
-      border: `1px solid ${t.border}`
+      border: `1px solid ${t.border}`,
+      boxShadow: "0 2px 8px -4px rgba(12, 10, 20, 0.2)",
+      animation: "$fadeIn .3s ease"
     },
 
     bubbleRow: {
@@ -115,7 +121,38 @@ const useStyles = makeStyles(theme => {
       lineHeight: 1.45,
       whiteSpace: "pre-wrap",
       overflowWrap: "anywhere",
+      transition: "transform .15s ease, box-shadow .15s ease",
+      "&:hover": { boxShadow: "0 6px 18px -8px rgba(12, 10, 20, 0.35)" },
+      "&:active": { transform: "scale(0.985)" },
       [theme.breakpoints.down("xs")]: { maxWidth: "86%" }
+    },
+    // mensagem que acabou de chegar/ser enviada
+    bubbleInMine: {
+      animation: "$sendIn .34s cubic-bezier(.3, 1.4, .5, 1) both",
+      transformOrigin: "bottom right"
+    },
+    bubbleInTheirs: {
+      animation: "$receiveIn .34s cubic-bezier(.3, 1.4, .5, 1) both",
+      transformOrigin: "bottom left"
+    },
+    "@keyframes sendIn": {
+      "0%": { opacity: 0, transform: "translate(24px, 14px) scale(.7)" },
+      "100%": { opacity: 1, transform: "none" }
+    },
+    "@keyframes receiveIn": {
+      "0%": { opacity: 0, transform: "translate(-18px, 10px) scale(.75)" },
+      "100%": { opacity: 1, transform: "none" }
+    },
+    "@keyframes fadeIn": { from: { opacity: 0 }, to: { opacity: 1 } },
+    "@keyframes popIn": {
+      "0%": { transform: "scale(.4) rotate(-30deg)", opacity: 0 },
+      "100%": { transform: "none", opacity: 1 }
+    },
+    "@keyframes fly": {
+      "0%": { transform: "none" },
+      "45%": { transform: "translate(18px, -18px) rotate(-20deg)", opacity: 0 },
+      "46%": { transform: "translate(-14px, 14px)", opacity: 0 },
+      "100%": { transform: "none", opacity: 1 }
     },
     bubbleTheirs: {
       backgroundColor: t.surface,
@@ -125,8 +162,11 @@ const useStyles = makeStyles(theme => {
     },
     bubbleMine: {
       backgroundColor: t.brand.main,
+      backgroundImage:
+        "linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0) 60%)",
       color: t.brand.contrastText,
       borderRadius: "16px 4px 16px 16px",
+      boxShadow: `0 4px 14px -6px ${t.brand.main}`,
       "& a": { color: "inherit", textDecoration: "underline" }
     },
     // bolhas do meio de uma sequência ficam com os cantos todos arredondados
@@ -183,9 +223,11 @@ const useStyles = makeStyles(theme => {
       borderRadius: 22,
       backgroundColor: t.surfaceSunken,
       border: `1px solid ${t.border}`,
-      transition: "border-color .15s ease, box-shadow .15s ease",
+      transition:
+        "border-color .15s ease, box-shadow .2s ease, background-color .2s ease",
       "&:focus-within": {
         borderColor: t.brand.main,
+        backgroundColor: t.surface,
         boxShadow: `0 0 0 3px ${t.brand.focusRing}`
       }
     },
@@ -204,7 +246,13 @@ const useStyles = makeStyles(theme => {
       borderRadius: "50%",
       backgroundColor: t.brand.main,
       color: t.brand.contrastText,
-      "&:hover": { backgroundColor: t.brand.hover },
+      boxShadow: `0 6px 16px -6px ${t.brand.main}`,
+      animation: "$popIn .28s cubic-bezier(.34, 1.56, .64, 1)",
+      transition: "transform .12s ease, background-color .15s ease",
+      "&:hover": { backgroundColor: t.brand.hover, transform: "scale(1.06)" },
+      "&:active": { transform: "scale(0.88)" },
+      "& svg": { transition: "transform .2s ease" },
+      "&:hover svg": { transform: "rotate(-12deg)" },
       "&.Mui-disabled": {
         backgroundColor: t.brand.main,
         color: t.brand.contrastText,
@@ -212,6 +260,7 @@ const useStyles = makeStyles(theme => {
       }
     },
 
+    flying: { "& svg": { animation: "$fly .42s ease" } },
     sendMessageIcons: {
       color: theme.palette.text.secondary
     },
@@ -336,6 +385,9 @@ export default function ChatMessages({
   const previewVideoRefs = useRef({});
 
   const [contentMessage, setContentMessage] = useState("");
+  // só anima as mensagens que chegam depois de abrir a conversa
+  const openedAt = useRef(Date.now());
+  const [flying, setFlying] = useState(false);
   const [medias, setMedias] = useState([]);
   const [loading, setLoading] = useState(false);
   const [recording, setRecording] = useState(false);
@@ -365,7 +417,7 @@ export default function ChatMessages({
 
   const scrollToBottom = () => {
     if (baseRef.current) {
-      baseRef.current.scrollIntoView({});
+      baseRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
     }
   };
 
@@ -621,6 +673,8 @@ export default function ChatMessages({
 
   const sendText = () => {
     if (contentMessage.trim() !== "") {
+      setFlying(true);
+      setTimeout(() => setFlying(false), 420);
       handleSendMessage(contentMessage);
       setContentMessage("");
     }
@@ -666,6 +720,8 @@ export default function ChatMessages({
               className={clsx(
                 classes.bubble,
                 mine ? classes.bubbleMine : classes.bubbleTheirs,
+                created.getTime() > openedAt.current - 1500 &&
+                  (mine ? classes.bubbleInMine : classes.bubbleInTheirs),
                 sameRun &&
                   (mine ? classes.bubbleMineFollow : classes.bubbleTheirsFollow)
               )}
@@ -758,7 +814,7 @@ export default function ChatMessages({
               <IconButton
                 aria-label="sendMessage"
                 onClick={sendText}
-                className={classes.roundAction}
+                className={clsx(classes.roundAction, flying && classes.flying)}
               >
                 <SendIcon />
               </IconButton>
@@ -768,7 +824,7 @@ export default function ChatMessages({
                 component="span"
                 disabled={loading}
                 onClick={handleStartRecording}
-                className={classes.roundAction}
+                className={clsx(classes.roundAction, flying && classes.flying)}
               >
                 <MicIcon />
               </IconButton>

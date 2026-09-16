@@ -155,10 +155,12 @@ const useStyles = makeStyles(theme => ({
       color: theme.palette.tkv.brand.contrastText
     },
     "& svg": { color: theme.palette.tkv.brand.contrastText, fontSize: 22 },
+    // celular: compacto, do tamanho dos outros ícones da barra
     [theme.breakpoints.down("xs")]: {
-      width: 46,
-      height: 46,
-      "& svg": { fontSize: 24 }
+      width: 38,
+      height: 38,
+      margin: "2px 2px 2px 0",
+      "& svg": { fontSize: 20 }
     }
   },
 
@@ -230,15 +232,15 @@ const useStyles = makeStyles(theme => ({
   },
   phoneIconButton: {
     flex: "none",
-    width: 46,
-    height: 46,
+    width: 38,
+    height: 42,
     padding: 0,
     color: theme.palette.tkv.brand.text,
-    "& svg": { fontSize: 28 }
+    "& svg": { fontSize: 23 }
   },
   plusIcon: {
     transition: "transform .25s cubic-bezier(.34, 1.56, .64, 1)",
-    fontSize: "32px !important"
+    fontSize: "27px !important"
   },
   plusOpen: { transform: "rotate(45deg)" },
   phoneInputWrapper: {
@@ -246,17 +248,17 @@ const useStyles = makeStyles(theme => ({
     minWidth: 0,
     display: "flex",
     alignItems: "center",
-    minHeight: 42,
+    minHeight: 38,
     margin: "2px 2px",
-    padding: "0 2px 0 14px",
-    borderRadius: 21,
+    padding: "0 2px 0 12px",
+    borderRadius: 19,
     backgroundColor: theme.palette.tkv.chat.input,
     boxShadow: `inset 0 0 0 1px ${theme.palette.tkv.border}`
   },
   pillAction: {
-    padding: 7,
+    padding: 6,
     color: theme.palette.tkv.brand.text,
-    "& svg": { fontSize: 25 }
+    "& svg": { fontSize: 21 }
   },
   roundBrand: {
     backgroundColor: theme.palette.tkv.brand.main,

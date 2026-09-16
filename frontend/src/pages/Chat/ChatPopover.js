@@ -6,6 +6,7 @@ import React, {
   useState
 } from "react";
 import { makeStyles } from "@material-ui/core/styles";
+import { useHistory } from "react-router-dom";
 import Tooltip from "@material-ui/core/Tooltip";
 import { useTheme } from "@material-ui/core/styles";
 import toastError from "../../errors/toastError";
@@ -116,6 +117,7 @@ export default function ChatPopover() {
   const soundAlertRef = useRef();
 
   const socketManager = useContext(SocketContext);
+  const history = useHistory();
 
   useEffect(() => {
     soundAlertRef.current = play;
@@ -208,9 +210,10 @@ export default function ChatPopover() {
     }
   };
 
-  const handleClick = event => {
-    setAnchorEl(event.currentTarget);
+  // vai direto para os canais, sem a prévia em popover
+  const handleClick = () => {
     setInvisible(true);
+    history.push("/chats");
   };
 
   const handleClose = () => {
@@ -226,7 +229,7 @@ export default function ChatPopover() {
 
   return (
     <div>
-      <Tooltip title={i18n.t("mainDrawer.listItems.chats")}>
+      <Tooltip title={i18n.t("mainDrawer.listItems.chats")} placement="right">
         <IconButton
           aria-describedby={id}
           aria-label={i18n.t("mainDrawer.listItems.chats")}
