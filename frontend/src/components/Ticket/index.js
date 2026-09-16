@@ -33,11 +33,22 @@ import useSettings from "../../hooks/useSettings";
 import { cachedTicket, rememberTicket } from "../../helpers/conversationCache";
 
 const useStyles = makeStyles(theme => ({
+  // o papel de parede cobre a conversa E a gaveta de dados do contato: as
+  // barras e a gaveta são de vidro fosco e deixam ele aparecer de leve
   root: {
     display: "flex",
     height: "100%",
     position: "relative",
     overflow: "hidden",
+    backgroundColor: theme.palette.tkv.chat.wallpaper,
+    backgroundImage: theme.palette.tkv.chat.wallpaperImage,
+    backgroundSize: theme.palette.tkv.chat.wallpaperSize,
+    backgroundPosition: "center",
+    backgroundBlendMode: theme.palette.tkv.chat.wallpaperBlend,
+    "& #messagesList": {
+      backgroundColor: "transparent",
+      backgroundImage: "none"
+    },
     // celular: a conversa entra deslizando da direita, como no WhatsApp
     [theme.breakpoints.down("xs")]: {
       animation: "$slideIn .24s cubic-bezier(.2, .8, .2, 1)"
@@ -54,6 +65,7 @@ const useStyles = makeStyles(theme => ({
     borderBottom: `1px solid ${theme.palette.tkv.border}`,
     "& .MuiAutocomplete-root .MuiOutlinedInput-root": {
       borderRadius: 0,
+      backgroundColor: "transparent",
       "& fieldset": { border: "none" }
     }
   },
@@ -69,6 +81,8 @@ const useStyles = makeStyles(theme => ({
   },
 
   mainWrapper: {
+    position: "relative",
+    backgroundColor: "transparent",
     flex: 1,
     height: "100%",
     display: "flex",
@@ -89,7 +103,7 @@ const useStyles = makeStyles(theme => ({
     border: "none",
     borderRadius: 0
   },
-  // celular: topo e barra de digitar flutuam sobre a conversa, em vidro fosco
+  // topo e barra de digitar flutuam sobre a conversa, em vidro fosco
   // levemente transparente; as mensagens passam por trás deles
   phoneTop: {
     position: "absolute",
@@ -98,9 +112,9 @@ const useStyles = makeStyles(theme => ({
     right: 0,
     zIndex: 6,
     "& > .MuiCard-root, & > .MuiPaper-root": {
-      backgroundColor: alpha(theme.palette.tkv.surface, 0.82),
-      backdropFilter: "saturate(1.6) blur(16px)",
-      WebkitBackdropFilter: "saturate(1.6) blur(16px)"
+      backgroundColor: alpha(theme.palette.tkv.surface, 0.72),
+      backdropFilter: "saturate(1.6) blur(18px)",
+      WebkitBackdropFilter: "saturate(1.6) blur(18px)"
     }
   },
   phoneBottom: {
@@ -110,9 +124,9 @@ const useStyles = makeStyles(theme => ({
     bottom: 0,
     zIndex: 6,
     "& > .MuiPaper-root": {
-      backgroundColor: alpha(theme.palette.tkv.chat.bar, 0.8),
-      backdropFilter: "saturate(1.6) blur(16px)",
-      WebkitBackdropFilter: "saturate(1.6) blur(16px)"
+      backgroundColor: alpha(theme.palette.tkv.chat.bar, 0.72),
+      backdropFilter: "saturate(1.6) blur(18px)",
+      WebkitBackdropFilter: "saturate(1.6) blur(18px)"
     }
   },
 
@@ -266,11 +280,11 @@ const Ticket = () => {
     setDrawerOpen(false);
   };
 
-  // celular: a lista de mensagens reserva o espaço do topo e da barra que
+  // a lista de mensagens reserva o espaço do topo e da barra que
   // flutuam por cima dela (as alturas mudam: tags, resposta, painéis…)
   useEffect(() => {
     const wrapper = wrapperRef.current;
-    if (!isPhone || !wrapper || typeof ResizeObserver === "undefined") {
+    if (!wrapper || typeof ResizeObserver === "undefined") {
       wrapper?.style.removeProperty("--chat-top");
       wrapper?.style.removeProperty("--chat-bottom");
       return undefined;
@@ -313,11 +327,7 @@ const Ticket = () => {
           isGroup={ticket.isGroup}
           markAsRead={true}
         ></MessagesList>
-        <div
-          ref={bottomRef}
-          className={isPhone ? classes.phoneBottom : undefined}
-          style={isPhone ? undefined : { display: "contents" }}
-        >
+        <div ref={bottomRef} className={classes.phoneBottom}>
           <MessageInput ticket={ticket} showTabGroups />
         </div>
       </>
@@ -341,11 +351,7 @@ const Ticket = () => {
           })}
           onClick={() => setDrawerOpen(false)}
         ></div>
-        <div
-          ref={topRef}
-          className={isPhone ? classes.phoneTop : undefined}
-          style={isPhone ? undefined : { display: "contents" }}
-        >
+        <div ref={topRef} className={classes.phoneTop}>
           <TicketHeader loading={loading} showBack>
             {renderTicketInfo()}
             {isPhone && (

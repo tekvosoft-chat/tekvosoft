@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { toast } from "react-toastify";
 import { Lightbox } from "react-modal-image";
 
-import { makeStyles } from "@material-ui/core/styles";
+import { alpha, makeStyles } from "@material-ui/core/styles";
 import Avatar from "@material-ui/core/Avatar";
 import ButtonBase from "@material-ui/core/ButtonBase";
 import IconButton from "@material-ui/core/IconButton";
@@ -224,14 +224,17 @@ const useStyles = makeStyles(theme => {
     },
 
     // computador: dentro da gaveta, no desenho do WhatsApp Web
+    // vidro fosco: o papel de parede da conversa aparece de leve por trás
     desktop: {
       position: "relative",
       height: "100%",
-      backgroundColor: t.surface,
+      backgroundColor: alpha(t.surface, 0.72),
+      backdropFilter: "saturate(1.6) blur(20px)",
+      WebkitBackdropFilter: "saturate(1.6) blur(20px)",
       "& $topBar": {
         gridTemplateColumns: "48px 1fr 48px",
         minHeight: 60,
-        borderBottom: `1px solid ${t.border}`,
+        borderBottom: `1px solid ${alpha(t.border, 0.6)}`,
         "& $topTitle": { textAlign: "left", fontWeight: 500 }
       },
       "& $scroll": { padding: 0 },
@@ -244,7 +247,7 @@ const useStyles = makeStyles(theme => {
         gap: 16,
         padding: "0 16px 20px",
         marginBottom: 0,
-        borderBottom: `8px solid ${t.canvas}`
+        borderBottom: `8px solid ${alpha(t.canvas, 0.45)}`
       },
       "& $actionCard": {
         width: 76,
@@ -259,13 +262,15 @@ const useStyles = makeStyles(theme => {
           borderRadius: "50%",
           fontSize: 22,
           color: t.brand.text,
+          backgroundColor: alpha(t.surface, 0.5),
           border: `1px solid ${t.border}`
         }
       },
       "& $group": {
         marginBottom: 0,
         borderRadius: 0,
-        borderBottom: `8px solid ${t.canvas}`
+        backgroundColor: "transparent",
+        borderBottom: `8px solid ${alpha(t.canvas, 0.45)}`
       },
       "& $groupTitle": { padding: "14px 16px 4px" }
     },

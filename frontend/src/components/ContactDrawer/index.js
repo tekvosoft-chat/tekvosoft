@@ -50,6 +50,8 @@ const useStyles = makeStyles(theme => ({
   drawerPaper: {
     width: drawerWidth,
     display: "flex",
+    // transparente: o vidro fosco fica no conteúdo (PhoneContactDetails)
+    backgroundColor: "transparent",
     borderTop: "1px solid rgba(0, 0, 0, 0.12)",
     borderRight: "1px solid rgba(0, 0, 0, 0.12)",
     borderBottom: "1px solid rgba(0, 0, 0, 0.12)",

@@ -154,6 +154,12 @@ const useStyles = makeStyles(theme => ({
     flexDirection: "column",
     flexGrow: 1,
     padding: "20px 20px 20px 20px",
+    // topo e barra de digitar flutuam por cima (Ticket): a lista começa
+    // abaixo de um e termina acima da outra
+    paddingTop: "calc(var(--chat-top, 0px) + 20px)",
+    paddingBottom: "calc(var(--chat-bottom, 0px) + 20px)",
+    scrollPaddingTop: "var(--chat-top, 0px)",
+    scrollPaddingBottom: "var(--chat-bottom, 0px)",
     overflowY: "scroll",
     // o gesto de responder move o balão para o lado; a lista não acompanha
     overflowX: "hidden",
@@ -161,13 +167,9 @@ const useStyles = makeStyles(theme => ({
     overscrollBehaviorX: "none",
     ...theme.scrollbarStyles,
     [theme.breakpoints.down("xs")]: {
-      // topo e barra de digitar flutuam por cima (Ticket): a lista começa
-      // abaixo de um e termina acima da outra
       padding: "10px 8px 12px",
       paddingTop: "calc(var(--chat-top, 0px) + 10px)",
       paddingBottom: "calc(var(--chat-bottom, 0px) + 12px)",
-      scrollPaddingTop: "var(--chat-top, 0px)",
-      scrollPaddingBottom: "var(--chat-bottom, 0px)",
       "-webkit-overflow-scrolling": "touch"
     }
   },
