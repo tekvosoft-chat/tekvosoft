@@ -82,14 +82,21 @@ const useStyles = makeStyles(theme => ({
    * O desenho é uma cápsula flutuante, como a barra de abas do iOS: solta das
    * bordas, com sombra, e a faixa da barra de gestos do iPhone logo abaixo.
    */
+  // solta: sem faixa de fundo, só a cápsula flutuando sobre a tela. Continua
+  // presa ao fim da área visível (o layout ocupa --vh), e as telas reservam
+  // o espaço dela com --mobile-nav-space.
   barWrap: {
-    position: "relative",
-    flex: "none",
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
     zIndex: theme.zIndex.appBar + 2,
     padding: "6px 12px 0",
     // a cápsula termina acima da barrinha de gestos, sem sobrar vão demais
     paddingBottom: "max(8px, calc(var(--safe-bottom, 0px) - 6px))",
-    backgroundColor: theme.palette.background.default
+    backgroundColor: "transparent",
+    pointerEvents: "none",
+    "& > *": { pointerEvents: "auto" }
   },
   bar: {
     position: "relative",

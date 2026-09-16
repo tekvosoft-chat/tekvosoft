@@ -33,7 +33,7 @@ import {
 import { useTheme } from "@material-ui/core/styles";
 import AddRoundedIcon from "@material-ui/icons/AddRounded";
 import TuneRoundedIcon from "@material-ui/icons/TuneRounded";
-import BottomSheet from "../ui/BottomSheet";
+import Collapse from "@material-ui/core/Collapse";
 import { TagsFilter } from "../TagsFilter";
 import { UsersFilter } from "../UsersFilter";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -91,10 +91,82 @@ const useStyles = makeStyles(theme => ({
     display: "flex",
     alignItems: "center",
     gap: theme.spacing(1),
-    padding: theme.spacing(0.75, 1),
-    borderBottom: `1px solid ${theme.palette.tkv.border}`
+    padding: theme.spacing(0.75, 1.25)
   },
   optionsSpacer: { flex: 1 },
+  // ── celular: abas em pílula (segmentado) ──
+  pillTabs: {
+    minHeight: 38,
+    margin: theme.spacing(1, 1.25, 0.5),
+    padding: 3,
+    borderRadius: 999,
+    backgroundColor: theme.palette.tkv.surfaceSunken,
+    "& .MuiTabs-flexContainer": { position: "relative", zIndex: 1 }
+  },
+  pillIndicator: {
+    height: "100%",
+    borderRadius: 999,
+    zIndex: 0,
+    backgroundColor: theme.palette.tkv.surface,
+    boxShadow: "0 2px 8px -2px rgba(12, 10, 20, 0.25)",
+    transition: "all .28s cubic-bezier(.3, 1.3, .5, 1)"
+  },
+  pillTab: {
+    minWidth: 0,
+    width: "auto",
+    flex: 1,
+    minHeight: 32,
+    padding: "4px 8px",
+    borderRadius: 999,
+    textTransform: "none",
+    fontSize: "0.8125rem",
+    fontWeight: 600,
+    color: theme.palette.text.secondary,
+    opacity: 1,
+    transition: "color .2s ease",
+    "&.Mui-selected": { color: theme.palette.text.primary }
+  },
+  newButtonPhone: {
+    borderRadius: 999,
+    textTransform: "none",
+    fontWeight: 600,
+    boxShadow: "none",
+    padding: "4px 14px"
+  },
+  filterButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    color: theme.palette.text.secondary,
+    backgroundColor: theme.palette.tkv.surfaceSunken,
+    transition: "background-color .2s ease, color .2s ease, transform .15s",
+    "&:active": { transform: "scale(0.92)" },
+    "& svg": { transition: "transform .3s cubic-bezier(.3, 1.4, .5, 1)" }
+  },
+  filterButtonOn: {
+    color: theme.palette.tkv.brand.contrastText,
+    backgroundColor: `${theme.palette.tkv.brand.main} !important`,
+    "& svg": { transform: "rotate(90deg)" }
+  },
+  // filtros abrem ali mesmo, deslizando por baixo da linha, sem modal
+  filterPanel: {
+    margin: theme.spacing(0, 1.25, 1),
+    padding: theme.spacing(1, 1.25),
+    borderRadius: 16,
+    backgroundColor: theme.palette.tkv.surfaceSunken,
+    display: "flex",
+    flexDirection: "column",
+    gap: theme.spacing(1),
+    animation: "$dropIn .28s cubic-bezier(.3, 1.3, .5, 1)",
+    "& .MuiFormControlLabel-root": {
+      marginLeft: 0,
+      justifyContent: "space-between"
+    }
+  },
+  "@keyframes dropIn": {
+    from: { opacity: 0, transform: "translateY(-8px) scale(.98)" },
+    to: { opacity: 1, transform: "none" }
+  },
   sheetSection: {
     display: "flex",
     flexDirection: "column",
@@ -256,13 +328,22 @@ const TicketsManagerTabs = () => {
           indicatorColor="primary"
           textColor="primary"
           aria-label="icon label tabs example"
+          classes={
+            isPhone
+              ? { root: classes.pillTabs, indicator: classes.pillIndicator }
+              : undefined
+          }
         >
           <Tab
             value={"open"}
-            icon={<MoveToInboxIcon />}
+            icon={isPhone ? undefined : <MoveToInboxIcon />}
             label={i18n.t("tickets.tabs.open.title")}
             classes={{
-              root: showTabGroups ? classes.tabWithGroups : classes.tab
+              root: isPhone
+                ? classes.pillTab
+                : showTabGroups
+                  ? classes.tabWithGroups
+                  : classes.tab
             }}
           />
 
@@ -270,31 +351,43 @@ const TicketsManagerTabs = () => {
             <Tab
               value={"groups"}
               icon={
-                <FontAwesomeIcon
-                  className={classes.icon24}
-                  icon={faPeopleGroup}
-                />
+                isPhone ? undefined : (
+                  <FontAwesomeIcon
+                    className={classes.icon24}
+                    icon={faPeopleGroup}
+                  />
+                )
               }
               label={i18n.t("tickets.tabs.groups.title")}
-              classes={{ root: classes.tabWithGroups }}
+              classes={{
+                root: isPhone ? classes.pillTab : classes.tabWithGroups
+              }}
             />
           )}
 
           <Tab
             value={"closed"}
-            icon={<CheckBoxIcon />}
+            icon={isPhone ? undefined : <CheckBoxIcon />}
             label={i18n.t("tickets.tabs.closed.title")}
             classes={{
-              root: showTabGroups ? classes.tabWithGroups : classes.tab
+              root: isPhone
+                ? classes.pillTab
+                : showTabGroups
+                  ? classes.tabWithGroups
+                  : classes.tab
             }}
           />
 
           <Tab
             value={"search"}
-            icon={<SearchIcon />}
+            icon={isPhone ? undefined : <SearchIcon />}
             label={i18n.t("tickets.tabs.search.title")}
             classes={{
-              root: showTabGroups ? classes.tabWithGroups : classes.tab
+              root: isPhone
+                ? classes.pillTab
+                : showTabGroups
+                  ? classes.tabWithGroups
+                  : classes.tab
             }}
           />
         </Tabs>
@@ -365,6 +458,7 @@ const TicketsManagerTabs = () => {
                       variant="contained"
                       color="primary"
                       size="small"
+                      className={classes.newButtonPhone}
                       startIcon={<AddRoundedIcon />}
                       onClick={() => setNewTicketModalOpen(true)}
                     >
@@ -374,8 +468,10 @@ const TicketsManagerTabs = () => {
                     <Tooltip title={i18n.t("common.filter")}>
                       <IconButton
                         size="small"
-                        onClick={() => setFiltersOpen(true)}
+                        className={`${classes.filterButton}${filtersOpen ? ` ${classes.filterButtonOn}` : ""}`}
+                        onClick={() => setFiltersOpen(v => !v)}
                         aria-label={i18n.t("common.filter")}
+                        aria-expanded={filtersOpen}
                       >
                         <MuiBadge
                           badgeContent={activeFilters}
@@ -389,16 +485,12 @@ const TicketsManagerTabs = () => {
                 )}
               </div>
 
-              <BottomSheet
-                open={filtersOpen}
-                onClose={() => setFiltersOpen(false)}
-                title={i18n.t("common.filter")}
-              >
-                <div className={classes.sheetSection}>
+              <Collapse in={filtersOpen && tab !== "search"} timeout={220}>
+                <div className={classes.filterPanel}>
                   {showAllSwitch}
                   {queueSelect}
                 </div>
-              </BottomSheet>
+              </Collapse>
             </>
           );
         }
@@ -431,12 +523,17 @@ const TicketsManagerTabs = () => {
           indicatorColor="primary"
           textColor="primary"
           variant="fullWidth"
+          classes={
+            isPhone
+              ? { root: classes.pillTabs, indicator: classes.pillIndicator }
+              : undefined
+          }
         >
           <Tab
             label={
               <Badge
                 className={classes.badge}
-                badgeContent={openCount}
+                badgeContent={isPhone ? 0 : openCount}
                 color="primary"
                 max={999}
               >
@@ -444,12 +541,13 @@ const TicketsManagerTabs = () => {
               </Badge>
             }
             value={"open"}
+            classes={isPhone ? { root: classes.pillTab } : undefined}
           />
           <Tab
             label={
               <Badge
                 className={classes.badge}
-                badgeContent={pendingCount}
+                badgeContent={isPhone ? 0 : pendingCount}
                 color="secondary"
                 max={999}
               >
@@ -457,6 +555,7 @@ const TicketsManagerTabs = () => {
               </Badge>
             }
             value={"pending"}
+            classes={isPhone ? { root: classes.pillTab } : undefined}
           />
         </Tabs>
         <Paper className={classes.ticketsWrapper}>

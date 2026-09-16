@@ -485,12 +485,21 @@
           clearInterval(interval);
           setTimeout(() => {
             const splashScreen = document.getElementById("splash-background");
-            splashScreen.remove();
+            splashScreen?.remove();
           }, 500);
         }
       }, 1000);
+      // o app montou: tira a tela de abertura na hora (com um fade curto).
+      // Esperar o próximo tique do intervalo deixava ela por até 1,5s em cima
+      // da animação de carregamento do app — duas animações ao mesmo tempo.
       window.finishProgress = () => {
         progress = 100;
+        clearInterval(interval);
+        const splash = document.getElementById("splash-background");
+        if (!splash) return;
+        splash.style.transition = "opacity .2s ease";
+        splash.style.opacity = "0";
+        setTimeout(() => splash.remove(), 220);
       };
 
       // Restart transitional page: show countdown and redirect after 30s

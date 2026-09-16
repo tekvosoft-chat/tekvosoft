@@ -38,7 +38,6 @@ import { PhoneCall } from "../components/PhoneCall";
 import UserModal from "../components/UserModal";
 import AboutModal from "../components/AboutModal";
 import { AuthContext } from "../context/Auth/AuthContext";
-import BackdropLoading from "../components/BackdropLoading";
 import { i18n } from "../translate/i18n";
 import { messages } from "../translate/languages";
 import toastError from "../errors/toastError";
@@ -83,6 +82,9 @@ const useStyles = makeStyles(theme => ({
     // passavam por cima do tema e deixavam "Novo" e "Cancelar" com cores
     // que não existem no resto do sistema. O tema já cuida dos dois.
     [theme.breakpoints.down("xs")]: {
+      position: "relative",
+      "--mobile-nav-space":
+        "calc(76px + max(0px, var(--safe-bottom, 0px) - 6px))",
       // No celular a pilha é vertical: conteúdo e, embaixo, a navegação.
       // A barra inferior ocupa o próprio espaço no fluxo em vez de flutuar
       // por cima com position: fixed — flutuando, ela ficava presa atrás da
@@ -382,6 +384,12 @@ const useStyles = makeStyles(theme => ({
     display: "flex",
     flexDirection: "column",
     overflow: "auto"
+  },
+  // celular com a barra de baixo: a tela vai até o fim e reserva o espaço
+  // da cápsula, que flutua por cima sem faixa de fundo
+  contentWithNav: {
+    paddingBottom: "var(--mobile-nav-space, 0px)",
+    backgroundColor: theme.palette.tkv.canvas
   },
   container: {
     paddingTop: theme.spacing(4),
@@ -889,8 +897,10 @@ const LoggedInLayout = ({ children, themeToggle }) => {
     ? dateToClient(user.company.dueDate)
     : "-";
 
+  // a animação de carregamento já é mostrada pela rota (routes/Route.js):
+  // mostrar aqui também empilhava duas animações ao entrar no sistema
   if (loading) {
-    return <BackdropLoading />;
+    return null;
   }
 
   // teste/assinatura vencida: bloqueia o sistema até pagar
@@ -1021,7 +1031,6 @@ const LoggedInLayout = ({ children, themeToggle }) => {
                 )}
 
                 <PhoneCall />
-                <ChatPopover />
               </div>
 
               <List className={classes.containerWithScroll}>
@@ -1199,7 +1208,17 @@ const LoggedInLayout = ({ children, themeToggle }) => {
       />
       {user.id && <NotificationsPopOver volume={volume} headless />}
       <ChatHead />
-      <main className={classes.content}>
+      {/* sem o balão no menu (o chat interno já está na lista), mas o som de
+          mensagem nova do chat continua vindo dele */}
+      <span style={{ display: "none" }} aria-hidden="true">
+        <ChatPopover />
+      </span>
+      <main
+        className={clsx(
+          classes.content,
+          isPhone && !inConversation && classes.contentWithNav
+        )}
+      >
         {!inConversation && <div className={classes.appBarSpacer} />}
         <OnlyForSuperUser user={currentUser} yes={() => <GoogleAnalytics />} />
         {children ? children : null}
