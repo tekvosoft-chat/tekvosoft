@@ -31,7 +31,6 @@ import PeopleAltOutlinedIcon from "@material-ui/icons/PeopleAltOutlined";
 import CodeRoundedIcon from "@material-ui/icons/CodeRounded";
 import LocalAtmIcon from "@material-ui/icons/LocalAtm";
 import SettingsOutlinedIcon from "@material-ui/icons/SettingsOutlined";
-import AnnouncementIcon from "@material-ui/icons/Announcement";
 import ListIcon from "@material-ui/icons/ListAlt";
 import PersonOutlineIcon from "@material-ui/icons/PersonOutline";
 import Brightness4Icon from "@material-ui/icons/Brightness4";
@@ -370,13 +369,6 @@ const MobileNav = ({ onOpenProfile }) => {
           to: "/campaigns",
           label: t("campaigns"),
           icon: <ListIcon />
-        });
-      }
-      if (user?.super) {
-        admin.push({
-          to: "/announcements",
-          label: t("annoucements"),
-          icon: <AnnouncementIcon />
         });
       }
       admin.push(

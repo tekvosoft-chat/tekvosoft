@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useRef, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { makeStyles, useTheme } from "@material-ui/core/styles";
 import {
   Button,
@@ -13,7 +13,9 @@ import Brightness2OutlinedIcon from "@material-ui/icons/Brightness2Outlined";
 import { toast } from "react-toastify";
 
 import ColorModeContext from "../../layout/themeContext";
-import useSettings from "../../hooks/useSettings";
+import api from "../../services/api";
+import { AuthContext } from "../../context/Auth/AuthContext";
+import { THEME_EVENT } from "../../hooks/useAccountTheme";
 import toastError from "../../errors/toastError";
 import { i18n } from "../../translate/i18n";
 import {
@@ -30,7 +32,7 @@ import {
 } from "../../theme/tokens";
 import {
   DEFAULT_WALLPAPER,
-  WALLPAPERS,
+  SOLID_COLORS,
   buildChatPalette
 } from "../../theme/chatPalette";
 
@@ -258,7 +260,72 @@ const useStyles = makeStyles(theme => {
       boxShadow: theme.shadows[3],
       pointerEvents: "none"
     },
-    // fundo das conversas
+    // fundo das conversas: abas + grade de miniaturas
+    wallTabs: { display: "flex", gap: 6, flexWrap: "wrap" },
+    wallTab: {
+      height: 34,
+      padding: "0 14px",
+      borderRadius: 999,
+      fontSize: "0.8125rem",
+      fontWeight: 700,
+      color: theme.palette.text.secondary,
+      border: `1px solid ${t.border}`
+    },
+    wallTabOn: {
+      color: t.brand.contrastText,
+      backgroundColor: t.brand.main,
+      borderColor: t.brand.main
+    },
+    wallTile: {
+      position: "relative",
+      width: "100%",
+      aspectRatio: "3 / 4",
+      borderRadius: t.radius.md,
+      overflow: "hidden",
+      border: `2px solid transparent`,
+      backgroundColor: t.surfaceSunken,
+      "& img": {
+        position: "absolute",
+        inset: 0,
+        width: "100%",
+        height: "100%",
+        objectFit: "cover"
+      }
+    },
+    wallTileOn: {
+      borderColor: t.brand.main,
+      boxShadow: `0 0 0 2px ${t.brand.soft}`
+    },
+    wallCheck: {
+      position: "absolute",
+      top: 6,
+      right: 6,
+      width: 24,
+      height: 24,
+      borderRadius: "50%",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      color: t.brand.contrastText,
+      backgroundColor: t.brand.main,
+      "& svg": { fontSize: 16 }
+    },
+    wallLabel: {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      bottom: 0,
+      padding: "14px 8px 6px",
+      fontSize: "0.6875rem",
+      fontWeight: 700,
+      color: "#FFFFFF",
+      textAlign: "left",
+      textTransform: "capitalize",
+      background: "linear-gradient(transparent, rgba(0,0,0,0.6))",
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis"
+    },
     section: {
       display: "flex",
       flexDirection: "column",
@@ -266,11 +333,11 @@ const useStyles = makeStyles(theme => {
     },
     wallGrid: {
       display: "grid",
-      gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
-      gap: theme.spacing(1.5),
+      gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))",
+      gap: theme.spacing(1.25),
       [theme.breakpoints.down("xs")]: {
-        gridTemplateColumns: "repeat(2, 1fr)",
-        gap: theme.spacing(1.25)
+        gridTemplateColumns: "repeat(3, 1fr)",
+        gap: theme.spacing(0.75)
       }
     },
     wallCard: {
@@ -377,7 +444,7 @@ const AppearanceSettings = () => {
   const classes = useStyles();
   const theme = useTheme();
   const { colorMode, accountTheme, mode } = useContext(ColorModeContext);
-  const { update } = useSettings();
+  const { user } = useContext(AuthContext);
   const [saving, setSaving] = useState(false);
   const customTimer = useRef(null);
   const themeBeforeCustom = useRef(null);
@@ -402,10 +469,10 @@ const AppearanceSettings = () => {
     colorMode.applyAccountTheme(next);
     setSaving(true);
     try {
-      await update({
-        key: "appTheme",
-        value: next ? JSON.stringify(next) : ""
-      });
+      // a aparência é de cada usuário, não da empresa
+      await api.put("/users/me/theme", { appTheme: next });
+      window.dispatchEvent(new CustomEvent(THEME_EVENT, { detail: next }));
+      if (user) user.appTheme = next ? JSON.stringify(next) : null;
       toast.success(
         next
           ? i18n.t("settings.appearance.applied")
@@ -433,6 +500,28 @@ const AppearanceSettings = () => {
       accountTheme
     );
   };
+
+  // claro/escuro também fica salvo na preferência do usuário
+  const chooseMode = mode => {
+    colorMode.setColorMode(mode);
+    const tekvosoft = THEME_PRESETS.find(p => p.id === "tekvosoft");
+    const current = accountTheme || {
+      preset: tekvosoft.id,
+      light: tekvosoft.light,
+      dark: tekvosoft.dark
+    };
+    persist({ ...current, mode }, accountTheme);
+  };
+
+  // fundos da pasta /backgrounds (GIFs e imagens)
+  const [backgrounds, setBackgrounds] = useState([]);
+  const [wallTab, setWallTab] = useState("gif");
+  useEffect(() => {
+    fetch("/backgrounds/index.json")
+      .then(res => res.json())
+      .then(list => setBackgrounds(Array.isArray(list) ? list : []))
+      .catch(() => setBackgrounds([]));
+  }, []);
 
   // o fundo vale para o tema atual; sem tema salvo, parte do padrão
   const chooseWallpaper = id => {
@@ -478,7 +567,7 @@ const AppearanceSettings = () => {
             role="radio"
             aria-checked={!isDark}
             className={`${classes.modeOption}${!isDark ? ` ${classes.modeOptionActive}` : ""}`}
-            onClick={() => colorMode.setColorMode("light")}
+            onClick={() => chooseMode("light")}
           >
             <WbSunnyOutlinedIcon />
             {i18n.t("settings.appearance.light")}
@@ -487,7 +576,7 @@ const AppearanceSettings = () => {
             role="radio"
             aria-checked={isDark}
             className={`${classes.modeOption}${isDark ? ` ${classes.modeOptionActive}` : ""}`}
-            onClick={() => colorMode.setColorMode("dark")}
+            onClick={() => chooseMode("dark")}
           >
             <Brightness2OutlinedIcon />
             {i18n.t("settings.appearance.dark")}
@@ -628,76 +717,113 @@ const AppearanceSettings = () => {
             {i18n.t("chatWallpaper.subtitle")}
           </Typography>
         </div>
+        <div className={classes.wallTabs} role="tablist">
+          {["gif", "image", "color", "classic"].map(key => (
+            <ButtonBase
+              key={key}
+              role="tab"
+              aria-selected={wallTab === key}
+              className={`${classes.wallTab}${wallTab === key ? ` ${classes.wallTabOn}` : ""}`}
+              onClick={() => setWallTab(key)}
+            >
+              {i18n.t(`chatWallpaper.tabs.${key}`)}
+            </ButtonBase>
+          ))}
+        </div>
+
         <div className={classes.wallGrid} role="radiogroup">
-          {WALLPAPERS.map(id => {
-            const active = wallpaper === id;
-            const chat = buildChatPalette({
-              brand: theme.palette.primary.main,
-              accent: currentAccent,
-              isDark,
-              wallpaper: id,
-              base: isDark ? whatsappDark : whatsappLight
-            });
-            return (
-              <ButtonBase
-                key={id}
-                role="radio"
-                aria-checked={active}
-                className={`${classes.wallCard}${active ? ` ${classes.wallCardActive}` : ""}`}
-                onClick={() => chooseWallpaper(id)}
-                disabled={saving}
-              >
-                {active && (
-                  <span
-                    className={classes.check}
-                    aria-hidden="true"
-                    style={{
-                      "--card-accent": theme.palette.primary.main,
-                      "--card-accent-text": theme.palette.primary.contrastText
-                    }}
+          {(wallTab === "gif" || wallTab === "image") &&
+            backgrounds
+              .filter(item => item.type === wallTab)
+              .map(item => {
+                const id = `bg:${item.id}`;
+                const active = wallpaper === id;
+                return (
+                  <ButtonBase
+                    key={id}
+                    role="radio"
+                    aria-checked={active}
+                    className={`${classes.wallTile}${active ? ` ${classes.wallTileOn}` : ""}`}
+                    onClick={() => chooseWallpaper(id)}
+                    disabled={saving}
+                    title={item.name}
                   >
-                    <CheckRoundedIcon />
-                  </span>
-                )}
-                <div
-                  className={classes.wallPreview}
-                  aria-hidden="true"
+                    <img
+                      src={wallTab === "gif" ? item.file : item.thumb}
+                      alt={item.name}
+                      loading="lazy"
+                    />
+                    {active && (
+                      <span className={classes.wallCheck}>
+                        <CheckRoundedIcon />
+                      </span>
+                    )}
+                    <span className={classes.wallLabel}>{item.name}</span>
+                  </ButtonBase>
+                );
+              })}
+
+          {wallTab === "color" &&
+            SOLID_COLORS.map(color => {
+              const id = `color:${color}`;
+              const active = wallpaper === id;
+              return (
+                <ButtonBase
+                  key={id}
+                  role="radio"
+                  aria-checked={active}
+                  className={`${classes.wallTile}${active ? ` ${classes.wallTileOn}` : ""}`}
+                  style={{ backgroundColor: color }}
+                  onClick={() => chooseWallpaper(id)}
+                  disabled={saving}
+                  title={color}
+                >
+                  {active && (
+                    <span className={classes.wallCheck}>
+                      <CheckRoundedIcon />
+                    </span>
+                  )}
+                </ButtonBase>
+              );
+            })}
+
+          {wallTab === "classic" &&
+            ["doodle", "plain"].map(id => {
+              const active = wallpaper === id;
+              const chat = buildChatPalette({
+                brand: theme.palette.primary.main,
+                accent: currentAccent,
+                isDark,
+                wallpaper: id,
+                base: isDark ? whatsappDark : whatsappLight
+              });
+              return (
+                <ButtonBase
+                  key={id}
+                  role="radio"
+                  aria-checked={active}
+                  className={`${classes.wallTile}${active ? ` ${classes.wallTileOn}` : ""}`}
                   style={{
                     backgroundColor: chat.wallpaper,
                     backgroundImage: chat.wallpaperImage,
                     backgroundSize:
-                      chat.wallpaperSize === "auto" ? "180px" : "cover",
+                      chat.wallpaperSize === "auto" ? "160px" : "cover",
                     backgroundBlendMode: chat.wallpaperBlend
                   }}
+                  onClick={() => chooseWallpaper(id)}
+                  disabled={saving}
                 >
-                  <span
-                    className={classes.wallBubble}
-                    style={{
-                      alignSelf: "flex-start",
-                      backgroundColor: chat.bubbleIn,
-                      color: chat.text
-                    }}
-                  >
-                    {i18n.t("chatWallpaper.sampleIn")}
+                  {active && (
+                    <span className={classes.wallCheck}>
+                      <CheckRoundedIcon />
+                    </span>
+                  )}
+                  <span className={classes.wallLabel}>
+                    {i18n.t(`chatWallpaper.options.${id}`)}
                   </span>
-                  <span
-                    className={classes.wallBubble}
-                    style={{
-                      alignSelf: "flex-end",
-                      backgroundColor: chat.bubbleOut,
-                      color: chat.text,
-                      animationDelay: "90ms"
-                    }}
-                  >
-                    {i18n.t("chatWallpaper.sampleOut")}
-                  </span>
-                </div>
-                <span className={classes.wallName}>
-                  {i18n.t(`chatWallpaper.options.${id}`)}
-                </span>
-              </ButtonBase>
-            );
-          })}
+                </ButtonBase>
+              );
+            })}
         </div>
       </div>
 

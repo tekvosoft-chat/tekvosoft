@@ -20,6 +20,7 @@ const ShowUserService = async (
       "profileImage",
       "super",
       "active",
+      "appTheme",
       "tokenVersion"
     ],
     include: [

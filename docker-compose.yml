@@ -78,7 +78,7 @@ services:
       # --- limites ---
       USER_LIMIT: ${USER_LIMIT:-10000}
       CONNECTIONS_LIMIT: ${CONNECTIONS_LIMIT:-100000}
-      TRIAL_DAYS: ${TRIAL_DAYS:-14}
+      TRIAL_DAYS: ${TRIAL_DAYS:-7}
       CLOSED_SEND_BY_ME: "true"
       # --- integrações opcionais ---
       RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY:-}

@@ -18,7 +18,24 @@ import doodleLight from "../assets/wa-background.png";
 import doodleDark from "../assets/wa-background-dark.png";
 
 export const WALLPAPERS = ["landscape", "waves", "gradient", "doodle", "plain"];
-export const DEFAULT_WALLPAPER = "landscape";
+export const DEFAULT_WALLPAPER = "doodle";
+
+/**
+ * Cores sólidas oferecidas como fundo (além das imagens e GIFs de
+ * /backgrounds). Valor salvo: "color:#RRGGBB" ou "bg:<id da imagem>".
+ */
+export const SOLID_COLORS = [
+  "#EFEAE2",
+  "#DCEBF7",
+  "#E3F2E1",
+  "#F6E7F0",
+  "#FFF4D6",
+  "#1F2933",
+  "#0B141A",
+  "#111827",
+  "#2B2141",
+  "#123B36"
+];
 
 /** Mistura duas cores. weight é quanto de `b` entra (0..1). */
 export const mix = (a, b, weight) => {
@@ -111,7 +128,14 @@ const wavesSvg = ({ brand, accent, isDark }) => {
 };
 
 export function buildChatPalette({ brand, accent, isDark, wallpaper, base }) {
-  const style = WALLPAPERS.includes(wallpaper) ? wallpaper : DEFAULT_WALLPAPER;
+  const custom =
+    typeof wallpaper === "string" &&
+    (wallpaper.startsWith("bg:") || wallpaper.startsWith("color:"));
+  const style = custom
+    ? wallpaper
+    : WALLPAPERS.includes(wallpaper)
+      ? wallpaper
+      : DEFAULT_WALLPAPER;
   const secondary = accent || brand;
   const ink = "#0A0910";
   const text = base.text;
@@ -124,14 +148,23 @@ export function buildChatPalette({ brand, accent, isDark, wallpaper, base }) {
   const quoteOut = isDark
     ? mix(bubbleOut, ink, 0.22)
     : mix(bubbleOut, brand, 0.08);
-  const wallpaperColor = isDark
+  let wallpaperColor = isDark
     ? mix(brand, "#0B0A11", 0.9)
     : mix(brand, "#F4F2EE", 0.9);
 
   let wallpaperImage = "none";
   let wallpaperSize = "cover";
   let wallpaperBlend = "normal";
-  if (style === "landscape") {
+  if (style.startsWith("bg:")) {
+    // imagem ou GIF escolhido: um véu leve deixa os balões legíveis
+    const id = style.slice(3).replace(/[^a-z0-9-]/gi, "");
+    const veil = isDark ? "rgba(8, 8, 12, 0.28)" : "rgba(255, 255, 255, 0.12)";
+    wallpaperImage = `linear-gradient(${veil}, ${veil}), url(/backgrounds/${id}.webp)`;
+    wallpaperColor = isDark ? "#0B0A11" : "#E9E4DC";
+  } else if (style.startsWith("color:")) {
+    const hex = style.slice(6);
+    if (/^#[0-9a-f]{6}$/i.test(hex)) wallpaperColor = hex;
+  } else if (style === "landscape") {
     wallpaperImage = svgUrl(landscapeSvg({ brand, accent: secondary, isDark }));
   } else if (style === "waves") {
     wallpaperImage = svgUrl(wavesSvg({ brand, accent: secondary, isDark }));

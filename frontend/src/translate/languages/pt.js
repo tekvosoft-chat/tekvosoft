@@ -1,6 +1,27 @@
 const messages = {
   pt: {
     translations: {
+      paywall: {
+        title: "Opa! Seu acesso expirou",
+        voluntaryTitle: "Escolha seu plano",
+        adminText:
+          "O período acabou e a gente também precisa pagar as contas 😅 Escolha um plano e libere o sistema agora mesmo — são 30 dias a partir do pagamento.",
+        voluntaryText:
+          "Pague agora e ganhe 30 dias a partir da data do pagamento.",
+        userText:
+          "O acesso da sua empresa está suspenso. Peça ao administrador para renovar a assinatura.",
+        perMonth: "/mês",
+        users: "Até {{count}} usuários",
+        connections: "{{count}} conexões",
+        queues: "{{count}} filas",
+        pay: "Pagar {{value}}",
+        logout: "Sair",
+        later: "Agora não",
+        thanksTitle: "Pagamento confirmado!",
+        thanksText:
+          "Muito obrigado por confiar na gente. Seu acesso foi liberado por mais 30 dias.",
+        continue: "Continuar"
+      },
       payment: {
         title: "Pagamento da assinatura",
         pix: "Pix",
@@ -205,7 +226,7 @@ const messages = {
         new: "Nova fila"
       },
       loginShowcase: {
-        title: "Todo o atendimento da sua empresa em um lugar só",
+        title: "Todo o atendimento da sua empresa em um lugar só"
       },
       annotator: {
         title: "Documento",
@@ -454,6 +475,12 @@ const messages = {
         deactivatedByAdmin: "Seu acesso foi desativado pelo administrador."
       },
       chatWallpaper: {
+        tabs: {
+          gif: "Animados",
+          image: "Fotos",
+          color: "Cores",
+          classic: "Clássicos"
+        },
         title: "Fundo das conversas",
         subtitle:
           "Desenhado com as cores do tema escolhido. Seus balões de mensagem também seguem a paleta.",
@@ -537,12 +564,52 @@ const messages = {
         differenceMinutes: "Diferença: {{count}} minuto(s)"
       },
       signup: {
+        options: {
+          segment: {
+            retail: "Varejo / Loja",
+            services: "Serviços",
+            health: "Saúde e bem-estar",
+            education: "Educação",
+            food: "Alimentação",
+            realEstate: "Imobiliário",
+            tech: "Tecnologia",
+            other: "Outro"
+          },
+          teamSize: {
+            1: "Só eu",
+            "2-5": "2 a 5 pessoas",
+            "6-20": "6 a 20 pessoas",
+            "21-50": "21 a 50 pessoas",
+            "50+": "Mais de 50"
+          },
+          goal: {
+            sales: "Vender mais",
+            support: "Atendimento / suporte",
+            scheduling: "Agendamentos",
+            marketing: "Campanhas e marketing",
+            other: "Outro"
+          },
+          source: {
+            google: "Google",
+            instagram: "Instagram",
+            youtube: "YouTube",
+            referral: "Indicação",
+            other: "Outro"
+          }
+        },
+        aboutBusiness: "Sobre o seu negócio",
+        subheading: "7 dias grátis. Sem cartão de crédito.",
+        heading: "Crie sua conta",
         title: "Cadastre-se",
         toasts: {
           success: "Usuário criado com sucesso! Faça seu login!!!.",
           fail: "Erro ao criar usuário. Verifique os dados informados."
         },
         form: {
+          source: "Como nos conheceu?",
+          goal: "Principal objetivo",
+          teamSize: "Tamanho da equipe",
+          segment: "Segmento",
           name: "Nome",
           email: "Email",
           password: "Senha"
@@ -553,6 +620,8 @@ const messages = {
         }
       },
       login: {
+        subheading: "Entre para continuar seus atendimentos.",
+        heading: "Bem-vindo de volta",
         title: "Login",
         form: {
           email: "Email",
@@ -735,6 +804,15 @@ const messages = {
         send: "Enviar"
       },
       internalChat: {
+        channelsCount_plural: "{{count}} canais",
+        channelsCount: "{{count}} canal",
+        newChannel: "Criar canal",
+        allAreas: "Todas as conversas",
+        areas: "Áreas",
+        areaHelp:
+          "Os canais ficam agrupados por área, nas bolinhas à esquerda.",
+        areaPlaceholder: "Ex.: Vendas, Suporte, Financeiro",
+        area: "Área",
         title: "Chat Interno",
         subtitle: "Conversas com a sua equipe",
         newChat: "Nova conversa",
@@ -932,6 +1010,9 @@ const messages = {
         success: "Usuário salvo com sucesso."
       },
       scheduleModal: {
+        mediaOrText: "Escreva uma mensagem ou anexe uma imagem.",
+        removeMedia: "Remover anexo",
+        addMedia: "Adicionar imagem",
         title: {
           add: "Novo Agendamento",
           edit: "Editar Agendamento"
@@ -1032,6 +1113,14 @@ const messages = {
         }
       },
       ticketsList: {
+        media: {
+          photo: "Foto",
+          audio: "Áudio",
+          video: "Vídeo",
+          document: "Documento",
+          gif: "GIF",
+          sticker: "Figurinha"
+        },
         pendingHeader: "Aguardando",
         assignedHeader: "Atendendo",
         noTicketsTitle: "Nada aqui!",
@@ -1690,7 +1779,7 @@ const messages = {
           custom: "Personalizado",
           customDescription: "Use a cor da sua marca",
           restore: "Restaurar padrão",
-          applied: "Tema aplicado para toda a equipe",
+          applied: "Tema aplicado",
           restored: "Cores padrão restauradas",
           current: "Em uso",
           presets: {

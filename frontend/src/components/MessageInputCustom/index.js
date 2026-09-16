@@ -1547,7 +1547,12 @@ const MessageInputCustom = props => {
             />
           </div>
         )}
-        <Collapse in={exprOpen && !recording} timeout={200} unmountOnExit>
+        <Collapse
+          in={exprOpen && !recording}
+          timeout={200}
+          unmountOnExit
+          style={{ width: "100%", alignSelf: "stretch" }}
+        >
           <ExpressionPanel
             compact
             ticketId={ticketId}

@@ -1,5 +1,6 @@
 import * as Yup from "yup";
 import { Request, Response } from "express";
+import Setting from "../models/Setting";
 import axios from "axios";
 import moment from "moment";
 import AppError from "../errors/AppError";
@@ -91,10 +92,31 @@ export const signup = async (
 
   // Teste grátis de quem se cadastra sozinho. TRIAL_DAYS no .env muda o
   // prazo sem precisar mexer no código.
-  const trialDays = Number(process.env.TRIAL_DAYS) || 14;
+  const trialDays = Number(process.env.TRIAL_DAYS) || 7;
   req.body.dueDate = moment().add(trialDays, "day").format();
 
-  return store(req, res);
+  // respostas extras do cadastro (segmento, tamanho da equipe, como nos
+  // conheceu, objetivo) ficam guardadas nas configurações da empresa
+  const { segment, teamSize, source, goal, ...companyData } = req.body;
+
+  const schema = Yup.object().shape({ name: Yup.string().required() });
+  try {
+    await schema.validate(companyData);
+  } catch (err) {
+    throw new AppError(err.message);
+  }
+
+  const company = await CreateCompanyService(companyData);
+
+  if (segment || teamSize || source || goal) {
+    await Setting.create({
+      companyId: company.id,
+      key: "signupInfo",
+      value: JSON.stringify({ segment, teamSize, source, goal })
+    });
+  }
+
+  return res.status(200).json(company);
 };
 
 export const show = async (req: Request, res: Response): Promise<Response> => {

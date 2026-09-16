@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useMemo, useState, useEffect, useContext } from "react";
 
 import * as Yup from "yup";
 import { Formik, Form, Field } from "formik";
@@ -15,6 +15,8 @@ import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import CircularProgress from "@material-ui/core/CircularProgress";
 
+import AddPhotoAlternateOutlinedIcon from "@material-ui/icons/AddPhotoAlternateOutlined";
+import { getBackendURL } from "../../services/config";
 import { i18n } from "../../translate/i18n";
 
 import api from "../../services/api";
@@ -52,11 +54,27 @@ const useStyles = makeStyles(theme => ({
   formControl: {
     margin: theme.spacing(1),
     minWidth: 120
-  }
+  },
+  mediaBox: { margin: theme.spacing(1, 0) },
+  mediaPreview: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    padding: 8,
+    borderRadius: 12,
+    border: `1px solid ${theme.palette.tkv.border}`,
+    "& img": {
+      width: 72,
+      height: 72,
+      objectFit: "cover",
+      borderRadius: 8
+    }
+  },
+  mediaName: { flex: 1, fontSize: "0.875rem", wordBreak: "break-all" }
 }));
 
 const ScheduleSchema = Yup.object().shape({
-  body: Yup.string().min(5, "Mensagem muito curta").required("Obrigatório"),
+  body: Yup.string(),
   contactId: Yup.number().required("Obrigatório"),
   sendAt: Yup.string().required("Obrigatório"),
   saveMessage: Yup.bool()
@@ -89,6 +107,8 @@ const ScheduleModal = ({
   };
 
   const [schedule, setSchedule] = useState(initialState);
+  const [mediaFile, setMediaFile] = useState(null);
+  const [removeMedia, setRemoveMedia] = useState(false);
   const [currentContact, setCurrentContact] = useState(initialContact);
   const [contacts, setContacts] = useState([initialContact]);
 
@@ -145,16 +165,47 @@ const ScheduleModal = ({
   const handleClose = () => {
     onClose();
     setSchedule(initialState);
+    setMediaFile(null);
+    setRemoveMedia(false);
   };
 
+  const mediaPreviewUrl = useMemo(
+    () => (mediaFile ? URL.createObjectURL(mediaFile) : null),
+    [mediaFile]
+  );
+  useEffect(
+    () => () => mediaPreviewUrl && URL.revokeObjectURL(mediaPreviewUrl),
+    [mediaPreviewUrl]
+  );
+  const savedMediaUrl =
+    !removeMedia && schedule.mediaPath
+      ? `${getBackendURL()}/public/${schedule.mediaPath}`
+      : null;
+
   const handleSaveSchedule = async values => {
-    const scheduleData = { ...values, userId: user.id };
+    if (
+      !String(values.body || "").trim() &&
+      !mediaFile &&
+      !schedule.mediaPath
+    ) {
+      toastError({ message: i18n.t("scheduleModal.mediaOrText") });
+      return;
+    }
+    // com imagem vai como multipart; sem, continua JSON
+    const form = new FormData();
+    Object.entries({ ...values, userId: user.id }).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) form.append(key, value);
+    });
+    if (mediaFile) form.append("media", mediaFile);
+    if (removeMedia) form.append("removeMedia", "true");
     try {
       if (scheduleId) {
-        await api.put(`/schedules/${scheduleId}`, scheduleData);
+        await api.put(`/schedules/${scheduleId}`, form);
       } else {
-        await api.post("/schedules", scheduleData);
+        await api.post("/schedules", form);
       }
+      setMediaFile(null);
+      setRemoveMedia(false);
       toast.success(i18n.t("scheduleModal.success"));
       if (typeof reload == "function") {
         reload();
@@ -256,6 +307,57 @@ const ScheduleModal = ({
                     variant="outlined"
                     fullWidth
                   />
+                </div>
+                {/* imagem ou arquivo que vai junto da mensagem */}
+                <div className={classes.mediaBox}>
+                  <input
+                    id="schedule-media-input"
+                    type="file"
+                    accept="image/*,video/*,application/pdf"
+                    hidden
+                    onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setMediaFile(file);
+                        setRemoveMedia(false);
+                      }
+                      e.target.value = "";
+                    }}
+                  />
+                  {mediaFile || savedMediaUrl ? (
+                    <div className={classes.mediaPreview}>
+                      {(mediaFile?.type || "").startsWith("image/") ||
+                      (!mediaFile &&
+                        /\.(png|jpe?g|webp|gif)$/i.test(
+                          schedule.mediaPath || ""
+                        )) ? (
+                        <img src={mediaPreviewUrl || savedMediaUrl} alt="" />
+                      ) : (
+                        <span className={classes.mediaName}>
+                          📎 {mediaFile?.name || schedule.mediaName}
+                        </span>
+                      )}
+                      <Button
+                        size="small"
+                        onClick={() => {
+                          setMediaFile(null);
+                          if (schedule.mediaPath) setRemoveMedia(true);
+                        }}
+                      >
+                        {i18n.t("scheduleModal.removeMedia")}
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      component="label"
+                      htmlFor="schedule-media-input"
+                      variant="outlined"
+                      color="primary"
+                      startIcon={<AddPhotoAlternateOutlinedIcon />}
+                    >
+                      {i18n.t("scheduleModal.addMedia")}
+                    </Button>
+                  )}
                 </div>
                 <div className={classes.multFieldLine}>
                   <FormControlLabel

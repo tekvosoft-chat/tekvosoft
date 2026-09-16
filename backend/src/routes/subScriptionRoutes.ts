@@ -15,6 +15,18 @@ subscriptionRoutes.get(
   SubscriptionController.methods
 );
 
+subscriptionRoutes.post(
+  "/subscription/plan",
+  isAuth,
+  SubscriptionController.choosePlan
+);
+
+subscriptionRoutes.get(
+  "/subscription/gifs",
+  isAuth,
+  SubscriptionController.gifs
+);
+
 subscriptionRoutes.delete(
   "/subscription/card",
   isAuth,

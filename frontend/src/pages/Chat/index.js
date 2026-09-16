@@ -5,6 +5,7 @@ import { useParams, useHistory } from "react-router-dom";
 import {
   Avatar,
   Button,
+  ButtonBase,
   Dialog,
   DialogActions,
   DialogContent,
@@ -34,6 +35,7 @@ import EmptyState from "../../components/ui/EmptyState";
 import api from "../../services/api";
 import { SocketContext } from "../../context/Socket/SocketContext";
 import { getInitials } from "../../helpers/getInitials";
+import { generateColor } from "../../helpers/colorGenerator";
 
 import { has, isObject } from "lodash";
 
@@ -83,6 +85,121 @@ const useStyles = makeStyles(theme => {
       [theme.breakpoints.down("xs")]: { borderRadius: 0, border: "none" }
     },
 
+    // ── trilho de áreas (bolinhas, como os servidores do Discord) ──
+    rail: {
+      width: 72,
+      flex: "none",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: 8,
+      padding: theme.spacing(1.5, 0),
+      overflowY: "auto",
+      backgroundColor: t.surfaceSunken,
+      borderRight: `1px solid ${t.border}`,
+      scrollbarWidth: "none",
+      "&::-webkit-scrollbar": { display: "none" },
+      [theme.breakpoints.down("sm")]: {
+        width: "100%",
+        flexDirection: "row",
+        overflowX: "auto",
+        overflowY: "hidden",
+        padding: theme.spacing(1, 1.5),
+        borderRight: "none",
+        borderBottom: `1px solid ${t.border}`
+      }
+    },
+    railSep: {
+      flex: "none",
+      width: 32,
+      height: 2,
+      borderRadius: 1,
+      backgroundColor: t.border,
+      [theme.breakpoints.down("sm")]: { width: 2, height: 32 }
+    },
+    bubbleWrap: {
+      position: "relative",
+      flex: "none",
+      display: "flex",
+      justifyContent: "center",
+      width: "100%",
+      [theme.breakpoints.down("sm")]: { width: "auto" }
+    },
+    // pílula à esquerda da bolinha escolhida
+    bubblePill: {
+      position: "absolute",
+      left: 0,
+      top: "50%",
+      width: 4,
+      height: 0,
+      marginTop: 0,
+      borderRadius: "0 4px 4px 0",
+      backgroundColor: theme.palette.text.primary,
+      transition: "height .18s ease, margin-top .18s ease",
+      [theme.breakpoints.down("sm")]: { display: "none" }
+    },
+    bubblePillOn: { height: 36, marginTop: -18 },
+    bubble: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      fontSize: "0.9375rem",
+      fontWeight: 700,
+      color: "#fff",
+      overflow: "hidden",
+      transition:
+        "border-radius .2s ease, transform .15s ease, box-shadow .15s ease",
+      "&:hover": { borderRadius: 16 },
+      "&:active": { transform: "scale(0.94)" },
+      "& svg": { fontSize: 24 }
+    },
+    bubbleOn: {
+      borderRadius: 16,
+      boxShadow: `0 0 0 2px ${t.surface}, 0 0 0 4px ${t.brand.main}`
+    },
+    bubbleAll: {
+      backgroundColor: t.brand.main,
+      color: t.brand.contrastText
+    },
+    bubbleAdd: {
+      backgroundColor: t.surface,
+      color: t.semantic.success,
+      border: `1px dashed ${t.border}`,
+      "&:hover": {
+        backgroundColor: t.semantic.success,
+        color: "#fff",
+        borderColor: "transparent"
+      }
+    },
+    bubbleDot: {
+      position: "absolute",
+      top: 0,
+      right: 10,
+      minWidth: 16,
+      height: 16,
+      padding: "0 4px",
+      borderRadius: 8,
+      fontSize: 10,
+      fontWeight: 700,
+      lineHeight: "16px",
+      textAlign: "center",
+      color: "#fff",
+      backgroundColor: t.semantic.danger,
+      boxShadow: `0 0 0 2px ${t.surfaceSunken}`,
+      pointerEvents: "none",
+      [theme.breakpoints.down("sm")]: { right: -2 }
+    },
+    listColumn: {
+      flex: "none",
+      display: "flex",
+      minHeight: 0,
+      [theme.breakpoints.down("sm")]: {
+        flex: 1,
+        flexDirection: "column",
+        width: "100%"
+      }
+    },
+
     // ── coluna da lista ──
     sidebar: {
       width: 340,
@@ -92,6 +209,7 @@ const useStyles = makeStyles(theme => {
       flexDirection: "column",
       borderRight: `1px solid ${t.border}`,
       [theme.breakpoints.down("sm")]: {
+        flex: 1,
         width: "100%",
         borderRight: "none"
       }
@@ -183,14 +301,18 @@ export function ChatModal({
   type,
   handleClose,
   handleLoadNewChat,
-  user
+  user,
+  areas = [],
+  defaultArea = ""
 }) {
   const [users, setUsers] = useState([]);
   const [title, setTitle] = useState("");
+  const [area, setArea] = useState("");
 
   useEffect(() => {
     setTitle("");
     setUsers([]);
+    setArea(type === "edit" ? chat?.area || "" : defaultArea || "");
     if (type === "edit" && chat?.users) {
       const userList = chat.users.map(u => ({
         id: u.user.id,
@@ -199,6 +321,7 @@ export function ChatModal({
       setUsers(userList);
       setTitle(chat.title);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chat, open, type]);
 
   const handleSave = async () => {
@@ -216,12 +339,14 @@ export function ChatModal({
       if (type === "edit") {
         await api.put(`/chats/${chat.id}`, {
           users,
-          title
+          title,
+          area
         });
       } else {
         const { data } = await api.post("/chats", {
           users,
-          title
+          title,
+          area
         });
         handleLoadNewChat(data);
       }
@@ -249,6 +374,24 @@ export function ChatModal({
               size="small"
               fullWidth
             />
+          </Grid>
+          <Grid xs={12} style={{ padding: "0 18px 18px" }} item>
+            <TextField
+              label={i18n.t("internalChat.area")}
+              placeholder={i18n.t("internalChat.areaPlaceholder")}
+              value={area}
+              onChange={e => setArea(e.target.value)}
+              variant="outlined"
+              size="small"
+              fullWidth
+              inputProps={{ list: "chat-areas", maxLength: 60 }}
+              helperText={i18n.t("internalChat.areaHelp")}
+            />
+            <datalist id="chat-areas">
+              {areas.map(a => (
+                <option key={a} value={a} />
+              ))}
+            </datalist>
           </Grid>
           <Grid xs={12} item>
             <UsersFilter
@@ -289,6 +432,14 @@ function Chat(props) {
   const [, setTab] = useState(0);
   const [headerMenu, setHeaderMenu] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // null = todas as áreas
+  const [area, setArea] = useState(() => {
+    try {
+      return localStorage.getItem("tkv:chatArea") || null;
+    } catch (e) {
+      return null;
+    }
+  });
   const isMounted = useRef(true);
   const scrollToBottomRef = useRef();
   const { id } = useParams();
@@ -408,6 +559,14 @@ function Chat(props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentChat, socketManager]);
 
+  // abrir /chats/:id com a página já aberta (ex.: pelo balãozinho)
+  useEffect(() => {
+    if (!id || !chats.length || currentChat?.uuid === id) return;
+    const chat = chats.find(r => r.uuid === id);
+    if (chat) selectChat(chat);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, chats]);
+
   const selectChat = chat => {
     try {
       setMessages([]);
@@ -495,15 +654,108 @@ function Chat(props) {
     </Button>
   );
 
+  const areaOf = chat => (chat?.area || "").trim();
+  const areas = Array.from(new Set(chats.map(areaOf).filter(Boolean))).sort(
+    (a, b) => a.localeCompare(b)
+  );
+  const activeArea = area && areas.includes(area) ? area : null;
+  const visibleChats = activeArea
+    ? chats.filter(chat => areaOf(chat) === activeArea)
+    : chats;
+  const unreadsIn = list =>
+    list.reduce(
+      (sum, chat) =>
+        sum +
+        ((chat.users || []).find(u => u.userId === user.id)?.unreads || 0),
+      0
+    );
+
+  const chooseArea = next => {
+    setArea(next);
+    try {
+      if (next) localStorage.setItem("tkv:chatArea", next);
+      else localStorage.removeItem("tkv:chatArea");
+    } catch (e) {
+      // sem armazenamento: só não lembra a escolha
+    }
+  };
+
+  const renderBubble = ({
+    key,
+    label,
+    active,
+    onClick,
+    className,
+    content,
+    count
+  }) => (
+    <div className={classes.bubbleWrap} key={key}>
+      <span
+        className={`${classes.bubblePill}${active ? ` ${classes.bubblePillOn}` : ""}`}
+      />
+      <Tooltip title={label} placement="right" arrow>
+        <ButtonBase
+          className={`${classes.bubble} ${className || ""}${active ? ` ${classes.bubbleOn}` : ""}`}
+          onClick={onClick}
+          aria-label={label}
+          style={
+            className ? undefined : { backgroundColor: generateColor(label) }
+          }
+        >
+          {content}
+        </ButtonBase>
+      </Tooltip>
+      {count > 0 && (
+        <span className={classes.bubbleDot}>{count > 99 ? "99+" : count}</span>
+      )}
+    </div>
+  );
+
+  const renderRail = () => (
+    <nav className={classes.rail} aria-label={i18n.t("internalChat.areas")}>
+      {renderBubble({
+        key: "all",
+        label: i18n.t("internalChat.allAreas"),
+        active: !activeArea,
+        onClick: () => chooseArea(null),
+        className: classes.bubbleAll,
+        content: <ForumOutlinedIcon />,
+        count: activeArea ? unreadsIn(chats) : 0
+      })}
+      <span className={classes.railSep} />
+      {areas.map(name =>
+        renderBubble({
+          key: name,
+          label: name,
+          active: activeArea === name,
+          onClick: () => chooseArea(name),
+          content: getInitials(name),
+          count: unreadsIn(chats.filter(chat => areaOf(chat) === name))
+        })
+      )}
+      {renderBubble({
+        key: "add",
+        label: i18n.t("internalChat.newChannel"),
+        onClick: openNewChat,
+        className: classes.bubbleAdd,
+        content: <AddRoundedIcon />
+      })}
+    </nav>
+  );
+
   const renderSidebar = () => (
     <aside className={classes.sidebar}>
       <div className={classes.sidebarHeader}>
         <div className={classes.sidebarTitleBox}>
           <Typography component="h1" className={classes.sidebarTitle}>
-            {i18n.t("internalChat.title")}
+            {activeArea || i18n.t("internalChat.title")}
           </Typography>
           <Typography className={classes.sidebarSubtitle}>
-            {i18n.t("internalChat.subtitle")}
+            {activeArea
+              ? i18n.t("internalChat.channelsCount", {
+                  count: visibleChats.length
+                })
+              : i18n.t("internalChat.subtitle")}
           </Typography>
         </div>
         {isWide ? (
@@ -521,7 +773,7 @@ function Chat(props) {
         )}
       </div>
       <ChatList
-        chats={chats}
+        chats={visibleChats}
         pageInfo={chatsPageInfo}
         loading={loading}
         handleSelectChat={chat => selectChat(chat)}
@@ -647,6 +899,8 @@ function Chat(props) {
         }}
         handleClose={() => setShowDialog(false)}
         user={user}
+        areas={areas}
+        defaultArea={activeArea || ""}
       />
       <ConfirmationModal
         title={i18n.t("internalChat.deleteTitle")}
@@ -658,7 +912,12 @@ function Chat(props) {
       </ConfirmationModal>
       <div className={classes.page}>
         <div className={classes.shell}>
-          {showList && renderSidebar()}
+          {showList && (
+            <div className={classes.listColumn}>
+              {renderRail()}
+              {renderSidebar()}
+            </div>
+          )}
           {showConversation && renderConversation()}
         </div>
       </div>

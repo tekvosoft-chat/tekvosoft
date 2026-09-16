@@ -280,6 +280,21 @@ export default function createAppTheme({
         MuiCssBaseline: {
           "@global": {
             html: { WebkitFontSmoothing: "antialiased" },
+            // tela de toque: nada de seleção de página web ao segurar;
+            // copiar fica no menu que abre ao segurar a mensagem
+            "@media (hover: none) and (pointer: coarse)": {
+              "body, #root": {
+                WebkitUserSelect: "none",
+                userSelect: "none",
+                WebkitTouchCallout: "none",
+                WebkitTapHighlightColor: "transparent"
+              },
+              "input, textarea, [contenteditable='true']": {
+                WebkitUserSelect: "text",
+                userSelect: "text",
+                WebkitTouchCallout: "default"
+              }
+            },
             body: {
               fontFamily: fontStack,
               backgroundColor: n.canvas,

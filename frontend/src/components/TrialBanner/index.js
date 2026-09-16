@@ -1,5 +1,5 @@
-import React from "react";
-import { useHistory } from "react-router-dom";
+import React, { useState } from "react";
+import Paywall from "../Paywall";
 import { makeStyles } from "@material-ui/core/styles";
 import ButtonBase from "@material-ui/core/ButtonBase";
 import AccessTimeRoundedIcon from "@material-ui/icons/AccessTimeRounded";
@@ -7,14 +7,14 @@ import AccessTimeRoundedIcon from "@material-ui/icons/AccessTimeRounded";
 import { i18n } from "../../translate/i18n";
 
 const DAY = 24 * 60 * 60 * 1000;
-// quem se cadastra sozinho ganha 14 dias (TRIAL_DAYS no backend); a folga
+// quem se cadastra sozinho ganha 7 dias (TRIAL_DAYS no backend); a folga
 // cobre fuso e o arredondamento do horário do cadastro
-const TRIAL_WINDOW_DAYS = 15;
+const TRIAL_WINDOW_DAYS = 8;
 
 /**
  * Situação do teste grátis da empresa do usuário, ou null se não está em teste.
  *
- * Empresa em teste = vencimento até ~14 dias depois do cadastro. Quando a
+ * Empresa em teste = vencimento até ~7 dias depois do cadastro. Quando a
  * empresa paga, o vencimento é empurrado para frente e ela sai desta regra —
  * então um cliente pagante nunca vê "teste grátis" quando está perto de
  * renovar. A empresa da instalação (id 1) e o superadmin não entram.
@@ -94,12 +94,11 @@ const useStyles = makeStyles(theme => ({
 
 /**
  * Faixa amarela no topo com quanto falta do teste grátis.
- * Fica laranja nos últimos 3 dias. O botão leva para o Financeiro, onde se
- * paga a assinatura — só aparece para admin, que é quem pode pagar.
+ * Fica laranja nos últimos 3 dias. O botão abre a tela de planos e pagamento — só aparece para admin, que é quem pode pagar.
  */
 const TrialBanner = ({ user, status }) => {
   const classes = useStyles();
-  const history = useHistory();
+  const [payOpen, setPayOpen] = useState(false);
   if (!status) return null;
 
   const { daysLeft } = status;
@@ -119,12 +118,12 @@ const TrialBanner = ({ user, status }) => {
         {text}
       </span>
       {user?.profile === "admin" && (
-        <ButtonBase
-          className={classes.cta}
-          onClick={() => history.push("/financeiro")}
-        >
+        <ButtonBase className={classes.cta} onClick={() => setPayOpen(true)}>
           {i18n.t("trialBanner.cta")}
         </ButtonBase>
+      )}
+      {payOpen && (
+        <Paywall user={user} voluntary onClose={() => setPayOpen(false)} />
       )}
     </div>
   );

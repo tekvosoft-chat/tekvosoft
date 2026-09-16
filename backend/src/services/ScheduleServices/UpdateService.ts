@@ -13,6 +13,8 @@ interface ScheduleData {
   companyId?: number;
   ticketId?: number;
   userId?: number;
+  mediaPath?: string | null;
+  mediaName?: string | null;
 }
 
 interface Request {
@@ -33,10 +35,19 @@ const UpdateUserService = async ({
   }
 
   const schema = Yup.object().shape({
-    body: Yup.string().min(5)
+    body: Yup.string()
   });
 
-  const { body, sendAt, sentAt, contactId, ticketId, userId } = scheduleData;
+  const {
+    body,
+    sendAt,
+    sentAt,
+    contactId,
+    ticketId,
+    userId,
+    mediaPath,
+    mediaName
+  } = scheduleData;
 
   try {
     await schema.validate({ body });
@@ -50,7 +61,9 @@ const UpdateUserService = async ({
     sentAt,
     contactId,
     ticketId,
-    userId
+    userId,
+    // undefined mantém a mídia; null tira
+    ...(mediaPath !== undefined ? { mediaPath, mediaName } : {})
   });
 
   await schedule.reload();

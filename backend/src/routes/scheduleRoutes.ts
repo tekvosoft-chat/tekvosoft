@@ -1,10 +1,13 @@
 import express from "express";
+import multer from "multer";
+import uploadConfig from "../config/upload";
 import isAuth from "../middleware/isAuth";
 import planFeature from "../middleware/planFeature";
 
 import * as ScheduleController from "../controllers/ScheduleController";
 
 const scheduleRoutes = express.Router();
+const upload = multer(uploadConfig);
 
 scheduleRoutes.get(
   "/schedules",
@@ -17,6 +20,7 @@ scheduleRoutes.post(
   "/schedules",
   isAuth,
   planFeature("useSchedules"),
+  upload.single("media"),
   ScheduleController.store
 );
 
@@ -24,6 +28,7 @@ scheduleRoutes.put(
   "/schedules/:scheduleId",
   isAuth,
   planFeature("useSchedules"),
+  upload.single("media"),
   ScheduleController.update
 );
 

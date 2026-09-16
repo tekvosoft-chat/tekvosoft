@@ -23,9 +23,16 @@ const useStyles = makeStyles(theme => {
   return {
     // no celular o painel ocupa o lugar do teclado (não cobre a conversa)
     compact: {
-      height: 300,
+      height: 320,
       backgroundColor: `${t.chat.bar} !important`,
-      borderTop: `1px solid ${t.border}`
+      borderTop: `1px solid ${t.border}`,
+      "& $search": { margin: "4px 10px 8px" },
+      "& $body": { padding: "0 8px 10px" },
+      // figurinhas em 4 colunas e GIFs em 3, sempre quadradinhos
+      "& $grid": { gridTemplateColumns: "repeat(4, 1fr)", gap: 4 },
+      "& $gifGrid": { gridTemplateColumns: "repeat(3, 1fr)", gap: 4 },
+      "& $item": { borderRadius: 8 },
+      "& $tabs": { justifyContent: "flex-start", padding: "8px 10px 4px" }
     },
     root: {
       width: "100%",

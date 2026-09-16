@@ -333,6 +333,67 @@ const downloadMedia = async (url: string): Promise<Buffer> => {
   return buffer;
 };
 
+/**
+ * GIFs escolhidos do KLIPY para momentos do sistema (aviso de pagamento
+ * vencido e agradecimento). Busca os arquivos pela API uma vez por dia.
+ */
+const FUN_GIFS: Record<string, string[]> = {
+  paywall: [
+    "pay-me-money",
+    "sauron-pay-up-1",
+    "dog-puppy-65",
+    "ok-okay-369",
+    "sad-monkey-14"
+  ],
+  thanks: [
+    "iceage-possum",
+    "smiling-smiling-cat-4",
+    "keanu-reeves-voll-gerne-2"
+  ]
+};
+
+export const funGifs = async (
+  kind: string
+): Promise<{ id: string; url: string }[]> => {
+  const slugs = FUN_GIFS[kind];
+  if (!slugs) return [];
+
+  const cacheKey = `fun:gifs:${kind}`;
+  const cached = await cacheLayer.get(cacheKey);
+  if (cached) {
+    try {
+      return JSON.parse(cached);
+    } catch (error) {
+      // busca de novo
+    }
+  }
+
+  const key = await klipyKey(1);
+  if (!key) return [];
+
+  try {
+    const response = await fetch(
+      `${KLIPY_BASE}/${encodeURIComponent(key)}/gifs/items?slugs=${slugs.join(",")}`
+    );
+    if (!response.ok) return [];
+    const body = (await response.json()) as { data?: { data?: KlipyItem[] } };
+    const gifs = (body.data?.data || [])
+      .map(item => ({
+        id: item.slug || "",
+        url:
+          pickKlipyFile(item, ["md", "hd", "sm"], ["webp", "gif", "mp4"]) || ""
+      }))
+      .filter(gif => gif.url);
+    if (gifs.length) {
+      await cacheLayer.set(cacheKey, JSON.stringify(gifs), "EX", 24 * 3600);
+    }
+    return gifs;
+  } catch (error) {
+    logger.warn("KLIPY: GIFs divertidos indisponíveis");
+    return [];
+  }
+};
+
 /** Envia um GIF ou figurinha do KLIPY para a conversa. */
 export const sendKlipy = async (
   ticket: Ticket,

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter, Redirect, Switch } from "react-router-dom";
-import { Slide, ToastContainer } from "react-toastify";
+import AppToaster from "../components/AppToaster";
 
 import LoggedInLayout from "../layout";
 import Dashboard from "../pages/Dashboard/";
@@ -22,19 +22,17 @@ import { AuthProvider } from "../context/Auth/AuthContext";
 import { TicketsContextProvider } from "../context/Tickets/TicketsContext";
 import { WhatsAppsProvider } from "../context/WhatsApp/WhatsAppsContext";
 import Route from "./Route";
-import withPlanFeature, { superOnly } from "../components/PlanGate";
+import withPlanFeature from "../components/PlanGate";
 import Schedules from "../pages/Schedules";
 import Campaigns from "../pages/Campaigns";
 import CampaignsConfig from "../pages/CampaignsConfig";
 import CampaignReport from "../pages/CampaignReport";
-import Annoucements from "../pages/Annoucements";
 import Chat from "../pages/Chat";
 import Kanban from "../pages/Kanban/";
 import Subscription from "../pages/Subscription/";
 
 // telas que dependem do plano contratado
 const KanbanPage = withPlanFeature(Kanban, "useKanban");
-const AnnoucementsPage = superOnly(Annoucements);
 const ChatPage = withPlanFeature(Chat, "useInternalChat");
 const SchedulesPage = withPlanFeature(Schedules, "useSchedules");
 const MessagesAPIPage = withPlanFeature(MessagesAPI, "useExternalApi");
@@ -130,12 +128,6 @@ const Routes = () => {
                 <Route exact path="/queues" component={Queues} isPrivate />
                 <Route
                   exact
-                  path="/announcements"
-                  component={AnnoucementsPage}
-                  isPrivate
-                />
-                <Route
-                  exact
                   path="/subscription"
                   component={Subscription}
                   isPrivate
@@ -184,16 +176,7 @@ const Routes = () => {
               </LoggedInLayout>
             </WhatsAppsProvider>
           </Switch>
-          <ToastContainer
-            position="top-right"
-            transition={Slide}
-            autoClose={2200}
-            hideProgressBar
-            newestOnTop
-            limit={3}
-            closeOnClick
-            draggable
-          />
+          <AppToaster />
         </TicketsContextProvider>
       </AuthProvider>
     </BrowserRouter>

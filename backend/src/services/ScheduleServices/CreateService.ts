@@ -11,6 +11,8 @@ interface Request {
   companyId: number;
   userId?: number;
   saveMessage?: boolean;
+  mediaPath?: string;
+  mediaName?: string;
 }
 
 const CreateService = async ({
@@ -19,10 +21,13 @@ const CreateService = async ({
   contactId,
   companyId,
   userId,
-  saveMessage
+  saveMessage,
+  mediaPath,
+  mediaName
 }: Request): Promise<Schedule> => {
+  // com imagem, o texto vira legenda e pode ser curto
   const schema = Yup.object().shape({
-    body: Yup.string().required().min(5),
+    body: mediaPath ? Yup.string() : Yup.string().required().min(1),
     sendAt: Yup.string().required()
   });
 
@@ -39,6 +44,8 @@ const CreateService = async ({
     companyId,
     userId,
     saveMessage,
+    mediaPath: mediaPath || null,
+    mediaName: mediaName || null,
     status: "PENDENTE"
   });
 

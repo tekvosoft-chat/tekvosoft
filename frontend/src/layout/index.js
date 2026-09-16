@@ -4,8 +4,6 @@ import clsx from "clsx";
 import {
   makeStyles,
   Drawer,
-  AppBar,
-  Toolbar,
   List,
   Typography,
   Divider,
@@ -33,6 +31,7 @@ import useNotificationSound, {
 import { syncPush } from "../services/push";
 import UserAvatar from "../components/ui/UserAvatar";
 import TrialBanner, { getTrialStatus } from "../components/TrialBanner";
+import Paywall, { isCompanyExpired } from "../components/Paywall";
 import useAccountTheme from "../hooks/useAccountTheme";
 import NotificationsPopOver from "../components/NotificationsPopOver";
 import { PhoneCall } from "../components/PhoneCall";
@@ -43,10 +42,10 @@ import BackdropLoading from "../components/BackdropLoading";
 import { i18n } from "../translate/i18n";
 import { messages } from "../translate/languages";
 import toastError from "../errors/toastError";
-import AnnouncementsPopover from "../components/AnnouncementsPopover";
 
 import { SocketContext } from "../context/Socket/SocketContext";
 import ChatPopover from "../pages/Chat/ChatPopover";
+import ChatHead from "../components/ChatHead";
 
 import { useDate } from "../hooks/useDate";
 import useAuth from "../hooks/useAuth.js";
@@ -227,7 +226,7 @@ const useStyles = makeStyles(theme => ({
     right: 0,
     height: "var(--safe-top, 0px)",
     zIndex: theme.zIndex.drawer + 2,
-    backgroundColor: theme.palette.tkv.brand.main
+    backgroundColor: theme.palette.background.default
   },
   menuButton: {
     marginRight: theme.spacing(0.5),
@@ -240,7 +239,7 @@ const useStyles = makeStyles(theme => ({
    */
   drawerEdgeToggle: {
     position: "fixed",
-    top: `calc(${appBarHeight}px + var(--banner-h, 0px) + ${theme.spacing(4)}px)`,
+    top: `calc(var(--banner-h, 0px) + ${theme.spacing(4)}px)`,
     left: drawerWidth - 14,
     zIndex: theme.zIndex.drawer + 2,
     width: 28,
@@ -345,7 +344,7 @@ const useStyles = makeStyles(theme => ({
   // Fica fora de drawerPaper porque essa classe também vai na raiz do Drawer,
   // e o espaço era somado duas vezes.
   drawerPaperOffset: {
-    paddingTop: `calc(${appBarHeight}px + var(--banner-h, 0px) + ${theme.spacing(1.5)}px)`
+    paddingTop: `calc(var(--banner-h, 0px) + ${theme.spacing(1.25)}px)`
   },
   drawerPaperClose: {
     overflowX: "hidden",
@@ -370,7 +369,7 @@ const useStyles = makeStyles(theme => ({
     backgroundColor: theme.palette.tkv.surface
   },
   appBarSpacer: {
-    minHeight: `calc(${appBarHeight}px + var(--banner-h, 0px))`,
+    minHeight: "var(--banner-h, 0px)",
     flex: "none"
   },
   content: {
@@ -418,6 +417,32 @@ const useStyles = makeStyles(theme => ({
   },
   sidebarCardCollapsed: {
     margin: theme.spacing(0, 1, 1.25)
+  },
+  sidebarTools: {
+    flex: "none",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 2,
+    padding: theme.spacing(0.75, 1, 0),
+    color: theme.palette.text.secondary,
+    "& .MuiIconButton-root": { padding: 7, color: "inherit" },
+    "& .MuiSvgIcon-root": { fontSize: 20 },
+    "&:empty": { display: "none" }
+  },
+  sidebarToolsCollapsed: {
+    flexDirection: "column",
+    justifyContent: "flex-start",
+    padding: theme.spacing(0.75, 0, 0)
+  },
+  phoneFloatingTools: {
+    position: "fixed",
+    top: "calc(var(--safe-top, 0px) + var(--banner-h, 0px) + 6px)",
+    right: 8,
+    zIndex: theme.zIndex.drawer + 3,
+    display: "flex",
+    gap: 4,
+    "&:empty": { display: "none" }
   },
   sidebarSearch: {
     flex: "none",
@@ -780,12 +805,6 @@ const LoggedInLayout = ({ children, themeToggle }) => {
     };
   }, [socketManager]);
 
-  const handleProfileMenu = event => {
-    setProfileMenuFrom("appbar");
-    setAnchorEl(event.currentTarget);
-    setMenuOpen(true);
-  };
-
   const handleSidebarProfileMenu = event => {
     setProfileMenuFrom("sidebar");
     setAnchorEl(event.currentTarget);
@@ -872,6 +891,11 @@ const LoggedInLayout = ({ children, themeToggle }) => {
 
   if (loading) {
     return <BackdropLoading />;
+  }
+
+  // teste/assinatura vencida: bloqueia o sistema até pagar
+  if (isCompanyExpired(user)) {
+    return <Paywall user={user} />;
   }
 
   const showTrialBanner = !!trialStatus && !inConversation;
@@ -968,6 +992,38 @@ const LoggedInLayout = ({ children, themeToggle }) => {
                 </Tooltip>
               )}
 
+              {/* o que ficava na barra de cima agora mora no topo do menu */}
+              <div
+                className={clsx(
+                  classes.sidebarTools,
+                  !drawerOpen && classes.sidebarToolsCollapsed
+                )}
+              >
+                {wsConnectionIssue && (
+                  <Tooltip title={i18n.t("common.connection")} arrow>
+                    <span
+                      aria-label={i18n.t("common.connection")}
+                      className={classes.wsConnectionAlertButton}
+                    >
+                      <Badge
+                        variant="dot"
+                        overlap="circular"
+                        color="secondary"
+                        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+                        className={classes.wsConnectionBadge}
+                      >
+                        <SettingsEthernetIcon
+                          className={classes.wsConnectionAlertIcon}
+                        />
+                      </Badge>
+                    </span>
+                  </Tooltip>
+                )}
+
+                <PhoneCall />
+                <ChatPopover />
+              </div>
+
               <List className={classes.containerWithScroll}>
                 <MainListItems
                   drawerClose={drawerClose}
@@ -1034,32 +1090,79 @@ const LoggedInLayout = ({ children, themeToggle }) => {
         open={aboutModalOpen}
         onClose={() => setAboutModalOpen(false)}
       />
-      <AppBar
-        position="absolute"
-        className={clsx(
-          classes.appBar,
-          drawerOpen && classes.appBarShift,
-          inConversation && classes.hiddenInConversation
-        )}
-        color="primary"
+      <Menu
+        id="menu-appbar"
+        anchorEl={anchorEl}
+        getContentAnchorEl={null}
+        anchorOrigin={
+          profileMenuFrom === "sidebar"
+            ? { vertical: "top", horizontal: "left" }
+            : { vertical: "bottom", horizontal: "right" }
+        }
+        transformOrigin={
+          profileMenuFrom === "sidebar"
+            ? { vertical: "bottom", horizontal: "left" }
+            : { vertical: "top", horizontal: "right" }
+        }
+        open={menuOpen}
+        onClose={handleCloseProfileMenu}
       >
-        <Toolbar variant="dense" className={classes.toolbar}>
-          {/* só o ícone, sem o nome escrito ao lado */}
-          <img
-            className={classes.appBarLogo}
-            src={theme.appLogoFavicon || "/vector/favicon.png"}
-            alt={theme.appName || "Tekvosoft"}
-            onClick={() => history.push("/")}
-          />
-
-          <Typography
-            component="h2"
-            variant="h6"
-            color="inherit"
-            noWrap
-            className={classes.title}
-          />
-
+        <div className={classes.userMenuInfoContainer}>
+          <Typography className={classes.userMenuInfoLine}>
+            {i18n.t("common.name")}: {user?.name || "-"}
+          </Typography>
+          <Typography className={classes.userMenuInfoLine}>
+            {i18n.t("common.company")}: {user?.company?.name || "-"}
+          </Typography>
+          {shouldShowCompanyDueDate && (
+            <Typography className={classes.userMenuInfoLine}>
+              {i18n.t("mainDrawer.appBar.user.subscriptionValidUntilLabel")}:{" "}
+              {companyDueDateText}
+            </Typography>
+          )}
+        </div>
+        <Divider />
+        <MenuItem onClick={handleOpenUserModal}>
+          {i18n.t("mainDrawer.appBar.user.profile")}
+        </MenuItem>
+        <MenuItem onClick={() => setSoundOn(!soundOn)}>
+          {i18n.t("notificationSound.title")}:{" "}
+          {soundOn
+            ? i18n.t("notificationSound.on")
+            : i18n.t("notificationSound.off")}
+        </MenuItem>
+        <MenuItem onClick={toggleColorMode}>
+          {theme.mode === "dark"
+            ? i18n.t("mainDrawer.appBar.user.lightmode")
+            : i18n.t("mainDrawer.appBar.user.darkmode")}
+        </MenuItem>
+        <NestedMenuItem
+          label={i18n.t("mainDrawer.appBar.user.language")}
+          parentMenuOpen={menuOpen}
+        >
+          {Object.keys(messages).map(m => (
+            <MenuItem onClick={() => handleChooseLanguage(m)}>
+              <div
+                style={{
+                  fontWeight: currentLanguage === m ? "bold" : "normal"
+                }}
+              >
+                {messages[m].translations.mainDrawer.appBar.i18n.language}
+              </div>
+            </MenuItem>
+          ))}
+        </NestedMenuItem>
+        <MenuItem onClick={handleOpenAboutModal}>
+          {i18n.t("about.aboutthe")}{" "}
+          {currentUser?.super ? "Tekvosoft" : theme.appName}
+        </MenuItem>
+        <MenuItem onClick={handleClickLogout}>
+          {i18n.t("mainDrawer.appBar.user.logout")}
+        </MenuItem>
+      </Menu>
+      {/* sem a barra de cima: no celular só o que precisa aparecer na hora */}
+      {isPhone && (
+        <div className={classes.phoneFloatingTools}>
           {wsConnectionIssue && (
             <Tooltip title={i18n.t("common.connection")} arrow>
               <span
@@ -1082,130 +1185,8 @@ const LoggedInLayout = ({ children, themeToggle }) => {
           )}
 
           <PhoneCall />
-
-          <span className={classes.hideOnPhone}>
-            {user.id && <NotificationsPopOver volume={volume} />}
-          </span>
-
-          <span className={classes.hideOnPhone}>
-            <AnnouncementsPopover />
-          </span>
-
-          <span className={classes.hideOnPhone}>
-            <ChatPopover />
-          </span>
-
-          <div className={classes.userInfoWrapper}>
-            <div
-              aria-label="account of current user"
-              aria-controls="menu-appbar"
-              aria-haspopup="true"
-              onClick={handleProfileMenu}
-              onKeyDown={event => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  handleProfileMenu(event);
-                }
-              }}
-              role="button"
-              tabIndex={0}
-              className={classes.profileTrigger}
-            >
-              <div className={classes.userInfoPanel}>
-                <Typography noWrap className={classes.userInfoName}>
-                  {user?.name || currentUser?.name || "-"}
-                </Typography>
-                <Typography noWrap className={classes.userInfoCompany}>
-                  {user?.company?.name || "-"}
-                </Typography>
-              </div>
-              <div className={classes.profileAvatarSlot}>
-                <UserAvatar
-                  user={user}
-                  size={34}
-                  className={classes.avatar}
-                  style={{
-                    backgroundColor: "rgba(255, 255, 255, 0.92)",
-                    color: theme.palette.tkv.brand.main
-                  }}
-                />
-              </div>
-            </div>
-            <Menu
-              id="menu-appbar"
-              anchorEl={anchorEl}
-              getContentAnchorEl={null}
-              anchorOrigin={
-                profileMenuFrom === "sidebar"
-                  ? { vertical: "top", horizontal: "left" }
-                  : { vertical: "bottom", horizontal: "right" }
-              }
-              transformOrigin={
-                profileMenuFrom === "sidebar"
-                  ? { vertical: "bottom", horizontal: "left" }
-                  : { vertical: "top", horizontal: "right" }
-              }
-              open={menuOpen}
-              onClose={handleCloseProfileMenu}
-            >
-              <div className={classes.userMenuInfoContainer}>
-                <Typography className={classes.userMenuInfoLine}>
-                  {i18n.t("common.name")}: {user?.name || "-"}
-                </Typography>
-                <Typography className={classes.userMenuInfoLine}>
-                  {i18n.t("common.company")}: {user?.company?.name || "-"}
-                </Typography>
-                {shouldShowCompanyDueDate && (
-                  <Typography className={classes.userMenuInfoLine}>
-                    {i18n.t(
-                      "mainDrawer.appBar.user.subscriptionValidUntilLabel"
-                    )}
-                    : {companyDueDateText}
-                  </Typography>
-                )}
-              </div>
-              <Divider />
-              <MenuItem onClick={handleOpenUserModal}>
-                {i18n.t("mainDrawer.appBar.user.profile")}
-              </MenuItem>
-              <MenuItem onClick={() => setSoundOn(!soundOn)}>
-                {i18n.t("notificationSound.title")}:{" "}
-                {soundOn
-                  ? i18n.t("notificationSound.on")
-                  : i18n.t("notificationSound.off")}
-              </MenuItem>
-              <MenuItem onClick={toggleColorMode}>
-                {theme.mode === "dark"
-                  ? i18n.t("mainDrawer.appBar.user.lightmode")
-                  : i18n.t("mainDrawer.appBar.user.darkmode")}
-              </MenuItem>
-              <NestedMenuItem
-                label={i18n.t("mainDrawer.appBar.user.language")}
-                parentMenuOpen={menuOpen}
-              >
-                {Object.keys(messages).map(m => (
-                  <MenuItem onClick={() => handleChooseLanguage(m)}>
-                    <div
-                      style={{
-                        fontWeight: currentLanguage === m ? "bold" : "normal"
-                      }}
-                    >
-                      {messages[m].translations.mainDrawer.appBar.i18n.language}
-                    </div>
-                  </MenuItem>
-                ))}
-              </NestedMenuItem>
-              <MenuItem onClick={handleOpenAboutModal}>
-                {i18n.t("about.aboutthe")}{" "}
-                {currentUser?.super ? "Tekvosoft" : theme.appName}
-              </MenuItem>
-              <MenuItem onClick={handleClickLogout}>
-                {i18n.t("mainDrawer.appBar.user.logout")}
-              </MenuItem>
-            </Menu>
-          </div>
-        </Toolbar>
-      </AppBar>
+        </div>
+      )}
       <NewTicketModal
         modalOpen={!!newTicketContact}
         contact={newTicketContact}
@@ -1216,6 +1197,8 @@ const LoggedInLayout = ({ children, themeToggle }) => {
           }
         }}
       />
+      {user.id && <NotificationsPopOver volume={volume} headless />}
+      <ChatHead />
       <main className={classes.content}>
         {!inConversation && <div className={classes.appBarSpacer} />}
         <OnlyForSuperUser user={currentUser} yes={() => <GoogleAnalytics />} />

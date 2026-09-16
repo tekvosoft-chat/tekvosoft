@@ -1,0 +1,170 @@
+[
+ {
+  "id": "a-welcome-sun",
+  "name": "A welcome sun",
+  "type": "gif",
+  "file": "/backgrounds/a-welcome-sun.webp",
+  "thumb": "/backgrounds/a-welcome-sun-thumb.webp",
+  "kb": 550
+ },
+ {
+  "id": "backyard",
+  "name": "backyard",
+  "type": "gif",
+  "file": "/backgrounds/backyard.webp",
+  "thumb": "/backgrounds/backyard-thumb.webp",
+  "kb": 94
+ },
+ {
+  "id": "city",
+  "name": "city",
+  "type": "gif",
+  "file": "/backgrounds/city.webp",
+  "thumb": "/backgrounds/city-thumb.webp",
+  "kb": 233
+ },
+ {
+  "id": "moon",
+  "name": "moon",
+  "type": "gif",
+  "file": "/backgrounds/moon.webp",
+  "thumb": "/backgrounds/moon-thumb.webp",
+  "kb": 498
+ },
+ {
+  "id": "snow",
+  "name": "snow",
+  "type": "gif",
+  "file": "/backgrounds/snow.webp",
+  "thumb": "/backgrounds/snow-thumb.webp",
+  "kb": 1800
+ },
+ {
+  "id": "spring-day",
+  "name": "spring day",
+  "type": "gif",
+  "file": "/backgrounds/spring-day.webp",
+  "thumb": "/backgrounds/spring-day-thumb.webp",
+  "kb": 569
+ },
+ {
+  "id": "artistic-leaves",
+  "name": "artistic leaves",
+  "type": "image",
+  "file": "/backgrounds/artistic-leaves.webp",
+  "thumb": "/backgrounds/artistic-leaves-thumb.webp",
+  "kb": 38
+ },
+ {
+  "id": "beach",
+  "name": "beach",
+  "type": "image",
+  "file": "/backgrounds/beach.webp",
+  "thumb": "/backgrounds/beach-thumb.webp",
+  "kb": 276
+ },
+ {
+  "id": "birds-farming",
+  "name": "birds farming",
+  "type": "image",
+  "file": "/backgrounds/birds-farming.webp",
+  "thumb": "/backgrounds/birds-farming-thumb.webp",
+  "kb": 84
+ },
+ {
+  "id": "blue-day",
+  "name": "blue day",
+  "type": "image",
+  "file": "/backgrounds/blue-day.webp",
+  "thumb": "/backgrounds/blue-day-thumb.webp",
+  "kb": 20
+ },
+ {
+  "id": "blue-river",
+  "name": "blue river",
+  "type": "image",
+  "file": "/backgrounds/blue-river.webp",
+  "thumb": "/backgrounds/blue-river-thumb.webp",
+  "kb": 431
+ },
+ {
+  "id": "bridge",
+  "name": "bridge",
+  "type": "image",
+  "file": "/backgrounds/bridge.webp",
+  "thumb": "/backgrounds/bridge-thumb.webp",
+  "kb": 288
+ },
+ {
+  "id": "brothers-togethers",
+  "name": "brothers togethers",
+  "type": "image",
+  "file": "/backgrounds/brothers-togethers.webp",
+  "thumb": "/backgrounds/brothers-togethers-thumb.webp",
+  "kb": 169
+ },
+ {
+  "id": "jumanji",
+  "name": "Jumanji",
+  "type": "image",
+  "file": "/backgrounds/jumanji.webp",
+  "thumb": "/backgrounds/jumanji-thumb.webp",
+  "kb": 200
+ },
+ {
+  "id": "metropol",
+  "name": "metropol",
+  "type": "image",
+  "file": "/backgrounds/metropol.webp",
+  "thumb": "/backgrounds/metropol-thumb.webp",
+  "kb": 74
+ },
+ {
+  "id": "mountain",
+  "name": "Mountain",
+  "type": "image",
+  "file": "/backgrounds/mountain.webp",
+  "thumb": "/backgrounds/mountain-thumb.webp",
+  "kb": 108
+ },
+ {
+  "id": "mountain-9999",
+  "name": "Mountain-9999",
+  "type": "image",
+  "file": "/backgrounds/mountain-9999.webp",
+  "thumb": "/backgrounds/mountain-9999-thumb.webp",
+  "kb": 76
+ },
+ {
+  "id": "pink-firmament",
+  "name": "pink firmament",
+  "type": "image",
+  "file": "/backgrounds/pink-firmament.webp",
+  "thumb": "/backgrounds/pink-firmament-thumb.webp",
+  "kb": 36
+ },
+ {
+  "id": "pinktain",
+  "name": "pinktain",
+  "type": "image",
+  "file": "/backgrounds/pinktain.webp",
+  "thumb": "/backgrounds/pinktain-thumb.webp",
+  "kb": 199
+ },
+ {
+  "id": "the-legend-himself",
+  "name": "The legend himself",
+  "type": "image",
+  "file": "/backgrounds/the-legend-himself.webp",
+  "thumb": "/backgrounds/the-legend-himself-thumb.webp",
+  "kb": 138
+ },
+ {
+  "id": "whale",
+  "name": "Whale",
+  "type": "image",
+  "file": "/backgrounds/whale.webp",
+  "thumb": "/backgrounds/whale-thumb.webp",
+  "kb": 57
+ }
+]

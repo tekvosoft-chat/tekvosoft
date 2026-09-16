@@ -14,6 +14,9 @@ userRoutes.get("/users/list", isAuth, UserController.list);
 
 userRoutes.post("/users", isAuth, UserController.store);
 
+// preferência de aparência de quem está logado (cor, modo e fundo)
+userRoutes.put("/users/me/theme", isAuth, UserController.updateMyTheme);
+
 userRoutes.put("/users/:userId", isAuth, UserController.update);
 
 userRoutes.get("/users/:userId", isAuth, UserController.show);

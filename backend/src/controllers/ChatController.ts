@@ -22,6 +22,7 @@ type IndexQuery = {
 type StoreData = {
   users: any[];
   title: string;
+  area?: string;
 };
 
 export const index = async (req: Request, res: Response): Promise<Response> => {

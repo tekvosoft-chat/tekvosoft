@@ -180,11 +180,18 @@ const useStyles = makeStyles(theme => ({
     marginTop: 2,
     minWidth: 100,
     maxWidth: "min(600px, calc(100% - 48px))",
+    // no computador sobra espaço ao lado para rostinho, setinha e encaminhar
+    [theme.breakpoints.up("sm")]: {
+      maxWidth: "min(600px, calc(100% - 116px))"
+    },
     height: "auto",
     display: "block",
     position: "relative",
     "&:hover [id^='messageActionsButton']": { display: "flex" },
-    "&:hover [data-react-trigger]": { opacity: 1, transform: "scale(1)" },
+    "&:hover [data-react-trigger], &:hover [data-forward-trigger]": {
+      opacity: 1,
+      transform: "scale(1)"
+    },
 
     whiteSpace: "pre-wrap",
     backgroundColor: theme.palette.tkv.chat.bubbleIn,
@@ -249,10 +256,14 @@ const useStyles = makeStyles(theme => ({
     marginTop: 2,
     minWidth: 100,
     maxWidth: "min(600px, 100%)",
+    [theme.breakpoints.up("sm")]: {
+      maxWidth: "min(600px, calc(100% - 116px))"
+    },
     height: "auto",
     display: "block",
     position: "relative",
     "&:hover [id^='messageActionsButton']": { display: "flex" },
+    "&:hover [data-forward-trigger]": { opacity: 1, transform: "scale(1)" },
     whiteSpace: "pre-wrap",
     backgroundColor: theme.palette.tkv.chat.bubbleOut,
     backgroundImage: theme.palette.tkv.chat.bubbleOutSheen,
@@ -309,12 +320,17 @@ const useStyles = makeStyles(theme => ({
    * Ela cresce ao passar o mouse e gira ao abrir o menu.
    */
   messageActionsButton: {
+    // no celular não aparece: lá se segura a mensagem para abrir as ações
+    "@media (hover: none)": { display: "none !important" },
+    [theme.breakpoints.down("xs")]: { display: "none !important" },
+    // fica fora do balão, ao lado do rostinho (não cobre mais o horário)
     display: "none",
     position: "absolute",
-    top: 4,
-    right: 4,
-    width: 26,
-    height: 26,
+    top: "50%",
+    right: -72,
+    width: 28,
+    height: 28,
+    marginTop: -14,
     padding: 0,
     zIndex: 2,
     color: theme.palette.tkv.chat.icon,
@@ -323,12 +339,21 @@ const useStyles = makeStyles(theme => ({
     transition:
       "transform .18s cubic-bezier(.34,1.56,.64,1), background-color .15s",
     "& svg": { fontSize: 18, transition: "transform .2s ease" },
+    "&::before": {
+      content: '""',
+      position: "absolute",
+      top: -6,
+      bottom: -6,
+      left: -8,
+      right: -8
+    },
     "&:hover, &.Mui-focusVisible": {
       backgroundColor: theme.palette.tkv.chat.datePill,
       transform: "scale(1.12)",
       color: theme.palette.tkv.brand.text
     }
   },
+  messageActionsButtonSent: { right: "auto", left: -40 },
   messageActionsButtonOpen: {
     display: "flex !important",
     backgroundColor: theme.palette.tkv.brand.textSoft,
@@ -403,8 +428,16 @@ const useStyles = makeStyles(theme => ({
     borderBottomLeftRadius: 8,
     borderBottomRightRadius: 8
   },
+  gifWrapper: {
+    width: "100%",
+    borderRadius: 13,
+    overflow: "hidden",
+    lineHeight: 0,
+    marginBottom: 4
+  },
+  gifMedia: { width: "100%", display: "block", pointerEvents: "none" },
   videoPreviewWrapper: {
-    width: 250,
+    width: "100%",
     maxHeight: 445,
     borderRadius: 13,
     overflow: "hidden",
@@ -465,6 +498,37 @@ const useStyles = makeStyles(theme => ({
     }
   },
   mediaWrap: { position: "relative", display: "block" },
+  // 3. encaminhar: seta fora do balão, aparece ao passar o mouse
+  forwardTrigger: {
+    position: "absolute",
+    top: "50%",
+    right: -104,
+    width: 30,
+    height: 30,
+    marginTop: -15,
+    padding: 0,
+    color: theme.palette.tkv.chat.icon,
+    backgroundColor: theme.palette.tkv.chat.datePill,
+    boxShadow: "0 1px 3px rgba(11, 20, 26, 0.18)",
+    opacity: 0,
+    transform: "scale(0.6)",
+    transition:
+      "opacity .15s ease, transform .2s cubic-bezier(.34, 1.56, .64, 1)",
+    "& svg": { fontSize: 18 },
+    "&:hover": {
+      backgroundColor: theme.palette.tkv.chat.datePill,
+      color: theme.palette.tkv.brand.text
+    },
+    "&::before": {
+      content: '""',
+      position: "absolute",
+      top: -6,
+      bottom: -6,
+      left: -6,
+      right: -6
+    }
+  },
+  forwardTriggerSent: { right: "auto", left: -74 },
 
   messageMediaClickable: {
     cursor: "pointer"
@@ -710,20 +774,20 @@ const useStyles = makeStyles(theme => ({
   reactionsContainer: {
     display: "block",
     height: 0,
-    marginBottom: 18
+    marginBottom: 24
   },
   reactions: {
     position: "absolute",
-    bottom: -19,
+    bottom: -17,
     left: 8,
     zIndex: 1,
     display: "inline-flex",
     alignItems: "center",
     gap: 3,
     maxWidth: "calc(100% - 12px)",
-    height: 26,
-    padding: "0 8px",
-    borderRadius: 13,
+    height: 22,
+    padding: "0 7px",
+    borderRadius: 11,
     backgroundColor: theme.palette.tkv.chat.bubbleIn,
     border: `2px solid ${theme.palette.tkv.chat.wallpaper}`,
     boxShadow: "0 1px 2px rgba(11, 20, 26, 0.18)",
@@ -737,7 +801,7 @@ const useStyles = makeStyles(theme => ({
   },
   reactionEmoji: {
     display: "inline-block",
-    fontSize: 16,
+    fontSize: 13,
     lineHeight: 1,
     animation: "$reactionBounce .5s cubic-bezier(.34, 1.56, .64, 1) both"
   },
@@ -1089,6 +1153,32 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
     });
   };
 
+  // duplo clique na linha (fora do balão) também responde à mensagem dela
+  const handleRowDoubleClick = e => {
+    if (isPhone || !canReply) return;
+    if (
+      e.target.closest?.(
+        "[data-bubble], a, button, img, video, audio, input, textarea, [role=button]"
+      )
+    ) {
+      return;
+    }
+    const y = e.clientY;
+    const bubble = Array.from(
+      e.currentTarget.querySelectorAll("[data-bubble]")
+    ).find(el => {
+      const rect = el.getBoundingClientRect();
+      return y >= rect.top - 4 && y <= rect.bottom + 4;
+    });
+    if (!bubble) return;
+    const message = messagesListRef.current.find(
+      m => String(m.id) === bubble.id
+    );
+    if (!message) return;
+    window.getSelection?.()?.removeAllRanges();
+    replyTo(message, bubble);
+  };
+
   const replyTo = (message, element) => {
     replyContext.setReplyingMessage(message);
     element?.animate?.(
@@ -1194,7 +1284,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
         finishSwipe(null);
       },
       onDoubleClick: e => {
-        if (!window.matchMedia?.("(pointer: fine)").matches) return;
+        if (isPhone) return;
         if (
           e.target.closest?.(
             "a, button, img, video, audio, input, textarea, [role=button]"
@@ -1744,20 +1834,6 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
               alt="midia da mensagem"
               onClick={() => openLightboxForMessage(message.id)}
             />
-            {!readOnly && !message.isDeleted && (
-              <Tooltip title={i18n.t("messageOptionsMenu.forward")}>
-                <IconButton
-                  className={classes.mediaForward}
-                  aria-label={i18n.t("messageOptionsMenu.forward")}
-                  onClick={event => {
-                    event.stopPropagation();
-                    setForwarding(message);
-                  }}
-                >
-                  <ShortcutRoundedIcon />
-                </IconButton>
-              </Tooltip>
-            )}
           </div>
           <>
             <div
@@ -1778,7 +1854,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
         </>
       );
     }
-    if (!document && message.mediaType === "audio" && isPhone) {
+    if (!document && message.mediaType === "audio") {
       return (
         <>
           <AudioBubble
@@ -1821,6 +1897,30 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
       );
     }
 
+    const isGif =
+      message.mediaType === "video" &&
+      (!!data?.message?.videoMessage?.gifPlayback ||
+        /\/gif-[^/]*\.mp4/i.test(message.mediaUrl || ""));
+    if (isGif) {
+      return (
+        <div
+          className={clsx(classes.gifWrapper, {
+            [classes.messageMediaDeleted]: message.isDeleted
+          })}
+        >
+          <video
+            className={classes.gifMedia}
+            src={message.mediaUrl}
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+          />
+        </div>
+      );
+    }
+
     if (!document || message.mediaType === "video") {
       return (
         <>
@@ -1829,20 +1929,6 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
               [classes.messageMediaDeleted]: message.isDeleted
             })}
           >
-            {!readOnly && !message.isDeleted && (
-              <Tooltip title={i18n.t("messageOptionsMenu.forward")}>
-                <IconButton
-                  className={classes.mediaForward}
-                  aria-label={i18n.t("messageOptionsMenu.forward")}
-                  onClick={event => {
-                    event.stopPropagation();
-                    setForwarding(message);
-                  }}
-                >
-                  <ShortcutRoundedIcon />
-                </IconButton>
-              </Tooltip>
-            )}
             <video
               ref={element => {
                 if (element) {
@@ -2662,6 +2748,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                   id={`messageActionsButton-${message.id}`}
                   disabled={message.isDeleted}
                   className={clsx(classes.messageActionsButton, {
+                    [classes.messageActionsButtonSent]: message.fromMe,
                     [classes.messageActionsButtonOpen]:
                       selectedMessage?.id === message.id &&
                       messageOptionsMenuOpen
@@ -2671,6 +2758,23 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                   <ExpandMore />
                 </IconButton>
               )}
+              {!readOnly &&
+                !isPhone &&
+                !message.isDeleted &&
+                message.mediaUrl && (
+                  <IconButton
+                    size="small"
+                    data-forward-trigger="1"
+                    aria-label={i18n.t("messageOptionsMenu.forward")}
+                    className={clsx(classes.forwardTrigger, {
+                      [classes.forwardTriggerSent]: message.fromMe
+                    })}
+                    onClick={() => setForwarding(message)}
+                  >
+                    <ShortcutRoundedIcon />
+                  </IconButton>
+                )}
+
               {!readOnly && !isPhone && !message.isDeleted && (
                 <IconButton
                   size="small"
@@ -2819,6 +2923,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                   id={`messageActionsButton-${message.id}`}
                   disabled={message.isDeleted}
                   className={clsx(classes.messageActionsButton, {
+                    [classes.messageActionsButtonSent]: message.fromMe,
                     [classes.messageActionsButtonOpen]:
                       selectedMessage?.id === message.id &&
                       messageOptionsMenuOpen
@@ -2828,6 +2933,22 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                   <ExpandMore />
                 </IconButton>
               )}
+              {!readOnly &&
+                !isPhone &&
+                !message.isDeleted &&
+                message.mediaUrl && (
+                  <IconButton
+                    size="small"
+                    data-forward-trigger="1"
+                    aria-label={i18n.t("messageOptionsMenu.forward")}
+                    className={clsx(classes.forwardTrigger, {
+                      [classes.forwardTriggerSent]: message.fromMe
+                    })}
+                    onClick={() => setForwarding(message)}
+                  >
+                    <ShortcutRoundedIcon />
+                  </IconButton>
+                )}
 
               {dataContext?.isForwarded && (
                 <span className={classes.forwardedMessage}>
@@ -2996,6 +3117,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
         id="messagesList"
         className={classes.messagesList}
         onScroll={handleScroll}
+        onDoubleClick={handleRowDoubleClick}
         ref={scrollRef}
       >
         {!hasMore &&

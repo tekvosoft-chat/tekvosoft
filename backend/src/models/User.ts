@@ -70,6 +70,10 @@ class User extends Model<User> {
   @Column
   active: boolean;
 
+  // cor, modo e fundo das conversas escolhidos por este usuário (JSON)
+  @Column(DataType.TEXT)
+  appTheme: string;
+
   @CreatedAt
   createdAt: Date;
 

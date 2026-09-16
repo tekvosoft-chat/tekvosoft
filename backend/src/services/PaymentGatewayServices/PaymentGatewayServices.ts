@@ -155,7 +155,9 @@ export const processInvoicePaid = async (invoice: Invoices) => {
     invoice.company || (await Company.findByPk(invoice.companyId));
 
   if (company) {
-    const currentDueDate = moment(company.dueDate);
+    // o novo período conta a partir do dia do pagamento (pagar antes do
+    // vencimento, ainda no teste grátis, também libera 30 dias a partir de hoje)
+    const currentDueDate = moment().startOf("day");
     let { dueDate } = company;
 
     switch (company.recurrence) {
@@ -173,7 +175,7 @@ export const processInvoicePaid = async (invoice: Invoices) => {
         break;
       case "MENSAL":
       default:
-        dueDate = currentDueDate.add(1, "month").format("YYYY-MM-DD");
+        dueDate = currentDueDate.add(30, "day").format("YYYY-MM-DD");
         break;
     }
 

@@ -309,6 +309,9 @@ const NotificationsPopOver = props => {
     return null;
   };
 
+  // sem o sininho: só o som e o aviso do navegador para atendimentos novos
+  if (props.headless) return browserNotification();
+
   return (
     <>
       {browserNotification()}

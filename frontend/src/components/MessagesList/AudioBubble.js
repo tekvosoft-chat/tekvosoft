@@ -34,6 +34,8 @@ const useStyles = makeStyles(theme => {
       whiteSpace: "normal"
     },
     side: {
+      // foto à direita do player
+      order: 3,
       position: "relative",
       flex: "none",
       width: 48,
@@ -51,7 +53,7 @@ const useStyles = makeStyles(theme => {
     },
     mic: {
       position: "absolute",
-      right: -3,
+      left: -3,
       bottom: -2,
       display: "flex",
       color: t.brand.text,
@@ -77,6 +79,7 @@ const useStyles = makeStyles(theme => {
       "& svg": { fontSize: 36 }
     },
     body: {
+      order: 2,
       flex: 1,
       minWidth: 0,
       display: "flex",

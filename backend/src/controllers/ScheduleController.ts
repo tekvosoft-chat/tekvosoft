@@ -1,4 +1,7 @@
 import { Request, Response } from "express";
+import fs from "fs";
+import path from "path";
+import { getPublicPath } from "../helpers/GetPublicPath";
 import { getIO } from "../libs/socket";
 
 import AppError from "../errors/AppError";
@@ -36,10 +39,31 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
   return res.json({ schedules, count, hasMore });
 };
 
+/**
+ * Imagem ou arquivo do agendamento: o multer grava em public/ com nome
+ * provisório; aqui ele vai para media/<empresa>/schedules/ com um nome único.
+ */
+const moveScheduleMedia = (
+  file: Express.Multer.File | undefined,
+  companyId: number
+): { mediaPath: string; mediaName: string } | null => {
+  if (!file) return null;
+  const folder = path.join("media", String(companyId), "schedules");
+  const absoluteFolder = path.join(getPublicPath(), folder);
+  fs.mkdirSync(absoluteFolder, { recursive: true });
+  const safeName = `${Date.now()}-${file.originalname.replace(/[^\w.-]+/g, "_")}`;
+  fs.renameSync(file.path, path.join(absoluteFolder, safeName));
+  return {
+    mediaPath: path.join(folder, safeName).split(path.sep).join("/"),
+    mediaName: file.originalname
+  };
+};
+
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const { body, sendAt, contactId, saveMessage } = req.body;
   const { companyId } = req.user;
   const userId = Number(req.user.id);
+  const media = moveScheduleMedia(req.file, companyId);
 
   const schedule = await CreateService({
     body,
@@ -47,7 +71,8 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     contactId,
     companyId,
     userId,
-    saveMessage: !!saveMessage
+    saveMessage: saveMessage === true || saveMessage === "true",
+    ...(media || {})
   });
 
   const io = getIO();
@@ -80,8 +105,15 @@ export const update = async (
   }
 
   const { scheduleId } = req.params;
-  const scheduleData = req.body;
+  const scheduleData = { ...req.body };
   const { companyId } = req.user;
+  const media = moveScheduleMedia(req.file, companyId);
+  if (media) {
+    Object.assign(scheduleData, media);
+  } else if (req.body.removeMedia === "true") {
+    scheduleData.mediaPath = null;
+    scheduleData.mediaName = null;
+  }
 
   const schedule = await UpdateService({
     scheduleData,

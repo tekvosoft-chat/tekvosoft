@@ -41,6 +41,10 @@ class Chat extends Model<Chat> {
   @Column({ defaultValue: "" })
   lastMessage: string;
 
+  // área da empresa (vendas, suporte…): agrupa os canais do chat interno
+  @Column
+  area: string;
+
   @ForeignKey(() => Company)
   @Column
   companyId: number;

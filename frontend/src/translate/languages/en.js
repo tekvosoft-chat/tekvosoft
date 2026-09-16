@@ -1,6 +1,26 @@
 const messages = {
   en: {
     translations: {
+      paywall: {
+        title: "Oops! Your access has expired",
+        voluntaryTitle: "Choose your plan",
+        adminText:
+          "Your period is over and we have bills to pay too 😅 Pick a plan and unlock the system right now — 30 days from the payment date.",
+        voluntaryText: "Pay now and get 30 days from the payment date.",
+        userText:
+          "Your company's access is suspended. Ask your administrator to renew the subscription.",
+        perMonth: "/month",
+        users: "Up to {{count}} users",
+        connections: "{{count}} connections",
+        queues: "{{count}} queues",
+        pay: "Pay {{value}}",
+        logout: "Log out",
+        later: "Not now",
+        thanksTitle: "Payment confirmed!",
+        thanksText:
+          "Thank you so much for trusting us. Your access is unlocked for 30 more days.",
+        continue: "Continue"
+      },
       payment: {
         title: "Subscription payment",
         pix: "Pix",
@@ -455,6 +475,12 @@ const messages = {
         deactivatedByAdmin: "Your access was disabled by the administrator."
       },
       chatWallpaper: {
+        tabs: {
+          gif: "Animated",
+          image: "Photos",
+          color: "Colors",
+          classic: "Classic"
+        },
         title: "Chat background",
         subtitle:
           "Drawn with the colors of the selected theme. Your message bubbles follow the palette too.",
@@ -538,12 +564,52 @@ const messages = {
         differenceMinutes: "Difference: {{count}} minute(s)"
       },
       signup: {
+        options: {
+          segment: {
+            retail: "Retail / Store",
+            services: "Services",
+            health: "Health & wellness",
+            education: "Education",
+            food: "Food",
+            realEstate: "Real estate",
+            tech: "Technology",
+            other: "Other"
+          },
+          teamSize: {
+            1: "Just me",
+            "2-5": "2 to 5 people",
+            "6-20": "6 to 20 people",
+            "21-50": "21 to 50 people",
+            "50+": "More than 50"
+          },
+          goal: {
+            sales: "Sell more",
+            support: "Customer support",
+            scheduling: "Appointments",
+            marketing: "Campaigns & marketing",
+            other: "Other"
+          },
+          source: {
+            google: "Google",
+            instagram: "Instagram",
+            youtube: "YouTube",
+            referral: "Referral",
+            other: "Other"
+          }
+        },
+        aboutBusiness: "About your business",
+        subheading: "7 days free. No credit card required.",
+        heading: "Create your account",
         title: "Sign Up",
         toasts: {
           success: "User created successfully! Log in now!!!",
           fail: "Error creating user. Check the provided data."
         },
         form: {
+          source: "How did you find us?",
+          goal: "Main goal",
+          teamSize: "Team size",
+          segment: "Industry",
           name: "Name",
           email: "Email",
           password: "Password"
@@ -554,6 +620,8 @@ const messages = {
         }
       },
       login: {
+        subheading: "Sign in to continue your conversations.",
+        heading: "Welcome back",
         title: "Login",
         form: {
           email: "Email",
@@ -737,6 +805,14 @@ const messages = {
         send: "Send"
       },
       internalChat: {
+        channelsCount_plural: "{{count}} channels",
+        channelsCount: "{{count}} channel",
+        newChannel: "Create channel",
+        allAreas: "All conversations",
+        areas: "Areas",
+        areaHelp: "Channels are grouped by area in the bubbles on the left.",
+        areaPlaceholder: "E.g.: Sales, Support, Finance",
+        area: "Area",
         title: "Internal Chat",
         subtitle: "Conversations with your team",
         newChat: "New conversation",
@@ -934,6 +1010,9 @@ const messages = {
         success: "User saved successfully."
       },
       scheduleModal: {
+        mediaOrText: "Write a message or attach an image.",
+        removeMedia: "Remove attachment",
+        addMedia: "Add image",
         title: {
           add: "New Schedule",
           edit: "Edit Schedule"
@@ -1034,6 +1113,14 @@ const messages = {
         }
       },
       ticketsList: {
+        media: {
+          photo: "Photo",
+          audio: "Audio",
+          video: "Video",
+          document: "Document",
+          gif: "GIF",
+          sticker: "Sticker"
+        },
         pendingHeader: "Pending",
         assignedHeader: "Assigned",
         noTicketsTitle: "Nothing here!",
@@ -1687,7 +1774,7 @@ const messages = {
           custom: "Custom",
           customDescription: "Use your brand color",
           restore: "Restore default",
-          applied: "Theme applied for the whole team",
+          applied: "Theme applied",
           restored: "Default colors restored",
           current: "In use",
           presets: {

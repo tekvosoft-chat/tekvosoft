@@ -160,6 +160,30 @@ export const setActive = async (
   return res.status(200).json(user);
 };
 
+/** Salva a aparência escolhida por quem está logado (só para ele). */
+export const updateMyTheme = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { appTheme } = req.body || {};
+  let value: string | null = null;
+
+  if (appTheme) {
+    const text =
+      typeof appTheme === "string" ? appTheme : JSON.stringify(appTheme);
+    if (text.length > 4000) throw new AppError("ERR_INVALID_THEME", 400);
+    try {
+      JSON.parse(text);
+    } catch (error) {
+      throw new AppError("ERR_INVALID_THEME", 400);
+    }
+    value = text;
+  }
+
+  await User.update({ appTheme: value }, { where: { id: req.user.id } });
+  return res.status(200).json({ appTheme: value });
+};
+
 export const remove = async (
   req: Request,
   res: Response

@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import * as Sentry from "@sentry/node";
 import Queue, { Job } from "bull";
 import moment from "moment";
@@ -7,6 +9,7 @@ import { subDays, subMinutes } from "date-fns";
 import { MessageData, SendMessage } from "./helpers/SendMessage";
 import Whatsapp from "./models/Whatsapp";
 import { logger } from "./utils/logger";
+import { getPublicPath } from "./helpers/GetPublicPath";
 import { asaasChargeSavedCards } from "./services/PaymentGatewayServices/AsaasServices";
 import Schedule from "./models/Schedule";
 import Contact from "./models/Contact";
@@ -141,13 +144,19 @@ async function handleSendScheduledMessage(job) {
   try {
     const whatsapp = await GetDefaultWhatsApp(schedule.companyId);
 
+    const mediaPath = scheduleRecord?.mediaPath
+      ? path.join(getPublicPath(), scheduleRecord.mediaPath)
+      : undefined;
+
     const message = await SendMessage(whatsapp, {
       number: schedule.contact.number,
       body: mustacheFormat({
-        body: schedule.body,
+        body: schedule.body || "",
         contact: schedule.contact,
         currentUser: schedule.user
-      })
+      }),
+      // imagem/arquivo do agendamento vai junto, com o texto como legenda
+      mediaPath: mediaPath && fs.existsSync(mediaPath) ? mediaPath : undefined
     });
 
     if (schedule.saveMessage) {

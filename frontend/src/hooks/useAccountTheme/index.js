@@ -1,18 +1,20 @@
 import { useContext, useEffect } from "react";
 
-import api from "../../services/api";
-import { SocketContext } from "../../context/Socket/SocketContext";
+import { AuthContext } from "../../context/Auth/AuthContext";
 import ColorModeContext from "../../layout/themeContext";
 
 /**
- * Aplica o tema de cores da empresa enquanto a pessoa está logada.
+ * Aplica a aparência escolhida pelo PRÓPRIO usuário (cor, modo claro/escuro
+ * e fundo das conversas). Cada admin tem a sua; não vale mais para a
+ * empresa toda.
  *
- * - Ao entrar, lê a configuração "appTheme" da empresa e pinta o sistema.
- * - Quando o admin troca o tema em Configurações > Aparência, o servidor
- *   avisa pelo socket e a tela de todo mundo da empresa muda na hora.
- * - Ao sair (o layout logado desmonta), devolve a cor da instalação — a
- *   tela de login não fica com a cor da última empresa que usou o navegador.
+ * - Ao entrar, lê a preferência que veio junto com o usuário.
+ * - Quando a pessoa troca em Configurações > Aparência, a tela avisa por um
+ *   evento e o tema muda na hora (inclusive em outras abas abertas).
+ * - Ao sair, volta para a cor padrão da instalação.
  */
+export const THEME_EVENT = "tkv:user-theme";
+
 export const parseAccountTheme = value => {
   if (!value) return null;
   try {
@@ -24,34 +26,28 @@ export const parseAccountTheme = value => {
 };
 
 const useAccountTheme = enabled => {
-  const socketManager = useContext(SocketContext);
+  const { user } = useContext(AuthContext);
   const { colorMode } = useContext(ColorModeContext);
 
   useEffect(() => {
     if (!enabled) return undefined;
-    let alive = true;
-
-    api
-      .get("/settings/appTheme")
-      .then(({ data }) => {
-        if (alive) colorMode.applyAccountTheme(parseAccountTheme(data));
-      })
-      .catch(() => {});
-
-    const socket = socketManager.GetSocket();
-    const onSettings = data => {
-      if (data?.key === "appTheme") {
-        colorMode.applyAccountTheme(parseAccountTheme(data.value));
+    const apply = value => {
+      const theme = parseAccountTheme(value);
+      colorMode.applyAccountTheme(theme);
+      if (theme?.mode === "dark" || theme?.mode === "light") {
+        colorMode.setColorMode(theme.mode);
       }
     };
-    socket.on("settings", onSettings);
+    apply(user?.appTheme);
 
+    const onTheme = event => apply(event.detail);
+    window.addEventListener(THEME_EVENT, onTheme);
     return () => {
-      alive = false;
-      socket.off?.("settings", onSettings);
+      window.removeEventListener(THEME_EVENT, onTheme);
       colorMode.applyAccountTheme(null);
     };
-  }, [enabled, socketManager, colorMode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, user?.id, colorMode]);
 };
 
 export default useAccountTheme;

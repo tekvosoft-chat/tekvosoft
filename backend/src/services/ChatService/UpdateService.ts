@@ -6,6 +6,7 @@ interface ChatData {
   id: number;
   title?: string;
   users?: any[];
+  area?: string;
 }
 
 export default async function UpdateService(data: ChatData) {
@@ -15,7 +16,12 @@ export default async function UpdateService(data: ChatData) {
   });
   const { ownerId } = record;
 
-  await record.update({ title: data.title });
+  await record.update({
+    title: data.title,
+    ...(data.area !== undefined
+      ? { area: (data.area || "").trim().slice(0, 60) || null }
+      : {})
+  });
 
   if (Array.isArray(users)) {
     await ChatUser.destroy({ where: { chatId: record.id } });

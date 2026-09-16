@@ -53,6 +53,13 @@ class Schedule extends Model<Schedule> {
   @Column(DataType.STRING)
   status: string;
 
+  // imagem ou arquivo que vai junto (caminho dentro de public/)
+  @Column(DataType.STRING)
+  mediaPath: string;
+
+  @Column(DataType.STRING)
+  mediaName: string;
+
   @CreatedAt
   createdAt: Date;
 

@@ -7,16 +7,18 @@ import clsx from "clsx";
 import { makeStyles } from "@material-ui/core/styles";
 import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
-import Divider from "@material-ui/core/Divider";
-import IconButton from "@material-ui/core/IconButton";
 import Tooltip from "@material-ui/core/Tooltip";
 import ButtonBase from "@material-ui/core/ButtonBase";
 
 import WhatsAppIcon from "@material-ui/icons/WhatsApp";
 import AndroidIcon from "@material-ui/icons/Android";
-import VisibilityOutlinedIcon from "@material-ui/icons/VisibilityOutlined";
 import DoneRoundedIcon from "@material-ui/icons/DoneRounded";
-import CloseRoundedIcon from "@material-ui/icons/CloseRounded";
+import PhotoCameraRoundedIcon from "@material-ui/icons/PhotoCameraRounded";
+import MicRoundedIcon from "@material-ui/icons/MicRounded";
+import VideocamRoundedIcon from "@material-ui/icons/VideocamRounded";
+import DescriptionRoundedIcon from "@material-ui/icons/DescriptionRounded";
+import GifRoundedIcon from "@material-ui/icons/GifRounded";
+import EmojiEmotionsRoundedIcon from "@material-ui/icons/EmojiEmotionsRounded";
 import SyncAltRoundedIcon from "@material-ui/icons/SyncAltRounded";
 import AccountTreeOutlinedIcon from "@material-ui/icons/AccountTreeOutlined";
 import WhatsMarked from "react-whatsmarked";
@@ -52,13 +54,17 @@ import {
 const useStyles = makeStyles(theme => {
   const t = theme.palette.tkv;
   return {
+    // card compacto e arredondado, com um respiro entre um contato e outro
     item: {
       position: "relative",
       display: "flex",
       alignItems: "flex-start",
-      gap: theme.spacing(1.5),
-      width: "100%",
-      padding: theme.spacing(1.25, 1.5, 1.25, 2),
+      gap: theme.spacing(1.25),
+      width: "calc(100% - 12px)",
+      margin: "2px 6px",
+      padding: theme.spacing(0.875, 1.25, 0.875, 1.5),
+      borderRadius: 12,
+      overflow: "hidden",
       textAlign: "left",
       cursor: "pointer",
       transition: "background-color .15s ease",
@@ -66,6 +72,7 @@ const useStyles = makeStyles(theme => {
     },
     selected: {
       backgroundColor: t.brand.textSoft,
+      boxShadow: `inset 0 0 0 1px ${t.brand.softHover}`,
       "&:hover": { backgroundColor: t.brand.textSoft }
     },
     pending: { cursor: "default" },
@@ -74,12 +81,14 @@ const useStyles = makeStyles(theme => {
       left: 0,
       top: 0,
       bottom: 0,
-      width: 5
+      width: 3,
+      borderRadius: "0 3px 3px 0"
     },
     avatar: {
       flex: "none",
-      width: 48,
-      height: 48,
+      width: 42,
+      height: 42,
+      fontSize: "0.95rem",
       color: "#FFFFFF",
       fontWeight: 700
     },
@@ -95,8 +104,9 @@ const useStyles = makeStyles(theme => {
       display: "flex",
       alignItems: "center",
       gap: 4,
-      fontSize: "0.9375rem",
+      fontSize: "0.875rem",
       fontWeight: 600,
+      letterSpacing: "-0.005em",
       color: theme.palette.text.primary,
       overflow: "hidden",
       textOverflow: "ellipsis",
@@ -105,19 +115,25 @@ const useStyles = makeStyles(theme => {
     },
     time: {
       flex: "none",
-      fontSize: "0.75rem",
+      fontSize: "0.6875rem",
       color: theme.palette.text.secondary
     },
     preview: {
       display: "flex",
       alignItems: "center",
       gap: theme.spacing(1),
-      marginTop: 2
+      marginTop: 1
+    },
+    mediaPreview: {
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 4,
+      "& svg": { fontSize: 17, opacity: 0.85 }
     },
     previewText: {
       flex: 1,
       minWidth: 0,
-      fontSize: "0.875rem",
+      fontSize: "0.8125rem",
       color: theme.palette.text.secondary,
       overflow: "hidden",
       textOverflow: "ellipsis",
@@ -126,14 +142,14 @@ const useStyles = makeStyles(theme => {
     },
     unread: {
       flex: "none",
-      minWidth: 22,
-      height: 22,
-      padding: "0 7px",
-      borderRadius: 11,
+      minWidth: 18,
+      height: 18,
+      padding: "0 5px",
+      borderRadius: 9,
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      fontSize: "0.75rem",
+      fontSize: "0.6875rem",
       fontWeight: 700,
       backgroundColor: t.semantic.success,
       color: "#FFFFFF"
@@ -146,28 +162,28 @@ const useStyles = makeStyles(theme => {
       display: "flex",
       flexWrap: "wrap",
       alignItems: "center",
-      gap: 6,
-      marginTop: 8
+      gap: 4,
+      marginTop: 5
     },
     chip: {
       display: "inline-flex",
       alignItems: "center",
       gap: 4,
       maxWidth: "100%",
-      height: 24,
-      padding: "0 9px",
+      height: 19,
+      padding: "0 7px",
       borderRadius: t.radius.pill,
-      fontSize: "0.75rem",
+      fontSize: "0.6875rem",
       fontWeight: 600,
       backgroundColor: t.surfaceSunken,
       color: theme.palette.text.secondary,
       overflow: "hidden",
       textOverflow: "ellipsis",
       whiteSpace: "nowrap",
-      "& svg": { fontSize: 14, flex: "none" }
+      "& svg": { fontSize: 12, flex: "none" }
     },
     chipUser: {
-      paddingLeft: 3,
+      paddingLeft: 2,
       backgroundColor: t.brand.textSoft,
       color: t.brand.text
     },
@@ -212,6 +228,37 @@ const useStyles = makeStyles(theme => {
   };
 });
 
+// última mensagem de mídia: ícone + nome curto, no lugar do nome do arquivo
+const MEDIA_RULES = [
+  [/^gif-.*\.mp4$/i, "gif", GifRoundedIcon],
+  [/^sticker\.webp$/i, "sticker", EmojiEmotionsRoundedIcon],
+  [/\.(jpe?g|png|webp|heic|bmp)$/i, "photo", PhotoCameraRoundedIcon],
+  [/\.(ogg|oga|opus|mp3|m4a|aac|wav|webm)$/i, "audio", MicRoundedIcon],
+  [/\.(mp4|mov|3gp|mkv)$/i, "video", VideocamRoundedIcon],
+  [
+    /\.(pdf|docx?|xlsx?|pptx?|txt|csv|zip|rar)$/i,
+    "document",
+    DescriptionRoundedIcon
+  ]
+];
+
+const mediaPreview = text => {
+  const first = String(text || "")
+    .split("\n")[0]
+    .trim();
+  if (["🔊", "Áudio", "Audio"].includes(first)) {
+    return {
+      icon: <MicRoundedIcon />,
+      label: i18n.t("ticketsList.media.audio")
+    };
+  }
+  if (!first || /\s/.test(first)) return null;
+  const rule = MEDIA_RULES.find(([pattern]) => pattern.test(first));
+  if (!rule) return null;
+  const [, key, Icon] = rule;
+  return { icon: <Icon />, label: i18n.t(`ticketsList.media.${key}`) };
+};
+
 const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
   const classes = useStyles();
   const history = useHistory();
@@ -219,28 +266,15 @@ const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
   const isMounted = useRef(true);
   const { setCurrentTicket } = useContext(TicketsContext);
   const { user } = useContext(AuthContext);
-  const { profile } = user;
 
   const [openTicketMessageDialog, setOpenTicketMessageDialog] = useState(false);
+  const longPress = useRef({ timer: null, fired: false, start: null });
 
   useEffect(() => {
     return () => {
       isMounted.current = false;
     };
   }, []);
-
-  const handleCloseTicket = async id => {
-    try {
-      await api.put(`/tickets/${id}`, {
-        status: "closed",
-        justClose: true,
-        userId: user?.id
-      });
-    } catch (err) {
-      toastError(err);
-    }
-    history.push(`/tickets/`);
-  };
 
   const handleAcceptTicket = async id => {
     try {
@@ -267,7 +301,7 @@ const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
     <div className={classes.chips}>
       {ticket.user?.name && !isPending && (
         <span className={clsx(classes.chip, classes.chipUser)}>
-          <UserAvatar user={ticket.user} size={18} />
+          <UserAvatar user={ticket.user} size={15} />
           {ticket.user.name}
         </span>
       )}
@@ -307,12 +341,37 @@ const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
           [classes.pending]: isPending && canAct,
           [classes.selected]: ticketId && +ticketId === ticket.id
         })}
-        onPointerDown={() => {
+        onPointerDown={event => {
+          longPress.current.fired = false;
+          clearTimeout(longPress.current.timer);
+          longPress.current.start = { x: event.clientX, y: event.clientY };
+          // segurar abre a prévia da conversa
+          longPress.current.timer = setTimeout(() => {
+            longPress.current.fired = true;
+            if (navigator.vibrate) navigator.vibrate(12);
+            setOpenTicketMessageDialog(true);
+          }, 480);
           if (isPending && canAct) return;
           rememberTicket(ticket);
           prefetchMessages(ticket.id);
         }}
+        onPointerMove={event => {
+          const start = longPress.current.start;
+          if (
+            start &&
+            Math.hypot(event.clientX - start.x, event.clientY - start.y) > 10
+          ) {
+            clearTimeout(longPress.current.timer);
+          }
+        }}
+        onPointerUp={() => clearTimeout(longPress.current.timer)}
+        onPointerCancel={() => clearTimeout(longPress.current.timer)}
+        onContextMenu={event => event.preventDefault()}
         onClick={() => {
+          if (longPress.current.fired) {
+            longPress.current.fired = false;
+            return;
+          }
           if (isPending && canAct) return;
           handleSelectTicket();
         }}
@@ -357,6 +416,11 @@ const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
                 </span>
               ) : ticket.lastMessage?.includes("data:image/png;base64") ? (
                 "📍 Localização"
+              ) : mediaPreview(ticket.lastMessage) ? (
+                <span className={classes.mediaPreview}>
+                  {mediaPreview(ticket.lastMessage).icon}
+                  {mediaPreview(ticket.lastMessage).label}
+                </span>
               ) : (
                 <WhatsMarked oneline>
                   {(ticket.lastMessage || "").startsWith('{"ticketzvCard"')
@@ -386,72 +450,10 @@ const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
               >
                 {i18n.t("messagesList.header.buttons.accept")}
               </Button>
-              {profile === "admin" && (
-                <Tooltip title={i18n.t("ticketActions.spy")}>
-                  <IconButton
-                    className={classes.secondaryAction}
-                    aria-label={i18n.t("ticketActions.spy")}
-                    onClick={e => {
-                      e.stopPropagation();
-                      setOpenTicketMessageDialog(true);
-                    }}
-                  >
-                    <VisibilityOutlinedIcon />
-                  </IconButton>
-                </Tooltip>
-              )}
-              <Tooltip title={i18n.t("ticketActions.close")}>
-                <IconButton
-                  className={clsx(classes.secondaryAction, classes.danger)}
-                  aria-label={i18n.t("ticketActions.close")}
-                  onClick={e => {
-                    e.stopPropagation();
-                    handleCloseTicket(ticket.id);
-                  }}
-                >
-                  <CloseRoundedIcon />
-                </IconButton>
-              </Tooltip>
             </div>
           )}
         </div>
-
-        {!isPending && canAct && (
-          <div className={classes.openActions}>
-            {profile === "admin" && (
-              <Tooltip title={i18n.t("ticketActions.spy")}>
-                <IconButton
-                  size="small"
-                  className={classes.iconAction}
-                  aria-label={i18n.t("ticketActions.spy")}
-                  onClick={e => {
-                    e.stopPropagation();
-                    setOpenTicketMessageDialog(true);
-                  }}
-                >
-                  <VisibilityOutlinedIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            )}
-            {ticket.status === "open" && (
-              <Tooltip title={i18n.t("ticketActions.close")}>
-                <IconButton
-                  size="small"
-                  className={clsx(classes.iconAction, classes.danger)}
-                  aria-label={i18n.t("ticketActions.close")}
-                  onClick={e => {
-                    e.stopPropagation();
-                    handleCloseTicket(ticket.id);
-                  }}
-                >
-                  <CloseRoundedIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            )}
-          </div>
-        )}
       </ButtonBase>
-      <Divider component="div" />
     </div>
   );
 };

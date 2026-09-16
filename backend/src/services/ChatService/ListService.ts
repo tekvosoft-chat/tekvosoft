@@ -24,7 +24,7 @@ const ListService = async ({
 
   const chatIds = chatUsers.map(chat => chat.chatId);
 
-  const limit = 20;
+  const limit = 100;
   const offset = limit * (+pageNumber - 1);
 
   const { count, rows: records } = await Chat.findAndCountAll({
@@ -38,12 +38,18 @@ const ListService = async ({
       {
         model: ChatUser,
         as: "users",
-        include: [{ model: User, as: "user", attributes: ["id", "name"] }]
+        include: [
+          {
+            model: User,
+            as: "user",
+            attributes: ["id", "name", "profileImage"]
+          }
+        ]
       }
     ],
     limit,
     offset,
-    order: [["createdAt", "DESC"]]
+    order: [["updatedAt", "DESC"]]
   });
 
   const hasMore = count > offset + records.length;
