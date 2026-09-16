@@ -3,6 +3,7 @@ import multer from "multer";
 import isAuth from "../middleware/isAuth";
 import uploadConfig from "../config/upload";
 import tokenAuth from "../middleware/tokenAuth";
+import planFeature from "../middleware/planFeature";
 
 import * as MessageController from "../controllers/MessageController";
 import isCompliant from "../middleware/isCompliant";
@@ -27,6 +28,13 @@ messageRoutes.get(
 );
 
 messageRoutes.get("/gifs/search", isAuth, isCompliant, MessageController.gifs);
+
+messageRoutes.get(
+  "/expressions/search",
+  isAuth,
+  isCompliant,
+  MessageController.expressions
+);
 
 messageRoutes.post(
   "/messages/:ticketId/expression",
@@ -88,6 +96,7 @@ messageRoutes.delete(
 messageRoutes.post(
   "/api/messages/send",
   tokenAuth,
+  planFeature("useExternalApi"),
   isCompliant,
   upload.array("medias"),
   MessageController.send

@@ -1,6 +1,213 @@
 const messages = {
   pt_PT: {
     translations: {
+      payment: {
+        title: "Pagamento da assinatura",
+        pix: "Pix",
+        card: "Cartão",
+        boleto: "Boleto",
+        payNow: "Pagar agora",
+        processing: "Processando…",
+        paid: "Pagamento aprovado!",
+        copied: "Copiado",
+        copyCode: "Copiar código Pix",
+        copyLine: "Copiar linha digitável",
+        openBoleto: "Abrir boleto",
+        pixIntro:
+          "Ao continuar, geramos um QR Code do Pix. O pagamento cai na hora.",
+        pixHint:
+          "Abra o app do banco, escolha Pix > Ler QR Code e aponte para a imagem.",
+        boletoIntro:
+          "Geramos o boleto em PDF com a linha digitável. A compensação leva até 3 dias úteis.",
+        boletoHint: "O boleto também foi enviado para o e-mail da empresa.",
+        cardIntro:
+          "Cobrança na hora. Você pode guardar o cartão para as próximas mensalidades saírem sozinhas.",
+        cardApproved: "Cartão aprovado! Sua assinatura já está em dia.",
+        cardPending:
+          "Cobrança enviada. Assim que o banco confirmar, sua assinatura é renovada.",
+        cardSaved: "Cartão salvo: {{card}}",
+        saveCard: "Salvar cartão para cobrança automática",
+        saveCardHint:
+          "Guardamos só um código seguro do cartão (token), nunca o número.",
+        autoCharge: "Cobrança automática ativa · {{card}}",
+        removeCard: "Remover cartão salvo",
+        cardRemoved: "Cartão removido",
+        noMethods: "Nenhuma forma de pagamento está ativa. Fale com o suporte.",
+        form: {
+          holder: "Nome impresso no cartão",
+          number: "Número do cartão",
+          expiry: "Validade (MM/AAAA)",
+          ccv: "CVV",
+          cpfCnpj: "CPF ou CNPJ",
+          email: "E-mail",
+          phone: "Celular",
+          postalCode: "CEP",
+          addressNumber: "Número"
+        }
+      },
+      paymentGateways: {
+        intro:
+          "Escolha o que o cliente pode usar para pagar a assinatura. O que estiver desligado não aparece para ele.",
+        pix: {
+          title: "Pix",
+          provider: "Efí (Gerencianet)",
+          how: "O cliente lê um QR Code e o dinheiro cai na hora na sua conta Efí.",
+          steps: [
+            "Crie uma aplicação Pix na conta Efí e gere o certificado (.p12).",
+            "Preencha abaixo o Client ID, o Client Secret, a chave Pix e envie o certificado.",
+            "O sistema registra sozinho o aviso de pagamento (webhook) na Efí.",
+            "Ao pagar, a fatura é baixada e o vencimento da empresa avança automaticamente."
+          ]
+        },
+        card: {
+          title: "Cartão de crédito",
+          provider: "Asaas",
+          how: "Cobrança na hora no cartão. Com o cartão salvo, as mensalidades seguintes são cobradas sozinhas.",
+          steps: [
+            "Crie a conta no Asaas e gere a chave de API (Integrações > API).",
+            "Cole a chave abaixo e escolha Sandbox (testes) ou Produção.",
+            "Cadastre a URL de aviso abaixo no painel do Asaas (Integrações > Webhooks) e repita o mesmo token.",
+            "Peça ao Asaas a liberação da tokenização de cartão para usar a cobrança automática em produção.",
+            "Todo dia, às 9h, o sistema cobra no cartão salvo as faturas que vencem."
+          ]
+        },
+        boleto: {
+          title: "Boleto bancário",
+          provider: "Asaas",
+          how: "Gera o boleto em PDF com linha digitável; a compensação leva até 3 dias úteis.",
+          steps: [
+            "Usa a mesma conta e a mesma chave do Asaas do cartão.",
+            "O cliente recebe o boleto na tela e por e-mail.",
+            "Quando o banco confirma, o Asaas avisa pelo webhook e a fatura é baixada sozinha."
+          ]
+        },
+        asaas: {
+          key: "Chave de API do Asaas",
+          env: "Ambiente",
+          sandbox: "Sandbox (testes)",
+          production: "Produção",
+          webhookToken: "Token do webhook",
+          webhookUrl:
+            "Cadastre esta URL no painel do Asaas (Integrações > Webhooks):"
+        }
+      },
+      revenue: {
+        monthly: "Receita mensal",
+        monthlySub: "{{count}} cliente ativo",
+        monthlySub_plural: "{{count}} clientes ativos",
+        next30: "A receber em 30 dias",
+        next30Sub: "Vencimentos do próximo mês",
+        overdue: "Em atraso",
+        overdueSub: "{{count}} cliente",
+        overdueSub_plural: "{{count}} clientes",
+        autoCharge: "Cobrança automática",
+        autoChargeSub: "Clientes com cartão salvo",
+        forecast: "Previsão dos próximos 6 meses",
+        expected: "Previsto",
+        clients: "Clientes",
+        search: "Buscar cliente",
+        empty: "Nenhum cliente com cobrança cadastrada.",
+        value: "Valor",
+        nextDue: "Próximo vencimento",
+        status: "Situação",
+        charge: "Cobrança",
+        noPlan: "Sem plano",
+        noDate: "Sem vencimento",
+        today: "Vence hoje",
+        inDays: "Em {{count}} dia",
+        inDays_plural: "Em {{count}} dias",
+        lateBy: "Atrasado {{count}} dia",
+        lateBy_plural: "Atrasado {{count}} dias",
+        auto: "Automática",
+        manualCharge: "Manual",
+        recurrence: {
+          MENSAL: "Mensal",
+          BIMESTRAL: "Bimestral",
+          TRIMESTRAL: "Trimestral",
+          SEMESTRAL: "Semestral",
+          ANUAL: "Anual"
+        }
+      },
+      planFeatures: {
+        lockedTitle: "{{feature}} não está no seu plano",
+        lockedText:
+          "Esse recurso faz parte de outro plano. Fale com o administrador da plataforma para liberar.",
+        lockedAction: "Ver meu plano",
+        names: {
+          useKanban: "Kanban",
+          useInternalChat: "Chat interno",
+          useSchedules: "Agendamentos",
+          useCampaigns: "Campanhas",
+          useExternalApi: "API de mensagens"
+        },
+        hints: {
+          useKanban: "Quadro com as conversas em colunas por etapa.",
+          useInternalChat: "Conversas entre a equipe, dentro do sistema.",
+          useSchedules: "Programar mensagens para sair em data e hora.",
+          useCampaigns: "Envio em massa para listas de contatos.",
+          useExternalApi: "Enviar mensagens por outros sistemas, via token."
+        }
+      },
+      plansPage: {
+        title: "Planos",
+        subtitle: "Limites e recursos de cada plano que você vende.",
+        new: "Novo plano",
+        edit: "Editar plano",
+        editShort: "Editar",
+        delete: "Excluir plano",
+        templatesTitle: "Modelos prontos",
+        templates: {
+          start: "Para quem está começando, com 1 número.",
+          pro: "O mais vendido: equipe pequena e agendamentos.",
+          business: "Equipe grande, campanhas e API liberadas.",
+          enterprise: "Operação em escala, sem amarras."
+        },
+        featuresTitle: "Recursos incluídos",
+        popular: "Mais vendido",
+        public: "Público",
+        private: "Interno",
+        perMonth: "/mês",
+        form: {
+          name: "Nome do plano",
+          value: "Valor mensal",
+          users: "Usuários",
+          connections: "Conexões",
+          queues: "Filas",
+          currency: "Moeda",
+          public: "Aparece no cadastro",
+          publicHint: "Planos internos só você usa ao criar a empresa."
+        },
+        saved: "Plano salvo",
+        saveError:
+          "Não foi possível salvar. Confira se já existe um plano com esse nome.",
+        loadError: "Não foi possível carregar os planos",
+        deleteTitle: "Excluir {{name}}?",
+        deleteText: "As empresas que usam este plano ficam sem plano.",
+        deleted: "Plano excluído",
+        deleteError: "Não foi possível excluir o plano"
+      },
+      queuesPage: {
+        subtitle:
+          "Organize o atendimento por setor e monte o menu automático de cada fila.",
+        emptyTitle: "Nenhuma fila ainda",
+        emptyText:
+          "Crie filas como Vendas, Suporte ou Financeiro para distribuir os atendimentos.",
+        chatbot: "Chatbot · {{count}} opção",
+        chatbot_plural: "Chatbot · {{count}} opções",
+        noChatbot: "Sem chatbot",
+        hours: "Horário definido",
+        noGreeting: "Sem mensagem de saudação",
+        users: "Atendentes",
+        connections: "Conexões",
+        tickets: "Abertos + fila",
+        edit: "Editar",
+        delete: "Excluir",
+        new: "Nova fila"
+      },
+      loginShowcase: {
+        title: "Todo o atendimento da sua empresa em um lugar só",
+        text: "WhatsApp, equipe e clientes conversando no mesmo painel — com Kanban, agendamentos e relatórios."
+      },
       annotator: {
         title: "Documento",
         annotate: "Desenhar",
@@ -37,6 +244,7 @@ const messages = {
         live: "Ao vivo",
         tabs: {
           platform: "Visão geral",
+          revenue: "Recebimentos",
           companies: "Empresas",
           mine: "Minha empresa"
         },
@@ -1221,6 +1429,7 @@ const messages = {
         emoji: "Emoji",
         stickers: "Autocolantes",
         gifs: "GIFs",
+        searchStickers: "Procurar autocolantes",
         searchGifs: "Procurar GIFs",
         noStickers:
           "Os autocolantes que chegarem nas conversas aparecem aqui para voltar a enviar.",
@@ -1353,10 +1562,15 @@ const messages = {
         extensionBuildUnknownError: "Erro desconhecido na construção."
       },
       settings: {
+        klipyApiKey: {
+          title: "Chave da API do KLIPY"
+        },
         giphyApiKey: {
           title: "Chave do GIPHY (GIFs)"
         },
         hints: {
+          klipyKey:
+            "Chave gratuita do klipy.com (o mesmo acervo de GIFs e autocolantes usado pelo Discord).",
           giphyKey:
             "Chave gratuita criada em developers.giphy.com. Com ela, a equipa procura e envia GIFs pelo chat.",
           groups: {

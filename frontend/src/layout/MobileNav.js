@@ -52,6 +52,7 @@ import {
   pushState
 } from "../components/NotificationSoundSetting";
 import NotificationsActiveRoundedIcon from "@material-ui/icons/NotificationsActiveRounded";
+import { routeAllowed } from "../helpers/planFeatures";
 
 /**
  * Navegação do celular.
@@ -281,6 +282,8 @@ const MobileNav = ({ onOpenProfile }) => {
 
   const t = key => i18n.t(`mainDrawer.listItems.${key}`);
 
+  const allowed = item => routeAllowed(user, item.to);
+
   // ── itens fixos da barra ──
   const barItems = useMemo(() => {
     // ícone vazado parado, preenchido quando é a tela atual
@@ -317,7 +320,7 @@ const MobileNav = ({ onOpenProfile }) => {
         tickets,
         contacts,
         chats
-      ];
+      ].filter(allowed);
     }
     return [
       tickets,
@@ -329,9 +332,9 @@ const MobileNav = ({ onOpenProfile }) => {
       },
       contacts,
       chats
-    ];
+    ].filter(allowed);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAdmin]);
+  }, [isAdmin, user?.company?.plan]);
 
   // ── grade do painel ──
   const sections = useMemo(() => {
@@ -369,12 +372,14 @@ const MobileNav = ({ onOpenProfile }) => {
           icon: <ListIcon />
         });
       }
-      admin.push(
-        {
+      if (user?.super) {
+        admin.push({
           to: "/announcements",
           label: t("annoucements"),
           icon: <AnnouncementIcon />
-        },
+        });
+      }
+      admin.push(
         { to: "/connections", label: t("connections"), icon: <SyncAltIcon /> },
         {
           to: "/queues",
@@ -403,11 +408,13 @@ const MobileNav = ({ onOpenProfile }) => {
     return list
       .map(section => ({
         ...section,
-        items: section.items.filter(item => !inBar.includes(item.to))
+        items: section.items.filter(
+          item => !inBar.includes(item.to) && allowed(item)
+        )
       }))
       .filter(section => section.items.length > 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAdmin, showCampaigns, barItems]);
+  }, [isAdmin, showCampaigns, barItems, user?.super]);
 
   const isActive = to =>
     to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);

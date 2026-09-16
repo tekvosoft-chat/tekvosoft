@@ -10,6 +10,11 @@ interface PlanData {
   value: number;
   currency?: string;
   isPublic: boolean;
+  useKanban?: boolean;
+  useInternalChat?: boolean;
+  useSchedules?: boolean;
+  useCampaigns?: boolean;
+  useExternalApi?: boolean;
 }
 
 const CreatePlanService = async (planData: PlanData): Promise<Plan> => {

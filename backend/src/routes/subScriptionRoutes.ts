@@ -9,9 +9,26 @@ subscriptionRoutes.post(
   isAuth,
   SubscriptionController.createSubscription
 );
+subscriptionRoutes.get(
+  "/subscription/methods",
+  isAuth,
+  SubscriptionController.methods
+);
+
+subscriptionRoutes.delete(
+  "/subscription/card",
+  isAuth,
+  SubscriptionController.removeCard
+);
+
 subscriptionRoutes.post(
   "/subscription/ticketz/webhook/:type?",
   SubscriptionController.webhook
+);
+
+subscriptionRoutes.post(
+  "/subscription/asaas/webhook",
+  SubscriptionController.asaasWebhookRoute
 );
 
 export default subscriptionRoutes;

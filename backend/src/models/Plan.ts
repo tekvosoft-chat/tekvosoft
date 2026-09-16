@@ -47,6 +47,27 @@ class Plan extends Model<Plan> {
   @Default(true)
   @Column
   isPublic: boolean;
+
+  // recursos incluídos no plano
+  @Default(true)
+  @Column
+  useKanban: boolean;
+
+  @Default(true)
+  @Column
+  useInternalChat: boolean;
+
+  @Default(true)
+  @Column
+  useSchedules: boolean;
+
+  @Default(true)
+  @Column
+  useCampaigns: boolean;
+
+  @Default(true)
+  @Column
+  useExternalApi: boolean;
 }
 
 export default Plan;

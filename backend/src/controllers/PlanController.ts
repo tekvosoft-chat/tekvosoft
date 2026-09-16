@@ -108,6 +108,7 @@ export const update = async (
     planData;
 
   const plan = await UpdatePlanService({
+    ...planData,
     id,
     name,
     users,

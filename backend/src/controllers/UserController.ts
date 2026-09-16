@@ -14,6 +14,7 @@ import SimpleListService from "../services/UserServices/SimpleListService";
 import User from "../models/User";
 import Queue from "../models/Queue";
 import saveMediaToFile from "../helpers/saveMediaFile";
+import { getPublicPath } from "../helpers/GetPublicPath";
 
 type IndexQuery = {
   searchParam: string;
@@ -223,8 +224,18 @@ export const updateProfileImage = async (
     throw new AppError("ERR_NO_PERMISSION", 403);
   }
 
+  // a foto anterior sai do disco; o nome novo leva a hora para o navegador
+  // não mostrar a imagem antiga guardada em cache
+  const previous = user.getDataValue("profileImage");
+  const dropPrevious = () => {
+    if (!previous || /^https?:\/\//.test(previous)) return;
+    const full = path.join(getPublicPath(), previous);
+    fs.promises.unlink(full).catch(() => {});
+  };
+
   if (req.method === "DELETE") {
     await user.update({ profileImage: null });
+    dropPrevious();
   } else {
     if (!file) {
       throw new AppError("ERR_NO_FILE_UPLOADED", 400);
@@ -237,7 +248,9 @@ export const updateProfileImage = async (
       {
         data: fs.readFileSync(file.path),
         mimetype: file.mimetype,
-        filename: `perfil-${user.id}${path.extname(file.originalname) || ".jpg"}`
+        filename: `perfil-${user.id}-${Date.now()}${
+          path.extname(file.originalname) || ".jpg"
+        }`
       },
       {
         destination: companyId,
@@ -248,6 +261,7 @@ export const updateProfileImage = async (
     fs.unlinkSync(file.path);
 
     await user.update({ profileImage: savedPath });
+    if (previous !== savedPath) dropPrevious();
   }
 
   await user.reload({ attributes: ["id", "name", "profileImage"] });

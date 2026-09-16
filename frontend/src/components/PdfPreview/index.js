@@ -1,223 +1,166 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { makeStyles } from "@material-ui/core";
-import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
-import pdfjsWorker from "pdfjs-dist/build/pdf.worker.entry";
+import ButtonBase from "@material-ui/core/ButtonBase";
+import IconButton from "@material-ui/core/IconButton";
+import GetAppRoundedIcon from "@material-ui/icons/GetAppRounded";
+
 import DocumentAnnotator from "../DocumentAnnotator";
+import { downloadFile } from "../../helpers/downloadFile";
 import { i18n } from "../../translate/i18n";
 
-GlobalWorkerOptions.workerSrc = pdfjsWorker;
-
+/**
+ * Cartão de PDF dentro da conversa, no formato do WhatsApp: ícone vermelho,
+ * nome do arquivo, tipo e tamanho. O documento só é aberto (e só aí é
+ * baixado de verdade) quando a pessoa toca no cartão — antes disso a
+ * conversa não gasta banda montando pré-visualização.
+ */
 const MAX_UNRANGED_BYTES = 10 * 1024 * 1024; // 10 MB
 
-const useStyles = makeStyles(() => ({
-  // ── Thumbnail ──────────────────────────────────────────────────────────
-  thumbnail: {
-    position: "relative",
-    width: "100%",
-    overflow: "hidden",
-    borderRadius: 4,
-    backgroundColor: "#f5f5f5",
-    cursor: "pointer",
-    "&:hover $thumbnailOverlay": {
-      opacity: 1
-    }
-  },
-  thumbnailCanvas: {
-    display: "block",
-    width: "100%"
-  },
-  thumbnailOverlay: {
-    position: "absolute",
-    inset: 0,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    background: "rgba(0,0,0,0.18)",
-    opacity: 0,
-    transition: "opacity 0.2s",
-    color: "#fff",
-    fontSize: "0.8rem",
-    fontWeight: 600,
-    letterSpacing: "0.05em",
-    pointerEvents: "none"
-  },
-  thumbnailFade: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: "30px",
-    background: "linear-gradient(transparent, rgba(0,0,0,0.12))",
-    pointerEvents: "none"
-  },
-  thumbnailMessage: {
-    padding: "6px 8px",
-    fontSize: "0.75rem",
-    color: "#666"
-  }
-}));
+const humanSize = bytes => {
+  if (!bytes && bytes !== 0) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1).replace(".", ",")} MB`;
+};
 
-// ── HEAD check ────────────────────────────────────────────────────────────────
-// Conservative: presumes range requests are NOT supported unless the server
-// explicitly confirms otherwise. Without range support we only allow loading
-// when the file size is known and ≤ MAX_UNRANGED_BYTES, to avoid locking up
-// the frontend with a huge unbounded download.
-async function checkPdfUrl(url) {
-  try {
-    const res = await fetch(url, { method: "HEAD" });
-    const acceptRanges = res.headers.get("Accept-Ranges");
-    const contentLength = res.headers.get("Content-Length");
-    const fileSize = contentLength ? parseInt(contentLength, 10) : null;
-
-    // Range support explicitly confirmed → always allow.
-    if (acceptRanges && acceptRanges !== "none") {
-      return { canLoad: true, supportsRange: true, fileSize };
-    }
-
-    // Range not supported or unknown → only allow when size is confirmed ≤ limit.
-    if (fileSize !== null && fileSize <= MAX_UNRANGED_BYTES) {
-      return { canLoad: true, supportsRange: false, fileSize };
-    }
-
-    return { canLoad: false, supportsRange: false, fileSize };
-  } catch {
-    // Request failed → cannot confirm range support; block to avoid lockup.
-    return { canLoad: false, supportsRange: false, fileSize: null };
-  }
-}
-
-// ── Thumbnail sub-component ───────────────────────────────────────────────────
-function Thumbnail({ url, onOpen }) {
-  const classes = useStyles();
-  const canvasRef = useRef(null);
-  const [status, setStatus] = useState("loading"); // loading | done | error
-
-  useEffect(() => {
-    if (!url) {
-      setStatus("error");
-      return;
-    }
-
-    let cancelled = false;
-    setStatus("loading");
-
-    (async () => {
-      try {
-        const pdf = await getDocument({
-          url,
-          // Only fetch what's needed for page 1 – don't pre-load the whole file.
-          disableAutoFetch: true,
-          disableStream: true,
-          rangeChunkSize: 65536 // 64 KB chunks
-        }).promise;
-        if (cancelled) {
-          pdf.destroy();
-          return;
-        }
-        const canvas = canvasRef.current;
-        if (!canvas) {
-          pdf.destroy();
-          return;
-        }
-
-        const page = await pdf.getPage(1);
-        if (cancelled) {
-          pdf.destroy();
-          return;
-        }
-
-        const containerWidth = canvas.parentElement?.clientWidth || 300;
-        const viewport = page.getViewport({ scale: 1 });
-        const scale = containerWidth / viewport.width;
-        const scaledViewport = page.getViewport({ scale });
-
-        // Draw only the top half of the first page
-        canvas.width = scaledViewport.width;
-        canvas.height = Math.floor(scaledViewport.height / 2);
-        await page.render({
-          canvasContext: canvas.getContext("2d"),
-          viewport: scaledViewport
-        }).promise;
-
-        if (!cancelled) setStatus("done");
-        pdf.destroy();
-      } catch (e) {
-        if (!cancelled) {
-          console.error("PdfPreview thumbnail error:", e);
-          setStatus("error");
-        }
+const useStyles = makeStyles(theme => {
+  const t = theme.palette.tkv;
+  return {
+    card: {
+      width: "100%",
+      minWidth: 240,
+      maxWidth: 320,
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      padding: "10px 8px 10px 10px",
+      borderRadius: 12,
+      textAlign: "left",
+      backgroundColor: t.isDark
+        ? "rgba(255, 255, 255, 0.06)"
+        : "rgba(11, 20, 26, 0.05)",
+      transition: "background-color .15s ease",
+      "&:hover": {
+        backgroundColor: t.isDark
+          ? "rgba(255, 255, 255, 0.1)"
+          : "rgba(11, 20, 26, 0.09)"
       }
-    })();
+    },
+    icon: {
+      flex: "none",
+      width: 40,
+      height: 44,
+      borderRadius: 6,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 2,
+      color: "#FFFFFF",
+      backgroundColor: "#E5453A",
+      fontSize: "0.5625rem",
+      fontWeight: 800,
+      letterSpacing: "0.04em",
+      "&::before": {
+        content: "''",
+        width: 16,
+        height: 16,
+        borderRadius: 3,
+        border: "2px solid rgba(255,255,255,0.9)",
+        borderTopRightRadius: 0
+      }
+    },
+    texts: { flex: 1, minWidth: 0 },
+    name: {
+      fontSize: "0.875rem",
+      lineHeight: 1.25,
+      color: t.chat.text,
+      display: "-webkit-box",
+      WebkitLineClamp: 2,
+      WebkitBoxOrient: "vertical",
+      overflow: "hidden",
+      wordBreak: "break-word"
+    },
+    meta: {
+      marginTop: 3,
+      fontSize: "0.6875rem",
+      color: t.chat.meta,
+      textTransform: "uppercase",
+      letterSpacing: "0.02em"
+    },
+    download: {
+      flex: "none",
+      width: 34,
+      height: 34,
+      color: t.chat.icon,
+      "& svg": { fontSize: 20 }
+    }
+  };
+});
 
-    return () => {
-      cancelled = true;
-    };
-  }, [url]);
-
-  return (
-    <div className={classes.thumbnail} onClick={onOpen}>
-      {status === "loading" && (
-        <div className={classes.thumbnailMessage}>
-          {i18n.t("annotator.loadingPreview")}
-        </div>
-      )}
-      {status === "error" && (
-        <div className={classes.thumbnailMessage}>
-          {i18n.t("annotator.previewUnavailable")}
-        </div>
-      )}
-      <canvas
-        ref={canvasRef}
-        className={classes.thumbnailCanvas}
-        style={{ display: status === "done" ? "block" : "none" }}
-      />
-      {status === "done" && (
-        <>
-          <div className={classes.thumbnailFade} />
-          <div className={classes.thumbnailOverlay}>
-            {i18n.t("annotator.openAndAnnotate")}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-// ── Public component ──────────────────────────────────────────────────────────
 function PdfPreview({ url, fileName, ticketId }) {
+  const classes = useStyles();
   const [open, setOpen] = useState(false);
-  // null = pending, true = can load, false = blocked
-  const [canLoad, setCanLoad] = useState(null);
+  const [size, setSize] = useState(null);
+  const [tooBig, setTooBig] = useState(false);
 
+  // só um HEAD: descobre o tamanho para mostrar no cartão
   useEffect(() => {
-    if (!url) return;
-    let cancelled = false;
-    setCanLoad(null);
-
-    checkPdfUrl(url).then(result => {
-      if (!cancelled) setCanLoad(result.canLoad);
-    });
-
+    if (!url) return undefined;
+    let alive = true;
+    fetch(url, { method: "HEAD" })
+      .then(res => {
+        if (!alive) return;
+        const length = res.headers.get("Content-Length");
+        const ranges = res.headers.get("Accept-Ranges");
+        const bytes = length ? parseInt(length, 10) : null;
+        setSize(bytes);
+        setTooBig(
+          (!ranges || ranges === "none") &&
+            bytes !== null &&
+            bytes > MAX_UNRANGED_BYTES
+        );
+      })
+      .catch(() => {});
     return () => {
-      cancelled = true;
+      alive = false;
     };
   }, [url]);
 
-  // canLoad===null means HEAD check is still in-flight; canLoad===false means
-  // range is unsupported and file exceeds 10 MB → fall back to the normal
-  // document download button already rendered in the messages list.
-  if (!canLoad) return null;
+  const name = fileName || url?.split("/").pop() || "PDF";
 
   return (
     <>
-      <Thumbnail url={url} onOpen={() => setOpen(true)} />
+      <ButtonBase
+        className={classes.card}
+        onClick={() => !tooBig && setOpen(true)}
+        title={tooBig ? i18n.t("annotator.previewUnavailable") : name}
+      >
+        <span className={classes.icon}>PDF</span>
+        <span className={classes.texts}>
+          <span className={classes.name}>{name}</span>
+          <span className={classes.meta}>
+            PDF{size ? ` · ${humanSize(size)}` : ""}
+          </span>
+        </span>
+        <IconButton
+          className={classes.download}
+          aria-label={i18n.t("annotator.download")}
+          onClick={event => {
+            event.stopPropagation();
+            downloadFile(url);
+          }}
+        >
+          <GetAppRoundedIcon />
+        </IconButton>
+      </ButtonBase>
       {open && (
         <DocumentAnnotator
           open={open}
           onClose={() => setOpen(false)}
           src={url}
           type="pdf"
-          fileName={fileName}
+          fileName={name}
           ticketId={ticketId}
         />
       )}

@@ -4,7 +4,9 @@ import { QueryTypes } from "sequelize";
 import sequelize from "../database";
 import User from "../models/User";
 import SystemMetricsService from "../services/SuperServices/SystemMetricsService";
-import PlatformOverviewService from "../services/SuperServices/PlatformOverviewService";
+import PlatformOverviewService, {
+  PlatformRevenueService
+} from "../services/SuperServices/PlatformOverviewService";
 
 /** Painel do super admin (rotas protegidas por isSuper). */
 export const system = async (req: Request, res: Response): Promise<Response> =>
@@ -17,6 +19,10 @@ export const overview = async (
   const companyId = Number(req.query.companyId) || undefined;
   return res.json(await PlatformOverviewService(companyId));
 };
+
+/** Recebimentos: quando cada cliente paga de novo. */
+export const revenue = async (req: Request, res: Response): Promise<Response> =>
+  res.json(await PlatformRevenueService());
 
 export const companyUsers = async (
   req: Request,

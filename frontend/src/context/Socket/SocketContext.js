@@ -53,24 +53,28 @@ class ManagedSocket {
     this.callbacks = [];
     this.joins = [];
 
-    this.rawSocket.on("connect", () => {
-      if (this.rawSocket.io.opts.query?.r && !this.rawSocket.recovered) {
-        const refreshJoinsOnReady = () => {
-          for (const j of this.joins) {
-            console.debug("refreshing join", j);
-            this.rawSocket.emit(`join${j.event}`, ...j.params);
-          }
-          this.rawSocket.off("ready", refreshJoinsOnReady);
-        };
-        for (const j of this.callbacks) {
-          if (j.managedOnly) {
-            continue;
-          }
-          this.rawSocket.off(j.event, j.callback);
-          this.rawSocket.on(j.event, j.callback);
-        }
+    /**
+     * Toda conexão nova zera as salas deste socket no servidor. Então, a
+     * cada "ready" (o servidor avisa quando terminou de preparar a conexão),
+     * entramos de novo em tudo o que esta tela pediu.
+     *
+     * Antes isso só acontecia em algumas reconexões, e quando não acontecia
+     * o app parava de receber mensagens até recarregar a página.
+     */
+    this.refreshJoins = () => {
+      for (const j of this.joins) {
+        this.rawSocket.emit(`join${j.event}`, ...j.params);
+      }
+    };
+    this.rawSocket.on("ready", this.refreshJoins);
 
-        this.rawSocket.on("ready", refreshJoinsOnReady);
+    this.rawSocket.on("connect", () => {
+      for (const j of this.callbacks) {
+        if (j.managedOnly) {
+          continue;
+        }
+        this.rawSocket.off(j.event, j.callback);
+        this.rawSocket.on(j.event, j.callback);
       }
     });
   }
@@ -116,13 +120,21 @@ class ManagedSocket {
 
   emit(event, ...params) {
     if (event.startsWith("join")) {
-      this.joins.push({ event: event.substring(4), params });
-      console.debug("Joining", { event: event.substring(4), params });
+      const name = event.substring(4);
+      const key = JSON.stringify(params);
+      const already = this.joins.some(
+        j => j.event === name && JSON.stringify(j.params) === key
+      );
+      if (!already) {
+        this.joins.push({ event: name, params });
+      }
+      console.debug("Joining", { event: name, params });
     }
     return this.rawSocket.emit(event, ...params);
   }
 
   disconnect() {
+    this.rawSocket.off("ready", this.refreshJoins);
     for (const j of this.joins) {
       this.rawSocket.emit(`leave${j.event}`, ...j.params);
     }
@@ -494,6 +506,17 @@ const socketManager = {
 
   onConnect: function (callbackReady) {
     this.onReady(callbackReady);
+  },
+
+  /**
+   * Avisa a CADA conexão pronta (inclusive reconexões), ao contrário de
+   * onReady, que dispara uma vez só. As telas usam para recarregar o que
+   * pode ter chegado enquanto o app estava sem conexão.
+   */
+  onEveryReady: function (callback) {
+    if (!this.currentSocket) return () => {};
+    this.currentSocket.on("ready", callback);
+    return () => this.currentSocket?.off("ready", callback);
   }
 };
 

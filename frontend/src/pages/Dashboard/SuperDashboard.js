@@ -50,6 +50,7 @@ import toastError from "../../errors/toastError";
 import BoxLoader from "../../components/ui/BoxLoader";
 import UserAvatar from "../../components/ui/UserAvatar";
 import CompaniesManager from "../../components/CompaniesManager";
+import Revenue from "./Revenue";
 import { i18n } from "../../translate/i18n";
 
 /**
@@ -203,8 +204,10 @@ const useStyles = makeStyles(theme => {
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      backgroundColor: t.brand.textSoft,
-      color: t.brand.text,
+      // cor de apoio por cartão: o painel deixa de ser todo da mesma cor
+      backgroundColor: `var(--tile-tone, ${t.brand.main})`,
+      color: "#FFFFFF",
+      boxShadow: `0 8px 18px -12px var(--tile-tone, ${t.brand.main})`,
       "& svg": { fontSize: 20 }
     },
     label: {
@@ -489,7 +492,8 @@ const ServerCard = ({
   samples,
   classes,
   theme,
-  delay
+  delay,
+  tone
 }) => {
   const color = toneFor(theme, percent ?? 0);
   return (
@@ -497,7 +501,8 @@ const ServerCard = ({
       className={classes.card}
       style={{
         animationDelay: `${delay}ms`,
-        paddingBottom: samples ? 44 : undefined
+        paddingBottom: samples ? 44 : undefined,
+        "--tile-tone": tone
       }}
     >
       <div className={classes.cardHead}>
@@ -521,8 +526,11 @@ const ServerCard = ({
   );
 };
 
-const Tile = ({ icon, label, value, sub, classes, delay }) => (
-  <div className={classes.card} style={{ animationDelay: `${delay}ms` }}>
+const Tile = ({ icon, label, value, sub, classes, delay, tone }) => (
+  <div
+    className={classes.card}
+    style={{ animationDelay: `${delay}ms`, "--tile-tone": tone }}
+  >
     <div className={classes.cardHead}>
       <span className={classes.icon}>{icon}</span>
       <span className={classes.label}>{label}</span>
@@ -782,6 +790,7 @@ const Overview = ({ classes, theme }) => {
   }));
 
   const t = theme.palette.tkv;
+  const accents = t.accents || [];
   const totals = overview?.totals;
   const cpu = system?.cpu.usage ?? 0;
   const memPct = system ? pct(system.memory.used, system.memory.total) : 0;
@@ -801,6 +810,7 @@ const Overview = ({ classes, theme }) => {
           <div className={classes.grid4}>
             <ServerCard
               classes={classes}
+              tone={accents[0]}
               theme={theme}
               delay={0}
               icon={<SpeedRoundedIcon />}
@@ -815,6 +825,7 @@ const Overview = ({ classes, theme }) => {
             />
             <ServerCard
               classes={classes}
+              tone={accents[1]}
               theme={theme}
               delay={40}
               icon={<MemoryRoundedIcon />}
@@ -830,6 +841,7 @@ const Overview = ({ classes, theme }) => {
             />
             <ServerCard
               classes={classes}
+              tone={accents[2]}
               theme={theme}
               delay={80}
               icon={<StorageRoundedIcon />}
@@ -840,6 +852,7 @@ const Overview = ({ classes, theme }) => {
             />
             <ServerCard
               classes={classes}
+              tone={accents[3]}
               theme={theme}
               delay={120}
               icon={<DnsRoundedIcon />}
@@ -867,6 +880,7 @@ const Overview = ({ classes, theme }) => {
           <div className={classes.grid6}>
             <Tile
               classes={classes}
+              tone={accents[0]}
               delay={0}
               icon={<BusinessRoundedIcon />}
               label={s("companies")}
@@ -875,6 +889,7 @@ const Overview = ({ classes, theme }) => {
             />
             <Tile
               classes={classes}
+              tone={accents[1]}
               delay={30}
               icon={<PeopleAltRoundedIcon />}
               label={s("users")}
@@ -883,6 +898,7 @@ const Overview = ({ classes, theme }) => {
             />
             <Tile
               classes={classes}
+              tone={accents[2]}
               delay={60}
               icon={<WhatsAppIcon />}
               label={s("connections")}
@@ -891,6 +907,7 @@ const Overview = ({ classes, theme }) => {
             />
             <Tile
               classes={classes}
+              tone={accents[3]}
               delay={90}
               icon={<ForumRoundedIcon />}
               label={s("tickets")}
@@ -899,6 +916,7 @@ const Overview = ({ classes, theme }) => {
             />
             <Tile
               classes={classes}
+              tone={accents[4]}
               delay={120}
               icon={<ChatBubbleRoundedIcon />}
               label={s("messagesToday")}
@@ -907,6 +925,7 @@ const Overview = ({ classes, theme }) => {
             />
             <Tile
               classes={classes}
+              tone={accents[5]}
               delay={150}
               icon={<FolderRoundedIcon />}
               label={s("storage")}
@@ -1263,7 +1282,7 @@ const SuperDashboard = ({ companyDashboard }) => {
           </span>
         </div>
         <div className={classes.tabs} role="tablist">
-          {["platform", "companies", "mine"].map(key => (
+          {["platform", "revenue", "companies", "mine"].map(key => (
             <ButtonBase
               key={key}
               role="tab"
@@ -1278,6 +1297,7 @@ const SuperDashboard = ({ companyDashboard }) => {
       </div>
 
       {tab === "platform" && <Overview classes={classes} theme={theme} />}
+      {tab === "revenue" && <Revenue />}
       {tab === "companies" && (
         <div className={classes.card} style={{ padding: 0 }}>
           <CompaniesManager />

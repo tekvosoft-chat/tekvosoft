@@ -10,7 +10,7 @@ import ReceiptRoundedIcon from "@material-ui/icons/ReceiptRounded";
 import moment from "moment";
 
 import MainContainer from "../../components/MainContainer";
-import SubscriptionModal from "../../components/SubscriptionModal";
+import PaymentDialog from "../../components/PaymentDialog";
 import BoxLoader from "../../components/ui/BoxLoader";
 import EmptyState from "../../components/ui/EmptyState";
 import api from "../../services/api";
@@ -399,12 +399,17 @@ const Invoices = () => {
 
   return (
     <MainContainer className={classes.page}>
-      <SubscriptionModal
+      <PaymentDialog
         open={!!paying}
+        invoice={paying}
         onClose={() => setPaying(null)}
-        aria-labelledby="form-dialog-title"
-        Invoice={paying || []}
-        contactId={null}
+        onPaid={() => {
+          setPaying(null);
+          api
+            .get("/invoices/all")
+            .then(({ data }) => setInvoices(Array.isArray(data) ? data : []))
+            .catch(() => {});
+        }}
       />
 
       <div className={classes.head}>

@@ -258,6 +258,13 @@ const TicketsListCustom = props => {
     return () => document.removeEventListener("visibilitychange", onVisibility);
   }, [refetchTickets]);
 
+  // reconectou: o servidor esqueceu as salas deste socket, então a lista é
+  // recarregada assim que a conexão volta
+  useEffect(() => {
+    const unsubscribe = socketManager.onEveryReady?.(() => refetchTickets());
+    return () => unsubscribe?.();
+  }, [socketManager, refetchTickets]);
+
   useEffect(() => {
     const queueIds = queues.map(q => q.id);
     const filteredTickets = tickets.filter(

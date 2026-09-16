@@ -19,6 +19,13 @@ superRoutes.get(
   SuperDashboardController.overview
 );
 superRoutes.get(
+  "/super/revenue",
+  isAuth,
+  isSuper,
+  SuperDashboardController.revenue
+);
+
+superRoutes.get(
   "/super/companies/:companyId/users",
   isAuth,
   isSuper,

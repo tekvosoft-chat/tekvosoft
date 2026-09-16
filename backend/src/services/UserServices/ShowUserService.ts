@@ -2,6 +2,8 @@ import User from "../../models/User";
 import AppError from "../../errors/AppError";
 import Queue from "../../models/Queue";
 import Company from "../../models/Company";
+import Plan from "../../models/Plan";
+import { PLAN_FEATURES } from "../../helpers/PlanFeatures";
 
 const ShowUserService = async (
   id: string | number,
@@ -17,6 +19,7 @@ const ShowUserService = async (
       "profile",
       "profileImage",
       "super",
+      "active",
       "tokenVersion"
     ],
     include: [
@@ -29,7 +32,9 @@ const ShowUserService = async (
         model: Company,
         as: "company",
         // createdAt: o banner de teste grátis compara cadastro e vencimento
-        attributes: ["id", "name", "dueDate", "createdAt"]
+        attributes: ["id", "name", "dueDate", "createdAt", "planId"],
+        // recursos do plano: a tela esconde o que não está incluído
+        include: [{ model: Plan, attributes: ["id", "name", ...PLAN_FEATURES] }]
       }
     ],
     order: [[{ model: Queue, as: "queues" }, "name", "ASC"]]

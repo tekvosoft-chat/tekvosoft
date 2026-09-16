@@ -221,9 +221,27 @@ export function tintNeutrals(base, brandHex) {
   const out = {};
   Object.entries(base).forEach(([key, value]) => {
     const hsl = rgbToHsl(hexToRgb(value));
-    out[key] = rgbToHex(hslToRgb({ ...hsl, h: hue }));
+    // só uma pitada do matiz da marca: antes os cinzas assumiam a cor
+    // inteira e o sistema ficava monocromático
+    out[key] = rgbToHex(hslToRgb({ ...hsl, h: hue, s: Math.min(hsl.s, 0.06) }));
   });
   return out;
+}
+
+/**
+ * Paleta de apoio derivada da cor da marca.
+ *
+ * Serve para os cartões de números, ícones e gráficos não ficarem todos da
+ * mesma cor: são matizes vizinhos e complementares da marca, com saturação
+ * controlada para continuarem combinando entre si.
+ */
+export function accentScale(brandHex, isDark) {
+  const { h, s } = rgbToHsl(hexToRgb(brandHex));
+  const sat = Math.min(0.72, Math.max(0.42, s));
+  const light = isDark ? 0.62 : 0.46;
+  return [0, 42, 96, 152, 200, 290].map(shift =>
+    rgbToHex(hslToRgb({ h: (h + shift) % 360, s: sat, l: light }))
+  );
 }
 
 // ─────────────────────────────────────────────────────────────

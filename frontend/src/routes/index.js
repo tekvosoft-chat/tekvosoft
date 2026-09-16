@@ -22,6 +22,7 @@ import { AuthProvider } from "../context/Auth/AuthContext";
 import { TicketsContextProvider } from "../context/Tickets/TicketsContext";
 import { WhatsAppsProvider } from "../context/WhatsApp/WhatsAppsContext";
 import Route from "./Route";
+import withPlanFeature, { superOnly } from "../components/PlanGate";
 import Schedules from "../pages/Schedules";
 import Campaigns from "../pages/Campaigns";
 import CampaignsConfig from "../pages/CampaignsConfig";
@@ -30,6 +31,18 @@ import Annoucements from "../pages/Annoucements";
 import Chat from "../pages/Chat";
 import Kanban from "../pages/Kanban/";
 import Subscription from "../pages/Subscription/";
+
+// telas que dependem do plano contratado
+const KanbanPage = withPlanFeature(Kanban, "useKanban");
+const AnnoucementsPage = superOnly(Annoucements);
+const ChatPage = withPlanFeature(Chat, "useInternalChat");
+const SchedulesPage = withPlanFeature(Schedules, "useSchedules");
+const MessagesAPIPage = withPlanFeature(MessagesAPI, "useExternalApi");
+const CampaignsPage = withPlanFeature(Campaigns, "useCampaigns");
+const CampaignsConfigPage = withPlanFeature(CampaignsConfig, "useCampaigns");
+const CampaignReportPage = withPlanFeature(CampaignReport, "useCampaigns");
+const ContactListsPage = withPlanFeature(ContactLists, "useCampaigns");
+const ContactListItemsPage = withPlanFeature(ContactListItems, "useCampaigns");
 
 const Routes = () => {
   const [showCampaigns, setShowCampaigns] = useState(false);
@@ -74,10 +87,10 @@ const Routes = () => {
                 <Route
                   exact
                   path="/schedules"
-                  component={Schedules}
+                  component={SchedulesPage}
                   isPrivate
                 />
-                <Route exact path="/kanban" component={Kanban} isPrivate />
+                <Route exact path="/kanban" component={KanbanPage} isPrivate />
                 {/* "Tarefas" virou Kanban: links e favoritos antigos continuam
                     chegando ao lugar certo */}
                 <Route
@@ -99,7 +112,7 @@ const Routes = () => {
                 <Route
                   exact
                   path="/messages-api"
-                  component={MessagesAPI}
+                  component={MessagesAPIPage}
                   isPrivate
                 />
                 <Route
@@ -118,7 +131,7 @@ const Routes = () => {
                 <Route
                   exact
                   path="/announcements"
-                  component={Annoucements}
+                  component={AnnoucementsPage}
                   isPrivate
                 />
                 <Route
@@ -128,37 +141,42 @@ const Routes = () => {
                   isPrivate
                 />
 
-                <Route exact path="/chats/:id?" component={Chat} isPrivate />
+                <Route
+                  exact
+                  path="/chats/:id?"
+                  component={ChatPage}
+                  isPrivate
+                />
                 {showCampaigns && (
                   <>
                     <Route
                       exact
                       path="/contact-lists"
-                      component={ContactLists}
+                      component={ContactListsPage}
                       isPrivate
                     />
                     <Route
                       exact
                       path="/contact-lists/:contactListId/contacts"
-                      component={ContactListItems}
+                      component={ContactListItemsPage}
                       isPrivate
                     />
                     <Route
                       exact
                       path="/campaigns"
-                      component={Campaigns}
+                      component={CampaignsPage}
                       isPrivate
                     />
                     <Route
                       exact
                       path="/campaign/:campaignId/report"
-                      component={CampaignReport}
+                      component={CampaignReportPage}
                       isPrivate
                     />
                     <Route
                       exact
                       path="/campaigns-config"
-                      component={CampaignsConfig}
+                      component={CampaignsConfigPage}
                       isPrivate
                     />
                   </>

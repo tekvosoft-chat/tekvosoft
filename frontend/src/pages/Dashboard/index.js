@@ -139,8 +139,9 @@ const useStyles = makeStyles(theme => ({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: theme.palette.tkv.brand.soft,
-    color: theme.palette.tkv.brand.main,
+    backgroundColor: `var(--metric-tone, ${theme.palette.tkv.brand.main})`,
+    color: "#FFFFFF",
+    boxShadow: "0 8px 18px -12px var(--metric-tone)",
     "& svg": { fontSize: 22 }
   },
   filterBar: {
@@ -206,11 +207,20 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-const MetricCard = ({ title, value, icon, graph }) => {
+// cada cartão puxa uma cor diferente da paleta de apoio: o painel deixa de
+// ser um bloco só da cor da marca
+const MetricCard = ({ title, value, icon, graph, tone = 0 }) => {
   const classes = useStyles();
+  const theme = useTheme();
+  const accents = theme.palette.tkv.accents || [];
+  const color = accents.length ? accents[tone % accents.length] : undefined;
 
   return (
-    <Paper className={classes.metricCard} variant="outlined">
+    <Paper
+      className={classes.metricCard}
+      variant="outlined"
+      style={color ? { "--metric-tone": color } : undefined}
+    >
       <div className={classes.metricBody}>
         <Typography component="h3" className={classes.metricLabel}>
           {title}
@@ -230,15 +240,17 @@ const MetricCard = ({ title, value, icon, graph }) => {
 
 // Dois atalhos para manter as chamadas existentes iguais. A diferença entre
 // eles agora é só o que aparece à direita (ícone ou anel), não o visual.
+let infoTone = 0;
 const InfoCard = props => (
   <Grid item xs={6} sm={6} md={3}>
-    <MetricCard {...props} />
+    <MetricCard tone={(infoTone += 1)} {...props} />
   </Grid>
 );
 
+let ringTone = 0;
 const InfoRingCard = props => (
   <Grid item xs={4} sm={4}>
-    <MetricCard {...props} />
+    <MetricCard tone={(ringTone += 1) + 2} {...props} />
   </Grid>
 );
 

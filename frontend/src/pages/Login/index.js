@@ -13,6 +13,8 @@ import Paper from "@material-ui/core/Paper";
 import MenuList from "@material-ui/core/MenuList";
 import IconButton from "@material-ui/core/IconButton";
 import { makeStyles, useTheme } from "@material-ui/core/styles";
+import useMediaQuery from "@material-ui/core/useMediaQuery";
+import GifShowcase from "./GifShowcase";
 import Brightness4Icon from "@material-ui/icons/Brightness4";
 import Brightness7Icon from "@material-ui/icons/Brightness7";
 import LanguageIcon from "@material-ui/icons/Translate";
@@ -102,6 +104,18 @@ const useStyles = makeStyles(theme => ({
     width: "100%",
     height: "100%",
     objectFit: "cover"
+  },
+  showcasePane: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    width: "50%",
+    zIndex: 1
+  },
+  contentSplit: {
+    marginRight: "50%",
+    "& $paper": { boxShadow: "none", background: "transparent" }
   },
   content: {
     position: "relative",
@@ -355,6 +369,7 @@ const useStyles = makeStyles(theme => ({
 const Login = () => {
   const classes = useStyles();
   const theme = useTheme();
+  const splitScreen = useMediaQuery(theme.breakpoints.up("md"));
   const { getPublicSetting } = useSettings();
   const { colorMode } = useContext(ColorModeContext);
 
@@ -418,6 +433,8 @@ const Login = () => {
   const sidePanelImageUrl = getPublicAssetUrl(sidePanelImage);
   const shouldRenderBackgroundVideo = isVideoFile(backgroundContent);
   const showSidePanelImage = !!sidePanelImageUrl;
+  // notebook: login de um lado, GIFs rolando do outro
+  const showShowcase = !showSidePanelImage && splitScreen;
   const isLightMode = theme.palette.type === "light";
 
   return (
@@ -495,7 +512,14 @@ const Login = () => {
           }
         />
       )}
-      <div className={classes.content}>
+      {showShowcase && (
+        <div className={classes.showcasePane}>
+          <GifShowcase />
+        </div>
+      )}
+      <div
+        className={`${classes.content}${showShowcase ? ` ${classes.contentSplit}` : ""}`}
+      >
         <div
           className={classes.layout}
           style={!showSidePanelImage ? { maxWidth: 440 } : undefined}

@@ -57,9 +57,12 @@ import MediaPreview from "../ui/MediaPreview";
 import { AttachPanel, RecordingPanel } from "./PhoneComposer";
 import QuickRepliesModal from "../QuickRepliesModal";
 import ExpressionPanel from "./ExpressionPanel";
-import { announceSend } from "../MessagesList/sendFlight";
+import {
+  announceFailed,
+  announceSending
+} from "../MessagesList/optimisticSend";
 import Popover from "@material-ui/core/Popover";
-import BottomSheet from "../ui/BottomSheet";
+import Collapse from "@material-ui/core/Collapse";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import ListItemIcon from "@material-ui/core/ListItemIcon";
@@ -316,51 +319,75 @@ const useStyles = makeStyles(theme => ({
     color: "green"
   },
 
+  /**
+   * Prévia da mensagem que está sendo respondida ou editada.
+   *
+   * Mensagem longa não pode empurrar a barra de envio para fora da tela:
+   * o texto fica preso em duas linhas, com reticências, como no WhatsApp.
+   */
   replyginMsgWrapper: {
     display: "flex",
     width: "100%",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: 8,
-    paddingLeft: 73,
-    paddingRight: 7,
-    [theme.breakpoints.down("xs")]: { paddingLeft: 8, paddingRight: 4 }
+    alignItems: "stretch",
+    gap: 6,
+    padding: "8px 10px 2px",
+    animation: "$replySlide .22s ease both",
+    [theme.breakpoints.down("xs")]: { padding: "6px 6px 0" }
+  },
+
+  "@keyframes replySlide": {
+    from: { opacity: 0, transform: "translateY(8px)" },
+    to: { opacity: 1, transform: "none" }
   },
 
   replyginMsgContainer: {
     flex: 1,
-    marginRight: 5,
-    overflowY: "hidden",
-    backgroundColor: "rgba(0, 0, 0, 0.05)",
-    borderRadius: "7.5px",
+    minWidth: 0,
+    overflow: "hidden",
+    backgroundColor: theme.palette.tkv.chat.quoteIn,
+    borderRadius: 10,
     display: "flex",
     position: "relative"
   },
 
   replyginMsgBody: {
-    padding: 10,
-    height: "auto",
-    display: "block",
-    whiteSpace: "pre-wrap",
-    overflow: "hidden"
+    flex: 1,
+    minWidth: 0,
+    padding: "7px 10px",
+    display: "flex",
+    flexDirection: "column",
+    gap: 2,
+    fontSize: "0.875rem",
+    color: theme.palette.tkv.chat.text,
+    "& > div, & > p": {
+      margin: 0,
+      display: "-webkit-box",
+      WebkitLineClamp: 2,
+      WebkitBoxOrient: "vertical",
+      overflow: "hidden",
+      overflowWrap: "anywhere",
+      whiteSpace: "pre-wrap",
+      maxHeight: "2.6em"
+    }
   },
 
   replyginContactMsgSideColor: {
     flex: "none",
     width: "4px",
-    backgroundColor: "#35cd96"
+    backgroundColor: theme.palette.tkv.brand.main
   },
 
   replyginSelfMsgSideColor: {
     flex: "none",
     width: "4px",
-    backgroundColor: "#6bcbef"
+    backgroundColor: theme.palette.tkv.semantic.success
   },
 
   messageContactName: {
     display: "flex",
-    color: "#6bcbef",
-    fontWeight: 500
+    fontSize: "0.75rem",
+    fontWeight: 700,
+    color: theme.palette.tkv.brand.text
   },
 
   iconSwitch: {
@@ -1290,15 +1317,23 @@ const MessageInputCustom = props => {
 
     handlePresenceUpdate(null);
 
-    // o balão sai da barra e voa até a conversa
-    if (editingMessage === null)
-      announceSend(inputMessage.trim(), inputRef.current);
+    // o balão entra na conversa na hora, saindo da barra de envio
+    const pendingId =
+      editingMessage === null
+        ? announceSending({
+            ticketId,
+            body: message.body,
+            quotedMsg: replyingMessage,
+            inputEl: inputRef.current
+          })
+        : null;
 
     const url =
       editingMessage !== null
         ? `/messages/edit/${editingMessage.id}`
         : `/messages/${ticketId}`;
     api.post(url, message).catch(err => {
+      if (pendingId) announceFailed(pendingId);
       toastError(err);
     });
 
@@ -1512,20 +1547,13 @@ const MessageInputCustom = props => {
             />
           </div>
         )}
-        <BottomSheet
-          open={exprOpen && !recording}
-          onClose={() => setExprOpen(false)}
-          title={i18n.t("expressions.title")}
-        >
-          {exprMounted && (
-            <ExpressionPanel
-              ticketId={ticketId}
-              showEmoji
-              onEmoji={handleAddEmoji}
-              disabled={disableOption}
-            />
-          )}
-        </BottomSheet>
+        <Collapse in={exprOpen && !recording} timeout={200} unmountOnExit>
+          <ExpressionPanel
+            compact
+            ticketId={ticketId}
+            disabled={disableOption}
+          />
+        </Collapse>
         <AttachPanel
           open={attachOpen && !recording}
           disabled={disableOption}

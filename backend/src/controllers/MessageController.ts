@@ -14,7 +14,9 @@ import {
   listStickers,
   searchGifs,
   sendGif,
-  sendSticker
+  sendSticker,
+  sendKlipy,
+  searchExpressions
 } from "../services/MessageServices/ExpressionsService";
 import ShowTicketService from "../services/TicketServices/ShowTicketService";
 import DeleteWhatsAppMessage from "../services/WbotServices/DeleteWhatsAppMessage";
@@ -451,6 +453,28 @@ export const gifs = async (req: Request, res: Response): Promise<Response> => {
 };
 
 /** Envia uma figurinha (messageId) ou um GIF (gifId) para o atendimento. */
+/** Busca de GIFs e figurinhas (KLIPY, com o GIPHY como reserva). */
+export const expressions = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { companyId } = req.user;
+  const { q, page, kind } = req.query as {
+    q?: string;
+    page?: string;
+    kind?: string;
+  };
+
+  const result = await searchExpressions(
+    companyId,
+    kind === "stickers" ? "stickers" : "gifs",
+    (q || "").trim(),
+    Number(page) || 1
+  );
+
+  return res.json(result);
+};
+
 export const sendExpression = async (
   req: Request,
   res: Response
@@ -466,6 +490,8 @@ export const sendExpression = async (
 
   if (stickerMessageId) {
     await sendSticker(ticket, String(stickerMessageId), companyId);
+  } else if (gifId && String(gifId).startsWith("klipy:")) {
+    await sendKlipy(ticket, String(gifId), companyId);
   } else if (gifId) {
     await sendGif(ticket, String(gifId), companyId);
   } else {

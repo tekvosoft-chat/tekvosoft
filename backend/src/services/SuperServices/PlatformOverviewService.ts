@@ -169,3 +169,123 @@ const PlatformOverviewService = async (companyId?: number) => {
 };
 
 export default PlatformOverviewService;
+
+/**
+ * Quando cada cliente paga de novo.
+ *
+ * Junta empresa + plano + faturas em aberto: a data do próximo vencimento, o
+ * valor combinado (o do plano, ou o da última fatura), a forma de pagamento
+ * guardada e o que já está atrasado. É o que alimenta a aba "Recebimentos".
+ */
+const RECURRENCE_MONTHS: Record<string, number> = {
+  MENSAL: 1,
+  BIMESTRAL: 2,
+  TRIMESTRAL: 3,
+  SEMESTRAL: 6,
+  ANUAL: 12
+};
+
+const PlatformRevenueService = async () => {
+  const rows = await select(`
+    SELECT c.id, c.name, c."dueDate", c.recurrence, c.status,
+           p.name AS "planName", p.value AS "planValue",
+           (SELECT s.value FROM "Settings" s
+             WHERE s."companyId" = c.id AND s.key = 'asaasCardLabel'
+             LIMIT 1) AS "cardLabel",
+           (SELECT COUNT(*) FROM "Invoices" i
+             WHERE i."companyId" = c.id AND i.status <> 'paid') AS "openInvoices",
+           (SELECT COALESCE(SUM(i.value), 0) FROM "Invoices" i
+             WHERE i."companyId" = c.id AND i.status <> 'paid'
+               AND i."dueDate"::date < now()::date) AS "overdueValue",
+           (SELECT MAX(i."updatedAt") FROM "Invoices" i
+             WHERE i."companyId" = c.id AND i.status = 'paid') AS "lastPayment",
+           (SELECT i.value FROM "Invoices" i
+             WHERE i."companyId" = c.id
+             ORDER BY i."dueDate"::date DESC LIMIT 1) AS "lastValue"
+      FROM "Companies" c
+      LEFT JOIN "Plans" p ON p.id = c."planId"
+     WHERE c.id <> 1
+     ORDER BY c."dueDate"::date ASC NULLS LAST
+  `);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const companies = rows.map(row => {
+    const months = RECURRENCE_MONTHS[row.recurrence] || 1;
+    const value = Number(row.planValue ?? row.lastValue ?? 0);
+    const dueDate = row.dueDate ? new Date(row.dueDate) : null;
+    const days = dueDate
+      ? Math.round((dueDate.getTime() - today.getTime()) / 86400000)
+      : null;
+
+    return {
+      id: Number(row.id),
+      name: row.name,
+      status: row.status,
+      plan: row.planName || null,
+      value,
+      recurrence: row.recurrence || "MENSAL",
+      months,
+      monthly: months > 0 ? value / months : value,
+      dueDate: row.dueDate,
+      daysToDue: days,
+      openInvoices: Number(row.openInvoices || 0),
+      overdueValue: Number(row.overdueValue || 0),
+      lastPayment: row.lastPayment || null,
+      autoCharge: !!row.cardLabel,
+      cardLabel: row.cardLabel || null
+    };
+  });
+
+  // previsão dos próximos 6 meses a partir da data de vencimento de cada um
+  const forecast: { month: string; value: number }[] = [];
+  for (let i = 0; i < 6; i += 1) {
+    const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    let total = 0;
+    companies.forEach(company => {
+      if (!company.dueDate || !company.value) return;
+      const due = new Date(company.dueDate);
+      // avança pela recorrência até cair neste mês (ou passar dele)
+      while (
+        due < date ||
+        (due.getFullYear() === date.getFullYear() &&
+          due.getMonth() === date.getMonth())
+      ) {
+        if (
+          due.getFullYear() === date.getFullYear() &&
+          due.getMonth() === date.getMonth()
+        ) {
+          total += company.value;
+        }
+        due.setMonth(due.getMonth() + company.months);
+        if (due.getFullYear() > date.getFullYear() + 1) break;
+      }
+    });
+    forecast.push({ month: key, value: Math.round(total * 100) / 100 });
+  }
+
+  const sum = (list: typeof companies, pick: (c: any) => number) =>
+    Math.round(list.reduce((acc, item) => acc + pick(item), 0) * 100) / 100;
+
+  return {
+    companies,
+    forecast,
+    totals: {
+      monthly: sum(companies, c => c.monthly),
+      next30: sum(
+        companies.filter(
+          c => c.daysToDue !== null && c.daysToDue <= 30 && c.daysToDue >= 0
+        ),
+        c => c.value
+      ),
+      overdue: sum(companies, c => c.overdueValue),
+      overdueCompanies: companies.filter(c => c.overdueValue > 0).length,
+      autoCharge: companies.filter(c => c.autoCharge).length,
+      companies: companies.length
+    }
+  };
+};
+
+export { PlatformRevenueService };

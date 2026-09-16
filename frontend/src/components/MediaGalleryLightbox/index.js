@@ -290,6 +290,8 @@ const MediaGalleryLightbox = ({
           "close"
         ].filter(Boolean)
       }}
+      // clicar fora da foto fecha, como no WhatsApp
+      controller={{ closeOnBackdropClick: true, closeOnPullDown: true }}
       plugins={[Video, Zoom, Download, Thumbnails, Captions]}
     />
   );

@@ -1,520 +1,639 @@
-import React, { useState, useEffect } from "react";
-import {
-  makeStyles,
-  Paper,
-  Grid,
-  TextField,
-  Table,
-  TableHead,
-  TableBody,
-  TableCell,
-  TableRow,
-  IconButton,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem
-} from "@material-ui/core";
-import { Formik, Form, Field } from "formik";
-import ButtonWithSpinner from "../ButtonWithSpinner";
-import ConfirmationModal from "../ConfirmationModal";
-import { Edit as EditIcon } from "@material-ui/icons";
-
+import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import { makeStyles } from "@material-ui/core/styles";
+import Button from "@material-ui/core/Button";
+import ButtonBase from "@material-ui/core/ButtonBase";
+import Dialog from "@material-ui/core/Dialog";
+import DialogActions from "@material-ui/core/DialogActions";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogTitle from "@material-ui/core/DialogTitle";
+import IconButton from "@material-ui/core/IconButton";
+import Switch from "@material-ui/core/Switch";
+import TextField from "@material-ui/core/TextField";
+import MenuItem from "@material-ui/core/MenuItem";
+import Typography from "@material-ui/core/Typography";
+import AddRoundedIcon from "@material-ui/icons/AddRounded";
+import EditOutlinedIcon from "@material-ui/icons/EditOutlined";
+import DeleteOutlineRoundedIcon from "@material-ui/icons/DeleteOutlineRounded";
+import CheckRoundedIcon from "@material-ui/icons/CheckRounded";
+import CloseRoundedIcon from "@material-ui/icons/CloseRounded";
+import AutoAwesomeIcon from "@material-ui/icons/WbIncandescentOutlined";
+
+import ConfirmationModal from "../ConfirmationModal";
+import BoxLoader from "../ui/BoxLoader";
 import usePlans from "../../hooks/usePlans";
 import { safeValueFormat } from "../../helpers/safeValueFormat";
+import { PLAN_FEATURES } from "../../helpers/planFeatures";
 import { i18n } from "../../translate/i18n";
-import cc from "currency-codes";
 
-// Maps the i18n language code (e.g. "pt", "pt_PT", "en") to a locale accepted
-// by Intl.NumberFormat (e.g. "pt-BR", "pt-PT", "en").
-const getLocale = () =>
-  (i18n.resolvedLanguage || i18n.language || "en").replace("_", "-").trim();
-
-// Detects the thousands and decimal separators used by the selected locale,
-// so formatted values can be parsed back into plain numbers correctly.
-const getSeparators = () => {
-  try {
-    const sample = new Intl.NumberFormat(getLocale()).format(1234.5);
-    const separators = sample.replace(/[0-9]/g, "");
-    // The decimal separator is the last non-digit character; the thousands
-    // separator (if any) is the one immediately before it.
-    const decimal = separators[separators.length - 1] || ".";
-    const thousands = separators.length > 1 ? separators[0] : "";
-    return { decimal, thousands };
-  } catch (e) {
-    return { decimal: ".", thousands: "," };
+/**
+ * Planos em cartões, como uma página de preços.
+ *
+ * Cada plano tem limites (usuários, conexões, filas), valor e os recursos
+ * incluídos — Kanban, chat interno, agendamentos, campanhas e API. Os
+ * modelos prontos criam planos típicos com um toque (dá para ajustar antes
+ * de salvar).
+ */
+const TEMPLATES = [
+  {
+    key: "start",
+    name: "Start",
+    users: 2,
+    connections: 1,
+    queues: 2,
+    value: 97,
+    features: {
+      useKanban: true,
+      useInternalChat: true,
+      useSchedules: false,
+      useCampaigns: false,
+      useExternalApi: false
+    }
+  },
+  {
+    key: "pro",
+    name: "Profissional",
+    users: 5,
+    connections: 2,
+    queues: 5,
+    value: 197,
+    features: {
+      useKanban: true,
+      useInternalChat: true,
+      useSchedules: true,
+      useCampaigns: false,
+      useExternalApi: false
+    }
+  },
+  {
+    key: "business",
+    name: "Business",
+    users: 15,
+    connections: 5,
+    queues: 10,
+    value: 397,
+    features: {
+      useKanban: true,
+      useInternalChat: true,
+      useSchedules: true,
+      useCampaigns: true,
+      useExternalApi: true
+    }
+  },
+  {
+    key: "enterprise",
+    name: "Enterprise",
+    users: 50,
+    connections: 15,
+    queues: 30,
+    value: 897,
+    features: {
+      useKanban: true,
+      useInternalChat: true,
+      useSchedules: true,
+      useCampaigns: true,
+      useExternalApi: true
+    }
   }
+];
+
+const EMPTY = {
+  name: "",
+  users: 1,
+  connections: 1,
+  queues: 1,
+  value: 0,
+  currency: "BRL",
+  isPublic: true,
+  ...Object.fromEntries(PLAN_FEATURES.map(f => [f, true]))
 };
 
-// Converts a possibly formatted value (e.g. "1.234,56" or "1,234.56") into a
-// plain number, stripping the locale-specific thousands separator and
-// normalizing the decimal separator, so the backend always receives an
-// unformatted numeric value.
-const parseValueToNumber = value => {
-  if (typeof value === "number") {
-    return value;
-  }
-  if (typeof value !== "string" || value.trim() === "") {
-    return 0;
-  }
-  const { decimal, thousands } = getSeparators();
-  let normalized = value.trim();
-  if (thousands) {
-    normalized = normalized.split(thousands).join("");
-  }
-  if (decimal !== ".") {
-    normalized = normalized.split(decimal).join(".");
-  }
-  const parsed = Number(normalized);
-  return Number.isNaN(parsed) ? 0 : parsed;
-};
+const CURRENCIES = [
+  "BRL",
+  "USD",
+  "EUR",
+  "PYG",
+  "ARS",
+  "MXN",
+  "COP",
+  "CLP",
+  "PEN"
+];
 
-// Formats a numeric value for display only, adapting the thousands/decimal
-// separators to the selected language. The value sent to the backend remains
-// unformatted (see parseValueToNumber).
-const formatValueForDisplay = value => {
-  if (typeof value !== "number" || Number.isNaN(value)) {
-    return "";
-  }
-  try {
-    return new Intl.NumberFormat(getLocale(), {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(value);
-  } catch (e) {
-    return value.toString();
-  }
-};
+const useStyles = makeStyles(theme => {
+  const t = theme.palette.tkv;
+  return {
+    root: {
+      display: "flex",
+      flexDirection: "column",
+      gap: theme.spacing(2.5),
+      padding: theme.spacing(1, 0)
+    },
+    head: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      flexWrap: "wrap",
+      gap: 12
+    },
+    title: {
+      fontSize: "1.125rem",
+      fontWeight: 800,
+      color: theme.palette.text.primary
+    },
+    sub: { fontSize: "0.875rem", color: theme.palette.text.secondary },
+    pill: { borderRadius: 999, textTransform: "none", fontWeight: 700 },
+    sectionTitle: {
+      fontSize: "0.8125rem",
+      fontWeight: 800,
+      textTransform: "uppercase",
+      letterSpacing: "0.04em",
+      color: theme.palette.text.secondary
+    },
+    templates: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+      gap: 10
+    },
+    template: {
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "flex-start",
+      gap: 2,
+      padding: theme.spacing(1.5, 2),
+      borderRadius: t.radius.lg,
+      border: `1px dashed ${t.brand.textBorder}`,
+      backgroundColor: t.brand.textSoft,
+      textAlign: "left",
+      "&:hover": { borderStyle: "solid" }
+    },
+    templateName: {
+      display: "flex",
+      alignItems: "center",
+      gap: 6,
+      fontWeight: 800,
+      color: t.brand.text,
+      "& svg": { fontSize: 18 }
+    },
+    grid: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+      gap: theme.spacing(2)
+    },
+    card: {
+      position: "relative",
+      display: "flex",
+      flexDirection: "column",
+      gap: theme.spacing(1.5),
+      padding: theme.spacing(2.5, 2.25),
+      borderRadius: t.radius.xl,
+      border: `1px solid ${t.border}`,
+      backgroundColor: t.surface,
+      animation: "$rise .35s ease both",
+      transition: "transform .18s ease, box-shadow .18s ease",
+      "&:hover": {
+        transform: "translateY(-3px)",
+        boxShadow: `0 18px 40px -24px ${t.brand.main}`
+      }
+    },
+    featured: {
+      borderColor: t.brand.main,
+      boxShadow: `0 0 0 1px ${t.brand.main}`
+    },
+    ribbon: {
+      position: "absolute",
+      top: -11,
+      left: 18,
+      padding: "3px 10px",
+      borderRadius: 999,
+      fontSize: "0.6875rem",
+      fontWeight: 800,
+      color: t.brand.contrastText,
+      backgroundColor: t.brand.main
+    },
+    planName: {
+      fontSize: "1.125rem",
+      fontWeight: 800,
+      color: theme.palette.text.primary
+    },
+    badge: {
+      marginLeft: 8,
+      padding: "1px 8px",
+      borderRadius: 999,
+      fontSize: "0.6875rem",
+      fontWeight: 700,
+      backgroundColor: t.surfaceSunken,
+      color: theme.palette.text.secondary
+    },
+    price: { display: "flex", alignItems: "baseline", gap: 4 },
+    priceValue: {
+      fontSize: "1.875rem",
+      fontWeight: 800,
+      letterSpacing: "-0.03em",
+      color: theme.palette.text.primary
+    },
+    priceUnit: { fontSize: "0.8125rem", color: theme.palette.text.secondary },
+    limits: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 },
+    limit: {
+      padding: "8px 4px",
+      borderRadius: 10,
+      textAlign: "center",
+      backgroundColor: t.surfaceSunken
+    },
+    limitValue: {
+      fontSize: "1rem",
+      fontWeight: 800,
+      color: theme.palette.text.primary
+    },
+    limitLabel: { fontSize: "0.6875rem", color: theme.palette.text.secondary },
+    features: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 6,
+      margin: 0,
+      padding: 0,
+      listStyle: "none"
+    },
+    feature: {
+      display: "flex",
+      alignItems: "center",
+      gap: 8,
+      fontSize: "0.875rem",
+      color: theme.palette.text.primary,
+      "& svg": { fontSize: 18 }
+    },
+    on: { color: t.semantic.success },
+    off: {
+      color: theme.palette.text.disabled,
+      textDecoration: "line-through",
+      "& svg": { color: theme.palette.text.disabled }
+    },
+    actions: { display: "flex", gap: 8, marginTop: "auto" },
+    formGrid: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: 12,
+      [theme.breakpoints.down("xs")]: { gridTemplateColumns: "1fr" }
+    },
+    switchRow: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 12,
+      padding: "6px 0",
+      borderBottom: `1px solid ${t.border}`
+    },
+    switchText: { display: "flex", flexDirection: "column" },
+    switchHint: { fontSize: "0.75rem", color: theme.palette.text.secondary },
+    center: { display: "flex", justifyContent: "center", padding: 32 },
+    "@keyframes rise": {
+      from: { opacity: 0, transform: "translateY(8px)" },
+      to: { opacity: 1, transform: "none" }
+    }
+  };
+});
 
-const useStyles = makeStyles(theme => ({
-  root: {
-    width: "100%"
-  },
-  mainPaper: {
-    width: "100%",
-    flex: 1,
-    padding: theme.spacing(2)
-  },
-  fullWidth: {
-    width: "100%"
-  },
-  tableContainer: {
-    width: "100%",
-    overflowX: "scroll",
-    ...theme.scrollbarStyles
-  },
-  textfield: {
-    width: "100%"
-  },
-  textRight: {
-    textAlign: "right"
-  },
-  row: {
-    paddingTop: theme.spacing(2),
-    paddingBottom: theme.spacing(2)
-  },
-  control: {
-    paddingRight: theme.spacing(1),
-    paddingLeft: theme.spacing(1)
-  },
-  buttonContainer: {
-    textAlign: "right",
-    padding: theme.spacing(1)
-  }
-}));
-
-export function PlanManagerForm(props) {
-  const { onSubmit, onDelete, onCancel, initialValue, loading } = props;
+const PlanForm = ({ open, initial, onClose, onSave, saving }) => {
   const classes = useStyles();
-
-  const [record, setRecord] = useState({
-    name: "",
-    users: 0,
-    connections: 0,
-    queues: 0,
-    value: 0,
-    currency: "",
-    isPublic: true
-  });
+  const [form, setForm] = useState(EMPTY);
+  const p = key => i18n.t(`plansPage.${key}`);
 
   useEffect(() => {
-    setRecord(initialValue);
-  }, [initialValue]);
+    if (open) setForm({ ...EMPTY, ...initial });
+  }, [open, initial]);
 
-  const handleSubmit = async data => {
-    onSubmit(data);
-  };
+  const set = (key, value) => setForm(f => ({ ...f, [key]: value }));
+  const valid = form.name.trim().length >= 2;
 
   return (
-    <Formik
-      enableReinitialize
-      className={classes.fullWidth}
-      initialValues={record}
-      onSubmit={(values, { resetForm }) =>
-        setTimeout(() => {
-          handleSubmit(values);
-          resetForm();
-        }, 500)
-      }
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      scroll="paper"
     >
-      {values => (
-        <Form className={classes.fullWidth}>
-          <Grid spacing={2} justifyContent="flex-end" container>
-            <Grid xs={12} sm={6} md={3} item>
-              <Field
-                as={TextField}
-                label={i18n.t("common.name")}
-                name="name"
-                variant="outlined"
-                className={classes.fullWidth}
-                margin="dense"
-              />
-            </Grid>
-            <Grid xs={12} sm={6} md={3} item>
-              <FormControl margin="dense" variant="outlined" fullWidth>
-                <InputLabel htmlFor="status-selection">
-                  {i18n.t("settings.Plans.public")}
-                </InputLabel>
-                <Field
-                  as={Select}
-                  id="status-selection"
-                  label={i18n.t("settings.Plans.public")}
-                  labelId="status-selection-label"
-                  name="isPublic"
-                  margin="dense"
-                >
-                  <MenuItem value={true}>{i18n.t("common.yes")}</MenuItem>
-                  <MenuItem value={false}>{i18n.t("common.no")}</MenuItem>
-                </Field>
-              </FormControl>
-            </Grid>
-
-            <Grid xs={12} sm={6} md={3} item>
-              <FormControl margin="dense" variant="outlined" fullWidth>
-                <InputLabel id="currency-select-label">
-                  {i18n.t("settings.Plans.currencyCode")}
-                </InputLabel>
-                <Field
-                  as={Select}
-                  labelId="currency-select-label"
-                  id="currency-select"
-                  name="currency"
-                  label={i18n.t("settings.Plans.currencyCode")}
-                  margin="dense"
-                >
-                  {cc.codes().map(code => {
-                    const currencyInfo = cc.code(code);
-                    if (
-                      currencyInfo &&
-                      currencyInfo.countries &&
-                      currencyInfo.countries.length > 0
-                    ) {
-                      if (currencyInfo.countries.length > 1) {
-                        return (
-                          <MenuItem key={code} value={code}>
-                            {`${code} - ${currencyInfo.currency}`}
-                          </MenuItem>
-                        );
-                      } else {
-                        return (
-                          <MenuItem key={code} value={code}>
-                            {code} - {currencyInfo.countries[0]} -{" "}
-                            {currencyInfo.currency}
-                          </MenuItem>
-                        );
-                      }
-                    } else {
-                      return (
-                        <MenuItem key={code} value={code}>
-                          {code}
-                        </MenuItem>
-                      );
-                    }
-                  })}
-                </Field>
-              </FormControl>
-            </Grid>
-
-            <Grid xs={12} sm={6} md={3} item>
-              <Field
-                as={TextField}
-                label={i18n.t("common.value")}
-                name="value"
-                variant="outlined"
-                className={classes.fullWidth}
-                margin="dense"
-                type="text"
-              />
-            </Grid>
-            <Grid xs={12} sm={6} md={4} item>
-              <Field
-                as={TextField}
-                label={i18n.t("settings.Plans.usersLimit")}
-                name="users"
-                variant="outlined"
-                className={classes.fullWidth}
-                margin="dense"
-                type="number"
-              />
-            </Grid>
-            <Grid xs={12} sm={6} md={4} item>
-              <Field
-                as={TextField}
-                label={i18n.t("settings.Plans.connectionsLimit")}
-                name="connections"
-                variant="outlined"
-                className={classes.fullWidth}
-                margin="dense"
-                type="number"
-              />
-            </Grid>
-            <Grid xs={12} sm={6} md={4} item>
-              <Field
-                as={TextField}
-                label={i18n.t("settings.Plans.queuesLimit")}
-                name="queues"
-                variant="outlined"
-                className={classes.fullWidth}
-                margin="dense"
-                type="number"
-              />
-            </Grid>
-            <Grid xs={12} item>
-              <Grid justifyContent="flex-end" spacing={1} container>
-                <Grid xs={4} md={1} item>
-                  <ButtonWithSpinner
-                    className={classes.fullWidth}
-                    loading={loading}
-                    onClick={() => onCancel()}
-                    variant="contained"
-                  >
-                    {i18n.t("common.cancel")}
-                  </ButtonWithSpinner>
-                </Grid>
-                {record.id !== undefined ? (
-                  <Grid xs={4} md={1} item>
-                    <ButtonWithSpinner
-                      className={classes.fullWidth}
-                      loading={loading}
-                      onClick={() => onDelete(record)}
-                      variant="contained"
-                      color="secondary"
-                    >
-                      {i18n.t("common.delete")}
-                    </ButtonWithSpinner>
-                  </Grid>
-                ) : null}
-                <Grid xs={4} md={1} item>
-                  <ButtonWithSpinner
-                    className={classes.fullWidth}
-                    loading={loading}
-                    type="submit"
-                    variant="contained"
-                    color="primary"
-                  >
-                    {i18n.t("common.save")}
-                  </ButtonWithSpinner>
-                </Grid>
-              </Grid>
-            </Grid>
-          </Grid>
-        </Form>
-      )}
-    </Formik>
-  );
-}
-
-export function PlansManagerGrid(props) {
-  const { records, onSelect } = props;
-  const classes = useStyles();
-
-  return (
-    <Paper className={classes.tableContainer}>
-      <Table
-        className={classes.fullWidth}
-        size="small"
-        aria-label="a dense table"
+      <DialogTitle>{form.id ? p("edit") : p("new")}</DialogTitle>
+      <DialogContent
+        dividers
+        style={{ display: "flex", flexDirection: "column", gap: 16 }}
       >
-        <TableHead>
-          <TableRow>
-            <TableCell align="center" style={{ width: "1%" }}>
-              #
-            </TableCell>
-            <TableCell align="left">{i18n.t("common.name")}</TableCell>
-            <TableCell align="center">
-              {i18n.t("settings.Plans.usersLimit")}
-            </TableCell>
-            <TableCell align="center">
-              {i18n.t("settings.Plans.public")}
-            </TableCell>
-            <TableCell align="center">
-              {i18n.t("settings.Plans.connectionsLimit")}
-            </TableCell>
-            <TableCell align="center">
-              {i18n.t("settings.Plans.queuesLimit")}
-            </TableCell>
-            <TableCell align="center">{i18n.t("common.value")}</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {records.map(row => (
-            <TableRow key={row.id}>
-              <TableCell align="center" style={{ width: "1%" }}>
-                <IconButton onClick={() => onSelect(row)} aria-label="delete">
-                  <EditIcon />
-                </IconButton>
-              </TableCell>
-              <TableCell align="left">{row.name || "-"}</TableCell>
-              <TableCell align="center">{row.users || "-"}</TableCell>
-              <TableCell align="center">
-                {row.isPublic ? "Sim" : "Não" || "-"}
-              </TableCell>
-              <TableCell align="center">{row.connections || "-"}</TableCell>
-              <TableCell align="center">{row.queues || "-"}</TableCell>
-              <TableCell align="center">
-                {safeValueFormat(row.value, row.currency)}
-              </TableCell>
-            </TableRow>
+        <div className={classes.formGrid}>
+          <TextField
+            label={p("form.name")}
+            variant="outlined"
+            size="small"
+            value={form.name}
+            onChange={e => set("name", e.target.value)}
+            autoFocus
+          />
+          <TextField
+            label={p("form.value")}
+            variant="outlined"
+            size="small"
+            type="number"
+            inputProps={{ min: 0, step: "0.01" }}
+            value={form.value}
+            onChange={e => set("value", e.target.value)}
+          />
+          <TextField
+            label={p("form.users")}
+            variant="outlined"
+            size="small"
+            type="number"
+            inputProps={{ min: 0 }}
+            value={form.users}
+            onChange={e => set("users", e.target.value)}
+          />
+          <TextField
+            label={p("form.connections")}
+            variant="outlined"
+            size="small"
+            type="number"
+            inputProps={{ min: 0 }}
+            value={form.connections}
+            onChange={e => set("connections", e.target.value)}
+          />
+          <TextField
+            label={p("form.queues")}
+            variant="outlined"
+            size="small"
+            type="number"
+            inputProps={{ min: 0 }}
+            value={form.queues}
+            onChange={e => set("queues", e.target.value)}
+          />
+          <TextField
+            select
+            label={p("form.currency")}
+            variant="outlined"
+            size="small"
+            value={form.currency || "BRL"}
+            onChange={e => set("currency", e.target.value)}
+          >
+            {CURRENCIES.map(c => (
+              <MenuItem key={c} value={c}>
+                {c}
+              </MenuItem>
+            ))}
+          </TextField>
+        </div>
+        <div>
+          <Typography className={classes.sectionTitle}>
+            {p("featuresTitle")}
+          </Typography>
+          {PLAN_FEATURES.map(feature => (
+            <div key={feature} className={classes.switchRow}>
+              <span className={classes.switchText}>
+                <span>{i18n.t(`planFeatures.names.${feature}`)}</span>
+                <span className={classes.switchHint}>
+                  {i18n.t(`planFeatures.hints.${feature}`)}
+                </span>
+              </span>
+              <Switch
+                color="primary"
+                checked={form[feature] !== false}
+                onChange={e => set(feature, e.target.checked)}
+              />
+            </div>
           ))}
-        </TableBody>
-      </Table>
-    </Paper>
+          <div className={classes.switchRow} style={{ borderBottom: "none" }}>
+            <span className={classes.switchText}>
+              <span>{p("form.public")}</span>
+              <span className={classes.switchHint}>{p("form.publicHint")}</span>
+            </span>
+            <Switch
+              color="primary"
+              checked={form.isPublic !== false}
+              onChange={e => set("isPublic", e.target.checked)}
+            />
+          </div>
+        </div>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>{i18n.t("common.cancel")}</Button>
+        <Button
+          variant="contained"
+          color="primary"
+          disabled={!valid || saving}
+          onClick={() => onSave(form)}
+        >
+          {i18n.t("common.save")}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
-}
+};
 
-export default function PlansManager() {
+const PlansManager = () => {
   const classes = useStyles();
   const { list, save, update, remove } = usePlans();
+  const [plans, setPlans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [removing, setRemoving] = useState(null);
+  const p = (key, opts) => i18n.t(`plansPage.${key}`, opts);
 
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [records, setRecords] = useState([]);
-  const [record, setRecord] = useState({
-    name: "",
-    users: 0,
-    connections: 0,
-    queues: 0,
-    value: 0,
-    currency: ""
-  });
+  const load = async () => {
+    try {
+      setPlans(await list());
+    } catch (e) {
+      toast.error(p("loadError"));
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
-    async function fetchData() {
-      await loadPlans();
-    }
-    fetchData();
+    load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const loadPlans = async () => {
-    setLoading(true);
-    try {
-      const planList = await list();
-      console.log(planList);
-      setRecords(planList);
-    } catch (e) {
-      toast.error("Não foi possível carregar a lista de registros");
-    }
-    setLoading(false);
-  };
-
-  const handleSubmit = async data => {
-    const datanew = {
-      id: data.id,
-      connections: data.connections,
-      name: data.name,
-      queues: data.queues,
-      users: data.users,
-      value: parseValueToNumber(data.value),
-      currency: data.currency,
-      isPublic: data.isPublic
+  const handleSave = async form => {
+    setSaving(true);
+    const data = {
+      ...form,
+      users: Number(form.users) || 0,
+      connections: Number(form.connections) || 0,
+      queues: Number(form.queues) || 0,
+      value: Number(String(form.value).replace(",", ".")) || 0
     };
-    console.log(datanew);
-    setLoading(true);
     try {
-      if (data.id !== undefined) {
-        await update(datanew);
-      } else {
-        await save(datanew);
-      }
-      await loadPlans();
-      handleCancel();
-      toast.success("Operação realizada com sucesso!");
+      if (form.id) await update(data);
+      else await save(data);
+      toast.success(p("saved"));
+      setEditing(null);
+      await load();
     } catch (e) {
-      toast.error(
-        "Não foi possível realizar a operação. Verifique se já existe uma plano com o mesmo nome ou se os campos foram preenchidos corretamente"
-      );
+      toast.error(p("saveError"));
     }
-    setLoading(false);
+    setSaving(false);
   };
 
-  const handleDelete = async () => {
-    setLoading(true);
-    try {
-      await remove(record.id);
-      await loadPlans();
-      handleCancel();
-      toast.success("Operação realizada com sucesso!");
-    } catch (e) {
-      toast.error("Não foi possível realizar a operação");
-    }
-    setLoading(false);
-  };
-
-  const handleOpenDeleteDialog = () => {
-    setShowConfirmDialog(true);
-  };
-
-  const handleCancel = () => {
-    setRecord({
-      name: "",
-      users: 0,
-      connections: 0,
-      queues: 0,
-      value: 0,
-      currency: "",
-      isPublic: true
-    });
-  };
-
-  const handleSelect = data => {
-    setRecord({
-      id: data.id,
-      name: data.name || "",
-      users: data.users || 0,
-      connections: data.connections || 0,
-      queues: data.queues || 0,
-      value: formatValueForDisplay(data.value),
-      currency: data.currency || "",
-      isPublic: data.isPublic
-    });
-  };
+  const featuredId =
+    plans.length > 2
+      ? [...plans].sort((a, b) => a.value - b.value)[
+          Math.floor(plans.length / 2)
+        ]?.id
+      : null;
 
   return (
-    <Paper className={classes.mainPaper} elevation={0}>
-      <Grid spacing={2} container>
-        <Grid xs={12} item>
-          <PlanManagerForm
-            initialValue={record}
-            onDelete={handleOpenDeleteDialog}
-            onSubmit={handleSubmit}
-            onCancel={handleCancel}
-            loading={loading}
-          />
-        </Grid>
-        <Grid xs={12} item>
-          <PlansManagerGrid records={records} onSelect={handleSelect} />
-        </Grid>
-      </Grid>
+    <div className={classes.root}>
+      <div className={classes.head}>
+        <div>
+          <Typography className={classes.title}>{p("title")}</Typography>
+          <Typography className={classes.sub}>{p("subtitle")}</Typography>
+        </div>
+        <Button
+          variant="contained"
+          color="primary"
+          className={classes.pill}
+          startIcon={<AddRoundedIcon />}
+          onClick={() => setEditing({})}
+        >
+          {p("new")}
+        </Button>
+      </div>
+
+      <div>
+        <Typography
+          className={classes.sectionTitle}
+          style={{ marginBottom: 8 }}
+        >
+          {p("templatesTitle")}
+        </Typography>
+        <div className={classes.templates}>
+          {TEMPLATES.map(tpl => (
+            <ButtonBase
+              key={tpl.key}
+              className={classes.template}
+              onClick={() =>
+                setEditing({
+                  name: plans.some(pl => pl.name === tpl.name)
+                    ? `${tpl.name} 2`
+                    : tpl.name,
+                  users: tpl.users,
+                  connections: tpl.connections,
+                  queues: tpl.queues,
+                  value: tpl.value,
+                  currency: "BRL",
+                  isPublic: true,
+                  ...tpl.features
+                })
+              }
+            >
+              <span className={classes.templateName}>
+                <AutoAwesomeIcon />
+                {tpl.name}
+              </span>
+              <span className={classes.sub}>{p(`templates.${tpl.key}`)}</span>
+            </ButtonBase>
+          ))}
+        </div>
+      </div>
+
+      {loading ? (
+        <div className={classes.center}>
+          <BoxLoader />
+        </div>
+      ) : (
+        <div className={classes.grid}>
+          {plans.map((plan, index) => (
+            <div
+              key={plan.id}
+              className={`${classes.card}${plan.id === featuredId ? ` ${classes.featured}` : ""}`}
+              style={{ animationDelay: `${index * 40}ms` }}
+            >
+              {plan.id === featuredId && (
+                <span className={classes.ribbon}>{p("popular")}</span>
+              )}
+              <div>
+                <span className={classes.planName}>{plan.name}</span>
+                <span className={classes.badge}>
+                  {plan.isPublic ? p("public") : p("private")}
+                </span>
+              </div>
+              <div className={classes.price}>
+                <span className={classes.priceValue}>
+                  {safeValueFormat(plan.value, plan.currency || "BRL")}
+                </span>
+                <span className={classes.priceUnit}>{p("perMonth")}</span>
+              </div>
+              <div className={classes.limits}>
+                {["users", "connections", "queues"].map(key => (
+                  <div key={key} className={classes.limit}>
+                    <div className={classes.limitValue}>{plan[key]}</div>
+                    <div className={classes.limitLabel}>{p(`form.${key}`)}</div>
+                  </div>
+                ))}
+              </div>
+              <ul className={classes.features}>
+                {PLAN_FEATURES.map(feature => {
+                  const on = plan[feature] !== false;
+                  return (
+                    <li
+                      key={feature}
+                      className={`${classes.feature}${on ? "" : ` ${classes.off}`}`}
+                    >
+                      {on ? (
+                        <CheckRoundedIcon className={classes.on} />
+                      ) : (
+                        <CloseRoundedIcon />
+                      )}
+                      {i18n.t(`planFeatures.names.${feature}`)}
+                    </li>
+                  );
+                })}
+              </ul>
+              <div className={classes.actions}>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  color="primary"
+                  className={classes.pill}
+                  startIcon={<EditOutlinedIcon />}
+                  onClick={() => setEditing(plan)}
+                >
+                  {p("editShort")}
+                </Button>
+                <IconButton
+                  onClick={() => setRemoving(plan)}
+                  aria-label={p("delete")}
+                >
+                  <DeleteOutlineRoundedIcon />
+                </IconButton>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <PlanForm
+        open={!!editing}
+        initial={editing || {}}
+        onClose={() => setEditing(null)}
+        onSave={handleSave}
+        saving={saving}
+      />
       <ConfirmationModal
-        title="Exclusão de Registro"
-        open={showConfirmDialog}
-        onClose={() => setShowConfirmDialog(false)}
-        onConfirm={() => handleDelete()}
+        title={p("deleteTitle", { name: removing?.name })}
+        open={!!removing}
+        onClose={() => setRemoving(null)}
+        onConfirm={async () => {
+          try {
+            await remove(removing.id);
+            toast.success(p("deleted"));
+            await load();
+          } catch (e) {
+            toast.error(p("deleteError"));
+          }
+          setRemoving(null);
+        }}
       >
-        Deseja realmente excluir esse registro?
+        {p("deleteText")}
       </ConfirmationModal>
-    </Paper>
+    </div>
   );
-}
+};
+
+export default PlansManager;

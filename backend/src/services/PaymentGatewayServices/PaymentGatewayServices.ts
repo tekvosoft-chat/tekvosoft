@@ -55,6 +55,12 @@ import {
   owenCreateSubscription,
   owenWebhook
 } from "./OwenServices";
+import {
+  asaasCheckStatus,
+  asaasCreateSubscription,
+  asaasEnabled,
+  asaasWebhook
+} from "./AsaasServices";
 import Invoices from "../../models/Invoices";
 import { getIO } from "../../libs/socket";
 import Company from "../../models/Company";
@@ -70,10 +76,40 @@ export const payGatewayInitialize = async () => {
   return null;
 };
 
+/**
+ * Formas de pagamento oferecidas ao cliente.
+ *
+ * Pix é pela Efí; cartão de crédito e boleto são pelo Asaas. Cada uma pode
+ * ser ligada ou desligada pelo super admin em Configurações.
+ */
+export const paymentMethods = async () => {
+  const [pix, card, boleto, asaas] = await Promise.all([
+    GetSuperSettingService({ key: "_pixEnabled" }),
+    GetSuperSettingService({ key: "_cardEnabled" }),
+    GetSuperSettingService({ key: "_boletoEnabled" }),
+    asaasEnabled()
+  ]);
+
+  const efiConfigured = !!(await GetSuperSettingService({ key: "_efiPixKey" }));
+
+  return {
+    pix: pix !== "disabled" && efiConfigured,
+    card: card === "enabled" && asaas,
+    boleto: boleto === "enabled" && asaas
+  };
+};
+
 export const payGatewayCreateSubscription = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
+  const { method } = req.body || {};
+
+  // cartão e boleto vão para o Asaas, independentemente do gateway do Pix
+  if (method === "CREDIT_CARD" || method === "BOLETO") {
+    return asaasCreateSubscription(req, res);
+  }
+
   const paymentGateway = await GetSuperSettingService({
     key: "_paymentGateway"
   });
@@ -90,6 +126,8 @@ export const payGatewayCreateSubscription = async (
     }
   }
 };
+
+export const payGatewayAsaasWebhook = asaasWebhook;
 
 export const payGatewayReceiveWebhook = async (
   req: Request,
@@ -183,6 +221,8 @@ export const checkInvoicePayment = async (invoice: Invoices) => {
     efiCheckStatus(invoice);
   } else if (invoice.payGw === "owen") {
     owenCheckStatus(invoice);
+  } else if (invoice.payGw === "asaas") {
+    asaasCheckStatus(invoice);
   }
 };
 

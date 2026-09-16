@@ -1,3 +1,5 @@
+import { QueryTypes } from "sequelize";
+import sequelize from "../database";
 import { Request, Response } from "express";
 import { getIO } from "../libs/socket";
 import CreateQueueService from "../services/QueueService/CreateQueueService";
@@ -14,6 +16,36 @@ import saveMediaToFile from "../helpers/saveMediaFile";
 
 type QueueFilter = {
   companyId: number;
+};
+
+/**
+ * Números de cada fila para os cartões da tela de Filas: opções do chatbot,
+ * atendentes, conexões e atendimentos abertos/aguardando.
+ */
+export const stats = async (req: Request, res: Response): Promise<Response> => {
+  const { companyId } = req.user;
+  const rows = await sequelize.query<Record<string, string | number>>(
+    `SELECT q.id,
+            (SELECT COUNT(*) FROM "QueueOptions" o WHERE o."queueId" = q.id) AS options,
+            (SELECT COUNT(*) FROM "UserQueues" uq WHERE uq."queueId" = q.id) AS users,
+            (SELECT COUNT(*) FROM "WhatsappQueues" wq WHERE wq."queueId" = q.id) AS connections,
+            (SELECT COUNT(*) FROM "Tickets" t WHERE t."queueId" = q.id AND t.status = 'open') AS open,
+            (SELECT COUNT(*) FROM "Tickets" t WHERE t."queueId" = q.id AND t.status = 'pending') AS pending
+       FROM "Queues" q
+      WHERE q."companyId" = :companyId`,
+    { type: QueryTypes.SELECT, replacements: { companyId } }
+  );
+  const result: Record<number, Record<string, number>> = {};
+  rows.forEach(row => {
+    result[Number(row.id)] = {
+      options: Number(row.options),
+      users: Number(row.users),
+      connections: Number(row.connections),
+      open: Number(row.open),
+      pending: Number(row.pending)
+    };
+  });
+  return res.status(200).json(result);
 };
 
 export const index = async (req: Request, res: Response): Promise<Response> => {

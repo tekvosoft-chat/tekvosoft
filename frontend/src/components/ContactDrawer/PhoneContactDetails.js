@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
+import { AuthContext } from "../../context/Auth/AuthContext";
+import { planAllows } from "../../helpers/planFeatures";
 import { createPortal } from "react-dom";
 import { toast } from "react-toastify";
 import { Lightbox } from "react-modal-image";
@@ -309,6 +311,8 @@ const PhoneContactDetails = ({
   const [editOpen, setEditOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [schedulesVersion, setSchedulesVersion] = useState(0);
+  const { user } = useContext(AuthContext);
+  const canSchedule = planAllows(user, "useSchedules");
   const [photoOpen, setPhotoOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
   const [tagsOpen, setTagsOpen] = useState(false);
@@ -435,7 +439,7 @@ const PhoneContactDetails = ({
               <ButtonBase
                 className={classes.actionCard}
                 onClick={() => setScheduleOpen(true)}
-                disabled={!contact?.id}
+                disabled={!contact?.id || !canSchedule}
               >
                 <EventOutlinedIcon />
                 {t("schedule")}
@@ -453,7 +457,7 @@ const PhoneContactDetails = ({
               </div>
             )}
 
-            {contact?.id && (
+            {contact?.id && canSchedule && (
               <div className={classes.group}>
                 <ContactSchedules
                   contactId={contact.id}

@@ -22,7 +22,6 @@ import {
 import SearchRoundedIcon from "@material-ui/icons/SearchRounded";
 import UnfoldMoreRoundedIcon from "@material-ui/icons/UnfoldMoreRounded";
 
-import MenuIcon from "@material-ui/icons/Menu";
 import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
 import SettingsEthernetIcon from "@material-ui/icons/SettingsEthernet";
 
@@ -233,6 +232,38 @@ const useStyles = makeStyles(theme => ({
   menuButton: {
     marginRight: theme.spacing(0.5),
     color: "inherit"
+  },
+  /**
+   * Recolher/expandir o menu: um botão redondo na BORDA do menu, na altura
+   * dos olhos, em vez de um ícone perdido na barra de cima. Ele acompanha a
+   * largura do menu e gira a seta conforme o estado.
+   */
+  drawerEdgeToggle: {
+    position: "fixed",
+    top: `calc(${appBarHeight}px + var(--banner-h, 0px) + ${theme.spacing(4)}px)`,
+    left: drawerWidth - 14,
+    zIndex: theme.zIndex.drawer + 2,
+    width: 28,
+    height: 28,
+    padding: 0,
+    borderRadius: "50%",
+    color: theme.palette.tkv.brand.text,
+    backgroundColor: theme.palette.tkv.surface,
+    border: `1px solid ${theme.palette.tkv.border}`,
+    boxShadow: "0 4px 14px -6px rgba(12, 10, 20, 0.45)",
+    transition: theme.transitions.create(["left", "background-color"], {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.enteringScreen
+    }),
+    "&:hover": { backgroundColor: theme.palette.tkv.brand.textSoft },
+    "& svg": {
+      fontSize: 18,
+      transition: "transform .25s ease"
+    }
+  },
+  drawerEdgeToggleClosed: {
+    left: drawerWidthCollapsed - 14,
+    "& svg": { transform: "rotate(180deg)" }
   },
   // A logo vira uma silhueta clara (ou escura, se o tema for claro demais
   // para texto branco): assim ela combina com qualquer cor de barra, em vez
@@ -858,117 +889,141 @@ const LoggedInLayout = ({ children, themeToggle }) => {
         <div className={classes.statusBarFill} aria-hidden="true" />
       )}
       {!isPhone && (
-        <Drawer
-          variant={drawerVariant}
-          className={
-            drawerOpen ? classes.drawerPaper : classes.drawerPaperClose
-          }
-          onClose={drawerClose}
-          classes={{
-            paper: clsx(
-              classes.drawerPaper,
-              classes.drawerPaperOffset,
-              !drawerOpen && classes.drawerPaperClose
-            )
-          }}
-          open={drawerOpen}
-        >
-          {/* Cartão do menu: busca, itens e, no rodapé, quem está logado. */}
-          <div
-            className={clsx(
-              classes.sidebarCard,
-              !drawerOpen && classes.sidebarCardCollapsed
-            )}
+        <>
+          <Tooltip
+            title={
+              drawerOpen ? "Recolher menu lateral" : "Expandir menu lateral"
+            }
+            placement="right"
           >
-            {drawerOpen ? (
-              <label className={classes.sidebarSearch}>
-                <SearchRoundedIcon fontSize="small" />
-                <InputBase
-                  inputRef={searchRef}
-                  value={menuQuery}
-                  onChange={e => setMenuQuery(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === "Escape") setMenuQuery("");
-                  }}
-                  placeholder={i18n.t("mainDrawer.listItems.search")}
-                  className={classes.sidebarSearchInput}
-                  inputProps={{
-                    "aria-label": i18n.t("mainDrawer.listItems.search")
-                  }}
-                />
-                {!menuQuery && <kbd className={classes.kbd}>Ctrl K</kbd>}
-              </label>
-            ) : (
-              <Tooltip
-                title={`${i18n.t("mainDrawer.listItems.search")} (Ctrl K)`}
-                placement="right"
-              >
-                <IconButton
-                  className={classes.sidebarSearchCollapsed}
-                  aria-label={i18n.t("mainDrawer.listItems.search")}
-                  onClick={() => {
-                    setDrawerOpen(true);
-                    setTimeout(() => searchRef.current?.focus(), 180);
-                  }}
-                >
+            <IconButton
+              aria-label={
+                drawerOpen ? "Recolher menu lateral" : "Expandir menu lateral"
+              }
+              onClick={handleDrawerToggle}
+              className={clsx(
+                classes.drawerEdgeToggle,
+                !drawerOpen && classes.drawerEdgeToggleClosed,
+                inConversation && classes.hiddenInConversation
+              )}
+            >
+              <ChevronLeftIcon />
+            </IconButton>
+          </Tooltip>
+          <Drawer
+            variant={drawerVariant}
+            className={
+              drawerOpen ? classes.drawerPaper : classes.drawerPaperClose
+            }
+            onClose={drawerClose}
+            classes={{
+              paper: clsx(
+                classes.drawerPaper,
+                classes.drawerPaperOffset,
+                !drawerOpen && classes.drawerPaperClose
+              )
+            }}
+            open={drawerOpen}
+          >
+            {/* Cartão do menu: busca, itens e, no rodapé, quem está logado. */}
+            <div
+              className={clsx(
+                classes.sidebarCard,
+                !drawerOpen && classes.sidebarCardCollapsed
+              )}
+            >
+              {drawerOpen ? (
+                <label className={classes.sidebarSearch}>
                   <SearchRoundedIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            )}
-
-            <List className={classes.containerWithScroll}>
-              <MainListItems
-                drawerClose={drawerClose}
-                drawerOpen={drawerOpen}
-                collapsed={!drawerOpen}
-                query={drawerOpen ? menuQuery : ""}
-              />
-            </List>
-
-            <div className={classes.userArea}>
-              <Tooltip
-                title={!drawerOpen ? user?.name || "" : ""}
-                placement="right"
-              >
-                <ButtonBase
-                  className={clsx(
-                    classes.userCard,
-                    !drawerOpen && classes.userCardCollapsed
-                  )}
-                  onClick={handleSidebarProfileMenu}
-                  aria-haspopup="true"
-                  aria-controls="menu-appbar"
+                  <InputBase
+                    inputRef={searchRef}
+                    value={menuQuery}
+                    onChange={e => setMenuQuery(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === "Escape") setMenuQuery("");
+                    }}
+                    placeholder={i18n.t("mainDrawer.listItems.search")}
+                    className={classes.sidebarSearchInput}
+                    inputProps={{
+                      "aria-label": i18n.t("mainDrawer.listItems.search")
+                    }}
+                  />
+                  {!menuQuery && <kbd className={classes.kbd}>Ctrl K</kbd>}
+                </label>
+              ) : (
+                <Tooltip
+                  title={`${i18n.t("mainDrawer.listItems.search")} (Ctrl K)`}
+                  placement="right"
                 >
-                  <span className={classes.userAvatarWrap}>
-                    <UserAvatar
-                      user={user}
-                      size={34}
-                      className={classes.userAvatar}
-                    />
-                    <span className={classes.onlineDot} aria-hidden="true" />
-                  </span>
-                  {drawerOpen && (
-                    <>
-                      <span className={classes.userText}>
-                        <span className={classes.userName}>
-                          {user?.name || "-"}
+                  <IconButton
+                    className={classes.sidebarSearchCollapsed}
+                    aria-label={i18n.t("mainDrawer.listItems.search")}
+                    onClick={() => {
+                      setDrawerOpen(true);
+                      setTimeout(() => searchRef.current?.focus(), 180);
+                    }}
+                  >
+                    <SearchRoundedIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
+
+              <List className={classes.containerWithScroll}>
+                <MainListItems
+                  drawerClose={drawerClose}
+                  drawerOpen={drawerOpen}
+                  collapsed={!drawerOpen}
+                  query={drawerOpen ? menuQuery : ""}
+                />
+              </List>
+
+              <div className={classes.userArea}>
+                <Tooltip
+                  title={!drawerOpen ? user?.name || "" : ""}
+                  placement="right"
+                >
+                  <ButtonBase
+                    className={clsx(
+                      classes.userCard,
+                      !drawerOpen && classes.userCardCollapsed
+                    )}
+                    onClick={handleSidebarProfileMenu}
+                    aria-haspopup="true"
+                    aria-controls="menu-appbar"
+                  >
+                    <span className={classes.userAvatarWrap}>
+                      <UserAvatar
+                        user={user}
+                        size={34}
+                        className={classes.userAvatar}
+                      />
+                      <span className={classes.onlineDot} aria-hidden="true" />
+                    </span>
+                    {drawerOpen && (
+                      <>
+                        <span className={classes.userText}>
+                          <span className={classes.userName}>
+                            {user?.name || "-"}
+                          </span>
+                          <span className={classes.userMeta}>
+                            {user?.profile === "admin"
+                              ? i18n.t("userModal.listItems.adminProfile")
+                              : i18n.t("userModal.listItems.userProfile")}
+                            {" · "}
+                            {i18n.t("mainDrawer.listItems.online")}
+                          </span>
                         </span>
-                        <span className={classes.userMeta}>
-                          {user?.profile === "admin"
-                            ? i18n.t("userModal.listItems.adminProfile")
-                            : i18n.t("userModal.listItems.userProfile")}
-                          {" · "}
-                          {i18n.t("mainDrawer.listItems.online")}
-                        </span>
-                      </span>
-                      <UnfoldMoreRoundedIcon className={classes.userChevron} />
-                    </>
-                  )}
-                </ButtonBase>
-              </Tooltip>
+                        <UnfoldMoreRoundedIcon
+                          className={classes.userChevron}
+                        />
+                      </>
+                    )}
+                  </ButtonBase>
+                </Tooltip>
+              </div>
             </div>
-          </div>
-        </Drawer>
+          </Drawer>
+        </>
       )}
       <UserModal
         open={userModalOpen}
@@ -989,18 +1044,6 @@ const LoggedInLayout = ({ children, themeToggle }) => {
         color="primary"
       >
         <Toolbar variant="dense" className={classes.toolbar}>
-          {!isPhone && (
-            <IconButton
-              edge="start"
-              aria-label={
-                drawerOpen ? "Recolher menu lateral" : "Expandir menu lateral"
-              }
-              onClick={handleDrawerToggle}
-              className={classes.menuButton}
-            >
-              {drawerOpen ? <ChevronLeftIcon /> : <MenuIcon />}
-            </IconButton>
-          )}
           {/* só o ícone, sem o nome escrito ao lado */}
           <img
             className={classes.appBarLogo}

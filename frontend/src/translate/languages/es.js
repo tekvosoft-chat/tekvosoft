@@ -1,6 +1,213 @@
 const messages = {
   es: {
     translations: {
+      payment: {
+        title: "Pago de la suscripción",
+        pix: "Pix",
+        card: "Tarjeta",
+        boleto: "Boleto",
+        payNow: "Pagar ahora",
+        processing: "Procesando…",
+        paid: "¡Pago aprobado!",
+        copied: "Copiado",
+        copyCode: "Copiar código Pix",
+        copyLine: "Copiar línea",
+        openBoleto: "Abrir boleto",
+        pixIntro:
+          "Generamos un código QR de Pix. El pago se acredita al instante.",
+        pixHint:
+          "Abre la app del banco, elige Pix > Leer QR y apunta a la imagen.",
+        boletoIntro:
+          "Generamos el boleto en PDF con la línea digitable. La acreditación tarda hasta 3 días hábiles.",
+        boletoHint: "El boleto también fue enviado al correo de la empresa.",
+        cardIntro:
+          "Cobro inmediato. Puedes guardar la tarjeta para que los próximos meses se cobren solos.",
+        cardApproved: "¡Tarjeta aprobada! Tu suscripción está al día.",
+        cardPending:
+          "Cobro enviado. Cuando el banco confirme, tu suscripción se renueva.",
+        cardSaved: "Tarjeta guardada: {{card}}",
+        saveCard: "Guardar tarjeta para cobro automático",
+        saveCardHint:
+          "Guardamos solo un código seguro (token), nunca el número.",
+        autoCharge: "Cobro automático activo · {{card}}",
+        removeCard: "Quitar tarjeta guardada",
+        cardRemoved: "Tarjeta eliminada",
+        noMethods: "No hay forma de pago activa. Habla con el soporte.",
+        form: {
+          holder: "Nombre en la tarjeta",
+          number: "Número de la tarjeta",
+          expiry: "Vencimiento (MM/AAAA)",
+          ccv: "CVV",
+          cpfCnpj: "CPF o CNPJ",
+          email: "Correo",
+          phone: "Celular",
+          postalCode: "Código postal",
+          addressNumber: "Número"
+        }
+      },
+      paymentGateways: {
+        intro:
+          "Elige qué puede usar el cliente para pagar. Lo que esté apagado no aparece.",
+        pix: {
+          title: "Pix",
+          provider: "Efí (Gerencianet)",
+          how: "El cliente lee un QR y el dinero llega al instante a tu cuenta Efí.",
+          steps: [
+            "Crea una aplicación Pix en Efí y genera el certificado (.p12).",
+            "Completa abajo el Client ID, el Client Secret, la clave Pix y sube el certificado.",
+            "El sistema registra solo el aviso de pago (webhook) en Efí.",
+            "Al pagar, la factura se salda y el vencimiento de la empresa avanza."
+          ]
+        },
+        card: {
+          title: "Tarjeta de crédito",
+          provider: "Asaas",
+          how: "Cobro inmediato. Con la tarjeta guardada, los meses siguientes se cobran solos.",
+          steps: [
+            "Crea la cuenta en Asaas y genera la clave de API (Integraciones > API).",
+            "Pega la clave abajo y elige Sandbox (pruebas) o Producción.",
+            "Registra la URL de aviso en Asaas (Integraciones > Webhooks) con el mismo token.",
+            "Pide a Asaas habilitar la tokenización de tarjeta para el cobro automático en producción.",
+            "Todos los días a las 9h el sistema cobra en la tarjeta guardada las facturas que vencen."
+          ]
+        },
+        boleto: {
+          title: "Boleto bancario",
+          provider: "Asaas",
+          how: "Genera el boleto en PDF con línea digitable; la acreditación tarda hasta 3 días hábiles.",
+          steps: [
+            "Usa la misma cuenta y clave de Asaas de la tarjeta.",
+            "El cliente recibe el boleto en pantalla y por correo.",
+            "Cuando el banco confirma, Asaas avisa por webhook y la factura se salda sola."
+          ]
+        },
+        asaas: {
+          key: "Clave de API de Asaas",
+          env: "Entorno",
+          sandbox: "Sandbox (pruebas)",
+          production: "Producción",
+          webhookToken: "Token del webhook",
+          webhookUrl: "Registra esta URL en Asaas (Integraciones > Webhooks):"
+        }
+      },
+      revenue: {
+        monthly: "Ingreso mensual",
+        monthlySub: "{{count}} cliente activo",
+        monthlySub_plural: "{{count}} clientes activos",
+        next30: "A recibir en 30 días",
+        next30Sub: "Vencimientos del próximo mes",
+        overdue: "Atrasado",
+        overdueSub: "{{count}} cliente",
+        overdueSub_plural: "{{count}} clientes",
+        autoCharge: "Cobro automático",
+        autoChargeSub: "Clientes con tarjeta guardada",
+        forecast: "Previsión de los próximos 6 meses",
+        expected: "Previsto",
+        clients: "Clientes",
+        search: "Buscar cliente",
+        empty: "Ningún cliente con cobro configurado.",
+        value: "Valor",
+        nextDue: "Próximo vencimiento",
+        status: "Situación",
+        charge: "Cobro",
+        noPlan: "Sin plan",
+        noDate: "Sin vencimiento",
+        today: "Vence hoy",
+        inDays: "En {{count}} día",
+        inDays_plural: "En {{count}} días",
+        lateBy: "Atrasado {{count}} día",
+        lateBy_plural: "Atrasado {{count}} días",
+        auto: "Automático",
+        manualCharge: "Manual",
+        recurrence: {
+          MENSAL: "Mensual",
+          BIMESTRAL: "Bimestral",
+          TRIMESTRAL: "Trimestral",
+          SEMESTRAL: "Semestral",
+          ANUAL: "Anual"
+        }
+      },
+      planFeatures: {
+        lockedTitle: "{{feature}} no está en tu plan",
+        lockedText:
+          "Esta función pertenece a otro plan. Habla con el administrador de la plataforma para activarla.",
+        lockedAction: "Ver mi plan",
+        names: {
+          useKanban: "Kanban",
+          useInternalChat: "Chat interno",
+          useSchedules: "Programados",
+          useCampaigns: "Campañas",
+          useExternalApi: "API de mensajes"
+        },
+        hints: {
+          useKanban: "Tablero con las conversaciones en columnas por etapa.",
+          useInternalChat: "Conversaciones del equipo dentro del sistema.",
+          useSchedules: "Programar mensajes para una fecha y hora.",
+          useCampaigns: "Envío masivo a listas de contactos.",
+          useExternalApi: "Enviar mensajes desde otros sistemas, con token."
+        }
+      },
+      plansPage: {
+        title: "Planes",
+        subtitle: "Límites y funciones de cada plan que vendes.",
+        new: "Nuevo plan",
+        edit: "Editar plan",
+        editShort: "Editar",
+        delete: "Eliminar plan",
+        templatesTitle: "Modelos listos",
+        templates: {
+          start: "Para quien empieza, con un número.",
+          pro: "El más vendido: equipo pequeño y programados.",
+          business: "Equipo grande, campañas y API incluidas.",
+          enterprise: "Operación a escala, sin límites."
+        },
+        featuresTitle: "Funciones incluidas",
+        popular: "Más vendido",
+        public: "Público",
+        private: "Interno",
+        perMonth: "/mes",
+        form: {
+          name: "Nombre del plan",
+          value: "Valor mensual",
+          users: "Usuarios",
+          connections: "Conexiones",
+          queues: "Colas",
+          currency: "Moneda",
+          public: "Aparece en el registro",
+          publicHint:
+            "Los planes internos solo los usas tú al crear la empresa."
+        },
+        saved: "Plan guardado",
+        saveError:
+          "No se pudo guardar. Verifica si ya existe un plan con ese nombre.",
+        loadError: "No se pudieron cargar los planes",
+        deleteTitle: "¿Eliminar {{name}}?",
+        deleteText: "Las empresas que usan este plan quedarán sin plan.",
+        deleted: "Plan eliminado",
+        deleteError: "No se pudo eliminar el plan"
+      },
+      queuesPage: {
+        subtitle:
+          "Organiza la atención por sector y arma el menú automático de cada cola.",
+        emptyTitle: "Aún no hay colas",
+        emptyText:
+          "Crea colas como Ventas, Soporte o Finanzas para distribuir las atenciones.",
+        chatbot: "Chatbot · {{count}} opción",
+        chatbot_plural: "Chatbot · {{count}} opciones",
+        noChatbot: "Sin chatbot",
+        hours: "Horario definido",
+        noGreeting: "Sin mensaje de saludo",
+        users: "Agentes",
+        connections: "Conexiones",
+        tickets: "Abiertos + cola",
+        edit: "Editar",
+        delete: "Eliminar",
+        new: "Nueva cola"
+      },
+      loginShowcase: {
+        title: "Toda la atención de tu empresa en un solo lugar",
+        text: "WhatsApp, equipo y clientes en el mismo panel — con Kanban, programados e informes."
+      },
       annotator: {
         title: "Documento",
         annotate: "Dibujar",
@@ -37,6 +244,7 @@ const messages = {
         live: "En vivo",
         tabs: {
           platform: "Resumen",
+          revenue: "Cobros",
           companies: "Empresas",
           mine: "Mi empresa"
         },

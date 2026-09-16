@@ -39,6 +39,7 @@ import toastError from "../errors/toastError";
 import { makeStyles } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
 import { loadJSON } from "../helpers/loadJSON";
+import { planAllows } from "../helpers/planFeatures";
 
 const gitinfo = loadJSON("/gitinfo.json");
 
@@ -386,7 +387,7 @@ const MainListItems = props => {
   const query = props.query || "";
   const searching = !!query.trim();
 
-  const campaignsBlock = showCampaigns && (
+  const campaignsBlock = showCampaigns && planAllows(user, "useCampaigns") && (
     <>
       {/* Recolhida, a barra é estreita demais para o submenu: nesse estado o
           item vira atalho direto para a listagem, com o nome em tooltip. */}
@@ -505,25 +506,31 @@ const MainListItems = props => {
           primary={i18n.t("mainDrawer.listItems.tickets")}
           icon={<WhatsAppIcon />}
         />
-        <ListItemLink
-          to="/kanban"
-          primary={i18n.t("mainDrawer.listItems.kanban")}
-          icon={<ViewWeekOutlinedIcon />}
-        />
-        <ListItemLink
-          to="/chats"
-          primary={i18n.t("mainDrawer.listItems.chats")}
-          icon={
-            <Badge color="secondary" variant="dot" invisible={invisible}>
-              <ForumIcon />
-            </Badge>
-          }
-        />
-        <ListItemLink
-          to="/schedules"
-          primary={i18n.t("mainDrawer.listItems.schedules")}
-          icon={<EventIcon />}
-        />
+        {planAllows(user, "useKanban") && (
+          <ListItemLink
+            to="/kanban"
+            primary={i18n.t("mainDrawer.listItems.kanban")}
+            icon={<ViewWeekOutlinedIcon />}
+          />
+        )}
+        {planAllows(user, "useInternalChat") && (
+          <ListItemLink
+            to="/chats"
+            primary={i18n.t("mainDrawer.listItems.chats")}
+            icon={
+              <Badge color="secondary" variant="dot" invisible={invisible}>
+                <ForumIcon />
+              </Badge>
+            }
+          />
+        )}
+        {planAllows(user, "useSchedules") && (
+          <ListItemLink
+            to="/schedules"
+            primary={i18n.t("mainDrawer.listItems.schedules")}
+            icon={<EventIcon />}
+          />
+        )}
 
         <Section label={i18n.t("mainDrawer.sections.audience")} />
         <ListItemLink
@@ -574,11 +581,13 @@ const MainListItems = props => {
               )}
 
               <Section label={i18n.t("mainDrawer.sections.system")} />
-              <ListItemLink
-                to="/messages-api"
-                primary={i18n.t("mainDrawer.listItems.messagesAPI")}
-                icon={<CodeRoundedIcon />}
-              />
+              {planAllows(user, "useExternalApi") && (
+                <ListItemLink
+                  to="/messages-api"
+                  primary={i18n.t("mainDrawer.listItems.messagesAPI")}
+                  icon={<CodeRoundedIcon />}
+                />
+              )}
               <ListItemLink
                 to="/financeiro"
                 primary={i18n.t("mainDrawer.listItems.financeiro")}

@@ -21,6 +21,12 @@ import { i18n } from "../../translate/i18n";
 const useStyles = makeStyles(theme => {
   const t = theme.palette.tkv;
   return {
+    // no celular o painel ocupa o lugar do teclado (não cobre a conversa)
+    compact: {
+      height: 300,
+      backgroundColor: `${t.chat.bar} !important`,
+      borderTop: `1px solid ${t.border}`
+    },
     root: {
       width: "100%",
       display: "flex",
@@ -112,17 +118,25 @@ const useStyles = makeStyles(theme => {
   };
 });
 
-const ExpressionPanel = ({ ticketId, showEmoji, onEmoji, disabled }) => {
+const ExpressionPanel = ({
+  ticketId,
+  showEmoji,
+  onEmoji,
+  disabled,
+  compact
+}) => {
   const classes = useStyles();
   const [tab, setTab] = useState(showEmoji ? "emoji" : "stickers");
   const [stickers, setStickers] = useState(null);
-  const [gifs, setGifs] = useState(null);
-  const [configured, setConfigured] = useState(true);
+  const [remote, setRemote] = useState({ stickers: null, gifs: null });
+  const [configured, setConfigured] = useState({ stickers: true, gifs: true });
+  const [provider, setProvider] = useState("");
   const [query, setQuery] = useState("");
   const [sending, setSending] = useState(null);
   const timer = useRef(null);
   const t = key => i18n.t(`expressions.${key}`);
 
+  // figurinhas que já apareceram nas conversas da empresa
   useEffect(() => {
     if (tab !== "stickers" || stickers) return;
     api
@@ -131,19 +145,24 @@ const ExpressionPanel = ({ ticketId, showEmoji, onEmoji, disabled }) => {
       .catch(() => setStickers([]));
   }, [tab, stickers]);
 
+  // acervo do KLIPY (ou GIPHY, nos GIFs, quando não há chave do KLIPY)
   useEffect(() => {
-    if (tab !== "gifs") return undefined;
+    if (tab === "emoji") return undefined;
     clearTimeout(timer.current);
     timer.current = setTimeout(
       () => {
-        setGifs(null);
+        setRemote(prev => ({ ...prev, [tab]: null }));
         api
-          .get("/gifs/search", { params: { q: query } })
+          .get("/expressions/search", { params: { kind: tab, q: query } })
           .then(({ data }) => {
-            setConfigured(data.configured !== false);
-            setGifs(data.gifs || []);
+            setConfigured(prev => ({
+              ...prev,
+              [tab]: data.configured !== false
+            }));
+            setProvider(data.provider || "");
+            setRemote(prev => ({ ...prev, [tab]: data.items || [] }));
           })
-          .catch(() => setGifs([]));
+          .catch(() => setRemote(prev => ({ ...prev, [tab]: [] })));
       },
       query ? 400 : 0
     );
@@ -167,8 +186,14 @@ const ExpressionPanel = ({ ticketId, showEmoji, onEmoji, disabled }) => {
     ["gifs", t("gifs")]
   ];
 
+  const onlineItems = remote[tab];
+  const ownStickers = tab === "stickers" ? stickers || [] : [];
+  const loading = tab !== "emoji" && onlineItems === null;
+  const empty =
+    !loading && (onlineItems || []).length === 0 && ownStickers.length === 0;
+
   return (
-    <div className={classes.root}>
+    <div className={`${classes.root}${compact ? ` ${classes.compact}` : ""}`}>
       <div className={classes.tabs} role="tablist">
         {tabs.map(([key, label]) => (
           <ButtonBase
@@ -183,6 +208,18 @@ const ExpressionPanel = ({ ticketId, showEmoji, onEmoji, disabled }) => {
         ))}
       </div>
 
+      {tab !== "emoji" && (
+        <label className={classes.search}>
+          <SearchRoundedIcon fontSize="small" />
+          <InputBase
+            fullWidth
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder={tab === "gifs" ? t("searchGifs") : t("searchStickers")}
+          />
+        </label>
+      )}
+
       <div className={classes.body}>
         {tab === "emoji" && (
           <Picker
@@ -194,64 +231,51 @@ const ExpressionPanel = ({ ticketId, showEmoji, onEmoji, disabled }) => {
           />
         )}
 
-        {tab === "stickers" &&
-          (stickers === null ? (
-            <div className={classes.center}>
-              <BoxLoader size={48} />
-            </div>
-          ) : stickers.length === 0 ? (
-            <div className={classes.empty}>{t("noStickers")}</div>
-          ) : (
-            <div className={classes.grid}>
-              {stickers.map(s => (
-                <ButtonBase
-                  key={s.id}
-                  className={`${classes.item}${sending ? ` ${classes.busy}` : ""}`}
-                  onClick={() => send({ stickerMessageId: s.id })}
-                  aria-label={t("sendSticker")}
-                >
-                  <img src={s.mediaUrl} alt="" loading="lazy" />
-                </ButtonBase>
-              ))}
-            </div>
-          ))}
-
-        {tab === "gifs" && (
+        {tab !== "emoji" && (
           <>
-            {configured && (
-              <label className={classes.search}>
-                <SearchRoundedIcon fontSize="small" />
-                <InputBase
-                  fullWidth
-                  value={query}
-                  onChange={e => setQuery(e.target.value)}
-                  placeholder={t("searchGifs")}
-                />
-              </label>
-            )}
-            {!configured ? (
-              <div className={classes.empty}>{t("gifsNotConfigured")}</div>
-            ) : gifs === null ? (
+            {loading ? (
               <div className={classes.center}>
                 <BoxLoader size={48} />
               </div>
-            ) : gifs.length === 0 ? (
-              <div className={classes.empty}>{t("noGifs")}</div>
+            ) : empty ? (
+              <div className={classes.empty}>
+                {tab === "gifs"
+                  ? configured.gifs
+                    ? t("noGifs")
+                    : t("gifsNotConfigured")
+                  : t("noStickers")}
+              </div>
             ) : (
               <>
-                <div className={classes.gifGrid}>
-                  {gifs.map(g => (
+                <div
+                  className={tab === "gifs" ? classes.gifGrid : classes.grid}
+                >
+                  {ownStickers.map(item => (
                     <ButtonBase
-                      key={g.id}
-                      className={`${classes.item} ${classes.gif}${sending ? ` ${classes.busy}` : ""}`}
-                      onClick={() => send({ gifId: g.id })}
-                      aria-label={g.title || t("sendGif")}
+                      key={item.id}
+                      className={`${classes.item}${sending ? ` ${classes.busy}` : ""}`}
+                      onClick={() => send({ stickerMessageId: item.id })}
+                      aria-label={t("sendSticker")}
                     >
-                      <img src={g.preview} alt={g.title} loading="lazy" />
+                      <img src={item.mediaUrl} alt="" loading="lazy" />
+                    </ButtonBase>
+                  ))}
+                  {(onlineItems || []).map(item => (
+                    <ButtonBase
+                      key={item.id}
+                      className={`${classes.item}${tab === "gifs" ? ` ${classes.gif}` : ""}${sending ? ` ${classes.busy}` : ""}`}
+                      onClick={() => send({ gifId: item.id })}
+                      aria-label={item.title || t("sendGif")}
+                    >
+                      <img src={item.preview} alt={item.title} loading="lazy" />
                     </ButtonBase>
                   ))}
                 </div>
-                <div className={classes.powered}>GIPHY</div>
+                {provider && (
+                  <div className={classes.powered}>
+                    {provider === "klipy" ? "KLIPY" : "GIPHY"}
+                  </div>
+                )}
               </>
             )}
           </>

@@ -8,6 +8,8 @@ import {
 import { SerializeUser } from "../../helpers/SerializeUser";
 import Queue from "../../models/Queue";
 import Company from "../../models/Company";
+import Plan from "../../models/Plan";
+import { PLAN_FEATURES } from "../../helpers/PlanFeatures";
 import Setting from "../../models/Setting";
 import { GetCompanySetting } from "../../helpers/CheckSettings";
 import UpdateSettingService from "../SettingServices/UpdateSettingService";
@@ -43,7 +45,16 @@ const AuthUserService = async ({
       Sequelize.fn("LOWER", Sequelize.col("email")),
       email.toLowerCase()
     ),
-    include: ["queues", { model: Company, include: [{ model: Setting }] }]
+    include: [
+      "queues",
+      {
+        model: Company,
+        include: [
+          { model: Setting },
+          { model: Plan, attributes: ["id", "name", ...PLAN_FEATURES] }
+        ]
+      }
+    ]
   });
 
   if (!user) {

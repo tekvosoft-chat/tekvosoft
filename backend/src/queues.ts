@@ -7,6 +7,7 @@ import { subDays, subMinutes } from "date-fns";
 import { MessageData, SendMessage } from "./helpers/SendMessage";
 import Whatsapp from "./models/Whatsapp";
 import { logger } from "./utils/logger";
+import { asaasChargeSavedCards } from "./services/PaymentGatewayServices/AsaasServices";
 import Schedule from "./models/Schedule";
 import Contact from "./models/Contact";
 import GetDefaultWhatsApp from "./helpers/GetDefaultWhatsApp";
@@ -632,6 +633,16 @@ const dailyDockerUpdatesCheckJob = new CronJob(
   runDailyDockerUpdatesCheck
 );
 dailyDockerUpdatesCheckJob.start();
+
+// cobrança automática no cartão salvo (Asaas), todo dia de manhã
+const dailyCardChargeJob = new CronJob("0 9 * * *", async () => {
+  try {
+    await asaasChargeSavedCards();
+  } catch (error) {
+    logger.error(error, "asaasChargeSavedCards");
+  }
+});
+dailyCardChargeJob.start();
 
 export async function startQueueProcess() {
   logger.info("Starting queue processing");

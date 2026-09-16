@@ -96,17 +96,75 @@ const useStyles = makeStyles(theme => ({
     fontSize: "0.875rem",
     color: theme.palette.text.secondary
   },
-  // cada opção é um cartão: controle em cima, explicação embaixo
+  /**
+   * Cada opção é um cartão: título em cima, explicação embaixo e o controle
+   * como uma "caixinha" própria.
+   *
+   * Antes o nome da opção era um rótulo flutuante do Material-UI: ao clicar,
+   * ele subia e ficava em cima da linha do campo, difícil de ler. Agora o
+   * título é texto fixo e o campo tem fundo e borda próprios — dá para ver
+   * o que está escolhido de relance.
+   */
   fieldCard: {
     height: "100%",
     boxSizing: "border-box",
     display: "flex",
     flexDirection: "column",
-    gap: theme.spacing(1),
-    padding: theme.spacing(1.5, 2, 2),
+    gap: theme.spacing(0.75),
+    padding: theme.spacing(1.75, 2, 2),
     borderRadius: theme.palette.tkv.radius.lg,
     border: `1px solid ${theme.palette.tkv.border}`,
-    backgroundColor: theme.palette.tkv.surface
+    backgroundColor: theme.palette.tkv.surface,
+    transition: "border-color .15s ease, box-shadow .15s ease",
+    "&:hover": { borderColor: theme.palette.tkv.borderStrong },
+    "&:focus-within": {
+      borderColor: theme.palette.tkv.brand.main,
+      boxShadow: `0 0 0 3px ${theme.palette.tkv.brand.soft}`
+    },
+
+    // título fixo no lugar do rótulo flutuante
+    "& .MuiFormControl-root": { width: "100%", margin: 0 },
+    "& .MuiInputLabel-root": {
+      position: "static",
+      transform: "none",
+      maxWidth: "100%",
+      whiteSpace: "normal",
+      marginBottom: 8,
+      fontSize: "0.9375rem",
+      fontWeight: 700,
+      lineHeight: 1.3,
+      color: theme.palette.text.primary,
+      "&.Mui-focused": { color: theme.palette.text.primary }
+    },
+
+    // o campo vira uma caixa, sem a linha embaixo
+    "& .MuiInputBase-root": {
+      marginTop: 0,
+      borderRadius: 10,
+      backgroundColor: theme.palette.tkv.surfaceSunken,
+      border: `1px solid ${theme.palette.tkv.border}`,
+      transition: "border-color .15s ease, background-color .15s ease",
+      "&:hover": { borderColor: theme.palette.tkv.borderStrong },
+      "&.Mui-focused": {
+        borderColor: theme.palette.tkv.brand.main,
+        backgroundColor: theme.palette.tkv.surface
+      }
+    },
+    "& .MuiInput-underline:before, & .MuiInput-underline:after": {
+      display: "none"
+    },
+    "& .MuiSelect-select, & .MuiInputBase-input": {
+      padding: "11px 14px",
+      fontSize: "0.9375rem",
+      fontWeight: 600,
+      color: theme.palette.text.primary,
+      borderRadius: 10
+    },
+    "& .MuiSelect-select:focus": { backgroundColor: "transparent" },
+    "& .MuiSelect-icon": { right: 8, color: theme.palette.text.secondary },
+    "& .MuiInputAdornment-root": { marginRight: 8 },
+    "& textarea": { fontWeight: 500 },
+    "& .MuiFormHelperText-root": { marginLeft: 2 }
   },
   hint: {
     fontSize: "0.8125rem",
@@ -138,6 +196,7 @@ export default function Options(props) {
   const [apiToken, setApiToken] = useState("");
   const [openAiKey, setOpenAiKey] = useState("");
   const [giphyApiKey, setGiphyApiKey] = useState("");
+  const [klipyApiKey, setKlipyApiKey] = useState("");
   const [aiProvider, setAiProvider] = useState("openai");
   const [audioTranscriptions, setAudioTranscriptions] = useState("disabled");
   const [useMultiThreadedWbot, setUseMultiThreadedWbot] = useState("disabled");
@@ -275,6 +334,9 @@ export default function Options(props) {
 
       const giphyApiKey = settings.find(s => s.key === "giphyApiKey");
       setGiphyApiKey(giphyApiKey?.value || "");
+
+      const klipyApiKey = settings.find(s => s.key === "klipyApiKey");
+      setKlipyApiKey(klipyApiKey?.value || "");
 
       const aiProvider = settings.find(s => s.key === "aiProvider");
       setAiProvider(aiProvider?.value || "openai");
@@ -1344,6 +1406,25 @@ export default function Options(props) {
             </FormControl>
             <Typography className={classes.hint}>
               {i18n.t("settings.hints.aiKey")}
+            </Typography>
+          </div>
+        </Grid>
+
+        <Grid xs={12} sm={12} md={8} item>
+          <div className={classes.fieldCard}>
+            <FormControl className={classes.selectContainer}>
+              <TextField
+                id="klipy-key-field"
+                label={i18n.t("settings.klipyApiKey.title")}
+                variant="standard"
+                type="password"
+                value={klipyApiKey}
+                onChange={e => setKlipyApiKey(e.target.value)}
+                onBlur={() => handleSetting("klipyApiKey", klipyApiKey.trim())}
+              />
+            </FormControl>
+            <Typography className={classes.hint}>
+              {i18n.t("settings.hints.klipyKey")}
             </Typography>
           </div>
         </Grid>

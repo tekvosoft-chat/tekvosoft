@@ -19,6 +19,7 @@ import BottomSheet from "../ui/BottomSheet";
 import toastError from "../../errors/toastError";
 import { Can } from "../Can";
 import { AuthContext } from "../../context/Auth/AuthContext";
+import { planAllows } from "../../helpers/planFeatures";
 
 /**
  * Mais ações do atendimento.
@@ -146,7 +147,7 @@ const TicketOptionsMenu = ({
       hint: a("transferHint"),
       onClick: () => setTransferTicketModalOpen(true)
     },
-    {
+    planAllows(user, "useSchedules") && {
       key: "schedule",
       icon: <EventRoundedIcon />,
       label: a("schedule"),

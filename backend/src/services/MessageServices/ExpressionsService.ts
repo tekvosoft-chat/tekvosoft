@@ -10,6 +10,7 @@ import { getPublicPath } from "../../helpers/GetPublicPath";
 import saveMediaToFile from "../../helpers/saveMediaFile";
 import { sendWhatsappFile } from "../WbotServices/SendWhatsAppMedia";
 import { logger } from "../../utils/logger";
+import { cacheLayer } from "../../libs/cache";
 
 /**
  * Figurinhas e GIFs no chat, como no WhatsApp.
@@ -203,4 +204,277 @@ export const sendGif = async (
     { mediaUrl, mimetype: "video/mp4", filename },
     { video: buffer, gifPlayback: true, mimetype: "video/mp4" }
   );
+};
+
+/**
+ * KLIPY (klipy.com): o mesmo acervo de GIFs e figurinhas que o Discord usa.
+ *
+ * A chave é gratuita e fica em Configurações > Serviços externos
+ * ("klipyApiKey"). Quando ela existe, é a fonte preferida de GIFs; sem ela,
+ * o sistema continua usando o GIPHY.
+ *
+ * Formato das rotas: https://api.klipy.com/api/v1/<chave>/<tipo>/<ação>
+ *   tipo  = gifs | stickers        ação = trending | search | items
+ */
+const KLIPY_BASE = "https://api.klipy.com/api/v1";
+
+type KlipyFile = { url?: string; width?: number; height?: number };
+type KlipySizes = Record<string, Record<string, KlipyFile>>;
+type KlipyItem = {
+  slug?: string;
+  title?: string;
+  type?: string;
+  file?: KlipySizes;
+};
+
+const klipyKey = async (companyId: number): Promise<string> => {
+  const own = await GetCompanySetting(companyId, "klipyApiKey", "");
+  if (own) return own;
+  return GetCompanySetting(1, "klipyApiKey", "");
+};
+
+const pickKlipyFile = (
+  item: KlipyItem,
+  sizes: string[],
+  formats: string[]
+): string | null => {
+  for (const size of sizes) {
+    const group = item.file?.[size];
+    if (!group) continue;
+    for (const format of formats) {
+      const url = group[format]?.url;
+      if (url) return url;
+    }
+  }
+  return null;
+};
+
+const klipyList = async (
+  companyId: number,
+  kind: "gifs" | "stickers",
+  query: string,
+  page = 1
+): Promise<{
+  configured: boolean;
+  items: { id: string; preview: string; title: string; provider: string }[];
+}> => {
+  const key = await klipyKey(companyId);
+  if (!key) return { configured: false, items: [] };
+
+  const params = new URLSearchParams({
+    customer_id: `company-${companyId}`,
+    page: String(Math.max(1, page)),
+    per_page: "24",
+    content_filter: "medium",
+    locale: "br"
+  });
+  if (query) params.set("q", query);
+
+  const url = `${KLIPY_BASE}/${encodeURIComponent(key)}/${kind}/${
+    query ? "search" : "trending"
+  }?${params}`;
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    logger.warn({ status: response.status }, "KLIPY: busca falhou");
+    throw new AppError("ERR_KLIPY_UNAVAILABLE", 502);
+  }
+  const body = (await response.json()) as {
+    data?: { data?: KlipyItem[] };
+  };
+
+  const items = (body.data?.data || [])
+    .filter(item => item?.slug && item?.file)
+    .map(item => ({
+      id: `klipy:${kind}:${item.slug}`,
+      title: item.title || "",
+      provider: "klipy",
+      preview:
+        pickKlipyFile(item, ["sm", "xs", "md"], ["webp", "gif", "png"]) || ""
+    }))
+    .filter(item => item.preview);
+
+  return { configured: true, items };
+};
+
+/** Baixa o arquivo de um item do KLIPY pelo identificador do nosso sistema. */
+const klipyItemFile = async (
+  companyId: number,
+  id: string,
+  formats: string[]
+): Promise<{ url: string; kind: "gifs" | "stickers" }> => {
+  const [, kind, slug] = id.split(":");
+  if (!["gifs", "stickers"].includes(kind) || !slug) {
+    throw new AppError("ERR_INVALID_GIF", 400);
+  }
+  const key = await klipyKey(companyId);
+  if (!key) throw new AppError("ERR_KLIPY_NOT_CONFIGURED", 400);
+
+  const response = await fetch(
+    `${KLIPY_BASE}/${encodeURIComponent(key)}/${kind}/items?slugs=${encodeURIComponent(slug)}`
+  );
+  if (!response.ok) throw new AppError("ERR_KLIPY_UNAVAILABLE", 502);
+  const body = (await response.json()) as { data?: { data?: KlipyItem[] } };
+  const item = (body.data?.data || [])[0];
+  const url = item && pickKlipyFile(item, ["md", "hd", "sm"], formats);
+  if (!url || !/^https:\/\//.test(url)) {
+    throw new AppError("ERR_INVALID_GIF", 400);
+  }
+  return { url, kind: kind as "gifs" | "stickers" };
+};
+
+const downloadMedia = async (url: string): Promise<Buffer> => {
+  const download = await fetch(url);
+  if (!download.ok) throw new AppError("ERR_KLIPY_UNAVAILABLE", 502);
+  const buffer = Buffer.from(await download.arrayBuffer());
+  if (buffer.length > 15 * 1024 * 1024) {
+    throw new AppError("ERR_FILESIZE_OVER_LIMIT", 400);
+  }
+  return buffer;
+};
+
+/** Envia um GIF ou figurinha do KLIPY para a conversa. */
+export const sendKlipy = async (
+  ticket: Ticket,
+  id: string,
+  companyId: number
+): Promise<void> => {
+  const isSticker = id.startsWith("klipy:stickers:");
+  const { url } = await klipyItemFile(
+    companyId,
+    id,
+    isSticker ? ["webp", "png", "gif"] : ["mp4", "webm", "gif"]
+  );
+  const buffer = await downloadMedia(url);
+
+  if (isSticker) {
+    const filename = "sticker.webp";
+    const mediaUrl = await saveMediaToFile(
+      { data: buffer, mimetype: "image/webp", filename },
+      { destination: ticket }
+    );
+    await sendWhatsappFile(
+      ticket,
+      { mediaUrl, mimetype: "image/webp", filename },
+      { sticker: buffer }
+    );
+    return;
+  }
+
+  const filename = `gif-${id.split(":").pop()}.mp4`;
+  const mediaUrl = await saveMediaToFile(
+    { data: buffer, mimetype: "video/mp4", filename },
+    { destination: ticket }
+  );
+  await sendWhatsappFile(
+    ticket,
+    { mediaUrl, mimetype: "video/mp4", filename },
+    { video: buffer, gifPlayback: true, mimetype: "video/mp4" }
+  );
+};
+
+/**
+ * Busca de GIFs e figurinhas para o painel de expressões: usa o KLIPY quando
+ * há chave; senão, cai no GIPHY (GIFs) ou nas figurinhas das conversas.
+ */
+export const searchExpressions = async (
+  companyId: number,
+  kind: "gifs" | "stickers",
+  query: string,
+  page = 1
+): Promise<{
+  configured: boolean;
+  provider: string;
+  items: { id: string; preview: string; title: string; provider: string }[];
+}> => {
+  try {
+    const klipy = await klipyList(companyId, kind, query, page);
+    if (klipy.configured) {
+      return { configured: true, provider: "klipy", items: klipy.items };
+    }
+  } catch (error) {
+    logger.warn("KLIPY indisponível, tentando o GIPHY");
+  }
+
+  if (kind === "gifs") {
+    const giphy = await searchGifs(companyId, query, (page - 1) * 24);
+    return {
+      configured: giphy.configured,
+      provider: "giphy",
+      items: giphy.gifs.map(gif => ({
+        id: gif.id,
+        preview: gif.preview,
+        title: gif.title,
+        provider: "giphy"
+      }))
+    };
+  }
+
+  return { configured: false, provider: "none", items: [] };
+};
+
+/**
+ * GIFs da tela de login (pública): uma seleção leve e sempre "livre" (g),
+ * com temas de atendimento e comemoração. Usa a chave do GIPHY da
+ * instalação e guarda o resultado por 6 horas.
+ */
+const LOGIN_THEMES = [
+  "customer service",
+  "happy team",
+  "thank you",
+  "celebration office",
+  "texting",
+  "high five"
+];
+
+export const loginGifs = async (): Promise<{
+  configured: boolean;
+  gifs: { id: string; url: string }[];
+}> => {
+  const cached = await cacheLayer.get("login:gifs");
+  if (cached) {
+    try {
+      return JSON.parse(cached);
+    } catch (error) {
+      // recalcula
+    }
+  }
+  const key = await GetCompanySetting(1, "giphyApiKey", "");
+  if (!key) return { configured: false, gifs: [] };
+
+  const seen = new Set<string>();
+  const gifs: { id: string; url: string }[] = [];
+  await Promise.all(
+    LOGIN_THEMES.map(async theme => {
+      try {
+        const params = new URLSearchParams({
+          api_key: key,
+          q: theme,
+          limit: "6",
+          rating: "g"
+        });
+        const response = await fetch(
+          `https://api.giphy.com/v1/gifs/search?${params}`
+        );
+        if (!response.ok) return;
+        const body = (await response.json()) as { data?: GiphyGif[] };
+        (body.data || []).forEach(gif => {
+          const url =
+            gif.images?.fixed_width?.webp || gif.images?.fixed_width?.url;
+          if (url && !seen.has(gif.id)) {
+            seen.add(gif.id);
+            gifs.push({ id: gif.id, url });
+          }
+        });
+      } catch (error) {
+        logger.warn("GIPHY: GIFs do login indisponíveis");
+      }
+    })
+  );
+
+  const result = { configured: true, gifs: gifs.slice(0, 30) };
+  if (gifs.length) {
+    await cacheLayer.set("login:gifs", JSON.stringify(result), "EX", 6 * 3600);
+  }
+  return result;
 };

@@ -22,6 +22,7 @@
 import { createTheme } from "@material-ui/core/styles";
 
 import {
+  accentScale,
   alpha,
   brandStates,
   buildShadows,
@@ -149,6 +150,8 @@ export default function createAppTheme({
           semantic: sem,
           radius,
           layout,
+          // cores de apoio: cartões e gráficos deixam de ser monocromáticos
+          accents: accentScale(primaryColor, isDark),
           isDark,
           // conversa nas cores do tema, com o papel de parede escolhido
           chat: buildChatPalette({

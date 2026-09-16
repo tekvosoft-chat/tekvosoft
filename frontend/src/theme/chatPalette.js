@@ -169,6 +169,13 @@ export function buildChatPalette({ brand, accent, isDark, wallpaper, base }) {
     bar: isDark ? mix(brand, "#1B1A21", 0.92) : mix(brand, "#F2F1F5", 0.94),
     input: isDark ? mix(brand, "#26242E", 0.9) : "#FFFFFF",
     datePill: isDark ? mix(brand, "#1B1A21", 0.9) : "#FFFFFF",
+    // sombra macia e um brilho leve no balão enviado: dá volume sem pesar
+    bubbleShadow: isDark
+      ? "0 1px 2px rgba(0, 0, 0, 0.45)"
+      : "0 1px 1px rgba(20, 16, 40, 0.06), 0 2px 8px rgba(20, 16, 40, 0.07)",
+    bubbleOutSheen: isDark
+      ? "linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 55%)"
+      : "linear-gradient(160deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 55%)",
     accent: brand,
     accentHover: isDark ? lighten(brand, 0.07) : darken(brand, 0.07)
   };

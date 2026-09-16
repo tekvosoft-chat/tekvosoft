@@ -99,9 +99,12 @@ const useAuth = () => {
     }
     const socket = socketManager.GetSocket(companyId);
 
+    // o aviso pode trazer só parte do usuário (a troca de foto manda id,
+    // nome e foto): junta com o que já temos. Trocar o objeto inteiro
+    // apagava perfil e empresa, e a tela ficava carregando para sempre.
     const onCompanyUserUseAuth = data => {
-      if (data.action === "update" && data.user.id === user.id) {
-        setUser(data.user);
+      if (data.action === "update" && data.user?.id === user.id) {
+        setUser(prev => ({ ...prev, ...data.user }));
       }
     };
 
@@ -111,7 +114,7 @@ const useAuth = () => {
       socket.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user?.id]);
 
   const posLogin = (data, impersonated = false) => {
     const {

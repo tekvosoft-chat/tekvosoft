@@ -1,6 +1,213 @@
 const messages = {
   en: {
     translations: {
+      payment: {
+        title: "Subscription payment",
+        pix: "Pix",
+        card: "Card",
+        boleto: "Bank slip",
+        payNow: "Pay now",
+        processing: "Processing…",
+        paid: "Payment approved!",
+        copied: "Copied",
+        copyCode: "Copy Pix code",
+        copyLine: "Copy barcode line",
+        openBoleto: "Open bank slip",
+        pixIntro:
+          "We will generate a Pix QR code. The payment clears instantly.",
+        pixHint:
+          "Open your bank app, choose Pix > Scan QR code and point at the image.",
+        boletoIntro:
+          "We generate the bank slip PDF with its barcode. Clearing takes up to 3 business days.",
+        boletoHint: "The bank slip was also sent to the company e-mail.",
+        cardIntro:
+          "Charged right away. You can save the card so the next months are charged automatically.",
+        cardApproved: "Card approved! Your subscription is up to date.",
+        cardPending:
+          "Charge sent. As soon as the bank confirms, your subscription renews.",
+        cardSaved: "Saved card: {{card}}",
+        saveCard: "Save card for automatic charges",
+        saveCardHint:
+          "We only keep a secure code (token), never the card number.",
+        autoCharge: "Automatic charge on · {{card}}",
+        removeCard: "Remove saved card",
+        cardRemoved: "Card removed",
+        noMethods: "No payment method is enabled. Contact support.",
+        form: {
+          holder: "Name on card",
+          number: "Card number",
+          expiry: "Expiry (MM/YYYY)",
+          ccv: "CVV",
+          cpfCnpj: "Tax ID",
+          email: "E-mail",
+          phone: "Mobile",
+          postalCode: "Postal code",
+          addressNumber: "Number"
+        }
+      },
+      paymentGateways: {
+        intro:
+          "Choose what customers can use to pay. Anything turned off is hidden from them.",
+        pix: {
+          title: "Pix",
+          provider: "Efí (Gerencianet)",
+          how: "The customer scans a QR code and the money lands instantly in your Efí account.",
+          steps: [
+            "Create a Pix application in Efí and generate the certificate (.p12).",
+            "Fill in the Client ID, Client Secret, Pix key and upload the certificate below.",
+            "The system registers the payment webhook in Efí by itself.",
+            "On payment, the invoice is settled and the company's due date moves forward."
+          ]
+        },
+        card: {
+          title: "Credit card",
+          provider: "Asaas",
+          how: "Charged instantly. With the card saved, the following months are charged automatically.",
+          steps: [
+            "Create an Asaas account and generate the API key (Integrations > API).",
+            "Paste the key below and pick Sandbox (testing) or Production.",
+            "Register the notification URL below in Asaas (Integrations > Webhooks) with the same token.",
+            "Ask Asaas to enable card tokenization to use automatic charges in production.",
+            "Every day at 9am the system charges the saved card for invoices that are due."
+          ]
+        },
+        boleto: {
+          title: "Bank slip",
+          provider: "Asaas",
+          how: "Generates the bank slip PDF with barcode; clearing takes up to 3 business days.",
+          steps: [
+            "Uses the same Asaas account and key as the card.",
+            "The customer gets the slip on screen and by e-mail.",
+            "When the bank confirms, Asaas notifies the webhook and the invoice is settled."
+          ]
+        },
+        asaas: {
+          key: "Asaas API key",
+          env: "Environment",
+          sandbox: "Sandbox (testing)",
+          production: "Production",
+          webhookToken: "Webhook token",
+          webhookUrl: "Register this URL in Asaas (Integrations > Webhooks):"
+        }
+      },
+      revenue: {
+        monthly: "Monthly revenue",
+        monthlySub: "{{count}} active client",
+        monthlySub_plural: "{{count}} active clients",
+        next30: "Due in 30 days",
+        next30Sub: "Next month's due dates",
+        overdue: "Overdue",
+        overdueSub: "{{count}} client",
+        overdueSub_plural: "{{count}} clients",
+        autoCharge: "Automatic charge",
+        autoChargeSub: "Clients with a saved card",
+        forecast: "Next 6 months forecast",
+        expected: "Expected",
+        clients: "Clients",
+        search: "Search client",
+        empty: "No client with billing set up.",
+        value: "Amount",
+        nextDue: "Next due date",
+        status: "Status",
+        charge: "Charge",
+        noPlan: "No plan",
+        noDate: "No due date",
+        today: "Due today",
+        inDays: "In {{count}} day",
+        inDays_plural: "In {{count}} days",
+        lateBy: "{{count}} day late",
+        lateBy_plural: "{{count}} days late",
+        auto: "Automatic",
+        manualCharge: "Manual",
+        recurrence: {
+          MENSAL: "Monthly",
+          BIMESTRAL: "Every 2 months",
+          TRIMESTRAL: "Quarterly",
+          SEMESTRAL: "Every 6 months",
+          ANUAL: "Yearly"
+        }
+      },
+      planFeatures: {
+        lockedTitle: "{{feature}} is not in your plan",
+        lockedText:
+          "This feature belongs to another plan. Talk to the platform administrator to enable it.",
+        lockedAction: "See my plan",
+        names: {
+          useKanban: "Kanban",
+          useInternalChat: "Internal chat",
+          useSchedules: "Scheduled messages",
+          useCampaigns: "Campaigns",
+          useExternalApi: "Messages API"
+        },
+        hints: {
+          useKanban: "Board with conversations in columns by stage.",
+          useInternalChat: "Team conversations inside the system.",
+          useSchedules: "Schedule messages for a date and time.",
+          useCampaigns: "Bulk sending to contact lists.",
+          useExternalApi: "Send messages from other systems, with a token."
+        }
+      },
+      plansPage: {
+        title: "Plans",
+        subtitle: "Limits and features of each plan you sell.",
+        new: "New plan",
+        edit: "Edit plan",
+        editShort: "Edit",
+        delete: "Delete plan",
+        templatesTitle: "Ready-made templates",
+        templates: {
+          start: "For those starting out, with one number.",
+          pro: "Best seller: small team and scheduling.",
+          business: "Large team, campaigns and API included.",
+          enterprise: "Operations at scale, no limits."
+        },
+        featuresTitle: "Included features",
+        popular: "Best seller",
+        public: "Public",
+        private: "Internal",
+        perMonth: "/month",
+        form: {
+          name: "Plan name",
+          value: "Monthly price",
+          users: "Users",
+          connections: "Connections",
+          queues: "Queues",
+          currency: "Currency",
+          public: "Shown on sign-up",
+          publicHint:
+            "Internal plans are only used by you when creating a company."
+        },
+        saved: "Plan saved",
+        saveError:
+          "Could not save. Check whether a plan with this name already exists.",
+        loadError: "Could not load the plans",
+        deleteTitle: "Delete {{name}}?",
+        deleteText: "Companies using this plan will be left without one.",
+        deleted: "Plan deleted",
+        deleteError: "Could not delete the plan"
+      },
+      queuesPage: {
+        subtitle:
+          "Organize service by department and build each queue's automatic menu.",
+        emptyTitle: "No queues yet",
+        emptyText:
+          "Create queues like Sales, Support or Billing to distribute tickets.",
+        chatbot: "Chatbot · {{count}} option",
+        chatbot_plural: "Chatbot · {{count}} options",
+        noChatbot: "No chatbot",
+        hours: "Business hours set",
+        noGreeting: "No greeting message",
+        users: "Agents",
+        connections: "Connections",
+        tickets: "Open + waiting",
+        edit: "Edit",
+        delete: "Delete",
+        new: "New queue"
+      },
+      loginShowcase: {
+        title: "All your company's conversations in one place",
+        text: "WhatsApp, team and customers in the same dashboard — with Kanban, scheduling and reports."
+      },
       annotator: {
         title: "Document",
         annotate: "Draw",
@@ -37,6 +244,7 @@ const messages = {
         live: "Live",
         tabs: {
           platform: "Overview",
+          revenue: "Revenue",
           companies: "Companies",
           mine: "My company"
         },
@@ -1249,6 +1457,7 @@ const messages = {
         emoji: "Emoji",
         stickers: "Stickers",
         gifs: "GIFs",
+        searchStickers: "Search stickers",
         searchGifs: "Search GIFs",
         noStickers:
           "Stickers that arrive in conversations show up here so you can send them again.",
@@ -1380,10 +1589,15 @@ const messages = {
         extensionBuildUnknownError: "Unknown build error."
       },
       settings: {
+        klipyApiKey: {
+          title: "KLIPY API key"
+        },
         giphyApiKey: {
           title: "GIPHY key (GIFs)"
         },
         hints: {
+          klipyKey:
+            "Free key from klipy.com (the same GIF and sticker library Discord uses). With it, chat GIF and sticker search uses KLIPY; without it, GIPHY.",
           giphyKey:
             "Free key created at developers.giphy.com. With it, the team can search and send GIFs in the chat.",
           groups: {

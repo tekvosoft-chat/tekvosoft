@@ -59,6 +59,15 @@ const decoupledDriverServices = DecoupledDriverServices.getInstance();
 
 let io: SocketIO;
 
+/**
+ * Entrar na sala sempre, mesmo que o contador já esteja acima de 1.
+ *
+ * O contador serve para saber quando ninguém mais precisa da sala (na saída).
+ * Se ele ficar fora de sincronia — por exemplo, uma tela que sai depois de a
+ * seguinte já ter entrado —, o socket saía da sala e as mensagens novas só
+ * apareciam depois de recarregar a página. Entrar é idempotente, então
+ * garantir a sala a cada pedido resolve isso sem efeito colateral.
+ */
 const joinTicketChannel = async (
   socket,
   ticketId: string,
@@ -66,9 +75,7 @@ const joinTicketChannel = async (
   counters: CounterManager
 ) => {
   const c = counters.incrementCounter(`ticket-${ticketId}`);
-  if (c === 1) {
-    socket.join(ticketId);
-  }
+  socket.join(ticketId);
   logger.debug(`joinChatbox[${c}]: Channel: ${ticketId} by user ${user.id}`);
 };
 
@@ -281,7 +288,7 @@ export const initIO = (httpServer: Server): SocketIO => {
 
     socket.on("joinNotification", async () => {
       const c = counters.incrementCounter("notification");
-      if (c === 1) {
+      {
         if (user.profile === "admin") {
           socket.join(`company-${user.companyId}-notification`);
         } else {
@@ -314,7 +321,8 @@ export const initIO = (httpServer: Server): SocketIO => {
     });
 
     socket.on("joinTickets", (status: string) => {
-      if (counters.incrementCounter(`status-${status}`) === 1) {
+      counters.incrementCounter(`status-${status}`);
+      {
         if (user.profile === "admin") {
           logger.debug(
             `Admin ${user.id} of company ${user.companyId} joined ${status} tickets channel.`

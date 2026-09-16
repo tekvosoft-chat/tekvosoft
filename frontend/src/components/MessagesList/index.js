@@ -66,7 +66,13 @@ import { Mutex } from "async-mutex";
 import BoxLoader from "../ui/BoxLoader";
 import AudioBubble from "./AudioBubble";
 import ReactionBar from "./ReactionBar";
-import { SEND_FLIGHT_EVENT, flyBubble } from "./sendFlight";
+import {
+  FAILED_EVENT,
+  SENDING_EVENT,
+  flyFromComposer,
+  matchesPending,
+  pendingMessage
+} from "./optimisticSend";
 import MessageForwardModal from "../MessageForwardModal";
 import InsertEmoticonOutlinedIcon from "@material-ui/icons/InsertEmoticonOutlined";
 import HistoryRoundedIcon from "@material-ui/icons/HistoryRounded";
@@ -177,26 +183,19 @@ const useStyles = makeStyles(theme => ({
     height: "auto",
     display: "block",
     position: "relative",
-    "&:hover [id^='messageActionsButton']": {
-      display: "flex",
-      position: "absolute",
-      top: 0,
-      right: 0
-    },
+    "&:hover [id^='messageActionsButton']": { display: "flex" },
     "&:hover [data-react-trigger]": { opacity: 1, transform: "scale(1)" },
 
     whiteSpace: "pre-wrap",
     backgroundColor: theme.palette.tkv.chat.bubbleIn,
     color: theme.palette.tkv.chat.text,
     alignSelf: "flex-start",
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 8,
-    borderBottomLeftRadius: 8,
-    borderBottomRightRadius: 8,
-    paddingLeft: 5,
-    paddingRight: 5,
-    paddingTop: 5,
-    paddingBottom: 0,
+    // redondo, com o canto do lado de quem fala mais fechado (a "ponta")
+    borderRadius: "18px 18px 18px 6px",
+    paddingLeft: 7,
+    paddingRight: 7,
+    paddingTop: 6,
+    paddingBottom: 1,
     boxShadow: theme.palette.tkv.chat.bubbleShadow,
     transition: "background-color 0.5s ease-in-out",
     [theme.breakpoints.down("xs")]: {
@@ -212,7 +211,7 @@ const useStyles = makeStyles(theme => ({
     minWidth: 0,
     overflow: "hidden",
     backgroundColor: theme.palette.tkv.chat.quoteIn,
-    borderRadius: "7.5px",
+    borderRadius: 12,
     display: "flex",
     position: "relative",
     cursor: "pointer"
@@ -253,24 +252,17 @@ const useStyles = makeStyles(theme => ({
     height: "auto",
     display: "block",
     position: "relative",
-    "&:hover [id^='messageActionsButton']": {
-      display: "flex",
-      position: "absolute",
-      top: 0,
-      right: 0
-    },
+    "&:hover [id^='messageActionsButton']": { display: "flex" },
     whiteSpace: "pre-wrap",
     backgroundColor: theme.palette.tkv.chat.bubbleOut,
+    backgroundImage: theme.palette.tkv.chat.bubbleOutSheen,
     color: theme.palette.tkv.chat.text,
     alignSelf: "flex-end",
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
-    borderBottomLeftRadius: 8,
-    borderBottomRightRadius: 0,
-    paddingLeft: 5,
-    paddingRight: 5,
-    paddingTop: 5,
-    paddingBottom: 0,
+    borderRadius: "18px 18px 6px 18px",
+    paddingLeft: 7,
+    paddingRight: 7,
+    paddingTop: 6,
+    paddingBottom: 1,
     boxShadow: theme.palette.tkv.chat.bubbleShadow,
     transition: "background-color 0.5s ease-in-out",
     [theme.breakpoints.down("xs")]: {
@@ -286,7 +278,7 @@ const useStyles = makeStyles(theme => ({
     minWidth: 0,
     overflowY: "hidden",
     backgroundColor: theme.palette.tkv.chat.quoteOut,
-    borderRadius: "7.5px",
+    borderRadius: 12,
     display: "flex",
     position: "relative"
   },
@@ -309,14 +301,39 @@ const useStyles = makeStyles(theme => ({
     backgroundColor: "#35cd96"
   },
 
+  /**
+   * Setinha de ações da mensagem (responder, encaminhar…).
+   *
+   * Agora é um botão redondo com fundo próprio — antes era um ícone cinza
+   * "colado" no texto, difícil de ver em cima de foto ou de balão colorido.
+   * Ela cresce ao passar o mouse e gira ao abrir o menu.
+   */
   messageActionsButton: {
     display: "none",
-    position: "relative",
-    color: "#999",
-    zIndex: 1,
-    backgroundColor: "inherit",
-    opacity: "90%",
-    "&:hover, &.Mui-focusVisible": { backgroundColor: "inherit" }
+    position: "absolute",
+    top: 4,
+    right: 4,
+    width: 26,
+    height: 26,
+    padding: 0,
+    zIndex: 2,
+    color: theme.palette.tkv.chat.icon,
+    backgroundColor: theme.palette.tkv.chat.datePill,
+    boxShadow: "0 1px 4px rgba(11, 20, 26, 0.22)",
+    transition:
+      "transform .18s cubic-bezier(.34,1.56,.64,1), background-color .15s",
+    "& svg": { fontSize: 18, transition: "transform .2s ease" },
+    "&:hover, &.Mui-focusVisible": {
+      backgroundColor: theme.palette.tkv.chat.datePill,
+      transform: "scale(1.12)",
+      color: theme.palette.tkv.brand.text
+    }
+  },
+  messageActionsButtonOpen: {
+    display: "flex !important",
+    backgroundColor: theme.palette.tkv.brand.textSoft,
+    color: theme.palette.tkv.brand.text,
+    "& svg": { transform: "rotate(180deg)" }
   },
 
   messageContactName: {
@@ -389,10 +406,7 @@ const useStyles = makeStyles(theme => ({
   videoPreviewWrapper: {
     width: 250,
     maxHeight: 445,
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
-    borderBottomLeftRadius: 8,
-    borderBottomRightRadius: 8,
+    borderRadius: 13,
     overflow: "hidden",
     position: "relative",
     backgroundColor: "#000"
@@ -421,12 +435,36 @@ const useStyles = makeStyles(theme => ({
   messageMedia: {
     objectFit: "cover",
     width: "100%",
-    height: 200,
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
-    borderBottomLeftRadius: 8,
-    borderBottomRightRadius: 8
+    height: "auto",
+    maxHeight: 440,
+    borderRadius: 13,
+    display: "block"
   },
+  // balão de foto/vídeo: largura própria, no tamanho do WhatsApp Web
+  bubbleMedia: {
+    width: 340,
+    maxWidth: "100%",
+    [theme.breakpoints.down("xs")]: { width: "78%", minWidth: 200 }
+  },
+  // 8. encaminhar direto da foto, sempre visível (sem precisar do mouse em cima)
+  mediaForward: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    zIndex: 2,
+    width: 32,
+    height: 32,
+    color: "#FFFFFF",
+    backgroundColor: "rgba(12, 10, 20, 0.45)",
+    backdropFilter: "blur(3px)",
+    transition: "transform .15s ease, background-color .15s ease",
+    "& svg": { fontSize: 18 },
+    "&:hover": {
+      backgroundColor: "rgba(12, 10, 20, 0.7)",
+      transform: "scale(1.08)"
+    }
+  },
+  mediaWrap: { position: "relative", display: "block" },
 
   messageMediaClickable: {
     cursor: "pointer"
@@ -456,7 +494,7 @@ const useStyles = makeStyles(theme => ({
 
   timestampStickerLeft: {
     backgroundColor: theme.palette.tkv.chat.bubbleIn,
-    borderRadius: 8,
+    borderRadius: 12,
     padding: 5,
     boxShadow:
       theme.mode === "light" ? "0 1px 1px #b3b3b3" : "0 1px 1px #000000"
@@ -464,10 +502,7 @@ const useStyles = makeStyles(theme => ({
 
   timestampStickerRight: {
     backgroundColor: theme.palette.tkv.chat.bubbleOut,
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
-    borderBottomLeftRadius: 8,
-    borderBottomRightRadius: 0,
+    borderRadius: "12px 12px 4px 12px",
     paddingLeft: 5,
     paddingRight: 5,
     paddingTop: 5,
@@ -794,6 +829,11 @@ const useStyles = makeStyles(theme => ({
     }
   },
   reactTriggerOn: { opacity: 1, transform: "scale(1)" },
+  // mensagens seguidas da mesma pessoa ficam "coladas": o canto de cima do
+  // lado de quem fala também fecha, e o espaço entre elas diminui
+  joinedLeft: { borderTopLeftRadius: 6 },
+  joinedRight: { borderTopRightRadius: 6 },
+
   // mensagem que acabou de chegar ou sair entra com um leve "pulo"
   justArrived: {
     animation: "$messageIn .32s cubic-bezier(.34, 1.4, .64, 1) backwards"
@@ -862,15 +902,35 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
+// a mensagem confirmada herda a chave do balão provisório (sem remontar)
+const keepClientKey = (previous, next) => {
+  if (previous?.clientKey && next && !next.clientKey) {
+    next.clientKey = previous.clientKey;
+  }
+  return next;
+};
+
 const reducer = (state, action) => {
+  if (action.type === "ADD_PENDING") {
+    return [...state, action.payload];
+  }
+
+  if (action.type === "REMOVE_PENDING") {
+    return state.filter(m => m.id !== action.payload);
+  }
+
   if (action.type === "LOAD_MESSAGES") {
     const messages = action.payload;
     const newMessages = [];
+    // provisório que já veio confirmado na recarga sai da lista
+    state = state.filter(
+      m => !m.pending || !messages.some(message => matchesPending(m, message))
+    );
 
     messages.forEach(message => {
       const messageIndex = state.findIndex(m => m.id === message.id);
       if (messageIndex !== -1) {
-        state[messageIndex] = message;
+        state[messageIndex] = keepClientKey(state[messageIndex], message);
       } else {
         newMessages.push(message);
       }
@@ -888,9 +948,17 @@ const reducer = (state, action) => {
   if (action.type === "ADD_MESSAGE") {
     const newMessage = action.payload;
     const messageIndex = state.findIndex(m => m.id === newMessage.id);
+    const pendingIndex =
+      messageIndex === -1
+        ? state.findIndex(m => matchesPending(m, newMessage))
+        : -1;
 
     if (messageIndex !== -1) {
-      state[messageIndex] = newMessage;
+      state[messageIndex] = keepClientKey(state[messageIndex], newMessage);
+    } else if (pendingIndex !== -1) {
+      // a confirmação ocupa o lugar do balão que já está na tela
+      newMessage.clientKey = state[pendingIndex].clientKey;
+      state[pendingIndex] = newMessage;
     } else {
       state.push(newMessage);
     }
@@ -920,7 +988,7 @@ const reducer = (state, action) => {
     const messageIndex = state.findIndex(m => m.id === messageToUpdate.id);
 
     if (messageIndex !== -1) {
-      state[messageIndex] = messageToUpdate;
+      state[messageIndex] = keepClientKey(state[messageIndex], messageToUpdate);
     }
 
     return [...state];
@@ -1054,7 +1122,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
   };
 
   const replyGestures = (message, data) => {
-    if (!canReply || message.isDeleted) return {};
+    if (!canReply || message.isDeleted || message.pending) return {};
     return {
       "data-bubble": "1",
       onContextMenu: e => {
@@ -1231,7 +1299,10 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
 
   useEffect(() => {
     if (ticketId && messagesList.length)
-      rememberMessages(ticketId, messagesList);
+      rememberMessages(
+        ticketId,
+        messagesList.filter(m => !m.pending)
+      );
   }, [messagesList, ticketId]);
 
   function loadData(incrementPage = false) {
@@ -1283,6 +1354,23 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
   reloadLatestRef.current = () => {
     if (ticketId) loadData();
   };
+  // reconectou (ou o servidor reiniciou): entra de novo na sala do
+  // atendimento e busca o que chegou enquanto estávamos fora
+  useEffect(() => {
+    if (!ticketId) return undefined;
+    const socket = socketManager.GetSocket();
+    const onReady = () => {
+      socket.emit("joinChatBox", `${ticketId}`);
+      reloadLatestRef.current?.();
+    };
+    const unsubscribe = socketManager.onEveryReady?.(onReady);
+    return () => {
+      unsubscribe?.();
+      socket.disconnect();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticketId, socketManager]);
+
   useEffect(() => {
     let hiddenAt = 0;
     const onVisibility = () => {
@@ -1460,28 +1548,45 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
     };
   }, [ticketId, ticket, socketManager]);
 
-  // animação de envio: o fantasma do balão pousa no fim desta lista
+  // envio: o balão provisório entra na hora e desliza da barra até aqui
+  const flightRef = useRef(null);
   useEffect(() => {
-    const onFlight = event => {
-      const { text, rect } = event.detail || {};
-      flyBubble({
-        text,
-        from: rect,
-        list: scrollRef.current,
-        background: theme.palette.tkv.chat.bubbleOut,
-        color: theme.palette.tkv.chat.text,
-        shadow: theme.palette.tkv.chat.bubbleShadow
-      });
-      if (scrollRef.current) {
-        scrollRef.current.scrollTo({
-          top: scrollRef.current.scrollHeight,
-          behavior: "smooth"
-        });
-      }
+    const timers = [];
+    const onSending = event => {
+      const detail = event.detail || {};
+      if (!detail.id || detail.ticketId !== currentTicketId.current) return;
+      flightRef.current = { id: detail.id, from: detail.from };
+      dispatch({ type: "ADD_PENDING", payload: pendingMessage(detail) });
+      // sem confirmação em 25 s, o provisório sai (a real chega pela recarga)
+      timers.push(
+        setTimeout(
+          () => dispatch({ type: "REMOVE_PENDING", payload: detail.id }),
+          25000
+        )
+      );
     };
-    window.addEventListener(SEND_FLIGHT_EVENT, onFlight);
-    return () => window.removeEventListener(SEND_FLIGHT_EVENT, onFlight);
-  }, [theme]);
+    const onFailed = event =>
+      dispatch({ type: "REMOVE_PENDING", payload: event.detail?.id });
+    window.addEventListener(SENDING_EVENT, onSending);
+    window.addEventListener(FAILED_EVENT, onFailed);
+    return () => {
+      window.removeEventListener(SENDING_EVENT, onSending);
+      window.removeEventListener(FAILED_EVENT, onFailed);
+      timers.forEach(clearTimeout);
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    const flight = flightRef.current;
+    if (!flight) return;
+    const element = document.getElementById(flight.id);
+    if (!element) return;
+    flightRef.current = null;
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+    flyFromComposer(element, flight.from);
+  }, [messagesList]);
 
   const loadMore = async () => {
     await loadPageMutex.runExclusive(async () => {
@@ -1626,18 +1731,34 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
     if (!document && message.mediaType === "image") {
       return (
         <>
-          <img
-            className={clsx(
-              classes.messageMedia,
-              classes.messageMediaClickable,
-              {
-                [classes.messageMediaDeleted]: message.isDeleted
-              }
+          <div className={classes.mediaWrap}>
+            <img
+              className={clsx(
+                classes.messageMedia,
+                classes.messageMediaClickable,
+                {
+                  [classes.messageMediaDeleted]: message.isDeleted
+                }
+              )}
+              src={message.mediaUrl}
+              alt="midia da mensagem"
+              onClick={() => openLightboxForMessage(message.id)}
+            />
+            {!readOnly && !message.isDeleted && (
+              <Tooltip title={i18n.t("messageOptionsMenu.forward")}>
+                <IconButton
+                  className={classes.mediaForward}
+                  aria-label={i18n.t("messageOptionsMenu.forward")}
+                  onClick={event => {
+                    event.stopPropagation();
+                    setForwarding(message);
+                  }}
+                >
+                  <ShortcutRoundedIcon />
+                </IconButton>
+              </Tooltip>
             )}
-            src={message.mediaUrl}
-            alt="midia da mensagem"
-            onClick={() => openLightboxForMessage(message.id)}
-          />
+          </div>
           <>
             <div
               className={[
@@ -1708,6 +1829,20 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
               [classes.messageMediaDeleted]: message.isDeleted
             })}
           >
+            {!readOnly && !message.isDeleted && (
+              <Tooltip title={i18n.t("messageOptionsMenu.forward")}>
+                <IconButton
+                  className={classes.mediaForward}
+                  aria-label={i18n.t("messageOptionsMenu.forward")}
+                  onClick={event => {
+                    event.stopPropagation();
+                    setForwarding(message);
+                  }}
+                >
+                  <ShortcutRoundedIcon />
+                </IconButton>
+              </Tooltip>
+            )}
             <video
               ref={element => {
                 if (element) {
@@ -1797,17 +1932,19 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
               ticketId={readOnly ? undefined : ticketId}
             />
           )}
-          <div className={classes.downloadMedia}>
-            <Button
-              startIcon={<Description />}
-              endIcon={<GetApp />}
-              color="primary"
-              variant="outlined"
-              onClick={() => downloadFile(message.mediaUrl)}
-            >
-              {document?.fileName || message.body}
-            </Button>
-          </div>
+          {!isPdf && (
+            <div className={classes.downloadMedia}>
+              <Button
+                startIcon={<Description />}
+                endIcon={<GetApp />}
+                color="primary"
+                variant="outlined"
+                onClick={() => downloadFile(message.mediaUrl)}
+              >
+                {document?.fileName || message.body}
+              </Button>
+            </div>
+          )}
           {message.body !== document?.fileName && (
             <>
               <div
@@ -2474,13 +2611,26 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
         return;
       }
 
+      let previous = null;
+      for (let i = index - 1; i >= 0; i -= 1) {
+        if (timeline[i].mediaType !== "reactionMessage") {
+          previous = timeline[i];
+          break;
+        }
+      }
+      const joined =
+        !!previous &&
+        previous.fromMe === message.fromMe &&
+        previous.ticketId === message.ticketId &&
+        isSameDay(parseISO(previous.createdAt), parseISO(message.createdAt));
+
       const data = JSON.parse(message.dataJson);
       const dataContext = getDataContextInfo(data);
       const messageError = getMessageErrorData(message);
       const isSticker = detectSticker(message, data);
       if (!message.fromMe) {
         const messageFragment = (
-          <React.Fragment key={message.id}>
+          <React.Fragment key={message.clientKey || message.id}>
             {renderTicketBoundary(message, index)}
             {renderDailyTimestamps(message, index)}
             {renderMessageDivider(message, index)}
@@ -2488,24 +2638,34 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
               id={message.id}
               className={[
                 clsx(classes.messageContainer, classes.messageLeft, {
+                  [classes.joinedLeft]: joined && !isSticker,
+                  [classes.bubbleMedia]:
+                    !isSticker &&
+                    !!message.mediaUrl &&
+                    ["image", "video"].includes(message.mediaType),
                   [classes.messageMediaSticker]: isSticker,
                   [classes.swipeable]: isPhone && canReply,
                   [classes.bubblePressed]:
                     reactTarget?.phone && reactTarget.message.id === message.id,
                   [classes.justArrived]:
+                    !message.clientKey &&
                     Date.now() - new Date(message.createdAt).getTime() < 6000
                 })
               ]}
               title={message.queueId && message.queue?.name}
               {...replyGestures(message, data)}
             >
-              {readOnly || (
+              {readOnly || message.pending || (
                 <IconButton
                   variant="contained"
                   size="small"
                   id={`messageActionsButton-${message.id}`}
                   disabled={message.isDeleted}
-                  className={classes.messageActionsButton}
+                  className={clsx(classes.messageActionsButton, {
+                    [classes.messageActionsButtonOpen]:
+                      selectedMessage?.id === message.id &&
+                      messageOptionsMenuOpen
+                  })}
                   onClick={e => handleOpenMessageOptionsMenu(e, message, data)}
                 >
                   <ExpandMore />
@@ -2627,7 +2787,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
         return messageFragment;
       } else {
         return (
-          <React.Fragment key={message.id}>
+          <React.Fragment key={message.clientKey || message.id}>
             {renderTicketBoundary(message, index)}
             {renderDailyTimestamps(message, index)}
             {renderMessageDivider(message, index)}
@@ -2635,24 +2795,34 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
               id={message.id}
               className={[
                 clsx(classes.messageContainer, classes.messageRight, {
+                  [classes.joinedRight]: joined && !isSticker,
+                  [classes.bubbleMedia]:
+                    !isSticker &&
+                    !!message.mediaUrl &&
+                    ["image", "video"].includes(message.mediaType),
                   [classes.messageMediaSticker]: isSticker,
                   [classes.swipeable]: isPhone && canReply,
                   [classes.bubblePressed]:
                     reactTarget?.phone && reactTarget.message.id === message.id,
                   [classes.justArrived]:
+                    !message.clientKey &&
                     Date.now() - new Date(message.createdAt).getTime() < 6000
                 })
               ]}
               title={message.queueId && message.queue?.name}
               {...replyGestures(message, data)}
             >
-              {readOnly || (
+              {readOnly || message.pending || (
                 <IconButton
                   variant="contained"
                   size="small"
                   id={`messageActionsButton-${message.id}`}
                   disabled={message.isDeleted}
-                  className={classes.messageActionsButton}
+                  className={clsx(classes.messageActionsButton, {
+                    [classes.messageActionsButtonOpen]:
+                      selectedMessage?.id === message.id &&
+                      messageOptionsMenuOpen
+                  })}
                   onClick={e => handleOpenMessageOptionsMenu(e, message, data)}
                 >
                   <ExpandMore />

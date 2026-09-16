@@ -11,6 +11,8 @@ const queueRoutes = Router();
 
 queueRoutes.get("/queue", isAuth, QueueController.index);
 
+queueRoutes.get("/queues/stats", isAuth, QueueController.stats);
+
 queueRoutes.post("/queue", isAuth, isAdmin, QueueController.store);
 
 queueRoutes.get("/queue/:queueId", isAuth, QueueController.show);
