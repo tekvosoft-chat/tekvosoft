@@ -20,8 +20,13 @@ const pickBackground = () => {
 
 const useStyles = makeStyles(theme => ({
   root: {
+    // acompanha a área visível: com o teclado aberto a tela encolhe e o
+    // campo em foco rola para cima dele (ver useViewportHeight no App.js)
     position: "fixed",
-    inset: 0,
+    left: 0,
+    right: 0,
+    top: "var(--vv-top, 0px)",
+    height: "var(--vh, 100vh)",
     display: "flex",
     background: "#000",
     color: "#fff",
@@ -58,6 +63,7 @@ const useStyles = makeStyles(theme => ({
     background: "#fff",
     color: "#0a0a0a",
     overflowY: "auto",
+    WebkitOverflowScrolling: "touch",
     [theme.breakpoints.down("sm")]: {
       width: "100%",
       minWidth: 0,

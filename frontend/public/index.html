@@ -84,6 +84,18 @@
         -webkit-overflow-scrolling: touch;
       }
 
+      /* Modais, gavetas e bottom sheets ficam fora do #root. Com position
+         fixed + inset 0 eles ocupavam a tela inteira mesmo com o teclado
+         aberto, e o campo em foco ficava embaixo do teclado. Aqui eles
+         encolhem para a área visível, como o resto do app. */
+      .MuiDialog-root,
+      .MuiDrawer-modal,
+      .tkv-viewport-fixed {
+        top: var(--vv-top, 0px) !important;
+        bottom: auto !important;
+        height: var(--vh, 100vh) !important;
+      }
+
       /* campos de data do iOS: sem isto o Safari desenha o seu próprio
          controle, centralizado e mais baixo que os outros campos */
       input[type="date"],

@@ -88,17 +88,13 @@ function useViewportHeight() {
       );
     };
 
-    // Campo dentro de modal ou painel: depois que o teclado sobe, rola o
-    // conteúdo do modal até o campo ficar à vista. O modal encolhe para caber
-    // acima do teclado, e o campo tocado podia ficar abaixo da dobra.
+    // Campo em foco: depois que o teclado sobe, rola o conteúdo até o campo
+    // ficar à vista. A tela (ou o modal) encolhe para caber acima do teclado,
+    // e o campo tocado podia ficar abaixo da dobra.
+    // Vale para qualquer tela (login, cadastro, formulários), não só modais.
     const revealFocused = () => {
       const el = document.activeElement;
-      if (
-        !isTypingField(el) ||
-        !el.closest(".MuiDialog-root, .MuiDrawer-root")
-      ) {
-        return;
-      }
+      if (!isTypingField(el)) return;
       let scroller = el.parentElement;
       while (scroller && scroller !== document.body) {
         const { overflowY } = getComputedStyle(scroller);
@@ -111,7 +107,13 @@ function useViewportHeight() {
         scroller = scroller.parentElement;
       }
       if (!scroller || scroller === document.body) return;
-      const box = scroller.getBoundingClientRect();
+      const rect = scroller.getBoundingClientRect();
+      // o que realmente aparece: a caixa que rola, cortada pela área visível
+      const vv = window.visualViewport;
+      const box = {
+        top: rect.top,
+        bottom: Math.min(rect.bottom, vv ? vv.height : window.innerHeight)
+      };
       const field = el.getBoundingClientRect();
       const margin = 16;
       if (field.bottom > box.bottom - margin) {
