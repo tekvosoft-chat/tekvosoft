@@ -168,6 +168,10 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   const { ticketId } = req.params;
   const { body, quotedMsg }: MessageData = req.body;
   const medias = req.files as Express.Multer.File[];
+  // legenda de cada foto/vídeo, na mesma ordem dos arquivos
+  const captions: string[] = []
+    .concat(req.body?.captions ?? [])
+    .map((caption: unknown) => String(caption ?? "").slice(0, 3000));
   const { companyId } = req.user;
   const userId = Number(req.user.id) || null;
 
@@ -191,8 +195,12 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   if (medias) {
     if (channel === "whatsapp") {
       await Promise.all(
-        medias.map(async (media: Express.Multer.File) => {
-          await SendWhatsAppMedia({ media, ticket });
+        medias.map(async (media: Express.Multer.File, index: number) => {
+          await SendWhatsAppMedia({
+            media,
+            ticket,
+            caption: captions[index] || undefined
+          });
           fs.unlinkSync(media.path);
         })
       );

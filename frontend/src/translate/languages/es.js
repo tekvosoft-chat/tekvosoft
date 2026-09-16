@@ -801,6 +801,9 @@ const messages = {
         cta: "Suscribirse ahora"
       },
       mediaPreview: {
+        add: "Agregar archivo",
+        captionPlaceholder: "Añadir un comentario…",
+        position: "{{current}} de {{total}}",
         files: "archivos",
         remove: "Quitar",
         send: "Enviar"

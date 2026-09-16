@@ -1,12 +1,20 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
-import { makeStyles } from "@material-ui/core/styles";
+import { makeStyles, useTheme } from "@material-ui/core/styles";
+import useMediaQuery from "@material-ui/core/useMediaQuery";
+import Dialog from "@material-ui/core/Dialog";
+import Slide from "@material-ui/core/Slide";
+import Grow from "@material-ui/core/Grow";
 import IconButton from "@material-ui/core/IconButton";
-import Button from "@material-ui/core/Button";
-import CreateOutlinedIcon from "@material-ui/icons/CreateOutlined";
-import Typography from "@material-ui/core/Typography";
+import InputBase from "@material-ui/core/InputBase";
+import CircularProgress from "@material-ui/core/CircularProgress";
 import CloseRoundedIcon from "@material-ui/icons/CloseRounded";
-import SendIcon from "@material-ui/icons/Send";
+import SendRoundedIcon from "@material-ui/icons/SendRounded";
+import CreateOutlinedIcon from "@material-ui/icons/CreateOutlined";
+import DeleteOutlineRoundedIcon from "@material-ui/icons/DeleteOutlineRounded";
+import AddRoundedIcon from "@material-ui/icons/AddRounded";
+import ChevronLeftRoundedIcon from "@material-ui/icons/ChevronLeftRounded";
+import ChevronRightRoundedIcon from "@material-ui/icons/ChevronRightRounded";
 import InsertDriveFileOutlinedIcon from "@material-ui/icons/InsertDriveFileOutlined";
 import AudiotrackOutlinedIcon from "@material-ui/icons/AudiotrackOutlined";
 
@@ -14,104 +22,131 @@ import { i18n } from "../../translate/i18n";
 import DocumentAnnotator from "../DocumentAnnotator";
 
 /**
- * Prévia dos arquivos antes de enviar.
+ * Prévia dos anexos antes de enviar, no jeito do WhatsApp.
  *
- * Antes, ao escolher uma foto, a barra de digitar era trocada por uma linha
- * com o NOME do arquivo ("IMG_4821.jpg") entre um X e uma seta — não dava
- * para ver qual foto era, nem conferir se era a certa antes de mandar para o
- * cliente. Agora a imagem aparece grande, vídeo e áudio tocam ali mesmo, e
- * documentos mostram nome e tamanho. Com vários arquivos, uma fileira de
- * miniaturas permite trocar a prévia e tirar um arquivo sem desistir dos
- * outros.
+ * Abre em tela cheia no celular (e grande no computador), com fundo escuro
+ * para a foto aparecer como o cliente vai ver. Embaixo fica o campo de
+ * legenda — cada foto tem a sua — e o botão de enviar; acima dele, as
+ * miniaturas com o "+" para juntar mais arquivos. No topo: fechar, desenhar
+ * sobre a imagem e tirar o arquivo atual.
  *
- * Só apresenta: quem envia continua sendo o componente que já enviava.
+ * Só apresenta: quem envia continua sendo o componente que chamou, que
+ * recebe as legendas em `onSend(event, captions)`.
  */
 const useStyles = makeStyles(theme => {
-  const t = theme.palette.tkv;
   return {
-    root: {
-      flex: "none",
-      width: "100%",
+    paper: {
+      backgroundColor: "#0b0a10",
+      color: "#fff",
+      overflow: "hidden",
       display: "flex",
       flexDirection: "column",
-      gap: theme.spacing(1),
-      padding: theme.spacing(1, 1.5, 1.25),
-      paddingBottom: `calc(${theme.spacing(1.25)}px + var(--safe-bottom, 0px))`,
-      borderTop: `1px solid ${t.border}`,
-      animation: "tkvPreviewIn .2s ease-out"
+      [theme.breakpoints.up("sm")]: {
+        width: "min(920px, calc(100vw - 64px))",
+        height: "min(760px, calc(var(--vh, 100vh) - 64px))",
+        maxWidth: "none",
+        maxHeight: "none",
+        borderRadius: 20
+      }
     },
-    header: {
+    backdrop: {
+      backgroundColor: "rgba(8, 7, 12, 0.72)",
+      backdropFilter: "blur(6px)"
+    },
+    top: {
+      flex: "none",
       display: "flex",
       alignItems: "center",
-      gap: theme.spacing(1)
+      gap: 4,
+      padding: theme.spacing(1, 1),
+      paddingTop: `calc(${theme.spacing(1)}px + var(--safe-top, 0px))`,
+      [theme.breakpoints.up("sm")]: { paddingTop: theme.spacing(1) },
+      "& .MuiIconButton-root": {
+        color: "#fff",
+        transition: "background-color .15s ease, transform .12s ease",
+        "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
+        "&:active": { transform: "scale(0.9)" }
+      }
     },
-    headerText: {
+    title: {
       flex: 1,
       minWidth: 0,
-      fontSize: "0.875rem",
+      padding: "0 6px",
+      display: "flex",
+      flexDirection: "column"
+    },
+    titleMain: {
+      fontSize: 15,
       fontWeight: 600,
-      color: theme.palette.text.primary,
       overflow: "hidden",
       textOverflow: "ellipsis",
       whiteSpace: "nowrap"
     },
-    annotate: {
-      position: "absolute",
-      top: 10,
-      right: 10,
-      zIndex: 2,
-      borderRadius: 999,
-      padding: "4px 12px",
-      textTransform: "none",
-      fontWeight: 700,
-      color: "#FFFFFF",
-      backgroundColor: "rgba(0, 0, 0, 0.55)",
-      backdropFilter: "blur(6px)",
-      "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.7)" }
-    },
+    titleSub: { fontSize: 12, color: "rgba(255,255,255,0.6)" },
     stage: {
       position: "relative",
+      flex: 1,
+      minHeight: 0,
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      height: "min(calc(var(--vh, 100vh) * 0.42), 320px)",
-      borderRadius: t.radius.lg,
-      overflow: "hidden",
-      backgroundColor: t.isDark ? "#0B0A10" : "#1A1626"
+      padding: theme.spacing(1, 2),
+      touchAction: "pan-y"
     },
     stageMedia: {
       maxWidth: "100%",
       maxHeight: "100%",
       objectFit: "contain",
-      display: "block"
+      display: "block",
+      borderRadius: 6,
+      boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
+      animation: "$enter .22s ease"
     },
+    "@keyframes enter": {
+      from: { opacity: 0, transform: "scale(.96)" },
+      to: { opacity: 1, transform: "none" }
+    },
+    nav: {
+      position: "absolute",
+      top: "50%",
+      marginTop: -22,
+      width: 44,
+      height: 44,
+      color: "#fff",
+      backgroundColor: "rgba(255,255,255,0.12)",
+      backdropFilter: "blur(6px)",
+      "&:hover": { backgroundColor: "rgba(255,255,255,0.2)" },
+      [theme.breakpoints.down("xs")]: { display: "none" }
+    },
+    navPrev: { left: 12 },
+    navNext: { right: 12 },
     doc: {
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
-      gap: theme.spacing(1),
-      padding: theme.spacing(2),
-      color: "#FFFFFF",
+      gap: 10,
+      padding: theme.spacing(4),
+      borderRadius: 20,
+      backgroundColor: "rgba(255,255,255,0.06)",
       textAlign: "center",
-      "& svg": { fontSize: 56, opacity: 0.9 }
+      maxWidth: 360,
+      "& > svg": { fontSize: 64, color: "rgba(255,255,255,0.8)" }
     },
-    docName: {
-      fontSize: "0.9375rem",
-      fontWeight: 600,
-      maxWidth: 280,
-      overflowWrap: "anywhere"
-    },
-    docSize: { fontSize: "0.75rem", opacity: 0.7 },
-    footer: {
+    docName: { fontSize: 15, fontWeight: 600, wordBreak: "break-word" },
+    docSize: { fontSize: 13, color: "rgba(255,255,255,0.6)" },
+    bottom: {
+      flex: "none",
       display: "flex",
-      alignItems: "center",
-      gap: theme.spacing(1)
+      flexDirection: "column",
+      gap: 10,
+      padding: theme.spacing(1, 1.5, 1.5),
+      paddingBottom: `calc(${theme.spacing(1.5)}px + var(--safe-bottom, 0px))`,
+      background:
+        "linear-gradient(to top, rgba(11,10,16,1) 60%, rgba(11,10,16,0))"
     },
     strip: {
-      flex: 1,
-      minWidth: 0,
       display: "flex",
-      gap: theme.spacing(0.75),
+      gap: 8,
       overflowX: "auto",
       padding: "4px 2px",
       scrollbarWidth: "none",
@@ -120,59 +155,97 @@ const useStyles = makeStyles(theme => {
     thumb: {
       position: "relative",
       flex: "none",
-      width: 56,
-      height: 56,
-      padding: 0,
-      borderRadius: t.radius.md,
+      width: 54,
+      height: 54,
+      borderRadius: 12,
       overflow: "hidden",
-      border: "2px solid transparent",
-      backgroundColor: t.surfaceSunken,
       cursor: "pointer",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      color: theme.palette.text.secondary,
-      "& img, & video": {
-        width: "100%",
-        height: "100%",
-        objectFit: "cover",
-        display: "block"
+      backgroundColor: "rgba(255,255,255,0.08)",
+      border: "2px solid transparent",
+      opacity: 0.7,
+      transition: "opacity .15s ease, border-color .15s ease, transform .15s",
+      "& img, & video": { width: "100%", height: "100%", objectFit: "cover" },
+      "& svg": { color: "rgba(255,255,255,0.8)" },
+      "&:active": { transform: "scale(0.94)" }
+    },
+    thumbActive: {
+      opacity: 1,
+      borderColor: "var(--tkv-accent)"
+    },
+    addTile: {
+      opacity: 1,
+      border: "2px dashed rgba(255,255,255,0.3)",
+      backgroundColor: "transparent",
+      "&:hover": { borderColor: "rgba(255,255,255,0.6)" }
+    },
+    composer: {
+      display: "flex",
+      alignItems: "flex-end",
+      gap: 8
+    },
+    captionPill: {
+      flex: 1,
+      minWidth: 0,
+      display: "flex",
+      alignItems: "center",
+      minHeight: 46,
+      padding: "4px 16px",
+      borderRadius: 23,
+      backgroundColor: "rgba(255,255,255,0.1)",
+      border: "1px solid rgba(255,255,255,0.08)",
+      transition: "background-color .15s ease, border-color .15s ease",
+      "&:focus-within": {
+        backgroundColor: "rgba(255,255,255,0.14)",
+        borderColor: "rgba(255,255,255,0.25)"
       }
     },
-    thumbActive: { borderColor: "var(--tkv-accent)" },
-    thumbRemove: {
-      position: "absolute",
-      top: 2,
-      right: 2,
-      width: 20,
-      height: 20,
-      padding: 0,
-      borderRadius: "50%",
-      backgroundColor: "rgba(0, 0, 0, 0.6)",
-      color: "#FFFFFF",
-      "& svg": { fontSize: 14 },
-      "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.8)" }
+    caption: {
+      flex: 1,
+      color: "#fff",
+      // 16px: abaixo disso o iPhone dá zoom ao focar
+      fontSize: 16,
+      "& textarea": { maxHeight: 110, overflowY: "auto !important" },
+      "& textarea::placeholder": { color: "rgba(255,255,255,0.55)", opacity: 1 }
     },
     send: {
+      position: "relative",
       flex: "none",
-      width: 52,
-      height: 52,
-      marginLeft: "auto",
-      borderRadius: "50%",
+      width: 50,
+      height: 50,
+      color: "var(--tkv-accent-text)",
       backgroundColor: "var(--tkv-accent)",
-      color: "var(--tkv-accent-text, #FFFFFF)",
-      boxShadow: theme.shadows[4],
+      boxShadow: "0 8px 20px -6px var(--tkv-accent)",
+      transition: "transform .12s ease, filter .15s ease",
       "&:hover": {
         backgroundColor: "var(--tkv-accent)",
-        filter: "brightness(0.95)"
+        filter: "brightness(1.08)"
       },
+      "&:active": { transform: "scale(0.9)" },
       "&.Mui-disabled": {
+        color: "var(--tkv-accent-text)",
         backgroundColor: "var(--tkv-accent)",
-        color: "var(--tkv-accent-text, #FFFFFF)",
-        opacity: 0.5
+        opacity: 0.6
       }
     },
-    progress: { width: "100%" }
+    count: {
+      position: "absolute",
+      top: -4,
+      right: -4,
+      minWidth: 20,
+      height: 20,
+      padding: "0 5px",
+      borderRadius: 10,
+      fontSize: 11,
+      fontWeight: 700,
+      lineHeight: "20px",
+      color: "var(--tkv-accent)",
+      backgroundColor: "#fff"
+    },
+    progress: { padding: "0 4px" },
+    hiddenInput: { display: "none" }
   };
 });
 
@@ -191,10 +264,15 @@ const humanSize = bytes => {
 const isPdf = file =>
   file?.type === "application/pdf" || /\.pdf$/i.test(file?.name || "");
 
+const SlideUp = React.forwardRef((props, ref) => (
+  <Slide direction="up" ref={ref} {...props} />
+));
+
 const MediaPreview = ({
   files,
   onRemove,
   onReplace,
+  onAdd,
   onClear,
   onSend,
   loading,
@@ -202,11 +280,18 @@ const MediaPreview = ({
   progress,
   accent,
   accentText = "#FFFFFF",
-  className
+  withCaption = false
 }) => {
   const classes = useStyles();
+  const theme = useTheme();
+  const isPhone = useMediaQuery(theme.breakpoints.down("xs"));
   const [selected, setSelected] = useState(0);
   const [annotating, setAnnotating] = useState(null);
+  // legenda de cada arquivo, pela chave do arquivo (sobrevive a remoções)
+  const [captions, setCaptions] = useState({});
+  const addInputRef = useRef(null);
+  const captionRef = useRef(null);
+  const touchX = useRef(null);
 
   // endereços locais para exibir os arquivos sem enviá-los; liberados ao sair
   const urls = useMemo(
@@ -222,42 +307,70 @@ const MediaPreview = ({
     if (selected > files.length - 1) setSelected(Math.max(0, files.length - 1));
   }, [files.length, selected]);
 
+  // no computador o cursor já vai para a legenda
+  useEffect(() => {
+    if (!isPhone && withCaption && files.length) {
+      setTimeout(() => captionRef.current?.focus(), 250);
+    }
+  }, [isPhone, withCaption, files.length, selected]);
+
   if (!files.length) return null;
 
   const current = files[selected] || files[0];
   const currentUrl = urls[selected] || urls[0];
   const kind = kindOf(current);
+  const keyOf = file => `${file.name}-${file.size}-${file.lastModified}`;
+  const captionOf = file => captions[keyOf(file)] || "";
+
+  const go = delta =>
+    setSelected(i => Math.max(0, Math.min(files.length - 1, i + delta)));
+
+  const send = event => {
+    if (loading || disabled) return;
+    onSend(
+      event,
+      files.map(file => captionOf(file).trim())
+    );
+  };
 
   const title =
     files.length === 1
       ? current.name
-      : `${files.length} ${i18n.t("mediaPreview.files")}`;
+      : i18n.t("mediaPreview.position", {
+          current: selected + 1,
+          total: files.length
+        });
 
   return (
-    <div
-      className={`${classes.root}${className ? ` ${className}` : ""}`}
-      style={{ "--tkv-accent": accent, "--tkv-accent-text": accentText }}
+    <Dialog
+      open
+      fullScreen={isPhone}
+      onClose={loading ? undefined : onClear}
+      TransitionComponent={isPhone ? SlideUp : Grow}
+      transitionDuration={{ enter: 240, exit: 180 }}
+      classes={{ paper: classes.paper }}
+      BackdropProps={{ className: classes.backdrop }}
+      PaperProps={{
+        style: { "--tkv-accent": accent, "--tkv-accent-text": accentText }
+      }}
     >
-      <div className={classes.header}>
+      <div className={classes.top}>
         <IconButton
-          size="small"
           onClick={onClear}
           disabled={loading}
           aria-label={i18n.t("common.cancel")}
         >
           <CloseRoundedIcon />
         </IconButton>
-        <Typography component="p" className={classes.headerText}>
-          {title}
-        </Typography>
-      </div>
-
-      <div className={classes.stage}>
+        <div className={classes.title}>
+          <span className={classes.titleMain}>{title}</span>
+          {kind === "document" && (
+            <span className={classes.titleSub}>{humanSize(current.size)}</span>
+          )}
+        </div>
         {onReplace && !loading && (kind === "image" || isPdf(current)) && (
-          <Button
-            size="small"
-            className={classes.annotate}
-            startIcon={<CreateOutlinedIcon />}
+          <IconButton
+            aria-label={i18n.t("annotator.annotate")}
             onClick={() =>
               setAnnotating({
                 index: selected,
@@ -267,11 +380,43 @@ const MediaPreview = ({
               })
             }
           >
-            {i18n.t("annotator.annotate")}
-          </Button>
+            <CreateOutlinedIcon />
+          </IconButton>
+        )}
+        {onRemove && !loading && files.length > 1 && (
+          <IconButton
+            aria-label={i18n.t("mediaPreview.remove")}
+            onClick={() => onRemove(selected)}
+          >
+            <DeleteOutlineRoundedIcon />
+          </IconButton>
+        )}
+      </div>
+
+      <div
+        className={classes.stage}
+        onTouchStart={e => {
+          touchX.current = e.touches[0]?.clientX ?? null;
+        }}
+        onTouchEnd={e => {
+          if (touchX.current === null) return;
+          const dx = (e.changedTouches[0]?.clientX ?? 0) - touchX.current;
+          touchX.current = null;
+          if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
+        }}
+      >
+        {files.length > 1 && selected > 0 && (
+          <IconButton
+            className={`${classes.nav} ${classes.navPrev}`}
+            onClick={() => go(-1)}
+            aria-label="anterior"
+          >
+            <ChevronLeftRoundedIcon />
+          </IconButton>
         )}
         {kind === "image" && (
           <img
+            key={currentUrl}
             className={classes.stageMedia}
             src={currentUrl}
             alt={current.name}
@@ -279,6 +424,7 @@ const MediaPreview = ({
         )}
         {kind === "video" && (
           <video
+            key={currentUrl}
             className={classes.stageMedia}
             src={currentUrl}
             controls
@@ -300,20 +446,29 @@ const MediaPreview = ({
             <span className={classes.docSize}>{humanSize(current.size)}</span>
           </div>
         )}
+        {files.length > 1 && selected < files.length - 1 && (
+          <IconButton
+            className={`${classes.nav} ${classes.navNext}`}
+            onClick={() => go(1)}
+            aria-label="próximo"
+          >
+            <ChevronRightRoundedIcon />
+          </IconButton>
+        )}
       </div>
 
-      {loading && progress && (
-        <div className={classes.progress}>{progress}</div>
-      )}
+      <div className={classes.bottom}>
+        {loading && progress && (
+          <div className={classes.progress}>{progress}</div>
+        )}
 
-      <div className={classes.footer}>
-        <div className={classes.strip}>
-          {files.length > 1 &&
-            files.map((file, i) => {
+        {(files.length > 1 || onAdd) && (
+          <div className={classes.strip}>
+            {files.map((file, i) => {
               const k = kindOf(file);
               return (
                 <div
-                  key={`${file.name}-${i}`}
+                  key={`${keyOf(file)}-${i}`}
                   role="button"
                   tabIndex={0}
                   className={`${classes.thumb}${i === selected ? ` ${classes.thumbActive}` : ""}`}
@@ -328,31 +483,82 @@ const MediaPreview = ({
                   )}
                   {k === "audio" && <AudiotrackOutlinedIcon />}
                   {k === "document" && <InsertDriveFileOutlinedIcon />}
-                  {onRemove && !loading && (
-                    <IconButton
-                      className={classes.thumbRemove}
-                      aria-label={i18n.t("mediaPreview.remove")}
-                      onClick={e => {
-                        e.stopPropagation();
-                        onRemove(i);
-                      }}
-                    >
-                      <CloseRoundedIcon />
-                    </IconButton>
-                  )}
                 </div>
               );
             })}
+            {onAdd && !loading && (
+              <div
+                role="button"
+                tabIndex={0}
+                className={`${classes.thumb} ${classes.addTile}`}
+                onClick={() => addInputRef.current?.click()}
+                aria-label={i18n.t("mediaPreview.add")}
+              >
+                <AddRoundedIcon />
+                <input
+                  ref={addInputRef}
+                  type="file"
+                  multiple
+                  className={classes.hiddenInput}
+                  onChange={e => {
+                    const added = Array.from(e.target.files || []);
+                    e.target.value = "";
+                    if (added.length) {
+                      onAdd(added);
+                      setSelected(files.length);
+                    }
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className={classes.composer}>
+          {withCaption && kind !== "audio" ? (
+            <div className={classes.captionPill}>
+              <InputBase
+                inputRef={captionRef}
+                multiline
+                maxRows={5}
+                className={classes.caption}
+                placeholder={i18n.t("mediaPreview.captionPlaceholder")}
+                value={captionOf(current)}
+                disabled={loading}
+                onChange={e => {
+                  const value = e.target.value;
+                  setCaptions(prev => ({ ...prev, [keyOf(current)]: value }));
+                }}
+                onKeyDown={e => {
+                  // computador: Enter envia, Shift+Enter quebra a linha
+                  if (!isPhone && e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    send(e);
+                  }
+                }}
+              />
+            </div>
+          ) : (
+            <div style={{ flex: 1 }} />
+          )}
+          <IconButton
+            className={classes.send}
+            onClick={send}
+            disabled={loading || disabled}
+            aria-label={i18n.t("mediaPreview.send")}
+          >
+            {loading ? (
+              <CircularProgress size={22} style={{ color: "inherit" }} />
+            ) : (
+              <SendRoundedIcon />
+            )}
+            {files.length > 1 && !loading && (
+              <span className={classes.count}>{files.length}</span>
+            )}
+          </IconButton>
         </div>
-        <IconButton
-          className={classes.send}
-          onClick={onSend}
-          disabled={loading || disabled}
-          aria-label={i18n.t("mediaPreview.send")}
-        >
-          <SendIcon />
-        </IconButton>
       </div>
+
       {annotating && (
         <DocumentAnnotator
           open
@@ -366,7 +572,7 @@ const MediaPreview = ({
           onSave={file => onReplace(annotating.index, file)}
         />
       )}
-    </div>
+    </Dialog>
   );
 };
 
@@ -374,13 +580,15 @@ MediaPreview.propTypes = {
   files: PropTypes.array.isRequired,
   onRemove: PropTypes.func,
   onReplace: PropTypes.func,
+  onAdd: PropTypes.func,
   onClear: PropTypes.func.isRequired,
   onSend: PropTypes.func.isRequired,
   loading: PropTypes.bool,
   disabled: PropTypes.bool,
   progress: PropTypes.node,
-  accent: PropTypes.string.isRequired,
-  accentText: PropTypes.string
+  accent: PropTypes.string,
+  accentText: PropTypes.string,
+  withCaption: PropTypes.bool
 };
 
 export default MediaPreview;

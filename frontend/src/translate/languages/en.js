@@ -800,6 +800,9 @@ const messages = {
         cta: "Subscribe now"
       },
       mediaPreview: {
+        add: "Add file",
+        captionPlaceholder: "Add a caption…",
+        position: "{{current}} of {{total}}",
         files: "files",
         remove: "Remove",
         send: "Send"

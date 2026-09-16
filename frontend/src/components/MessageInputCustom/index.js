@@ -48,7 +48,6 @@ import { EditMessageContext } from "../../context/EditingMessage/EditingMessageC
 import useQuickMessages from "../../hooks/useQuickMessages";
 
 import Compressor from "compressorjs";
-import LinearWithValueLabel from "./ProgressBarCustom";
 import WhatsMarked from "react-whatsmarked";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSignature } from "@fortawesome/free-solid-svg-icons";
@@ -1055,7 +1054,6 @@ const MessageInputCustom = props => {
   const [showEmoji, setShowEmoji] = useState(false);
   const [loading, setLoading] = useState(false);
   const [recording, setRecording] = useState(false);
-  const [percentLoading, setPercentLoading] = useState(0);
 
   const inputRef = useRef();
   const { setReplyingMessage, replyingMessage } =
@@ -1166,25 +1164,32 @@ const MessageInputCustom = props => {
    * conversa na hora (com o anel de envio) e vai subindo em segundo plano —
    * sem tela de prévia no meio do caminho.
    */
-  const sendMediaDirect = files => {
-    files.forEach(file => {
+  const sendMediaDirect = (files, captions = []) => {
+    files.forEach((file, index) => {
       const type = file.type.split("/")[0];
-      const url = URL.createObjectURL(file);
-      const pendingId = announceSending({
-        ticketId,
-        body: "",
-        inputEl: inputRef.current,
-        media: { url, type }
-      });
+      const text = (captions[index] || "").trim();
+      // legenda assinada como as mensagens de texto
+      const caption = text && signMessage ? `*${user?.name}:*\n${text}` : text;
+      const visual = type === "image" || type === "video";
+      const url = visual ? URL.createObjectURL(file) : null;
+      const pendingId = visual
+        ? announceSending({
+            ticketId,
+            body: caption,
+            inputEl: inputRef.current,
+            media: { url, type }
+          })
+        : null;
       prepareMedia(file)
         .then(media => {
           const formData = new FormData();
           formData.append("fromMe", true);
           formData.append("medias", media, media.name || file.name);
           formData.append("body", media.name || file.name);
+          formData.append("captions", caption);
           return api.post(`/messages/${ticketId}`, formData, {
             onUploadProgress: event => {
-              if (!event.total) return;
+              if (!event.total || !pendingId) return;
               announceProgress(
                 pendingId,
                 Math.round((event.loaded * 100) / event.total)
@@ -1193,10 +1198,12 @@ const MessageInputCustom = props => {
           });
         })
         .catch(err => {
-          announceFailed(pendingId);
+          if (pendingId) announceFailed(pendingId);
           toastError(err);
         })
-        .finally(() => setTimeout(() => URL.revokeObjectURL(url), 120000));
+        .finally(() => {
+          if (url) setTimeout(() => URL.revokeObjectURL(url), 120000);
+        });
     });
   };
 
@@ -1209,14 +1216,7 @@ const MessageInputCustom = props => {
     // deixa escolher o mesmo arquivo de novo depois
     e.target.value = "";
     setAttachOpen(false);
-    if (
-      isPhone &&
-      selectedMedias.length > 0 &&
-      selectedMedias.every(file => /^(image|video)\//.test(file.type))
-    ) {
-      sendMediaDirect(selectedMedias);
-      return;
-    }
+    // abre a prévia (com legenda); o envio sai de lá
     setMedias(selectedMedias);
   };
 
@@ -1266,48 +1266,6 @@ const MessageInputCustom = props => {
     if (e.clipboardData.files[0]) {
       setMedias([e.clipboardData.files[0]]);
     }
-  };
-
-  const handleUploadMedia = async e => {
-    setLoading(true);
-    e.preventDefault();
-
-    const formData = new FormData();
-    formData.append("fromMe", true);
-
-    // antes: compressão sem esperar + setTimeout de 2 s torcendo para dar tempo
-    const prepared = await Promise.all(
-      medias.filter(Boolean).map(prepareMedia)
-    );
-    prepared.forEach(media => {
-      formData.append("medias", media, media.name);
-      formData.append("body", media.name);
-    });
-
-    await (async () => {
-      try {
-        await api
-          .post(`/messages/${ticketId}`, formData, {
-            onUploadProgress: event => {
-              let progress = Math.round((event.loaded * 100) / event.total);
-              setPercentLoading(progress);
-            }
-          })
-          .then(response => {
-            setLoading(false);
-            setMedias([]);
-            setPercentLoading(0);
-          })
-          .catch(err => {
-            setLoading(false);
-            setMedias([]);
-            setPercentLoading(0);
-            toastError(err);
-          });
-      } catch (err) {
-        toastError(err);
-      }
-    })();
   };
 
   const handlePresenceUpdate = presence => {
@@ -1503,9 +1461,9 @@ const MessageInputCustom = props => {
               : theme.palette.tkv.chat.accent
           }
           accentText={theme.palette.tkv.brand.contrastText}
-          loading={loading}
           disabled={disableOption}
-          progress={<LinearWithValueLabel progress={percentLoading} />}
+          withCaption
+          onAdd={added => setMedias(prev => [...prev, ...added])}
           onClear={() => setMedias([])}
           onRemove={index =>
             setMedias(prev => prev.filter((_, i) => i !== index))
@@ -1515,7 +1473,12 @@ const MessageInputCustom = props => {
               prev.map((item, i) => (i === index ? file : item))
             )
           }
-          onSend={handleUploadMedia}
+          onSend={(event, captions) => {
+            // fecha a prévia na hora: cada mídia entra na conversa com o anel
+            // de envio e sobe em segundo plano
+            sendMediaDirect(medias, captions);
+            setMedias([]);
+          }}
         />
       </Paper>
     );

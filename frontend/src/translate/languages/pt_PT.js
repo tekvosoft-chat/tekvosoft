@@ -769,6 +769,9 @@ const messages = {
         cta: "Subscrever agora"
       },
       mediaPreview: {
+        add: "Adicionar arquivo",
+        captionPlaceholder: "Adicionar legenda…",
+        position: "{{current}} de {{total}}",
         files: "ficheiros",
         remove: "Remover",
         send: "Enviar"

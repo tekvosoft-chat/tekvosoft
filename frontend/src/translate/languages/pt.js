@@ -799,6 +799,9 @@ const messages = {
         cta: "Assinar agora"
       },
       mediaPreview: {
+        add: "Adicionar arquivo",
+        captionPlaceholder: "Adicionar legenda…",
+        position: "{{current}} de {{total}}",
         files: "arquivos",
         remove: "Remover",
         send: "Enviar"
