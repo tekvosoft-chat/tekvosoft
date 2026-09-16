@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import { makeStyles } from "@material-ui/core/styles";
 import { green } from "@material-ui/core/colors";
 
+import WhatsAppIcon from "@material-ui/icons/WhatsApp";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +32,101 @@ const useStyles = makeStyles(theme => ({
   root: {
     display: "flex",
     flexWrap: "wrap"
+  },
+  paper: { borderRadius: 20 },
+  titleBar: {
+    display: "flex",
+    alignItems: "center",
+    gap: 14,
+    padding: theme.spacing(2.5, 3)
+  },
+  titleIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#fff",
+    background: "linear-gradient(135deg, #25D366, #128C7E)",
+    boxShadow: "0 8px 18px -8px #128C7E"
+  },
+  title: { fontSize: "1.125rem", fontWeight: 700, letterSpacing: "-0.01em" },
+  content: {
+    padding: theme.spacing(1, 3, 2),
+    backgroundColor: theme.palette.tkv.canvas
+  },
+  section: {
+    marginTop: theme.spacing(2),
+    padding: theme.spacing(2),
+    borderRadius: 16,
+    backgroundColor: theme.palette.tkv.surface,
+    border: `1px solid ${theme.palette.tkv.border}`,
+    animation: "$in .3s ease both"
+  },
+  "@keyframes in": {
+    from: { opacity: 0, transform: "translateY(6px)" },
+    to: { opacity: 1, transform: "none" }
+  },
+  sectionTitle: {
+    marginBottom: theme.spacing(1.5),
+    fontSize: 12,
+    fontWeight: 700,
+    letterSpacing: "0.06em",
+    textTransform: "uppercase",
+    color: theme.palette.text.secondary
+  },
+  defaultCard: {
+    height: "100%",
+    minHeight: 56,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+    padding: theme.spacing(1, 1, 1, 2),
+    borderRadius: 12,
+    border: `1px solid ${theme.palette.tkv.border}`,
+    cursor: "pointer"
+  },
+  msgCard: {
+    height: "100%",
+    padding: theme.spacing(1.5),
+    borderRadius: 14,
+    border: `1px solid ${theme.palette.tkv.border}`,
+    transition: "border-color .15s ease, box-shadow .15s ease",
+    "&:focus-within": {
+      borderColor: theme.palette.tkv.brand.main,
+      boxShadow: `0 0 0 3px ${theme.palette.tkv.brand.focusRing}`
+    }
+  },
+  msgHead: { display: "flex", gap: 10, marginBottom: 10 },
+  msgIcon: {
+    flex: "none",
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 16,
+    backgroundColor: theme.palette.tkv.surfaceSunken
+  },
+  msgTitle: { fontSize: 14, fontWeight: 600 },
+  msgHint: { fontSize: 12, color: theme.palette.text.secondary },
+  vars: {
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: theme.spacing(1.5)
+  },
+  varChip: {
+    padding: "2px 8px",
+    borderRadius: 999,
+    fontSize: 11.5,
+    color: theme.palette.text.secondary,
+    backgroundColor: theme.palette.tkv.surfaceSunken,
+    "& b": { color: theme.palette.tkv.brand.text, fontWeight: 600 }
   },
 
   multFieldLine: {
@@ -123,14 +219,28 @@ const WhatsAppModal = ({ open, onClose, whatsAppId }) => {
       <Dialog
         open={open}
         onClose={handleClose}
-        maxWidth="sm"
+        maxWidth="md"
         fullWidth
         scroll="paper"
+        PaperProps={{ className: classes.paper }}
       >
-        <DialogTitle>
-          {whatsAppId
-            ? i18n.t("whatsappModal.title.edit")
-            : i18n.t("whatsappModal.title.add")}
+        <DialogTitle disableTypography className={classes.titleBar}>
+          <span className={classes.titleIcon}>
+            <WhatsAppIcon />
+          </span>
+          <div>
+            <div className={classes.title}>
+              {whatsAppId
+                ? i18n.t("whatsappModal.title.edit")
+                : i18n.t("whatsappModal.title.add")}
+            </div>
+            <div className={classes.msgHint}>
+              {i18n.t(
+                "whatsappModal.subtitle",
+                "Nome, filas e as mensagens automáticas desta conexão"
+              )}
+            </div>
+          </div>
         </DialogTitle>
         <Formik
           initialValues={whatsApp}
@@ -145,168 +255,316 @@ const WhatsAppModal = ({ open, onClose, whatsAppId }) => {
         >
           {({ values, touched, errors, isSubmitting }) => (
             <Form>
-              <DialogContent dividers>
-                <div className={classes.multFieldLine}>
-                  <Grid spacing={2} container>
-                    <Grid item>
+              <DialogContent dividers className={classes.content}>
+                <section className={classes.section}>
+                  <div className={classes.sectionTitle}>
+                    {i18n.t("whatsappModal.sections.identity", "Identificação")}
+                  </div>
+                  <Grid container spacing={2} alignItems="stretch">
+                    <Grid item xs={12} md={7}>
                       <Field
                         as={TextField}
                         label={i18n.t("whatsappModal.form.name")}
                         autoFocus
                         name="name"
                         error={touched.name && Boolean(errors.name)}
-                        helperText={touched.name && errors.name}
+                        helperText={
+                          (touched.name && errors.name) ||
+                          i18n.t(
+                            "whatsappModal.hints.name",
+                            "Como essa conexão aparece para a equipe"
+                          )
+                        }
                         variant="outlined"
-                        margin="dense"
-                        className={classes.textField}
+                        fullWidth
                       />
                     </Grid>
-                    <Grid style={{ paddingTop: 15 }} item>
-                      <FormControlLabel
-                        control={
-                          <Field
-                            as={Switch}
-                            color="primary"
-                            name="isDefault"
-                            checked={values.isDefault}
-                          />
+                    <Grid item xs={12} md={5}>
+                      <label className={classes.defaultCard}>
+                        <div>
+                          <div className={classes.msgTitle}>
+                            {i18n.t("whatsappModal.form.default")}
+                          </div>
+                          <div className={classes.msgHint}>
+                            {i18n.t(
+                              "whatsappModal.hints.default",
+                              "Usada quando nenhuma outra for escolhida"
+                            )}
+                          </div>
+                        </div>
+                        <Field
+                          as={Switch}
+                          color="primary"
+                          name="isDefault"
+                          checked={values.isDefault}
+                        />
+                      </label>
+                    </Grid>
+                    <Grid item xs={12} md={7}>
+                      <QueueSelect
+                        selectedQueueIds={selectedQueueIds}
+                        onChange={selectedIds =>
+                          setSelectedQueueIds(selectedIds)
                         }
-                        label={i18n.t("whatsappModal.form.default")}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={5}>
+                      <Field
+                        as={SelectLanguage}
+                        name="language"
+                        fullWidth
+                        variant="outlined"
+                        margin="dense"
                       />
                     </Grid>
                   </Grid>
-                </div>
-                <div>
-                  <Field
-                    as={TextField}
-                    label={i18n.t("queueModal.form.greetingMessage")}
-                    type="greetingMessage"
-                    multiline
-                    rows={4}
-                    fullWidth
-                    name="greetingMessage"
-                    spellCheck={true}
-                    error={
-                      touched.greetingMessage && Boolean(errors.greetingMessage)
-                    }
-                    helperText={
-                      touched.greetingMessage && errors.greetingMessage
-                    }
-                    variant="outlined"
-                    margin="dense"
-                  />
-                </div>
-                <div>
-                  <Typography style={{ fontSize: "11px" }}>
-                    {`Variaveis: ( {{ms}}=> Turno, 
-                  {{name}}=> Nome do contato, 
-                  {{protocol}}=> protocolo, {{hora}}=> hora )`}
-                  </Typography>
-                </div>
-                <div>
-                  <Field
-                    as={TextField}
-                    label={i18n.t("queueModal.form.complationMessage")}
-                    type="complationMessage"
-                    multiline
-                    rows={4}
-                    fullWidth
-                    name="complationMessage"
-                    spellCheck={true}
-                    error={
-                      touched.complationMessage &&
-                      Boolean(errors.complationMessage)
-                    }
-                    helperText={
-                      touched.complationMessage && errors.complationMessage
-                    }
-                    variant="outlined"
-                    margin="dense"
-                  />
-                </div>
-                <div>
-                  <Field
-                    as={TextField}
-                    label={i18n.t("queueModal.form.transferMessage")}
-                    type="transferMessage"
-                    multiline
-                    rows={4}
-                    fullWidth
-                    name="transferMessage"
-                    spellCheck={true}
-                    error={
-                      touched.transferMessage && Boolean(errors.transferMessage)
-                    }
-                    helperText={
-                      touched.transferMessage && errors.transferMessage
-                    }
-                    variant="outlined"
-                    margin="dense"
-                  />
-                </div>
-                <div>
-                  <Field
-                    as={TextField}
-                    label={i18n.t("queueModal.form.outOfHoursMessage")}
-                    type="outOfHoursMessage"
-                    multiline
-                    rows={4}
-                    fullWidth
-                    name="outOfHoursMessage"
-                    spellCheck={true}
-                    error={
-                      touched.outOfHoursMessage &&
-                      Boolean(errors.outOfHoursMessage)
-                    }
-                    helperText={
-                      touched.outOfHoursMessage && errors.outOfHoursMessage
-                    }
-                    variant="outlined"
-                    margin="dense"
-                  />
-                </div>
-                <div>
-                  <Field
-                    as={TextField}
-                    label={i18n.t("queueModal.form.ratingMessage")}
-                    type="ratingMessage"
-                    multiline
-                    rows={4}
-                    fullWidth
-                    name="ratingMessage"
-                    spellCheck={true}
-                    error={
-                      touched.ratingMessage && Boolean(errors.ratingMessage)
-                    }
-                    helperText={touched.ratingMessage && errors.ratingMessage}
-                    variant="outlined"
-                    margin="dense"
-                  />
-                </div>
-                <div>
+                </section>
+
+                <section className={classes.section}>
+                  <div className={classes.sectionTitle}>
+                    {i18n.t(
+                      "whatsappModal.sections.messages",
+                      "Mensagens automáticas"
+                    )}
+                  </div>
+                  <div className={classes.vars}>
+                    <span className={classes.msgHint}>
+                      {i18n.t("whatsappModal.variables", "Variáveis:")}
+                    </span>
+                    {[
+                      ["{{name}}", "nome do contato"],
+                      ["{{ms}}", "turno"],
+                      ["{{protocol}}", "protocolo"],
+                      ["{{hora}}", "hora"]
+                    ].map(([v, d]) => (
+                      <span key={v} className={classes.varChip} title={d}>
+                        <b>{v}</b> {d}
+                      </span>
+                    ))}
+                  </div>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
+                      <div className={classes.msgCard}>
+                        <div className={classes.msgHead}>
+                          <span className={classes.msgIcon}>👋</span>
+                          <div>
+                            <div className={classes.msgTitle}>
+                              {i18n.t("queueModal.form.greetingMessage")}
+                            </div>
+                            <div className={classes.msgHint}>
+                              {i18n.t(
+                                "whatsappModal.hints.greetingMessage",
+                                "Enviada quando o cliente inicia a conversa"
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <Field
+                          as={TextField}
+                          placeholder={i18n.t(
+                            "whatsappModal.placeholder",
+                            "Escreva a mensagem…"
+                          )}
+                          multiline
+                          minRows={3}
+                          maxRows={8}
+                          fullWidth
+                          name="greetingMessage"
+                          spellCheck={true}
+                          error={
+                            touched.greetingMessage &&
+                            Boolean(errors.greetingMessage)
+                          }
+                          helperText={
+                            touched.greetingMessage && errors.greetingMessage
+                          }
+                          variant="outlined"
+                          size="small"
+                        />
+                      </div>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <div className={classes.msgCard}>
+                        <div className={classes.msgHead}>
+                          <span className={classes.msgIcon}>✅</span>
+                          <div>
+                            <div className={classes.msgTitle}>
+                              {i18n.t("queueModal.form.complationMessage")}
+                            </div>
+                            <div className={classes.msgHint}>
+                              {i18n.t(
+                                "whatsappModal.hints.complationMessage",
+                                "Enviada ao resolver o atendimento"
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <Field
+                          as={TextField}
+                          placeholder={i18n.t(
+                            "whatsappModal.placeholder",
+                            "Escreva a mensagem…"
+                          )}
+                          multiline
+                          minRows={3}
+                          maxRows={8}
+                          fullWidth
+                          name="complationMessage"
+                          spellCheck={true}
+                          error={
+                            touched.complationMessage &&
+                            Boolean(errors.complationMessage)
+                          }
+                          helperText={
+                            touched.complationMessage &&
+                            errors.complationMessage
+                          }
+                          variant="outlined"
+                          size="small"
+                        />
+                      </div>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <div className={classes.msgCard}>
+                        <div className={classes.msgHead}>
+                          <span className={classes.msgIcon}>🔁</span>
+                          <div>
+                            <div className={classes.msgTitle}>
+                              {i18n.t("queueModal.form.transferMessage")}
+                            </div>
+                            <div className={classes.msgHint}>
+                              {i18n.t(
+                                "whatsappModal.hints.transferMessage",
+                                "Enviada ao transferir para outra fila ou atendente"
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <Field
+                          as={TextField}
+                          placeholder={i18n.t(
+                            "whatsappModal.placeholder",
+                            "Escreva a mensagem…"
+                          )}
+                          multiline
+                          minRows={3}
+                          maxRows={8}
+                          fullWidth
+                          name="transferMessage"
+                          spellCheck={true}
+                          error={
+                            touched.transferMessage &&
+                            Boolean(errors.transferMessage)
+                          }
+                          helperText={
+                            touched.transferMessage && errors.transferMessage
+                          }
+                          variant="outlined"
+                          size="small"
+                        />
+                      </div>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <div className={classes.msgCard}>
+                        <div className={classes.msgHead}>
+                          <span className={classes.msgIcon}>🌙</span>
+                          <div>
+                            <div className={classes.msgTitle}>
+                              {i18n.t("queueModal.form.outOfHoursMessage")}
+                            </div>
+                            <div className={classes.msgHint}>
+                              {i18n.t(
+                                "whatsappModal.hints.outOfHoursMessage",
+                                "Enviada fora do horário de atendimento"
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <Field
+                          as={TextField}
+                          placeholder={i18n.t(
+                            "whatsappModal.placeholder",
+                            "Escreva a mensagem…"
+                          )}
+                          multiline
+                          minRows={3}
+                          maxRows={8}
+                          fullWidth
+                          name="outOfHoursMessage"
+                          spellCheck={true}
+                          error={
+                            touched.outOfHoursMessage &&
+                            Boolean(errors.outOfHoursMessage)
+                          }
+                          helperText={
+                            touched.outOfHoursMessage &&
+                            errors.outOfHoursMessage
+                          }
+                          variant="outlined"
+                          size="small"
+                        />
+                      </div>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <div className={classes.msgCard}>
+                        <div className={classes.msgHead}>
+                          <span className={classes.msgIcon}>⭐</span>
+                          <div>
+                            <div className={classes.msgTitle}>
+                              {i18n.t("queueModal.form.ratingMessage")}
+                            </div>
+                            <div className={classes.msgHint}>
+                              {i18n.t(
+                                "whatsappModal.hints.ratingMessage",
+                                "Pede a avaliação do atendimento"
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <Field
+                          as={TextField}
+                          placeholder={i18n.t(
+                            "whatsappModal.placeholder",
+                            "Escreva a mensagem…"
+                          )}
+                          multiline
+                          minRows={3}
+                          maxRows={8}
+                          fullWidth
+                          name="ratingMessage"
+                          spellCheck={true}
+                          error={
+                            touched.ratingMessage &&
+                            Boolean(errors.ratingMessage)
+                          }
+                          helperText={
+                            touched.ratingMessage && errors.ratingMessage
+                          }
+                          variant="outlined"
+                          size="small"
+                        />
+                      </div>
+                    </Grid>
+                  </Grid>
+                </section>
+
+                <section className={classes.section}>
+                  <div className={classes.sectionTitle}>
+                    {i18n.t("whatsappModal.sections.integration", "Integração")}
+                  </div>
                   <Field
                     as={TextField}
                     label={i18n.t("queueModal.form.token")}
-                    type="token"
                     fullWidth
                     name="token"
                     variant="outlined"
-                    margin="dense"
+                    size="small"
+                    helperText={i18n.t(
+                      "whatsappModal.hints.token",
+                      "Opcional: token para enviar mensagens pela API"
+                    )}
                   />
-                </div>
-                <QueueSelect
-                  selectedQueueIds={selectedQueueIds}
-                  onChange={selectedIds => setSelectedQueueIds(selectedIds)}
-                />
-                <div>
-                  <Field
-                    as={SelectLanguage}
-                    name="language"
-                    fullWidth
-                    variant="outlined"
-                    margin="dense"
-                  />
-                </div>
+                </section>
               </DialogContent>
               <DialogActions>
                 <Button

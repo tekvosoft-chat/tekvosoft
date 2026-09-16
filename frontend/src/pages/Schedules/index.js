@@ -25,7 +25,6 @@ import SearchIcon from "@material-ui/icons/Search";
 import EditOutlinedIcon from "@material-ui/icons/EditOutlined";
 import DeleteOutlineRoundedIcon from "@material-ui/icons/DeleteOutlineRounded";
 import EventRoundedIcon from "@material-ui/icons/EventRounded";
-import AccessTimeRoundedIcon from "@material-ui/icons/AccessTimeRounded";
 
 import MainContainer from "../../components/MainContainer";
 import ScheduleModal from "../../components/ScheduleModal";
@@ -161,6 +160,183 @@ const useStyles = makeStyles(theme => {
       color: t.brand.text
     },
     dot: { width: 8, height: 8, borderRadius: "50%", flex: "none" },
+    // ── seletor Mês / Semana / Dia / Lista (como o Google Agenda) ──
+    views: {
+      position: "relative",
+      display: "inline-flex",
+      padding: 3,
+      borderRadius: t.radius.pill,
+      backgroundColor: t.surfaceSunken,
+      border: `1px solid ${t.border}`
+    },
+    viewBtn: {
+      position: "relative",
+      zIndex: 1,
+      height: 30,
+      padding: "0 14px",
+      borderRadius: t.radius.pill,
+      fontSize: "0.8125rem",
+      fontWeight: 600,
+      color: theme.palette.text.secondary,
+      transition: "color .2s ease, background-color .25s ease, box-shadow .25s",
+      [theme.breakpoints.down("xs")]: { padding: "0 10px" }
+    },
+    viewBtnOn: {
+      color: t.brand.text,
+      backgroundColor: t.surface,
+      boxShadow: "0 2px 8px -2px rgba(12, 10, 20, 0.2)"
+    },
+    // troca de visão entra deslizando
+    viewEnter: { animation: "$viewIn .28s cubic-bezier(.2, .8, .2, 1) both" },
+    "@keyframes viewIn": {
+      from: { opacity: 0, transform: "translateY(8px) scale(.995)" },
+      to: { opacity: 1, transform: "none" }
+    },
+    "@keyframes popIn": {
+      from: { opacity: 0, transform: "scale(.9)" },
+      to: { opacity: 1, transform: "none" }
+    },
+    // ── grade de horas (semana e dia) ──
+    tg: {
+      borderRadius: t.radius.lg,
+      border: `1px solid ${t.border}`,
+      backgroundColor: t.surface,
+      overflow: "hidden"
+    },
+    tgHead: {
+      display: "grid",
+      borderBottom: `1px solid ${t.border}`,
+      paddingRight: 8
+    },
+    tgHeadDay: {
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: 2,
+      padding: theme.spacing(1, 0),
+      cursor: "pointer",
+      borderRadius: 12,
+      transition: "background-color .15s ease",
+      "&:hover": { backgroundColor: t.surfaceHover }
+    },
+    tgHeadName: {
+      fontSize: "0.6875rem",
+      fontWeight: 700,
+      letterSpacing: "0.06em",
+      textTransform: "uppercase",
+      color: theme.palette.text.secondary
+    },
+    tgHeadNum: {
+      width: 40,
+      height: 40,
+      borderRadius: "50%",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: "1.375rem",
+      fontWeight: 500,
+      color: theme.palette.text.primary,
+      transition: "background-color .2s ease, transform .2s ease",
+      [theme.breakpoints.down("xs")]: {
+        width: 30,
+        height: 30,
+        fontSize: "1rem"
+      }
+    },
+    tgScroll: {
+      position: "relative",
+      height: "calc(var(--vh, 100vh) - 300px)",
+      minHeight: 360,
+      overflowY: "auto",
+      scrollBehavior: "smooth",
+      ...theme.scrollbarStyles,
+      [theme.breakpoints.down("xs")]: {
+        height: "calc(var(--vh, 100vh) - 330px)"
+      }
+    },
+    tgBody: { position: "relative", display: "grid" },
+    tgHours: { position: "relative" },
+    tgHour: {
+      height: 52,
+      position: "relative",
+      "& span": {
+        position: "absolute",
+        top: -7,
+        right: 8,
+        fontSize: "0.6875rem",
+        color: theme.palette.text.secondary
+      }
+    },
+    tgCol: {
+      position: "relative",
+      borderLeft: `1px solid ${t.border}`,
+      backgroundImage: `repeating-linear-gradient(to bottom, ${t.border} 0, ${t.border} 1px, transparent 1px, transparent 52px)`
+    },
+    tgColToday: { backgroundColor: t.brand.soft },
+    tgSlot: {
+      height: 26,
+      cursor: "pointer",
+      transition: "background-color .12s ease",
+      "&:hover": { backgroundColor: t.brand.textSoft }
+    },
+    tgEvent: {
+      position: "absolute",
+      left: 3,
+      right: 3,
+      minHeight: 22,
+      padding: "3px 7px",
+      borderRadius: 8,
+      overflow: "hidden",
+      fontSize: "0.75rem",
+      fontWeight: 600,
+      lineHeight: 1.3,
+      cursor: "pointer",
+      borderLeft: "3px solid currentColor",
+      boxShadow: "0 2px 6px -2px rgba(12, 10, 20, 0.2)",
+      animation: "$popIn .25s ease both",
+      transition: "transform .15s ease, box-shadow .15s ease",
+      "&:hover": {
+        zIndex: 2,
+        transform: "translateY(-1px) scale(1.02)",
+        boxShadow: "0 8px 18px -6px rgba(12, 10, 20, 0.35)"
+      },
+      [theme.breakpoints.down("xs")]: {
+        padding: "2px 4px",
+        fontSize: "0.625rem"
+      }
+    },
+    tgEventText: {
+      display: "block",
+      fontWeight: 400,
+      opacity: 0.85,
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis"
+    },
+    nowLine: {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      height: 2,
+      zIndex: 3,
+      backgroundColor: t.semantic.danger,
+      pointerEvents: "none",
+      "&::before": {
+        content: '""',
+        position: "absolute",
+        left: -6,
+        top: -5,
+        width: 12,
+        height: 12,
+        borderRadius: "50%",
+        backgroundColor: t.semantic.danger,
+        animation: "$nowPulse 2s ease-in-out infinite"
+      }
+    },
+    "@keyframes nowPulse": {
+      "0%, 100%": { transform: "scale(1)" },
+      "50%": { transform: "scale(1.35)" }
+    },
     body: {
       display: "grid",
       gridTemplateColumns: "minmax(0, 1fr) 340px",
@@ -196,13 +372,18 @@ const useStyles = makeStyles(theme => {
       alignItems: "stretch",
       justifyContent: "flex-start",
       gap: 3,
-      minHeight: 108,
+      minHeight: 128,
       padding: 6,
       borderRight: `1px solid ${t.border}`,
       borderBottom: `1px solid ${t.border}`,
       textAlign: "left",
       transition: "background-color .15s ease",
       "&:nth-child(7n)": { borderRight: "none" },
+      "& $chip": { animation: "$popIn .25s ease both" },
+      "& $dayNumber": {
+        transition: "transform .15s ease, background-color .15s"
+      },
+      "&:hover $dayNumber": { transform: "scale(1.12)" },
       "&:hover": { backgroundColor: t.surfaceHover },
       [theme.breakpoints.down("xs")]: {
         minHeight: 52,
@@ -242,7 +423,9 @@ const useStyles = makeStyles(theme => {
       fontWeight: 600,
       whiteSpace: "nowrap",
       overflow: "hidden",
-      textOverflow: "ellipsis"
+      textOverflow: "ellipsis",
+      transition: "transform .12s ease",
+      "&:hover": { transform: "translateX(2px)" }
     },
     more: {
       fontSize: "0.6875rem",
@@ -408,10 +591,22 @@ const Schedules = () => {
 
   // primeira e última célula visíveis (semanas completas)
   const range = useMemo(() => {
+    if (view === "week") {
+      return {
+        start: selected.clone().startOf("week"),
+        end: selected.clone().endOf("week")
+      };
+    }
+    if (view === "day") {
+      return {
+        start: selected.clone().startOf("day"),
+        end: selected.clone().endOf("day")
+      };
+    }
     const start = month.clone().startOf("month").startOf("week");
     const end = month.clone().endOf("month").endOf("week");
     return { start, end };
-  }, [month]);
+  }, [month, selected, view]);
 
   const load = useCallback(async () => {
     try {
@@ -478,13 +673,16 @@ const Schedules = () => {
 
   const days = useMemo(() => {
     const list = [];
-    const cursor = range.start.clone();
+    const monthStart = month.clone().startOf("month").startOf("week");
+    const monthEnd = month.clone().endOf("month").endOf("week");
+    const cursor = monthStart.clone();
+    const range = { end: monthEnd };
     while (cursor.isSameOrBefore(range.end, "day")) {
       list.push(cursor.clone());
       cursor.add(1, "day");
     }
     return list;
-  }, [range]);
+  }, [month]);
 
   const weekdayNames = useMemo(() => {
     const fmt = new Intl.DateTimeFormat(locale, {
@@ -506,6 +704,24 @@ const Schedules = () => {
     }).format(selected.toDate())
   );
 
+  // anterior/próximo conforme a visão: mês, semana ou dia
+  const goStep = delta => {
+    if (view === "week" || view === "day") {
+      const next = selected
+        .clone()
+        .add(delta, view === "week" ? "week" : "day");
+      setSelected(next.startOf("day"));
+      setMonth(next.clone().startOf("month"));
+      return;
+    }
+    goMonth(delta);
+  };
+
+  const openDay = day => {
+    pickDay(day);
+    setView("day");
+  };
+
   const goMonth = delta => {
     const next = month.clone().add(delta, "month");
     setMonth(next);
@@ -524,12 +740,15 @@ const Schedules = () => {
     if (!day.isSame(month, "month")) setMonth(day.clone().startOf("month"));
   };
 
-  const newOnDay = day => {
+  const newOnDay = (day, hour, minute = 0) => {
     const base = day.clone();
     const now = moment();
-    const suggested = base.isSame(now, "day")
-      ? now.clone().add(1, "hour").startOf("hour")
-      : base.clone().hour(9).minute(0);
+    const suggested =
+      hour !== undefined
+        ? base.clone().hour(hour).minute(minute)
+        : base.isSame(now, "day")
+          ? now.clone().add(1, "hour").startOf("hour")
+          : base.clone().hour(9).minute(0);
     setModal({
       open: true,
       defaultSendAt: suggested.format("YYYY-MM-DDTHH:mm")
@@ -646,6 +865,11 @@ const Schedules = () => {
             >
               <span
                 className={`${classes.dayNumber}${isToday ? ` ${classes.today}` : ""}`}
+                onClick={e => {
+                  e.stopPropagation();
+                  openDay(day);
+                }}
+                role="button"
               >
                 {day.date()}
               </span>
@@ -741,6 +965,139 @@ const Schedules = () => {
     </div>
   );
 
+  const HOUR_H = 52;
+  const gridRef = React.useRef(null);
+  // abre a grade perto do horário comercial (ou da hora atual)
+  useEffect(() => {
+    if (view !== "week" && view !== "day") return;
+    const el = gridRef.current;
+    if (!el) return;
+    const hour = Math.max(0, Math.min(moment().hour(), 16) - 1);
+    el.scrollTop = Math.max(0, (hour < 7 ? 7 : hour) * HOUR_H);
+  }, [view, loading]);
+
+  const renderTimeGrid = list => {
+    const cols = `${isPhone ? 36 : 56}px repeat(${list.length}, minmax(0, 1fr))`;
+    const now = moment();
+    const dayFmt = new Intl.DateTimeFormat(locale, {
+      weekday: isPhone && list.length > 1 ? "narrow" : "short"
+    });
+    return (
+      <div className={classes.tg}>
+        <div className={classes.tgHead} style={{ gridTemplateColumns: cols }}>
+          <span />
+          {list.map(day => {
+            const isToday = day.isSame(now, "day");
+            return (
+              <div
+                key={day.format("YYYY-MM-DD")}
+                className={classes.tgHeadDay}
+                onClick={() => openDay(day)}
+                role="button"
+              >
+                <span className={classes.tgHeadName}>
+                  {dayFmt.format(day.toDate()).replace(".", "")}
+                </span>
+                <span
+                  className={`${classes.tgHeadNum}${isToday ? ` ${classes.today}` : ""}`}
+                >
+                  {day.date()}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        <div className={classes.tgScroll} ref={gridRef}>
+          <div className={classes.tgBody} style={{ gridTemplateColumns: cols }}>
+            <div className={classes.tgHours}>
+              {Array.from({ length: 24 }, (_, h) => (
+                <div key={h} className={classes.tgHour}>
+                  {h > 0 && <span>{String(h).padStart(2, "0")}:00</span>}
+                </div>
+              ))}
+            </div>
+            {list.map(day => {
+              const key = day.format("YYYY-MM-DD");
+              const events = byDay[key] || [];
+              const isToday = day.isSame(now, "day");
+              return (
+                <div
+                  key={key}
+                  className={`${classes.tgCol}${isToday ? ` ${classes.tgColToday}` : ""}`}
+                >
+                  {Array.from({ length: 48 }, (_, i) => (
+                    <div
+                      key={i}
+                      className={classes.tgSlot}
+                      onClick={() =>
+                        newOnDay(day, Math.floor(i / 2), i % 2 ? 30 : 0)
+                      }
+                    />
+                  ))}
+                  {events.map((s, index) => {
+                    const at = moment(s.sendAt);
+                    const top = (at.hours() + at.minutes() / 60) * HOUR_H;
+                    return (
+                      <div
+                        key={s.id}
+                        className={`${classes.tgEvent} ${classes[`tone_${statusOf(s.status)}`]}`}
+                        style={{
+                          top,
+                          height: HOUR_H * 0.85,
+                          animationDelay: `${index * 40}ms`
+                        }}
+                        title={`${at.format("HH:mm")} · ${s.contact?.name || ""}`}
+                        onClick={e => {
+                          e.stopPropagation();
+                          setModal({ open: true, scheduleId: s.id });
+                        }}
+                      >
+                        {at.format("HH:mm")} {s.contact?.name}
+                        {(view === "day" || !isPhone) && s.body && (
+                          <span className={classes.tgEventText}>{s.body}</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {isToday && (
+                    <div
+                      className={classes.nowLine}
+                      style={{
+                        top: (now.hours() + now.minutes() / 60) * HOUR_H
+                      }}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const weekDays = Array.from({ length: 7 }, (_, i) =>
+    selected.clone().startOf("week").add(i, "day")
+  );
+  const rangeLabel =
+    view === "week"
+      ? upperFirst(
+          `${new Intl.DateTimeFormat(locale, { day: "numeric", month: "short" }).format(weekDays[0].toDate())} – ${new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", year: "numeric" }).format(weekDays[6].toDate())}`
+        )
+      : view === "day"
+        ? dayTitle
+        : monthName;
+
+  const viewButton = (key, label) => (
+    <ButtonBase
+      key={key}
+      className={`${classes.viewBtn}${view === key ? ` ${classes.viewBtnOn}` : ""}`}
+      onClick={() => setView(key)}
+    >
+      {label}
+    </ButtonBase>
+  );
+
   const filterButton = (key, label) => (
     <ButtonBase
       key={key}
@@ -818,30 +1175,29 @@ const Schedules = () => {
           <div className={classes.monthNav}>
             <IconButton
               className={classes.navBtn}
-              onClick={() => goMonth(-1)}
+              onClick={() => goStep(-1)}
               aria-label={t("previous")}
             >
               <ChevronLeftRoundedIcon />
             </IconButton>
             <IconButton
               className={classes.navBtn}
-              onClick={() => goMonth(1)}
+              onClick={() => goStep(1)}
               aria-label={t("next")}
             >
               <ChevronRightRoundedIcon />
             </IconButton>
           </div>
-          <Typography className={classes.monthLabel}>{monthName}</Typography>
+          <Typography className={classes.monthLabel}>{rangeLabel}</Typography>
           <Button size="small" variant="outlined" onClick={goToday}>
             {t("today")}
           </Button>
-          <ButtonBase
-            className={`${classes.filter}${view === "list" ? ` ${classes.filterOn}` : ""}`}
-            onClick={() => setView(v => (v === "month" ? "list" : "month"))}
-          >
-            <AccessTimeRoundedIcon style={{ fontSize: 16 }} />
-            {view === "month" ? t("list") : t("month")}
-          </ButtonBase>
+          <div className={classes.views} role="tablist">
+            {viewButton("month", t("month"))}
+            {viewButton("week", i18n.t("schedules.calendar.week", "Semana"))}
+            {viewButton("day", i18n.t("schedules.calendar.day", "Dia"))}
+            {viewButton("list", t("list"))}
+          </div>
           <div className={classes.filters}>
             {filterButton("all", t("all"))}
             {filterButton("pending", t("pending"))}
@@ -854,12 +1210,23 @@ const Schedules = () => {
           <div className={classes.loading}>
             <BoxLoader />
           </div>
-        ) : view === "list" ? (
-          listView
         ) : (
-          <div className={classes.body}>
-            {monthView}
-            {dayPanel}
+          <div key={view} className={classes.viewEnter}>
+            {view === "list" ? (
+              listView
+            ) : view === "week" ? (
+              renderTimeGrid(weekDays)
+            ) : view === "day" ? (
+              <div className={classes.body}>
+                {renderTimeGrid([selected])}
+                {dayPanel}
+              </div>
+            ) : (
+              <div className={classes.body}>
+                {monthView}
+                {dayPanel}
+              </div>
+            )}
           </div>
         )}
       </div>

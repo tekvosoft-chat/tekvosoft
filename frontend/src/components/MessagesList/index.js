@@ -598,7 +598,9 @@ const useStyles = makeStyles(theme => ({
   timestamp: {
     fontSize: 11,
     position: "absolute",
-    bottom: 0,
+    // um respiro do canto: colado em 0 o horário passava da borda do balão
+    bottom: 3,
+    lineHeight: "16px",
     right: 5,
     color: theme.palette.tkv.chat.meta
   },

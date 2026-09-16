@@ -68,7 +68,22 @@ const useStyles = makeStyles(theme => {
       textAlign: "left",
       cursor: "pointer",
       transition: "background-color .15s ease",
-      "&:hover": { backgroundColor: t.surfaceHover }
+      "&:hover": { backgroundColor: t.surfaceHover },
+      // celular: linha bem fina separando uma conversa da outra
+      [theme.breakpoints.down("xs")]: {
+        overflow: "visible",
+        "&::after": {
+          content: '""',
+          position: "absolute",
+          left: 64,
+          right: 8,
+          bottom: -2,
+          height: 1,
+          backgroundColor: t.border,
+          opacity: 0.6,
+          transform: "scaleY(0.5)"
+        }
+      }
     },
     selected: {
       backgroundColor: t.brand.textSoft,
