@@ -231,8 +231,9 @@ const useStyles = makeStyles(theme => {
 // última mensagem de mídia: ícone + nome curto, no lugar do nome do arquivo
 const MEDIA_RULES = [
   [/^gif-.*\.mp4$/i, "gif", GifRoundedIcon],
-  [/^sticker\.webp$/i, "sticker", EmojiEmotionsRoundedIcon],
-  [/\.(jpe?g|png|webp|heic|bmp)$/i, "photo", PhotoCameraRoundedIcon],
+  // figurinha do WhatsApp chega como .webp
+  [/\.webp$/i, "sticker", EmojiEmotionsRoundedIcon],
+  [/\.(jpe?g|png|heic|bmp)$/i, "photo", PhotoCameraRoundedIcon],
   [/\.(ogg|oga|opus|mp3|m4a|aac|wav|webm)$/i, "audio", MicRoundedIcon],
   [/\.(mp4|mov|3gp|mkv)$/i, "video", VideocamRoundedIcon],
   [
@@ -243,10 +244,19 @@ const MEDIA_RULES = [
 ];
 
 const mediaPreview = text => {
+  // tira emoji/símbolo na frente ("📎 arquivo.webp", "🎤 Áudio")
   const first = String(text || "")
     .split("\n")[0]
+    .trim()
+    .replace(/^[^\p{L}\p{N}]+/u, "")
     .trim();
-  if (["🔊", "Áudio", "Audio"].includes(first)) {
+  if (!first && /🔊|🎤|🎙/.test(String(text || ""))) {
+    return {
+      icon: <MicRoundedIcon />,
+      label: i18n.t("ticketsList.media.audio")
+    };
+  }
+  if (["Áudio", "Audio", "Mensagem de voz"].includes(first)) {
     return {
       icon: <MicRoundedIcon />,
       label: i18n.t("ticketsList.media.audio")

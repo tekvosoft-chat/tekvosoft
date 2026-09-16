@@ -1364,30 +1364,49 @@ const MessageInputCustom = props => {
     }
   };
 
+  // o áudio entra na conversa na hora (com o anel de envio) e sobe em
+  // segundo plano: dá para sair da conversa enquanto ele carrega
   const handleUploadAudio = async () => {
-    setLoading(true);
     handlePresenceUpdate(null);
+    let blob;
     try {
-      const [, blob] = await Mp3Recorder.stop().getMp3();
-      if (blob.size < 10000) {
-        setLoading(false);
-        setRecording(false);
-        return;
-      }
-
-      const formData = new FormData();
-      const filename = `audio-record-site-${new Date().getTime()}.mp3`;
-      formData.append("medias", blob, filename);
-      formData.append("body", filename);
-      formData.append("fromMe", true);
-
-      await api.post(`/messages/${ticketId}`, formData);
+      [, blob] = await Mp3Recorder.stop().getMp3();
     } catch (err) {
+      setRecording(false);
       toastError(err);
+      return;
     }
-
     setRecording(false);
-    setLoading(false);
+    if (!blob || blob.size < 10000) return;
+
+    const url = URL.createObjectURL(blob);
+    const pendingId = announceSending({
+      ticketId,
+      body: "",
+      inputEl: inputRef.current,
+      media: { url, type: "audio" }
+    });
+    const formData = new FormData();
+    const filename = `audio-record-site-${new Date().getTime()}.mp3`;
+    formData.append("medias", blob, filename);
+    formData.append("body", filename);
+    formData.append("fromMe", true);
+
+    api
+      .post(`/messages/${ticketId}`, formData, {
+        onUploadProgress: event => {
+          if (!event.total) return;
+          announceProgress(
+            pendingId,
+            Math.round((event.loaded * 100) / event.total)
+          );
+        }
+      })
+      .catch(err => {
+        announceFailed(pendingId);
+        toastError(err);
+      })
+      .finally(() => setTimeout(() => URL.revokeObjectURL(url), 120000));
   };
 
   const handleCancelAudio = async () => {

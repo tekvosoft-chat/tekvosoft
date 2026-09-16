@@ -59,7 +59,7 @@ const TicketAdvanced = () => {
   return (
     <div className={classes.root}>
       <div className={classes.pane}>
-        {ticketId ? <Ticket /> : <TicketsManagerTabs />}
+        {ticketId ? <Ticket key={ticketId} /> : <TicketsManagerTabs />}
       </div>
     </div>
   );

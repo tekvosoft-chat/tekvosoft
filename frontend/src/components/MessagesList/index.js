@@ -587,9 +587,13 @@ const useStyles = makeStyles(theme => ({
       height: "auto",
       maxWidth: "48vw",
       borderRadius: 0,
-      backgroundColor: "transparent"
+      backgroundColor: "transparent",
+      display: "block"
     }
   },
+  // figurinha enviada respondendo uma mensagem: o balão fica largo por causa
+  // da citação e a figurinha ia para a esquerda; encosta no lado de quem enviou
+  stickerRight: { "& $messageMedia": { marginLeft: "auto" } },
 
   timestamp: {
     fontSize: 11,
@@ -2982,6 +2986,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                     !!message.mediaUrl &&
                     ["image", "video"].includes(message.mediaType),
                   [classes.messageMediaSticker]: isSticker,
+                  [classes.stickerRight]: isSticker,
                   [classes.swipeable]: isPhone && canReply,
                   [classes.bubblePressed]:
                     reactTarget?.phone && reactTarget.message.id === message.id,

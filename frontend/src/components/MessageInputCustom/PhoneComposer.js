@@ -116,9 +116,13 @@ const useStyles = makeStyles(theme => {
       width: 3,
       height: "100%",
       borderRadius: 3,
-      backgroundColor: t.chat.meta,
+      backgroundColor: t.brand.text,
+      opacity: 0.35,
       transform: "scaleY(0.12)",
-      transition: "transform .09s linear"
+      transition: "transform .12s cubic-bezier(.3, 1.4, .5, 1)",
+      // as barras mais recentes (à direita) ficam mais fortes
+      "&:nth-last-child(-n+14)": { opacity: 0.65 },
+      "&:nth-last-child(-n+6)": { opacity: 1 }
     },
     recBottom: {
       display: "flex",
@@ -144,6 +148,10 @@ const useStyles = makeStyles(theme => {
       backgroundColor: t.semantic.danger,
       animation: "$pulse 1.2s ease-in-out infinite"
     },
+    "@keyframes recRing": {
+      "0%": { boxShadow: `0 0 0 0 ${t.brand.main}` },
+      "100%": { boxShadow: "0 0 0 14px transparent" }
+    },
     "@keyframes pulse": {
       "0%, 100%": { opacity: 1, transform: "scale(1)" },
       "50%": { opacity: 0.35, transform: "scale(0.8)" }
@@ -155,6 +163,10 @@ const useStyles = makeStyles(theme => {
       borderRadius: "50%",
       backgroundColor: t.brand.main,
       color: t.brand.contrastText,
+      // anel pulsando enquanto grava
+      animation: "$recRing 1.6s ease-out infinite",
+      transition: "transform .12s ease",
+      "&:active": { transform: "scale(0.9)" },
       "&:hover": { backgroundColor: t.brand.hover },
       "&.Mui-disabled": {
         backgroundColor: t.brand.main,

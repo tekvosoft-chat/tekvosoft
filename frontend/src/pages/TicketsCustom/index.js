@@ -60,7 +60,7 @@ const TicketsCustom = () => {
           <Grid item md={7} className={classes.messagesWrapper}>
             {ticketId ? (
               <>
-                <Ticket />
+                <Ticket key={ticketId} />
               </>
             ) : (
               <Paper square variant="outlined" className={classes.welcomeMsg}>

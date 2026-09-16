@@ -31,7 +31,19 @@ const useStyles = makeStyles(theme => {
       width: 268,
       maxWidth: "100%",
       padding: "6px 4px 2px",
-      whiteSpace: "normal"
+      whiteSpace: "normal",
+      // celular: mais compacto e com espaço embaixo para o horário
+      [theme.breakpoints.down("xs")]: {
+        width: 214,
+        gap: 6,
+        padding: "4px 2px 16px",
+        "& $side, & $avatar": { width: 36, height: 36 },
+        "& $avatar": { fontSize: "0.8125rem" },
+        "& $play": { width: 30, height: 30, "& svg": { fontSize: 30 } },
+        "& $wave": { height: 22 },
+        "& $body": { paddingTop: 4 },
+        "& $mic svg": { fontSize: 16 }
+      }
     },
     side: {
       // foto à direita do player
