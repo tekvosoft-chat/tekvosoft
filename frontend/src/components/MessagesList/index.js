@@ -1195,11 +1195,33 @@ const reducer = (state, action) => {
         m => m.id === newMessage.quotedMsgId
       );
       if (reactionIndex !== -1) {
-        state[reactionIndex].replies = state[reactionIndex].replies || [];
-        state[reactionIndex].replies.push(newMessage);
+        state[reactionIndex] = {
+          ...state[reactionIndex],
+          replies: [
+            ...(state[reactionIndex].replies || []).filter(
+              r => !(r.localReaction && newMessage.fromMe)
+            ),
+            newMessage
+          ]
+        };
       }
     }
 
+    return [...state];
+  }
+
+  // reação aparece na hora; a confirmação do WhatsApp chega depois
+  if (action.type === "LOCAL_REACTION") {
+    const { messageId, reply, remove } = action.payload;
+    const index = state.findIndex(m => m.id === messageId);
+    if (index === -1) return state;
+    const replies = (state[index].replies || []).filter(
+      r => !remove || r.id !== remove
+    );
+    state[index] = {
+      ...state[index],
+      replies: reply ? [...replies, reply] : replies
+    };
     return [...state];
   }
 
@@ -1417,17 +1439,46 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
   const closeReactions = useCallback(() => setReactTarget(null), []);
 
   const sendReaction = (message, emoji) => {
+    const localId = `local-reaction-${Date.now()}`;
+    dispatch({
+      type: "LOCAL_REACTION",
+      payload: {
+        messageId: message.id,
+        reply: {
+          id: localId,
+          localReaction: true,
+          mediaType: "reactionMessage",
+          fromMe: true,
+          body: emoji,
+          createdAt: new Date().toISOString()
+        }
+      }
+    });
     api
       .post(`/messages/react/${message.id}`, {
         ticketId: message.ticketId,
         emoji
       })
-      .catch(toastError);
+      .catch(err => {
+        dispatch({
+          type: "LOCAL_REACTION",
+          payload: { messageId: message.id, remove: localId }
+        });
+        toastError(err);
+      });
   };
+
+  // reações em ordem de envio: a mais recente de cada pessoa é a que vale
+  const sortedReplies = replies =>
+    [...(replies || [])].sort(
+      (a, b) =>
+        new Date(a?.createdAt || 0).getTime() -
+        new Date(b?.createdAt || 0).getTime()
+    );
 
   // a última reação minha nesta mensagem (para marcar na barra)
   const myReaction = message => {
-    const mine = (message?.replies || []).filter(
+    const mine = sortedReplies(message?.replies).filter(
       r => r?.mediaType === "reactionMessage" && r.fromMe
     );
     return mine.length ? mine[mine.length - 1].body || null : null;
@@ -2562,7 +2613,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
   const renderReplies = (replies, fromMe) => {
     // cada pessoa tem uma reação só: vale a última (vazia = tirou a reação)
     const byPerson = new Map();
-    (replies || []).forEach(reply => {
+    sortedReplies(replies).forEach(reply => {
       if (reply?.mediaType !== "reactionMessage") return;
       const who = reply.fromMe
         ? "me"

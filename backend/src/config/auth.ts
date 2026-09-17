@@ -1,3 +1,4 @@
+import { randomBytes } from "crypto";
 import { cacheLayer } from "../libs/cache";
 import { logger } from "../utils/logger";
 
@@ -12,20 +13,15 @@ const CACHE_KEY_JWT_SECRET = "TICKETZ_JWT_SECRET";
 const CACHE_KEY_JWT_REFRESH_SECRET = "TICKETZ_JWT_REFRESH_SECRET";
 
 function generateSecret(length: number): string {
-  const charset =
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+";
-  let secret = "";
-  for (let i = 0; i < length; i += 1) {
-    const randomIndex = Math.floor(Math.random() * charset.length);
-    secret += charset[randomIndex];
-  }
-  return secret;
+  // SEGURANÇA: aleatório criptográfico (Math.random é previsível e permitiria
+  // adivinhar o segredo e forjar tokens de login)
+  return randomBytes(length).toString("base64url");
 }
 
 async function generateSecretIfNotExists(cacheKey: string): Promise<string> {
   let secret = await cacheLayer.get(cacheKey);
   if (!secret) {
-    secret = generateSecret(32);
+    secret = generateSecret(48);
     await cacheLayer.set(cacheKey, secret);
     // nunca registrar o valor do segredo no log
     logger.debug(`[auth.ts] Generated ${cacheKey}`);

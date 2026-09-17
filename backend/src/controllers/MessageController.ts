@@ -38,6 +38,7 @@ import { verifyMessage } from "../services/WbotServices/wbotMessageListener";
 import { getJidOf } from "../services/WbotServices/getJidOf";
 import ShowContactService from "../services/ContactServices/ShowContactService";
 import { verifyContact } from "../services/WbotServices/verifyContact";
+import EnsureSameCompany from "../helpers/EnsureSameCompany";
 
 type IndexQuery = {
   nextId?: string;
@@ -281,6 +282,8 @@ export const remove = async (
 ): Promise<Response> => {
   const { messageId } = req.params;
   const { companyId } = req.user;
+
+  EnsureSameCompany(await Message.findByPk(messageId), companyId);
 
   const message = await DeleteWhatsAppMessage(messageId);
 

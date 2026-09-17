@@ -10,6 +10,8 @@ import ShowTicketNoteService from "../services/TicketNoteService/ShowTicketNoteS
 import FindAllTicketNotesService from "../services/TicketNoteService/FindAllTicketNotesService";
 import DeleteTicketNoteService from "../services/TicketNoteService/DeleteTicketNoteService";
 import FindNotesByContactIdAndTicketId from "../services/TicketNoteService/FindNotesByContactIdAndTicketId";
+import EnsureSameCompany from "../helpers/EnsureSameCompany";
+import Ticket from "../models/Ticket";
 
 type IndexQuery = {
   searchParam: string;
@@ -35,6 +37,16 @@ type UpdateTicketNoteData = {
 type QueryFilteredNotes = {
   contactId: number | string;
   ticketId: number | string;
+};
+
+// a observação pertence a um atendimento: ele precisa ser da mesma empresa
+const ensureNoteCompany = async (
+  id: string | number,
+  companyId: number
+): Promise<void> => {
+  const note = id ? await TicketNote.findByPk(id) : null;
+  const ticket = note ? await Ticket.findByPk(note.ticketId) : null;
+  EnsureSameCompany(ticket, companyId);
 };
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
@@ -80,6 +92,7 @@ export const show = async (req: Request, res: Response): Promise<Response> => {
   const { id } = req.params;
 
   const ticketNote = await ShowTicketNoteService(id);
+  await ensureNoteCompany(ticketNote.id, req.user.companyId);
 
   return res.status(200).json(ticketNote);
 };
@@ -100,6 +113,7 @@ export const update = async (
     throw new AppError(err.message);
   }
 
+  await ensureNoteCompany(ticketNote.id, req.user.companyId);
   const recordUpdated = await UpdateTicketNoteService(ticketNote);
 
   return res.status(200).json(recordUpdated);
@@ -115,6 +129,7 @@ export const remove = async (
     throw new AppError("ERR_NO_PERMISSION", 403);
   }
 
+  await ensureNoteCompany(id, req.user.companyId);
   await DeleteTicketNoteService(id);
 
   return res.status(200).json({ message: "Observação removida" });

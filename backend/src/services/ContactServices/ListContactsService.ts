@@ -28,8 +28,12 @@ const ListContactsService = async ({
             Sequelize.fn("UNACCENT", Sequelize.col("Contact.name"))
           ),
           {
+            // SEGURANÇA: o termo vai escapado (antes ia colado no SQL, e uma
+            // aspa na busca permitia ler qualquer dado do banco)
             [Op.like]: Sequelize.literal(
-              `'%' || UNACCENT('${normalizedSearchParam}') || '%'`
+              `'%' || UNACCENT(${Contact.sequelize.escape(
+                normalizedSearchParam
+              )}) || '%'`
             )
           }
         )

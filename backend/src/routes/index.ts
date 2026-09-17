@@ -20,10 +20,6 @@ import dashboardRoutes from "./dashboardRoutes";
 import queueOptionRoutes from "./queueOptionRoutes";
 import scheduleRoutes from "./scheduleRoutes";
 import tagRoutes from "./tagRoutes";
-import contactListRoutes from "./contactListRoutes";
-import contactListItemRoutes from "./contactListItemRoutes";
-import campaignRoutes from "./campaignRoutes";
-import campaignSettingRoutes from "./campaignSettingRoutes";
 import announcementRoutes from "./announcementRoutes";
 import chatRoutes from "./chatRoutes";
 import invoiceRoutes from "./invoicesRoutes";
@@ -59,10 +55,8 @@ routes.use(dashboardRoutes);
 routes.use(queueOptionRoutes);
 routes.use(scheduleRoutes);
 routes.use(tagRoutes);
-routes.use(contactListRoutes);
-routes.use(contactListItemRoutes);
-routes.use(campaignRoutes);
-routes.use(campaignSettingRoutes);
+// campanhas saíram do produto: as rotas delas (listas de contatos,
+// campanhas) ficam desligadas — não conferiam a empresa dos registros
 routes.use(announcementRoutes);
 routes.use(chatRoutes);
 routes.use(subscriptionRoutes);

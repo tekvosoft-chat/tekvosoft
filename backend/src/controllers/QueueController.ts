@@ -13,6 +13,7 @@ import fs from "fs";
 import path from "path";
 import AppError from "../errors/AppError";
 import saveMediaToFile from "../helpers/saveMediaFile";
+import EnsureSameCompany from "../helpers/EnsureSameCompany";
 
 type QueueFilter = {
   companyId: number;
@@ -147,6 +148,8 @@ export const mediaUpload = async (
   const files = req.files as Express.Multer.File[];
   const file = head(files);
 
+  EnsureSameCompany(await Queue.findByPk(queueId), req.user.companyId);
+
   try {
     const queue = await Queue.findByPk(queueId);
 
@@ -179,6 +182,8 @@ export const deleteMedia = async (
   res: Response
 ): Promise<Response> => {
   const { queueId } = req.params;
+
+  EnsureSameCompany(await Queue.findByPk(queueId), req.user.companyId);
 
   try {
     const queue = await Queue.findByPk(queueId);

@@ -868,9 +868,12 @@ export const verifyMessage = async (
     isEdited: false
   };
 
-  await ticket.update({
-    lastMessage: body.substring(0, 255).replace(/\n/g, " ")
-  });
+  // reação não é mensagem nova: a prévia da conversa continua a mesma
+  if (!msg.message.reactionMessage) {
+    await ticket.update({
+      lastMessage: body.substring(0, 255).replace(/\n/g, " ")
+    });
+  }
 
   const newMessage = await CreateMessageService({
     messageData,

@@ -168,12 +168,9 @@ export const efiWebhook = async (
           return true;
         }
 
-        if (pix.valor < invoice.value) {
-          logger.debug("Recebido valor menor");
-          return true;
-        }
-
-        await processInvoicePaid(invoice);
+        // SEGURANÇA: não confia no corpo do aviso (qualquer um pode chamar
+        // esta rota). Confere o pix direto na Efí antes de liberar o plano.
+        await efiCheckStatus(invoice);
         return true;
       }
     );

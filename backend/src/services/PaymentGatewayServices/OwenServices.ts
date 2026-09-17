@@ -44,7 +44,6 @@ import axios from "axios";
 import { createHmac } from "crypto";
 import GetSuperSettingService from "../SettingServices/GetSuperSettingService";
 import { logger } from "../../utils/logger";
-import { getIO } from "../../libs/socket";
 import Invoices from "../../models/Invoices";
 import Company from "../../models/Company";
 import AppError from "../../errors/AppError";
@@ -82,8 +81,8 @@ export const owenWebhook = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  const { data } = req.body;
-  if (data.status === "APPROVED") {
+  const { data } = req.body || {};
+  if (data?.status === "APPROVED") {
     const { qrcodeId } = data;
     const invoice = await Invoices.findOne({
       where: {
@@ -97,26 +96,13 @@ export const owenWebhook = async (
       return res.json({ ok: true });
     }
 
-    const expiresAt = new Date(invoice.company.dueDate);
-    expiresAt.setDate(expiresAt.getDate() + 30);
-    const date = expiresAt.toISOString().split("T")[0];
-
-    await invoice.company.update({
-      dueDate: date
-    });
-    await invoice.update({
-      status: "paid"
-    });
-    await invoice.company.reload();
-    const io = getIO();
-
-    io.to(`company-${invoice.companyId}-mainchannel`)
-      .to("super")
-      .emit(`company-${invoice.companyId}-payment`, {
-        action: "CONCLUIDA",
-        company: invoice.company,
-        invoiceId: invoice.id
-      });
+    // SEGURANÇA: o aviso pode ser falso (a rota é pública). Só libera se a
+    // própria Owen confirmar o pagamento.
+    const confirmed = await owenCheckStatus(invoice);
+    if (!confirmed) {
+      logger.warn({ invoiceId: invoice.id }, "owenWebhook: não confirmado");
+    }
+    return res.json({ ok: true });
   }
   return res.json({ ok: true });
 };

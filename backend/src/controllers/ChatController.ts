@@ -12,6 +12,8 @@ import Chat from "../models/Chat";
 import CreateMessageService from "../services/ChatService/CreateMessageService";
 import User from "../models/User";
 import ChatUser from "../models/ChatUser";
+import EnsureSameCompany from "../helpers/EnsureSameCompany";
+import AppError from "../errors/AppError";
 
 type IndexQuery = {
   pageNumber: string;
@@ -23,6 +25,15 @@ type StoreData = {
   users: any[];
   title: string;
   area?: string;
+};
+
+// só o dono da conversa (ou um admin da mesma empresa) edita ou apaga
+const ensureChatManager = async (id: number, req: Request): Promise<void> => {
+  const chat = await Chat.findByPk(id);
+  EnsureSameCompany(chat, req.user.companyId);
+  if (chat.ownerId !== +req.user.id && req.user.profile !== "admin") {
+    throw new AppError("ERR_NO_PERMISSION", 403);
+  }
 };
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
@@ -68,6 +79,8 @@ export const update = async (
   const data = req.body;
   const { id } = req.params;
 
+  await ensureChatManager(+id, req);
+
   const record = await UpdateService({
     ...data,
     id: +id
@@ -89,6 +102,7 @@ export const show = async (req: Request, res: Response): Promise<Response> => {
   const { id } = req.params;
 
   const record = await ShowFromUuidService(id);
+  EnsureSameCompany(record, req.user.companyId);
 
   return res.status(200).json(record);
 };
@@ -99,6 +113,8 @@ export const remove = async (
 ): Promise<Response> => {
   const { id } = req.params;
   const { companyId } = req.user;
+
+  await ensureChatManager(+id, req);
 
   await DeleteService(id);
 
@@ -121,6 +137,11 @@ export const saveMessage = async (
   const { id } = req.params;
   const senderId = +req.user.id;
   const chatId = +id;
+
+  // SEGURANÇA: só quem participa da conversa manda mensagem nela
+  if (!(await ChatUser.count({ where: { chatId, userId: senderId } }))) {
+    throw new AppError("ERR_NO_PERMISSION", 403);
+  }
 
   let newMessage = null;
 
@@ -175,10 +196,12 @@ export const checkAsRead = async (
   res: Response
 ): Promise<Response> => {
   const { companyId } = req.user;
-  const { userId } = req.body;
+  // sempre o próprio usuário (antes vinha do corpo e dava para mexer em outro)
+  const userId = +req.user.id;
   const { id } = req.params;
 
   const chatUser = await ChatUser.findOne({ where: { chatId: id, userId } });
+  if (!chatUser) throw new AppError("ERR_NO_PERMISSION", 403);
   await chatUser.update({ unreads: 0 });
 
   const chat = await Chat.findByPk(id, {

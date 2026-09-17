@@ -68,9 +68,28 @@ app.get("/public/*", (req, res) => {
     res.setHeader("Content-Type", "audio/aac");
   }
 
+  // SEGURANÇA: arquivos vêm de clientes no WhatsApp. HTML/SVG/XML abertos
+  // no navegador rodariam script no domínio do sistema e roubariam a sessão
+  // do atendente. Só abre na tela o que é mídia/PDF/texto; o resto baixa, e
+  // tudo que não é mídia vai com "sandbox" (sem script, mesmo se aberto).
+  const safeInline =
+    /\.(pdf|png|jpe?g|gif|webp|bmp|ico|mp4|webm|ogg|oga|opus|mp3|m4a|aac|wav|txt)$/i.test(
+      filePath
+    );
+  if (
+    !/\.(png|jpe?g|gif|webp|bmp|ico|mp4|webm|ogg|oga|opus|mp3|m4a|aac|wav|pdf)$/i.test(
+      filePath
+    )
+  ) {
+    res.setHeader("Content-Security-Policy", "sandbox; default-src 'none'");
+  }
+  if (/\.txt$/i.test(filePath)) {
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+  }
+
   // ?inline=1 → serve with Content-Disposition: inline so browsers display
   // the file in-place (e.g. PDF viewer iframe) instead of downloading it.
-  if (req.query.inline === "1") {
+  if (req.query.inline === "1" && safeInline) {
     res.setHeader("Content-Disposition", "inline");
     return res.sendFile(filePath, err => {
       if (err) {

@@ -12,6 +12,7 @@ import FindService from "../services/QuickMessageService/FindService";
 import QuickMessage from "../models/QuickMessage";
 
 import AppError from "../errors/AppError";
+import EnsureSameCompany from "../helpers/EnsureSameCompany";
 
 type IndexQuery = {
   searchParam: string;
@@ -73,6 +74,7 @@ export const show = async (req: Request, res: Response): Promise<Response> => {
   const { id } = req.params;
 
   const record = await ShowService(id);
+  EnsureSameCompany(record, req.user.companyId);
 
   return res.status(200).json(record);
 };
@@ -97,6 +99,8 @@ export const update = async (
 
   const { id } = req.params;
 
+  EnsureSameCompany(await ShowService(id), companyId);
+
   const record = await UpdateService({
     ...data,
     userId: Number.parseInt(req.user.id, 10),
@@ -118,6 +122,8 @@ export const remove = async (
 ): Promise<Response> => {
   const { id } = req.params;
   const { companyId } = req.user;
+
+  EnsureSameCompany(await ShowService(id), companyId);
 
   await DeleteService(id);
 

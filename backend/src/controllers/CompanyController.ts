@@ -18,6 +18,7 @@ import User from "../models/User";
 import CheckSettings from "../helpers/CheckSettings";
 import { OpenHoursData } from "../helpers/checkOpenHours";
 import CompaniesStorageService from "../services/CompanyService/CompaniesStorageService";
+import Plan from "../models/Plan";
 
 type IndexQuery = {
   searchParam: string;
@@ -97,13 +98,40 @@ export const signup = async (
 
   // respostas extras do cadastro (segmento, tamanho da equipe, como nos
   // conheceu, objetivo) ficam guardadas nas configurações da empresa
-  const { segment, teamSize, source, goal, ...companyData } = req.body;
+  const { segment, teamSize, source, goal } = req.body;
 
-  const schema = Yup.object().shape({ name: Yup.string().required() });
+  // SEGURANÇA: só os campos do formulário. Antes o corpo ia inteiro e dava
+  // para mandar status, prazo ou um plano interno; e sem senha a conta
+  // nascia com a senha padrão "123456".
+  const companyData = {
+    name: req.body.name,
+    phone: req.body.phone,
+    email: req.body.email,
+    password: req.body.password,
+    planId: req.body.planId,
+    // o pagamento soma o período da recorrência: no cadastro é sempre mensal
+    recurrence: "MENSAL",
+    language: req.body.language,
+    dueDate: req.body.dueDate,
+    status: true
+  };
+
+  const schema = Yup.object().shape({
+    name: Yup.string().required(),
+    email: Yup.string().email().required(),
+    password: Yup.string().min(6).required()
+  });
   try {
     await schema.validate(companyData);
   } catch (err) {
     throw new AppError(err.message);
+  }
+
+  if (companyData.planId) {
+    const plan = await Plan.findByPk(companyData.planId);
+    if (!plan || !plan.isPublic) {
+      throw new AppError("ERR_NO_PLAN_FOUND", 404);
+    }
   }
 
   const company = await CreateCompanyService(companyData);
@@ -170,7 +198,11 @@ export const updateSchedules = async (
   const { id } = req.params;
   const requestUser = await User.findByPk(req.user.id);
 
-  if (!requestUser.super && Number.parseInt(id, 10) !== requestUser.companyId) {
+  if (
+    !requestUser.super &&
+    (Number.parseInt(id, 10) !== requestUser.companyId ||
+      requestUser.profile !== "admin")
+  ) {
     throw new AppError("ERR_FORBIDDEN", 403);
   }
 

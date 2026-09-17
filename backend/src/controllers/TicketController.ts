@@ -11,6 +11,7 @@ import ShowTicketUUIDService from "../services/TicketServices/ShowTicketFromUUID
 import ShowTicketService from "../services/TicketServices/ShowTicketService";
 import UpdateTicketService from "../services/TicketServices/UpdateTicketService";
 import ListTicketsServiceKanban from "../services/TicketServices/ListTicketsServiceKanban";
+import EnsureSameCompany from "../helpers/EnsureSameCompany";
 
 type IndexQuery = {
   isSearch?: string;
@@ -201,6 +202,7 @@ export const showFromUUID = async (
   const { uuid } = req.params;
 
   const ticket: Ticket = await ShowTicketUUIDService(uuid);
+  EnsureSameCompany(ticket, req.user.companyId);
 
   return res.status(200).json(ticket);
 };

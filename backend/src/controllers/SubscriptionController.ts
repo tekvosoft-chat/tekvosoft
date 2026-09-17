@@ -77,6 +77,11 @@ export const choosePlan = async (
   if (!plan) throw new AppError("ERR_NO_PLAN_FOUND", 404);
 
   const company = await Company.findByPk(companyId);
+  // SEGURANÇA: só planos públicos (ou o que a empresa já tem). Sem isso,
+  // dava para escolher um plano interno/cortesia de valor menor.
+  if (!plan.isPublic && company.planId !== plan.id) {
+    throw new AppError("ERR_NO_PLAN_FOUND", 404);
+  }
   await company.update({ planId: plan.id });
 
   const today = new Date().toISOString().slice(0, 10);

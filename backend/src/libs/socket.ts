@@ -238,6 +238,8 @@ export const initIO = (httpServer: Server): SocketIO => {
           ) {
             joinTicketChannel(socket, ticketId, user, counters);
           } else if (
+            // SEGURANÇA: grupo também precisa ser da mesma empresa
+            ticket?.companyId === user.companyId &&
             ticket.isGroup &&
             (await GetCompanySetting(
               user.companyId,

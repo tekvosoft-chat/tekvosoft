@@ -13,6 +13,7 @@ import FindAllInvoiceService from "../services/InvoicesService/FindAllInvoiceSer
 import ListInvoicesServices from "../services/InvoicesService/ListInvoicesServices";
 import ShowInvoceService from "../services/InvoicesService/ShowInvoiceService";
 import UpdateInvoiceService from "../services/InvoicesService/UpdateInvoiceService";
+import EnsureSameCompany from "../helpers/EnsureSameCompany";
 
 type IndexQuery = {
   searchParam: string;
@@ -48,6 +49,12 @@ export const show = async (req: Request, res: Response): Promise<Response> => {
   const { Invoiceid } = req.params;
 
   const invoice = await ShowInvoceService(Invoiceid);
+  if (!req.user.isSuper) {
+    const owner = await Invoices.findByPk(invoice.id, {
+      attributes: ["companyId"]
+    });
+    EnsureSameCompany(owner, req.user.companyId);
+  }
 
   return res.status(200).json(invoice);
 };

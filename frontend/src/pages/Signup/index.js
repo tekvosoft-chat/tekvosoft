@@ -60,7 +60,7 @@ const UserSchema = Yup.object().shape({
     .max(50, i18n.t("common.validations.long"))
     .required(i18n.t("common.validations.required")),
   password: Yup.string()
-    .min(5, i18n.t("common.validations.short"))
+    .min(6, i18n.t("common.validations.short"))
     .max(50, i18n.t("common.validations.long"))
     .required(i18n.t("common.validations.required")),
   email: Yup.string()

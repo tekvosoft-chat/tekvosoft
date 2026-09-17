@@ -323,7 +323,9 @@ export const asaasWebhook = async (
     ["PAYMENT_RECEIVED", "PAYMENT_CONFIRMED"].includes(event) &&
     invoice.status !== "paid"
   ) {
-    await processInvoicePaid(invoice);
+    // SEGURANÇA: o aviso só dispara a conferência. Quem confirma o pagamento
+    // é o próprio Asaas (consulta pela API) — um aviso falso não libera plano
+    await asaasCheckStatus(invoice);
   }
 
   return res.json({ ok: true });

@@ -26,10 +26,10 @@ const rateLimit =
   async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     let keys: string[] = [];
     try {
-      const ip =
-        String(req.headers["x-forwarded-for"] || "")
-          .split(",")[0]
-          .trim() || req.ip;
+      // X-Real-IP vem do nginx (já resolvido com os proxies confiáveis).
+      // O primeiro item do X-Forwarded-For é o próprio cliente quem manda:
+      // trocando ele a cada tentativa, dava para furar o limite.
+      const ip = String(req.headers["x-real-ip"] || "").trim() || req.ip;
       // por e-mail o limite é mais apertado; por IP, mais folgado
       const field = bodyField && String(req.body?.[bodyField] || "").trim();
       keys = [`rl:${name}:ip:${ip}`];
