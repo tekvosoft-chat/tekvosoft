@@ -58,6 +58,7 @@ import QuickRepliesModal from "../QuickRepliesModal";
 import ExpressionPanel from "./ExpressionPanel";
 import {
   announceFailed,
+  announceConfirmed,
   announceProgress,
   announceSending
 } from "../MessagesList/optimisticSend";
@@ -1232,6 +1233,9 @@ const MessageInputCustom = props => {
             }
           });
         })
+        .then(() => {
+          if (pendingId) announceConfirmed(pendingId);
+        })
         .catch(err => {
           if (pendingId) announceFailed(pendingId);
           toastError(err);
@@ -1437,6 +1441,7 @@ const MessageInputCustom = props => {
           );
         }
       })
+      .then(() => announceConfirmed(pendingId))
       .catch(err => {
         announceFailed(pendingId);
         toastError(err);

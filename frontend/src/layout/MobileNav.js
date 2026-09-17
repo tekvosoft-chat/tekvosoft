@@ -16,8 +16,6 @@ import ButtonBase from "@material-ui/core/ButtonBase";
 import WhatsAppIcon from "@material-ui/icons/WhatsApp";
 import DashboardOutlinedIcon from "@material-ui/icons/DashboardOutlined";
 import DashboardIcon from "@material-ui/icons/Dashboard";
-import ContactPhoneOutlinedIcon from "@material-ui/icons/ContactPhoneOutlined";
-import ContactPhoneIcon from "@material-ui/icons/ContactPhone";
 import ForumIcon from "@material-ui/icons/Forum";
 import ForumOutlinedIcon from "@material-ui/icons/ForumOutlined";
 import ViewWeekOutlinedIcon from "@material-ui/icons/ViewWeekOutlined";
@@ -351,12 +349,6 @@ const MobileNav = ({ onOpenProfile }) => {
       icon: <WhatsAppIcon />,
       activeIcon: <WhatsAppIcon />
     };
-    const contacts = {
-      to: "/contacts",
-      label: t("contacts"),
-      icon: <ContactPhoneOutlinedIcon />,
-      activeIcon: <ContactPhoneIcon />
-    };
     const chats = {
       to: "/chats",
       label: t("chats"),
@@ -374,7 +366,12 @@ const MobileNav = ({ onOpenProfile }) => {
           activeIcon: <DashboardIcon />
         },
         tickets,
-        contacts,
+        {
+          to: "/kanban",
+          label: t("kanban"),
+          icon: <ViewWeekOutlinedIcon />,
+          activeIcon: <ViewWeekIcon />
+        },
         chats
       ].filter(allowed);
     }
@@ -386,7 +383,6 @@ const MobileNav = ({ onOpenProfile }) => {
         icon: <ViewWeekOutlinedIcon />,
         activeIcon: <ViewWeekIcon />
       },
-      contacts,
       chats
     ].filter(allowed);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -400,11 +396,6 @@ const MobileNav = ({ onOpenProfile }) => {
         items: [
           { to: "/tickets", label: t("tickets"), icon: <WhatsAppIcon /> },
           { to: "/kanban", label: t("kanban"), icon: <ViewWeekOutlinedIcon /> },
-          {
-            to: "/contacts",
-            label: t("contacts"),
-            icon: <ContactPhoneOutlinedIcon />
-          },
           { to: "/schedules", label: t("schedules"), icon: <EventIcon /> },
           { to: "/chats", label: t("chats"), icon: <ForumIcon /> },
           { to: "/helps", label: t("helps"), icon: <HelpOutlineIcon /> }

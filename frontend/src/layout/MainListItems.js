@@ -13,7 +13,6 @@ import WhatsAppIcon from "@material-ui/icons/WhatsApp";
 import SyncAltIcon from "@material-ui/icons/SyncAlt";
 import SettingsOutlinedIcon from "@material-ui/icons/SettingsOutlined";
 import PeopleAltOutlinedIcon from "@material-ui/icons/PeopleAltOutlined";
-import ContactPhoneOutlinedIcon from "@material-ui/icons/ContactPhoneOutlined";
 import AccountTreeOutlinedIcon from "@material-ui/icons/AccountTreeOutlined";
 import HelpOutlineIcon from "@material-ui/icons/HelpOutline";
 import CodeRoundedIcon from "@material-ui/icons/CodeRounded";
@@ -531,16 +530,18 @@ const MainListItems = props => {
           />
         )}
 
-        <Section label={i18n.t("mainDrawer.sections.audience")} />
-        <ListItemLink
-          to="/contacts"
-          primary={i18n.t("mainDrawer.listItems.contacts")}
-          icon={<ContactPhoneOutlinedIcon />}
-        />
+        {/* contatos agora ficam na tela de conversas (busca e "+") */}
         <Can
           role={user.profile}
           perform="drawer-admin-items:view"
-          yes={() => campaignsBlock || null}
+          yes={() =>
+            campaignsBlock ? (
+              <>
+                <Section label={i18n.t("mainDrawer.sections.audience")} />
+                {campaignsBlock}
+              </>
+            ) : null
+          }
         />
 
         <Can

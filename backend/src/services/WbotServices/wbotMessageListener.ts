@@ -776,8 +776,23 @@ export const verifyMediaMessage = async (
     dataJson: JSON.stringify(msg)
   };
 
+  // prévia na lista de conversas no jeito do WhatsApp: emoji + tipo
+  // (e a legenda, quando houver) em vez do nome do arquivo
+  const caption =
+    body && body !== filename && !/^[^\s]+\.[a-z0-9]{2,5}$/i.test(body.trim())
+      ? body.trim()
+      : "";
+  const content = getUnpackedMessage(msg) as proto.IMessage;
+  let preview: string;
+  if (content?.stickerMessage) preview = "💟 Figurinha";
+  else if (content?.videoMessage?.gifPlayback) preview = "👾 GIF";
+  else if (mediaType === "image") preview = `📷 ${caption || "Foto"}`;
+  else if (mediaType === "video") preview = `🎥 ${caption || "Vídeo"}`;
+  else if (mediaType === "audio") preview = "🎤 Áudio";
+  else preview = `📄 ${caption || filename}`;
+
   await ticket.update({
-    lastMessage: body || filename ? `📎 ${filename}` : ""
+    lastMessage: preview.substring(0, 255).replace(/\n/g, " ")
   });
 
   const newMessage = await CreateMessageService({

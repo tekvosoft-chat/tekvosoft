@@ -9,6 +9,12 @@ import CloseRoundedIcon from "@material-ui/icons/CloseRounded";
 import DirectionsRoundedIcon from "@material-ui/icons/DirectionsRounded";
 import OpenInNewRoundedIcon from "@material-ui/icons/OpenInNewRounded";
 import RoomRoundedIcon from "@material-ui/icons/RoomRounded";
+import RefreshRoundedIcon from "@material-ui/icons/RefreshRounded";
+import SearchRoundedIcon from "@material-ui/icons/SearchRounded";
+import InfoOutlinedIcon from "@material-ui/icons/InfoOutlined";
+import NearMeRoundedIcon from "@material-ui/icons/NearMeRounded";
+import PinDropOutlinedIcon from "@material-ui/icons/PinDropOutlined";
+import ShareLocationIcon from "@material-ui/icons/WifiTetheringRounded";
 
 /**
  * Localização no jeito do WhatsApp: um cartão com o mapa de verdade e o
@@ -17,6 +23,9 @@ import RoomRoundedIcon from "@material-ui/icons/RoomRounded";
  * pela pessoa enquanto ela estiver compartilhando.
  */
 const ZOOM = 16;
+
+export const googleEmbed = (lat, lon, zoom = 16) =>
+  `https://maps.google.com/maps?q=${lat},${lon}&z=${zoom}&hl=pt-BR&output=embed`;
 
 const tileFor = (lat, lon, zoom = ZOOM) => {
   const n = 2 ** zoom;
@@ -205,8 +214,8 @@ export const LocationDialog = ({ open, onClose, location, title }) => {
   const isPhone = useMediaQuery(theme.breakpoints.down("xs"));
   if (!location) return null;
   const { lat, lon } = location;
-  const d = 0.004;
-  const src = `https://www.openstreetmap.org/export/embed.html?bbox=${lon - d}%2C${lat - d}%2C${lon + d}%2C${lat + d}&layer=mapnik&marker=${lat}%2C${lon}`;
+  // mapa do Google (incorporação gratuita, sem chave)
+  const src = googleEmbed(lat, lon);
   return (
     <Dialog
       open={open}
@@ -322,106 +331,267 @@ export default LocationMessage;
 
 const useSendStyles = makeStyles(theme => {
   const t = theme.palette.tkv;
+  const dark = theme.palette.type === "dark" || theme.mode === "dark";
+  const sheet = dark ? "#1c1c1e" : "#f2f2f7";
+  const group = dark ? "#2c2c2e" : "#ffffff";
   return {
     paper: {
       overflow: "hidden",
       display: "flex",
       flexDirection: "column",
+      backgroundColor: sheet,
       [theme.breakpoints.up("sm")]: {
-        width: "min(720px, calc(100vw - 64px))",
-        height: "min(640px, calc(var(--vh, 100vh) - 64px))",
+        width: "min(520px, calc(100vw - 48px))",
+        height: "min(820px, calc(var(--vh, 100vh) - 48px))",
         maxWidth: "none",
-        borderRadius: 20
+        borderRadius: 18
       }
     },
-    head: {
+    top: {
+      flex: "none",
+      display: "grid",
+      gridTemplateColumns: "88px 1fr 88px",
+      alignItems: "center",
+      padding: theme.spacing(1, 1.5, 0),
+      paddingTop: `calc(${theme.spacing(1.5)}px + var(--safe-top, 0px))`,
+      [theme.breakpoints.up("sm")]: { paddingTop: theme.spacing(1.5) }
+    },
+    cancel: {
+      justifySelf: "start",
+      padding: "6px 4px",
+      border: "none",
+      background: "none",
+      fontSize: 16,
+      color: theme.palette.text.primary,
+      textDecoration: "underline",
+      cursor: "pointer"
+    },
+    title: {
+      textAlign: "center",
+      fontSize: 16,
+      fontWeight: 700,
+      color: theme.palette.text.primary
+    },
+    refresh: { justifySelf: "end", color: theme.palette.text.primary },
+    searchWrap: { flex: "none", padding: theme.spacing(1.25, 1.5, 1.5) },
+    search: {
       display: "flex",
       alignItems: "center",
       gap: 8,
-      padding: theme.spacing(1, 1, 1, 2),
-      paddingTop: `calc(${theme.spacing(1)}px + var(--safe-top, 0px))`,
-      [theme.breakpoints.up("sm")]: { paddingTop: theme.spacing(1) },
-      borderBottom: `1px solid ${t.border}`,
-      fontWeight: 700
-    },
-    search: {
-      display: "flex",
-      gap: 8,
-      padding: theme.spacing(1.5, 2, 1)
-    },
-    input: {
-      flex: 1,
-      minWidth: 0,
-      height: 40,
-      padding: "0 14px",
-      borderRadius: 999,
-      border: `1px solid ${t.border}`,
-      backgroundColor: t.surfaceSunken,
-      color: theme.palette.text.primary,
-      fontSize: 15,
-      outline: "none",
-      "&:focus": { borderColor: t.brand.main }
-    },
-    results: {
-      maxHeight: 180,
-      overflowY: "auto",
-      padding: theme.spacing(0, 1)
-    },
-    result: {
-      display: "flex",
-      gap: 10,
-      width: "100%",
-      padding: "8px 10px",
+      height: 38,
+      padding: "0 12px",
       borderRadius: 10,
+      backgroundColor: dark ? "#2c2c2e" : "#e3e3e8",
+      color: theme.palette.text.secondary,
+      "& input": {
+        flex: 1,
+        minWidth: 0,
+        border: "none",
+        outline: "none",
+        background: "transparent",
+        fontSize: 16,
+        color: theme.palette.text.primary
+      }
+    },
+    mapBox: {
+      position: "relative",
+      flex: "1 1 50%",
+      minHeight: 200,
+      backgroundColor: dark ? "#2a3345" : "#e5e3df"
+    },
+    frame: {
+      position: "absolute",
+      inset: 0,
+      width: "100%",
+      height: "100%",
+      border: 0
+    },
+    mapTools: {
+      position: "absolute",
+      top: 12,
+      right: 12,
+      display: "flex",
+      flexDirection: "column",
+      borderRadius: 10,
+      overflow: "hidden",
+      backgroundColor: dark ? "rgba(44,44,46,0.92)" : "rgba(255,255,255,0.95)",
+      boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
+      "& button": {
+        width: 44,
+        height: 44,
+        border: "none",
+        background: "none",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: theme.palette.text.primary,
+        cursor: "pointer"
+      },
+      "& button + button": {
+        borderTop: `1px solid ${dark ? "#3a3a3c" : "#e5e5ea"}`
+      }
+    },
+    sheet: {
+      position: "relative",
+      flex: "1 1 50%",
+      minHeight: 0,
+      marginTop: -14,
+      display: "flex",
+      flexDirection: "column",
+      borderRadius: "14px 14px 0 0",
+      backgroundColor: sheet,
+      boxShadow: "0 -6px 18px rgba(0,0,0,0.18)"
+    },
+    grabber: {
+      flex: "none",
+      width: 38,
+      height: 5,
+      margin: "8px auto 6px",
+      borderRadius: 3,
+      backgroundColor: dark ? "#48484a" : "#c7c7cc"
+    },
+    scroll: {
+      flex: 1,
+      minHeight: 0,
+      overflowY: "auto",
+      padding: theme.spacing(0.5, 1.5),
+      paddingBottom: `calc(${theme.spacing(2)}px + var(--safe-bottom, 0px))`
+    },
+    group: {
+      borderRadius: 12,
+      overflow: "hidden",
+      backgroundColor: group
+    },
+    row: {
+      display: "flex",
+      alignItems: "center",
+      gap: 14,
+      width: "100%",
+      minHeight: 56,
+      padding: "8px 14px",
       border: "none",
+      background: "none",
       textAlign: "left",
       cursor: "pointer",
-      fontSize: 13,
       color: theme.palette.text.primary,
-      backgroundColor: "transparent",
-      "&:hover": { backgroundColor: t.surfaceHover },
-      "& svg": { color: t.brand.text, flex: "none" }
+      transition: "background-color .12s ease",
+      "&:active, &:hover": { backgroundColor: dark ? "#3a3a3c" : "#ececf0" },
+      "&:disabled": { cursor: "default", opacity: 0.55 }
     },
-    map: { flex: 1, minHeight: 220, border: 0, width: "100%" },
-    placeholder: {
-      flex: 1,
+    rowDivider: {
+      "& + $rowDivider": {
+        borderTop: `1px solid ${dark ? "#3a3a3c" : "#e5e5ea"}`
+      }
+    },
+    rowIcon: {
+      flex: "none",
+      width: 36,
+      height: 36,
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      padding: theme.spacing(3),
-      textAlign: "center",
-      fontSize: 14,
-      color: theme.palette.text.secondary
+      color: theme.palette.text.primary,
+      "& svg": { fontSize: 26 }
     },
-    foot: {
+    ringIcon: {
+      width: 30,
+      height: 30,
+      borderRadius: "50%",
+      border: `2.5px solid ${theme.palette.text.primary}`,
       display: "flex",
       alignItems: "center",
-      gap: 10,
-      padding: theme.spacing(1.5, 2),
-      paddingBottom: `calc(${theme.spacing(1.5)}px + var(--safe-bottom, 0px))`,
-      borderTop: `1px solid ${t.border}`
+      justifyContent: "center",
+      "&::after": {
+        content: '""',
+        width: 14,
+        height: 14,
+        borderRadius: "50%",
+        backgroundColor: theme.palette.text.primary
+      }
     },
-    address: {
-      flex: 1,
-      minWidth: 0,
+    rowText: { flex: 1, minWidth: 0 },
+    rowTitle: {
+      fontSize: 16,
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap"
+    },
+    rowSub: {
       fontSize: 13,
       color: theme.palette.text.secondary,
       overflow: "hidden",
       textOverflow: "ellipsis",
       whiteSpace: "nowrap"
-    }
+    },
+    sectionLabel: {
+      padding: theme.spacing(2.25, 1.5, 0.75),
+      fontSize: 15,
+      fontWeight: 600,
+      color: theme.palette.text.secondary
+    },
+    note: {
+      padding: theme.spacing(2),
+      textAlign: "center",
+      fontSize: 13,
+      color: theme.palette.text.secondary
+    },
+    sending: { opacity: 0.6, pointerEvents: "none" }
   };
 });
 
+const haversine = (a, b) => {
+  const R = 6371000;
+  const toRad = v => (v * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLon = toRad(b.lon - a.lon);
+  const x =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(x));
+};
+
+const addressOf = tags =>
+  [
+    [tags["addr:street"], tags["addr:housenumber"]].filter(Boolean).join(", "),
+    tags["addr:suburb"],
+    tags["addr:city"]
+  ]
+    .filter(Boolean)
+    .join(" - ");
+
+// lugares por perto (lojas, restaurantes, serviços) pelo OpenStreetMap
+const fetchNearby = async ({ lat, lon }) => {
+  const query = `[out:json][timeout:10];(node(around:350,${lat},${lon})[name][~"^(amenity|shop|office|tourism|leisure|healthcare)$"~"."];);out 25;`;
+  const response = await fetch("https://overpass-api.de/api/interpreter", {
+    method: "POST",
+    body: `data=${encodeURIComponent(query)}`
+  });
+  const json = await response.json();
+  return (json?.elements || [])
+    .map(el => ({
+      lat: el.lat,
+      lon: el.lon,
+      name: el.tags?.name,
+      address: addressOf(el.tags || {}),
+      distance: haversine({ lat, lon }, { lat: el.lat, lon: el.lon })
+    }))
+    .filter(p => p.name)
+    .sort((a, b) => a.distance - b.distance)
+    .slice(0, 15);
+};
+
 /**
- * Enviar localização: usa a posição atual do aparelho ou um endereço
- * buscado, mostra no mapa e envia como pino (localização do WhatsApp).
+ * Enviar localização, no desenho do WhatsApp: mapa em cima, busca no topo e
+ * a lista embaixo com a localização atual e os lugares próximos. Tocar num
+ * item já envia.
  */
 export const SendLocationDialog = ({ open, onClose, onSend }) => {
   const classes = useSendStyles();
   const theme = useTheme();
   const isPhone = useMediaQuery(theme.breakpoints.down("xs"));
-  const [point, setPoint] = useState(null);
+  const [here, setHere] = useState(null);
+  const [focus, setFocus] = useState(null);
+  const [nearby, setNearby] = useState([]);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [status, setStatus] = useState("");
@@ -434,26 +604,22 @@ export const SendLocationDialog = ({ open, onClose, onSend }) => {
     }
     setStatus("Buscando sua localização…");
     navigator.geolocation.getCurrentPosition(
-      async pos => {
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
-        setPoint({ lat, lon, name: "Minha localização", address: "" });
+      pos => {
+        const point = {
+          lat: pos.coords.latitude,
+          lon: pos.coords.longitude,
+          accuracy: Math.round(pos.coords.accuracy || 0)
+        };
+        setHere(point);
+        setFocus(point);
         setStatus("");
-        try {
-          const r = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=pt-BR`
-          );
-          const j = await r.json();
-          if (j?.display_name) {
-            setPoint(p => (p ? { ...p, address: j.display_name } : p));
-          }
-        } catch (e) {
-          // sem endereço: vai só o pino
-        }
+        fetchNearby(point)
+          .then(setNearby)
+          .catch(() => setNearby([]));
       },
       () =>
         setStatus(
-          "Não foi possível pegar sua localização. Permita o acesso ou busque um endereço."
+          "Não foi possível pegar sua localização. Permita o acesso ou pesquise um endereço."
         ),
       { enableHighAccuracy: true, timeout: 12000 }
     );
@@ -461,7 +627,9 @@ export const SendLocationDialog = ({ open, onClose, onSend }) => {
 
   useEffect(() => {
     if (!open) return;
-    setPoint(null);
+    setHere(null);
+    setFocus(null);
+    setNearby([]);
     setResults([]);
     setQuery("");
     locate();
@@ -476,30 +644,49 @@ export const SendLocationDialog = ({ open, onClose, onSend }) => {
     }
     const timer = setTimeout(async () => {
       try {
+        const near = here
+          ? `&viewbox=${here.lon - 0.3},${here.lat + 0.3},${here.lon + 0.3},${here.lat - 0.3}`
+          : "";
         const r = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&limit=5&accept-language=pt-BR&q=${encodeURIComponent(term)}`
+          `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=8&accept-language=pt-BR&q=${encodeURIComponent(term)}${near}`
         );
         const list = await r.json();
-        setResults(Array.isArray(list) ? list : []);
+        setResults(
+          (Array.isArray(list) ? list : []).map(item => ({
+            lat: Number(item.lat),
+            lon: Number(item.lon),
+            name: String(item.display_name || "").split(",")[0],
+            address: String(item.display_name || "")
+              .split(",")
+              .slice(1, 4)
+              .join(",")
+              .trim()
+          }))
+        );
       } catch (e) {
         setResults([]);
       }
-    }, 450);
+    }, 400);
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, here]);
 
-  const send = async () => {
-    if (!point) return;
+  const send = async point => {
+    if (!point || sending) return;
+    setFocus(point);
     setSending(true);
     try {
       await onSend(point);
       onClose();
+    } catch (e) {
+      // o erro já aparece no aviso
     } finally {
       setSending(false);
     }
   };
 
-  const d = 0.004;
+  const list = query.trim().length >= 3 ? results : nearby;
+  const center = focus || here;
+
   return (
     <Dialog
       open={open}
@@ -508,78 +695,148 @@ export const SendLocationDialog = ({ open, onClose, onSend }) => {
       TransitionComponent={SlideUp}
       classes={{ paper: classes.paper }}
     >
-      <div className={classes.head}>
-        <span style={{ flex: 1 }}>Enviar localização</span>
-        <IconButton onClick={onClose} aria-label="Fechar">
-          <CloseRoundedIcon />
+      <div className={classes.top}>
+        <button type="button" className={classes.cancel} onClick={onClose}>
+          Cancelar
+        </button>
+        <div className={classes.title}>Enviar localização</div>
+        <IconButton
+          className={classes.refresh}
+          onClick={locate}
+          aria-label="Atualizar"
+        >
+          <RefreshRoundedIcon />
         </IconButton>
       </div>
-      <div className={classes.search}>
-        <input
-          className={classes.input}
-          placeholder="Buscar endereço ou lugar…"
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-        />
-        <Button
-          variant="outlined"
-          color="primary"
-          onClick={locate}
-          style={{ borderRadius: 999, textTransform: "none" }}
-        >
-          📍 Atual
-        </Button>
+
+      <div className={classes.searchWrap}>
+        <label className={classes.search}>
+          <SearchRoundedIcon fontSize="small" />
+          <input
+            placeholder="Pesquise ou insira um endereço"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+          />
+        </label>
       </div>
-      {results.length > 0 && (
-        <div className={classes.results}>
-          {results.map(item => (
-            <button
-              type="button"
-              key={item.place_id}
-              className={classes.result}
-              onClick={() => {
-                setPoint({
-                  lat: Number(item.lat),
-                  lon: Number(item.lon),
-                  name: String(item.display_name || "").split(",")[0],
-                  address: item.display_name
-                });
-                setResults([]);
-                setQuery("");
-              }}
-            >
-              <RoomRoundedIcon fontSize="small" />
-              {item.display_name}
+
+      <div className={classes.mapBox}>
+        {center && (
+          <iframe
+            key={`${center.lat},${center.lon}`}
+            title="mapa"
+            className={classes.frame}
+            src={googleEmbed(center.lat, center.lon, 17)}
+          />
+        )}
+        <div className={classes.mapTools}>
+          <button
+            type="button"
+            aria-label="Abrir no Google Maps"
+            onClick={() =>
+              center &&
+              window.open(
+                `https://www.google.com/maps?q=${center.lat},${center.lon}`,
+                "_blank"
+              )
+            }
+          >
+            <InfoOutlinedIcon />
+          </button>
+          <button
+            type="button"
+            aria-label="Minha localização"
+            onClick={() => (here ? setFocus(here) : locate())}
+          >
+            <NearMeRoundedIcon />
+          </button>
+        </div>
+      </div>
+
+      <div
+        className={`${classes.sheet}${sending ? ` ${classes.sending}` : ""}`}
+      >
+        <span className={classes.grabber} />
+        <div className={classes.scroll}>
+          <div className={classes.group}>
+            <button type="button" className={classes.row} disabled>
+              <span className={classes.rowIcon}>
+                <ShareLocationIcon />
+              </span>
+              <span className={classes.rowText}>
+                <span className={classes.rowTitle} style={{ display: "block" }}>
+                  Compartilhar localização em tempo real
+                </span>
+                <span className={classes.rowSub} style={{ display: "block" }}>
+                  Disponível só no app do WhatsApp
+                </span>
+              </span>
             </button>
-          ))}
+          </div>
+
+          <div className={classes.sectionLabel}>
+            {query.trim().length >= 3 ? "Resultados" : "Locais próximos"}
+          </div>
+          <div className={classes.group}>
+            {!query.trim() && (
+              <button
+                type="button"
+                className={`${classes.row} ${classes.rowDivider}`}
+                disabled={!here}
+                onClick={() =>
+                  send({ ...here, name: "Localização atual", address: "" })
+                }
+              >
+                <span className={classes.rowIcon}>
+                  <span className={classes.ringIcon} />
+                </span>
+                <span className={classes.rowText}>
+                  <span
+                    className={classes.rowTitle}
+                    style={{ display: "block" }}
+                  >
+                    Localização atual
+                  </span>
+                  <span className={classes.rowSub} style={{ display: "block" }}>
+                    {here
+                      ? `Precisão de ${here.accuracy}m`
+                      : status || "Buscando…"}
+                  </span>
+                </span>
+              </button>
+            )}
+            {list.map(place => (
+              <button
+                type="button"
+                key={`${place.lat},${place.lon},${place.name}`}
+                className={`${classes.row} ${classes.rowDivider}`}
+                onMouseEnter={() => !isPhone && setFocus(place)}
+                onClick={() => send(place)}
+              >
+                <span className={classes.rowIcon}>
+                  <PinDropOutlinedIcon />
+                </span>
+                <span className={classes.rowText}>
+                  <span
+                    className={classes.rowTitle}
+                    style={{ display: "block" }}
+                  >
+                    {place.name}
+                  </span>
+                  <span className={classes.rowSub} style={{ display: "block" }}>
+                    {place.address ||
+                      (place.distance
+                        ? `a ${Math.round(place.distance)} m`
+                        : "")}
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
+          {query.trim().length >= 3 && results.length === 0 && (
+            <div className={classes.note}>Nenhum lugar encontrado</div>
+          )}
         </div>
-      )}
-      {point ? (
-        <iframe
-          key={`${point.lat},${point.lon}`}
-          title="mapa"
-          className={classes.map}
-          src={`https://www.openstreetmap.org/export/embed.html?bbox=${point.lon - d}%2C${point.lat - d}%2C${point.lon + d}%2C${point.lat + d}&layer=mapnik&marker=${point.lat}%2C${point.lon}`}
-        />
-      ) : (
-        <div className={classes.placeholder}>
-          {status || "Busque um endereço ou use a localização atual."}
-        </div>
-      )}
-      <div className={classes.foot}>
-        <span className={classes.address}>
-          {point?.address ||
-            (point ? `${point.lat.toFixed(5)}, ${point.lon.toFixed(5)}` : "")}
-        </span>
-        <Button
-          variant="contained"
-          color="primary"
-          disabled={!point || sending}
-          onClick={send}
-          style={{ borderRadius: 999, textTransform: "none", fontWeight: 700 }}
-        >
-          Enviar
-        </Button>
       </div>
     </Dialog>
   );

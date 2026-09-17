@@ -13,12 +13,6 @@ import ButtonBase from "@material-ui/core/ButtonBase";
 import WhatsAppIcon from "@material-ui/icons/WhatsApp";
 import AndroidIcon from "@material-ui/icons/Android";
 import DoneRoundedIcon from "@material-ui/icons/DoneRounded";
-import PhotoCameraRoundedIcon from "@material-ui/icons/PhotoCameraRounded";
-import MicRoundedIcon from "@material-ui/icons/MicRounded";
-import VideocamRoundedIcon from "@material-ui/icons/VideocamRounded";
-import DescriptionRoundedIcon from "@material-ui/icons/DescriptionRounded";
-import GifRoundedIcon from "@material-ui/icons/GifRounded";
-import EmojiEmotionsRoundedIcon from "@material-ui/icons/EmojiEmotionsRounded";
 import SyncAltRoundedIcon from "@material-ui/icons/SyncAltRounded";
 import AccountTreeOutlinedIcon from "@material-ui/icons/AccountTreeOutlined";
 import WhatsMarked from "react-whatsmarked";
@@ -35,7 +29,6 @@ import UserAvatar from "../ui/UserAvatar";
 import { generateColor } from "../../helpers/colorGenerator";
 import { getInitials } from "../../helpers/getInitials";
 import pastRelativeDate from "../../helpers/pastRelativeDate";
-import TagsLine from "../TagsLine";
 import {
   prefetchMessages,
   rememberTicket
@@ -173,12 +166,32 @@ const useStyles = makeStyles(theme => {
       fontWeight: 600,
       color: t.semantic.success
     },
+    // tudo numa linha só: o que não cabe encurta com reticências
     chips: {
       display: "flex",
-      flexWrap: "wrap",
+      flexWrap: "nowrap",
       alignItems: "center",
       gap: 4,
-      marginTop: 5
+      marginTop: 5,
+      minWidth: 0,
+      overflow: "hidden",
+      "& > *": { flexShrink: 1, minWidth: 0 },
+      "& > span:first-child": { flexShrink: 0, maxWidth: "45%" }
+    },
+    tagChip: {
+      display: "inline-flex",
+      alignItems: "center",
+      height: 19,
+      padding: "0 7px",
+      borderRadius: t.radius.pill,
+      fontSize: "0.6875rem",
+      fontWeight: 700,
+      color: "#FFFFFF",
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      flexShrink: 1,
+      minWidth: 24
     },
     chip: {
       display: "inline-flex",
@@ -243,45 +256,37 @@ const useStyles = makeStyles(theme => {
   };
 });
 
-// última mensagem de mídia: ícone + nome curto, no lugar do nome do arquivo
+// última mensagem de mídia no jeito do WhatsApp: emoji + nome curto, no
+// lugar do nome do arquivo ("📷 Foto", "🎤 Áudio", "💟 Figurinha"…)
 const MEDIA_RULES = [
-  [/^gif-.*\.mp4$/i, "gif", GifRoundedIcon],
+  [/(^|\/)gif-[^/]*\.mp4$/i, "👾", "gif"],
   // figurinha do WhatsApp chega como .webp
-  [/\.webp$/i, "sticker", EmojiEmotionsRoundedIcon],
-  [/\.(jpe?g|png|heic|bmp)$/i, "photo", PhotoCameraRoundedIcon],
-  [/\.(ogg|oga|opus|mp3|m4a|aac|wav|webm)$/i, "audio", MicRoundedIcon],
-  [/\.(mp4|mov|3gp|mkv)$/i, "video", VideocamRoundedIcon],
-  [
-    /\.(pdf|docx?|xlsx?|pptx?|txt|csv|zip|rar)$/i,
-    "document",
-    DescriptionRoundedIcon
-  ]
+  [/\.webp$/i, "💟", "sticker"],
+  [/\.(jpe?g|png|heic|bmp)$/i, "📷", "photo"],
+  [/\.(ogg|oga|opus|mp3|m4a|aac|wav|webm)$/i, "🎤", "audio"],
+  [/\.(mp4|mov|3gp|mkv)$/i, "🎥", "video"],
+  [/\.(pdf|docx?|xlsx?|pptx?|txt|csv|zip|rar)$/i, "📄", "document"]
 ];
 
 const mediaPreview = text => {
-  // tira emoji/símbolo na frente ("📎 arquivo.webp", "🎤 Áudio")
-  const first = String(text || "")
+  // tira assinatura ("*Nome:*") e o emoji da frente ("📎 arquivo.webp")
+  const raw = String(text || "")
+    .replace(/^\*[^*\n]{1,60}:\*\s*/, "")
     .split("\n")[0]
-    .trim()
-    .replace(/^[^\p{L}\p{N}]+/u, "")
     .trim();
-  if (!first && /🔊|🎤|🎙/.test(String(text || ""))) {
-    return {
-      icon: <MicRoundedIcon />,
-      label: i18n.t("ticketsList.media.audio")
-    };
+  const first = raw.replace(/^[^\p{L}\p{N}]+/u, "").trim();
+  if (
+    (!first && /🔊|🎤|🎙/.test(raw)) ||
+    ["Áudio", "Audio", "Mensagem de voz"].includes(first)
+  ) {
+    return `🎤 ${i18n.t("ticketsList.media.audio")}`;
   }
-  if (["Áudio", "Audio", "Mensagem de voz"].includes(first)) {
-    return {
-      icon: <MicRoundedIcon />,
-      label: i18n.t("ticketsList.media.audio")
-    };
-  }
-  if (!first || /\s/.test(first)) return null;
+  if (!first || first.length > 180) return null;
   const rule = MEDIA_RULES.find(([pattern]) => pattern.test(first));
   if (!rule) return null;
-  const [, key, Icon] = rule;
-  return { icon: <Icon />, label: i18n.t(`ticketsList.media.${key}`) };
+  const [, emoji, key] = rule;
+  if (key === "document") return `${emoji} ${first}`;
+  return `${emoji} ${i18n.t(`ticketsList.media.${key}`)}`;
 };
 
 const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
@@ -349,7 +354,16 @@ const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
           Chatbot
         </span>
       )}
-      <TagsLine ticket={ticket} />
+      {[...(ticket.tags || []), ...(ticket.contact?.tags || [])].map(tag => (
+        <span
+          key={`tag-${tag.id}-${tag.name}`}
+          className={classes.tagChip}
+          style={{ backgroundColor: tag.color }}
+          title={tag.name}
+        >
+          {tag.name}
+        </span>
+      ))}
     </div>
   );
 
@@ -443,8 +457,7 @@ const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
                 "📍 Localização"
               ) : mediaPreview(ticket.lastMessage) ? (
                 <span className={classes.mediaPreview}>
-                  {mediaPreview(ticket.lastMessage).icon}
-                  {mediaPreview(ticket.lastMessage).label}
+                  {mediaPreview(ticket.lastMessage)}
                 </span>
               ) : (
                 <WhatsMarked oneline>

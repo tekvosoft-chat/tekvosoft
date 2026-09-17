@@ -9,6 +9,11 @@
 export const SENDING_EVENT = "tkv:message-sending";
 export const FAILED_EVENT = "tkv:message-failed";
 export const PROGRESS_EVENT = "tkv:message-progress";
+export const CONFIRMED_EVENT = "tkv:message-confirmed";
+
+/** O servidor terminou de enviar (a mensagem real já está salva). */
+export const announceConfirmed = id =>
+  window.dispatchEvent(new CustomEvent(CONFIRMED_EVENT, { detail: { id } }));
 
 let seq = 0;
 

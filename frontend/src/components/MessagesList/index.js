@@ -68,6 +68,7 @@ import AudioBubble from "./AudioBubble";
 import LocationMessage, { readLocation } from "./LocationMessage";
 import ReactionBar from "./ReactionBar";
 import {
+  CONFIRMED_EVENT,
   FAILED_EVENT,
   PROGRESS_EVENT,
   SENDING_EVENT,
@@ -186,8 +187,22 @@ const useStyles = makeStyles(theme => ({
     pointerEvents: "none"
   },
 
+  // fotinho do contato ao lado das mensagens recebidas (computador)
+  inAvatar: {
+    position: "absolute",
+    top: 0,
+    left: -34,
+    width: 26,
+    height: 26,
+    fontSize: 12,
+    fontWeight: 700,
+    color: theme.palette.tkv.brand.text,
+    backgroundColor: theme.palette.tkv.brand.textSoft,
+    boxShadow: "0 1px 3px rgba(12, 10, 20, 0.2)"
+  },
   messageLeft: {
     marginRight: 20,
+    [theme.breakpoints.up("sm")]: { marginLeft: 34 },
     marginTop: 2,
     minWidth: 100,
     maxWidth: "min(600px, calc(100% - 48px))",
@@ -515,6 +530,32 @@ const useStyles = makeStyles(theme => ({
     "& $messageMedia": { borderRadius: 0 },
     "& $textContentItem": { padding: "6px 70px 6px 10px" },
     [theme.breakpoints.down("xs")]: { width: "78%", minWidth: 200 }
+  },
+  // foto/vídeo sem legenda: só a imagem, arredondada, sem balão em volta;
+  // o horário fica numa pílula escura por cima da foto
+  mediaOnly: {
+    backgroundColor: "transparent !important",
+    backgroundImage: "none !important",
+    boxShadow: "none !important",
+    border: "none !important",
+    "&::before, &::after": { display: "none" },
+    "& $messageMedia": { borderRadius: 14 },
+    "& $videoPreviewWrapper": { borderRadius: 14 },
+    "& $mediaWrap": {
+      borderRadius: 14,
+      overflow: "hidden",
+      boxShadow: "0 2px 10px -4px rgba(12, 10, 20, 0.35)"
+    },
+    "& $textContentItem, & $textContentItemDeleted": { display: "none" },
+    "& $timestamp": {
+      right: 8,
+      bottom: 8,
+      padding: "1px 8px",
+      borderRadius: 999,
+      color: "#fff",
+      backgroundColor: "rgba(0, 0, 0, 0.45)",
+      "& svg": { color: "#fff !important" }
+    }
   },
   // 8. encaminhar direto da foto, sempre visível (sem precisar do mouse em cima)
   mediaForward: {
@@ -1190,6 +1231,10 @@ const reducer = (state, action) => {
  * em profundidade e, na falta da marca, o próprio arquivo .webp resolve —
  * assim ela aparece solta no fundo, sem balão, como no WhatsApp.
  */
+// corpo de mídia que é só o nome do arquivo (não é legenda de verdade)
+const isFileName = text =>
+  /^[^\s]+\.[a-z0-9]{2,5}$/i.test(String(text || "").trim());
+
 const detectSticker = (message, data) => {
   const find = (node, depth = 0) => {
     if (!node || typeof node !== "object" || depth > 5) return false;
@@ -1766,12 +1811,36 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
     };
     const onProgress = event =>
       dispatch({ type: "PENDING_PROGRESS", payload: event.detail || {} });
+    // enviado com sucesso: se o aviso em tempo real não trouxe a mensagem
+    // (conexão oscilou, aba em segundo plano…), busca a conversa de novo e a
+    // recarga troca o provisório pela mensagem real
+    const onConfirmed = event => {
+      const id = event.detail?.id;
+      if (!id) return;
+      dispatch({ type: "PENDING_PROGRESS", payload: { id, progress: 100 } });
+      timers.push(
+        setTimeout(async () => {
+          const stillPending = messagesListRef.current.some(m => m.id === id);
+          const ticket = currentTicketId.current;
+          if (!stillPending || !ticket) return;
+          try {
+            const { data } = await api.get(`/messages/${ticket}`);
+            if (currentTicketId.current !== ticket) return;
+            dispatch({ type: "LOAD_MESSAGES", payload: data.messages || [] });
+          } catch (err) {
+            // tenta de novo na próxima atualização da conversa
+          }
+        }, 2500)
+      );
+    };
     const onFailed = event =>
       dispatch({ type: "REMOVE_PENDING", payload: event.detail?.id });
     window.addEventListener(SENDING_EVENT, onSending);
     window.addEventListener(FAILED_EVENT, onFailed);
     window.addEventListener(PROGRESS_EVENT, onProgress);
+    window.addEventListener(CONFIRMED_EVENT, onConfirmed);
     return () => {
+      window.removeEventListener(CONFIRMED_EVENT, onConfirmed);
       window.removeEventListener(PROGRESS_EVENT, onProgress);
       window.removeEventListener(SENDING_EVENT, onSending);
       window.removeEventListener(FAILED_EVENT, onFailed);
@@ -1990,7 +2059,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                 })
               ]}
             >
-              {message.body && (
+              {message.body && !isFileName(message.body) && (
                 <>
                   <WhatsMarked>{message.body}</WhatsMarked>
                 </>
@@ -2831,6 +2900,12 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                     !isSticker &&
                     !!message.mediaUrl &&
                     ["image", "video"].includes(message.mediaType),
+                  [classes.mediaOnly]:
+                    !isSticker &&
+                    !!message.mediaUrl &&
+                    ["image", "video"].includes(message.mediaType) &&
+                    (!String(message.body || "").trim() ||
+                      isFileName(message.body)),
                   [classes.messageMediaSticker]: isSticker,
                   [classes.swipeable]: isPhone && canReply,
                   [classes.bubblePressed]:
@@ -2845,6 +2920,26 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
               title={message.queueId && message.queue?.name}
               {...replyGestures(message, data)}
             >
+              {/* computador: fotinho de quem mandou, na primeira da sequência */}
+              {!isPhone && (
+                <Avatar
+                  className={classes.inAvatar}
+                  src={
+                    (isGroup
+                      ? message.contact?.profilePicUrl
+                      : ticket?.contact?.profilePicUrl) || undefined
+                  }
+                  style={{ visibility: joined ? "hidden" : "visible" }}
+                >
+                  {(
+                    (isGroup ? message.contact?.name : ticket?.contact?.name) ||
+                    "?"
+                  )
+                    .trim()
+                    .charAt(0)
+                    .toUpperCase()}
+                </Avatar>
+              )}
               {readOnly || message.pending || (
                 <IconButton
                   variant="contained"
@@ -3011,6 +3106,12 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                     !isSticker &&
                     !!message.mediaUrl &&
                     ["image", "video"].includes(message.mediaType),
+                  [classes.mediaOnly]:
+                    !isSticker &&
+                    !!message.mediaUrl &&
+                    ["image", "video"].includes(message.mediaType) &&
+                    (!String(message.body || "").trim() ||
+                      isFileName(message.body)),
                   [classes.messageMediaSticker]: isSticker,
                   [classes.stickerRight]: isSticker,
                   [classes.swipeable]: isPhone && canReply,
