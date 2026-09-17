@@ -741,7 +741,7 @@ const messages = {
           deleteMessage: "Are you sure? This action cannot be undone.",
           disconnectTitle: "Disconnect",
           disconnectMessage:
-            "Are you sure? You will need to scan the QR Code again.",
+            "Are you sure? All conversations and tickets from this connection will be deleted from the system (nothing is deleted on WhatsApp) and you will need to scan the QR Code again.",
           closeTickets: "Close all open tickets from this connection"
         },
         buttons: {

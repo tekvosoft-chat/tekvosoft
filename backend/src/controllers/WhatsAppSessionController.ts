@@ -1,3 +1,4 @@
+import DeleteTicketsByWhatsappService from "../services/TicketServices/DeleteTicketsByWhatsappService";
 import { Request, Response } from "express";
 import {
   getWbot,
@@ -70,6 +71,9 @@ const remove = async (req: Request, res: Response): Promise<Response> => {
     wbot.logout();
     wbot.ws.close();
   }
+
+  // desconectou: as conversas dessa conexão somem do sistema
+  await DeleteTicketsByWhatsappService(whatsapp.id, companyId);
 
   if (whatsapp.channel === "facebook" || whatsapp.channel === "instagram") {
     whatsapp.destroy();

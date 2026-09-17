@@ -3,6 +3,11 @@ import { AuthContext } from "../../context/Auth/AuthContext";
 import { planAllows } from "../../helpers/planFeatures";
 import { createPortal } from "react-dom";
 import { toast } from "react-toastify";
+import { useHistory } from "react-router-dom";
+import DeleteOutlineRoundedIcon from "@material-ui/icons/DeleteOutlineRounded";
+import ConfirmationModal from "../ConfirmationModal";
+import api from "../../services/api";
+import toastError from "../../errors/toastError";
 import { Lightbox } from "react-modal-image";
 
 import { alpha, makeStyles } from "@material-ui/core/styles";
@@ -274,7 +279,21 @@ const useStyles = makeStyles(theme => {
       },
       "& $groupTitle": { padding: "14px 16px 4px" }
     },
-    iconBtn: { color: theme.palette.text.secondary }
+    iconBtn: { color: theme.palette.text.secondary },
+    deleteRow: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "flex-start",
+      gap: 16,
+      width: "100%",
+      minHeight: 52,
+      padding: "0 16px",
+      fontSize: "0.9375rem",
+      fontWeight: 500,
+      color: t.semantic.danger,
+      "& svg": { fontSize: 22 },
+      "&:hover": { backgroundColor: t.semantic.dangerSoft }
+    }
   };
 });
 
@@ -321,6 +340,8 @@ const PhoneContactDetails = ({
   const [photoOpen, setPhotoOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
   const [tagsOpen, setTagsOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const history = useHistory();
 
   const name = formatWhatsappContactName(contact, ticket);
   const number = formatWhatsappContactNumber(contact);
@@ -539,6 +560,18 @@ const PhoneContactDetails = ({
               />
             </div>
 
+            {user?.profile === "admin" && ticket?.id && (
+              <div className={classes.group}>
+                <ButtonBase
+                  className={classes.deleteRow}
+                  onClick={() => setConfirmDelete(true)}
+                >
+                  <DeleteOutlineRoundedIcon />
+                  Excluir conversa
+                </ButtonBase>
+              </div>
+            )}
+
             {contact?.extraInfo?.length > 0 && (
               <>
                 <Typography className={classes.groupTitle} component="h3">
@@ -559,6 +592,26 @@ const PhoneContactDetails = ({
           </div>
         </div>
       </Slide>
+
+      <ConfirmationModal
+        title="Excluir esta conversa?"
+        open={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        onConfirm={async () => {
+          try {
+            await api.delete(`/tickets/${ticket.id}`);
+            toast.success("Conversa excluída do sistema");
+            onClose?.();
+            history.push("/tickets");
+          } catch (err) {
+            toastError(err);
+          }
+        }}
+      >
+        Ela some do Tekvosoft (atendimento e mensagens salvas aqui), como se
+        nunca tivesse existido. Nada é apagado no WhatsApp do cliente nem no seu
+        celular.
+      </ConfirmationModal>
 
       {editOpen && (
         <ContactModal

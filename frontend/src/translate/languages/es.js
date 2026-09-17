@@ -742,7 +742,7 @@ const messages = {
           deleteMessage: "¿Estás seguro? Esta acción no se puede deshacer.",
           disconnectTitle: "Desconectar",
           disconnectMessage:
-            "¿Estás seguro? Tendrás que escanear el código QR nuevamente.",
+            "¿Estás seguro? Todas las conversaciones y atenciones de esta conexión se eliminarán del sistema (nada se borra en WhatsApp) y tendrás que escanear el código QR nuevamente.",
           closeTickets: "Cerrar todas las atenciones de esta conexión"
         },
         buttons: {

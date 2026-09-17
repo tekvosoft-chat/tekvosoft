@@ -16,7 +16,6 @@ import ButtonWithSpinner from "../ButtonWithSpinner";
 import toastError from "../../errors/toastError";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { TicketsContext } from "../../context/Tickets/TicketsContext";
-import AddBoxIcon from "@material-ui/icons/AddBox";
 import { Call, CallEnd } from "@material-ui/icons";
 import Tooltip from "@material-ui/core/Tooltip";
 import { PhoneCallContext } from "../../context/PhoneCall/PhoneCallContext";
@@ -176,19 +175,6 @@ const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
     >
       {ticket.status === "closed" && (!showTabGroups || !ticket.isGroup) && (
         <>
-          <Tooltip title={i18n.t("ticketsManager.buttons.newTicket")}>
-            <IconButton
-              onClick={() =>
-                window.mentionClick({
-                  contactId: ticket.contactId,
-                  name: ticket.contact?.name,
-                  number: ticket.contact?.number
-                })
-              }
-            >
-              <AddBoxIcon />
-            </IconButton>
-          </Tooltip>
           {user.profile === "admin" && (
             <Tooltip title={i18n.t("messagesList.header.buttons.reopen")}>
               {isPhone ? (

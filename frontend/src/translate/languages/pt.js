@@ -740,7 +740,7 @@ const messages = {
           deleteMessage: "Você tem certeza? Essa ação não pode ser revertida.",
           disconnectTitle: "Desconectar",
           disconnectMessage:
-            "Tem certeza? Você precisará ler o QR Code novamente.",
+            "Tem certeza? Todas as conversas e atendimentos desta conexão serão apagados do sistema (nada é apagado no WhatsApp) e você precisará ler o QR Code novamente.",
           closeTickets: "Fechar todos os atendimentos desta conexão"
         },
         buttons: {

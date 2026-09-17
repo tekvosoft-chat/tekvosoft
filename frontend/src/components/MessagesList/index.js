@@ -1231,6 +1231,77 @@ const reducer = (state, action) => {
  * em profundidade e, na falta da marca, o próprio arquivo .webp resolve —
  * assim ela aparece solta no fundo, sem balão, como no WhatsApp.
  */
+/**
+ * Foto da conversa com lugar reservado enquanto carrega e aviso visível se
+ * não carregar (antes a foto quebrada ficava invisível no balão sem fundo).
+ * Tenta de novo sozinha algumas vezes: logo depois do envio o arquivo pode
+ * ainda não estar disponível no servidor.
+ */
+const ChatImage = ({ src, className, onClick }) => {
+  const [attempt, setAttempt] = React.useState(0);
+  const [state, setState] = React.useState("loading");
+  React.useEffect(() => {
+    setAttempt(0);
+    setState("loading");
+  }, [src]);
+  const url =
+    attempt && src ? `${src}${src.includes("?") ? "&" : "?"}r=${attempt}` : src;
+  if (!src || state === "error") {
+    return (
+      <a
+        href={src || undefined}
+        target="_blank"
+        rel="noreferrer"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 8,
+          minHeight: 120,
+          padding: 16,
+          borderRadius: 14,
+          fontSize: 13,
+          color: "inherit",
+          textDecoration: "none",
+          background: "rgba(127,127,127,0.15)"
+        }}
+        onClick={e => {
+          if (!src) return;
+          e.preventDefault();
+          setAttempt(a => a + 1);
+          setState("loading");
+        }}
+      >
+        🖼️ Não foi possível carregar a imagem · toque para tentar de novo
+      </a>
+    );
+  }
+  return (
+    <img
+      key={url}
+      className={className}
+      src={url}
+      alt="midia da mensagem"
+      onClick={onClick}
+      onLoad={() => setState("ok")}
+      onError={() => {
+        // eslint-disable-next-line no-console
+        console.warn("[chat] imagem não carregou:", url);
+        if (attempt < 3) {
+          setTimeout(() => setAttempt(a => a + 1), 1500 * (attempt + 1));
+        } else {
+          setState("error");
+        }
+      }}
+      style={
+        state === "loading"
+          ? { minHeight: 160, background: "rgba(127,127,127,0.15)" }
+          : undefined
+      }
+    />
+  );
+};
+
 // corpo de mídia que é só o nome do arquivo (não é legenda de verdade)
 const isFileName = text =>
   /^[^\s]+\.[a-z0-9]{2,5}$/i.test(String(text || "").trim());
@@ -2037,7 +2108,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
       return (
         <>
           <div className={classes.mediaWrap}>
-            <img
+            <ChatImage
               className={clsx(
                 classes.messageMedia,
                 classes.messageMediaClickable,
@@ -2046,7 +2117,6 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                 }
               )}
               src={message.mediaUrl}
-              alt="midia da mensagem"
               onClick={() => openLightboxForMessage(message.id)}
             />
           </div>
