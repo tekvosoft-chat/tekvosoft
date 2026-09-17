@@ -21,6 +21,7 @@ import {
   Typography
 } from "@material-ui/core";
 import AddRoundedIcon from "@material-ui/icons/AddRounded";
+import Collapse from "@material-ui/core/Collapse";
 import ArrowBackIosRoundedIcon from "@material-ui/icons/ArrowBackIosRounded";
 import MoreVertIcon from "@material-ui/icons/MoreVert";
 import EditOutlinedIcon from "@material-ui/icons/EditOutlined";
@@ -308,7 +309,9 @@ export function ChatModal({
   handleLoadNewChat,
   user,
   areas = [],
-  defaultArea = ""
+  defaultArea = "",
+  // inline: desce dentro da lista (nova conversa), sem modal por cima
+  inline = false
 }) {
   const [users, setUsers] = useState([]);
   const [title, setTitle] = useState("");
@@ -359,63 +362,95 @@ export function ChatModal({
     } catch (err) {}
   };
 
-  return (
-    <Dialog
-      open={open}
-      onClose={handleClose}
-      aria-labelledby="alert-dialog-title"
-      aria-describedby="alert-dialog-description"
-    >
-      <DialogTitle id="alert-dialog-title">Conversa</DialogTitle>
-      <DialogContent>
-        <Grid spacing={2} container>
-          <Grid xs={12} style={{ padding: 18 }} item>
-            <TextField
-              label="Título"
-              placeholder="Título"
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              variant="outlined"
-              size="small"
-              fullWidth
-            />
-          </Grid>
-          <Grid xs={12} style={{ padding: "0 18px 18px" }} item>
-            <TextField
-              label={i18n.t("internalChat.area")}
-              placeholder={i18n.t("internalChat.areaPlaceholder")}
-              value={area}
-              onChange={e => setArea(e.target.value)}
-              variant="outlined"
-              size="small"
-              fullWidth
-              inputProps={{ list: "chat-areas", maxLength: 60 }}
-              helperText={i18n.t("internalChat.areaHelp")}
-            />
-            <datalist id="chat-areas">
-              {areas.map(a => (
-                <option key={a} value={a} />
-              ))}
-            </datalist>
-          </Grid>
-          <Grid xs={12} item>
-            <UsersFilter
-              multiple
-              onFiltered={users => setUsers(users)}
-              initialUsers={users}
-              excludeId={user.id}
-            />
-          </Grid>
+  const fields = (
+    <>
+      <Grid spacing={2} container>
+        <Grid xs={12} style={{ padding: 18 }} item>
+          <TextField
+            label="Título"
+            placeholder="Título"
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            variant="outlined"
+            size="small"
+            fullWidth
+          />
         </Grid>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose} color="primary">
-          Fechar
-        </Button>
-        <Button onClick={handleSave} color="primary" variant="contained">
-          Salvar
-        </Button>
-      </DialogActions>
+        <Grid xs={12} style={{ padding: "0 18px 18px" }} item>
+          <TextField
+            label={i18n.t("internalChat.area")}
+            placeholder={i18n.t("internalChat.areaPlaceholder")}
+            value={area}
+            onChange={e => setArea(e.target.value)}
+            variant="outlined"
+            size="small"
+            fullWidth
+            inputProps={{ list: "chat-areas", maxLength: 60 }}
+            helperText={i18n.t("internalChat.areaHelp")}
+          />
+          <datalist id="chat-areas">
+            {areas.map(a => (
+              <option key={a} value={a} />
+            ))}
+          </datalist>
+        </Grid>
+        <Grid xs={12} item>
+          <UsersFilter
+            multiple
+            onFiltered={users => setUsers(users)}
+            initialUsers={users}
+            excludeId={user.id}
+          />
+        </Grid>
+      </Grid>
+    </>
+  );
+  const actions = (
+    <>
+      <Button onClick={handleClose} color="primary">
+        {inline ? "Cancelar" : "Fechar"}
+      </Button>
+      <Button onClick={handleSave} color="primary" variant="contained">
+        {type === "edit" ? "Salvar" : "Criar conversa"}
+      </Button>
+    </>
+  );
+
+  if (inline) {
+    return (
+      <Collapse in={open} timeout={300} unmountOnExit>
+        <div
+          style={{
+            margin: "0 12px 12px",
+            padding: "12px 4px 8px",
+            borderRadius: 16,
+            border: "1px solid rgba(127,127,127,0.25)"
+          }}
+        >
+          <div style={{ padding: "0 14px 4px", fontWeight: 700, fontSize: 15 }}>
+            {type === "edit" ? "Editar conversa" : "Nova conversa ou grupo"}
+          </div>
+          {fields}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: 8,
+              padding: "8px 14px 4px"
+            }}
+          >
+            {actions}
+          </div>
+        </div>
+      </Collapse>
+    );
+  }
+
+  return (
+    <Dialog open={open} onClose={handleClose}>
+      <DialogTitle>Conversa</DialogTitle>
+      <DialogContent>{fields}</DialogContent>
+      <DialogActions>{actions}</DialogActions>
     </Dialog>
   );
 }
@@ -777,6 +812,23 @@ function Chat(props) {
           </Tooltip>
         )}
       </div>
+      <ChatModal
+        inline
+        type="new"
+        open={showDialog && dialogType === "new"}
+        chat={null}
+        handleLoadNewChat={data => {
+          setMessages([]);
+          setMessagesPage(1);
+          setCurrentChat(data);
+          setTab(1);
+          history.push(`/chats/${data.uuid}`);
+        }}
+        handleClose={() => setShowDialog(false)}
+        user={user}
+        areas={areas}
+        defaultArea={activeArea || ""}
+      />
       <ChatList
         chats={visibleChats}
         pageInfo={chatsPageInfo}
@@ -893,7 +945,7 @@ function Chat(props) {
     <>
       <ChatModal
         type={dialogType}
-        open={showDialog}
+        open={showDialog && dialogType === "edit"}
         chat={currentChat}
         handleLoadNewChat={data => {
           setMessages([]);

@@ -21,11 +21,12 @@ import { i18n } from "../../translate/i18n";
 
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
-import { FormControl, FormControlLabel, Switch } from "@material-ui/core";
-import Autocomplete from "@material-ui/lab/Autocomplete";
+import { FormControlLabel, Switch } from "@material-ui/core";
+import Collapse from "@material-ui/core/Collapse";
+import ContactPicker from "../ContactPicker";
 import moment from "moment";
 import { AuthContext } from "../../context/Auth/AuthContext";
-import { isArray, capitalize } from "lodash";
+import { capitalize } from "lodash";
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -70,8 +71,57 @@ const useStyles = makeStyles(theme => ({
       borderRadius: 8
     }
   },
-  mediaName: { flex: 1, fontSize: "0.875rem", wordBreak: "break-all" }
+  mediaName: { flex: 1, fontSize: "0.875rem", wordBreak: "break-all" },
+  // versão na página: compacta, em duas colunas no computador
+  inlinePanel: {
+    marginBottom: theme.spacing(2),
+    borderRadius: 16,
+    overflow: "hidden",
+    backgroundColor: theme.palette.tkv.surface,
+    border: `1px solid ${theme.palette.tkv.border}`,
+    boxShadow: "0 10px 26px -18px rgba(12, 10, 20, 0.45)",
+    "& .MuiDialogTitle-root": {
+      padding: theme.spacing(1.5, 2.5, 0.5),
+      "& h2": { fontSize: 15, fontWeight: 700 }
+    },
+    "& .MuiDialogContent-root": {
+      display: "grid",
+      gridTemplateColumns: "minmax(0, 1.4fr) minmax(0, 1fr)",
+      gridTemplateAreas: `"contact date" "body media" "body toggle"`,
+      alignItems: "start",
+      columnGap: theme.spacing(2),
+      rowGap: theme.spacing(1),
+      padding: theme.spacing(1, 2.5, 1),
+      border: "none",
+      overflow: "visible",
+      "& > br": { display: "none" },
+      "& > div:nth-of-type(1)": { gridArea: "contact" },
+      "& > div:nth-of-type(2)": { gridArea: "body" },
+      "& > div:nth-of-type(3)": { gridArea: "date" },
+      "& > div:nth-of-type(4)": { gridArea: "media", margin: 0 },
+      "& > div:nth-of-type(5)": { gridArea: "toggle" },
+      "& .MuiFormControl-marginDense": { margin: 0 },
+      "& textarea": { height: "96px !important", overflowY: "auto !important" },
+      [theme.breakpoints.down("xs")]: {
+        gridTemplateColumns: "minmax(0, 1fr)",
+        gridTemplateAreas: `"contact" "body" "date" "media" "toggle"`,
+        padding: theme.spacing(1, 1.5)
+      }
+    },
+    "& .MuiDialogActions-root": {
+      padding: theme.spacing(1, 2.5, 1.5),
+      borderTop: "none",
+      "& .MuiButton-root": { borderRadius: 999, textTransform: "none" }
+    }
+  }
 }));
+
+// versão "na página": o formulário desce suavemente, sem cobrir a tela
+const InlinePanel = ({ in: open, className, children }) => (
+  <Collapse in={open} timeout={300} unmountOnExit>
+    <div className={className}>{children}</div>
+  </Collapse>
+);
 
 const ScheduleSchema = Yup.object().shape({
   body: Yup.string(),
@@ -87,10 +137,13 @@ const ScheduleModal = ({
   contactId,
   cleanContact,
   reload,
-  defaultSendAt
+  defaultSendAt,
+  // inline: abre deslizando dentro da página (sem modal por cima)
+  inline = false
 }) => {
   const classes = useStyles();
   const history = useHistory();
+  const Wrapper = inline ? InlinePanel : Dialog;
   const { user } = useContext(AuthContext);
 
   const initialState = {
@@ -110,29 +163,21 @@ const ScheduleModal = ({
   const [mediaFile, setMediaFile] = useState(null);
   const [removeMedia, setRemoveMedia] = useState(false);
   const [currentContact, setCurrentContact] = useState(initialContact);
-  const [contacts, setContacts] = useState([initialContact]);
-
+  // veio de um contato específico: carrega só ele (antes baixava a lista
+  // inteira de contatos da empresa a cada abertura)
   useEffect(() => {
-    if (contactId && contacts.length) {
-      const contact = contacts.find(c => c.id === contactId);
-      if (contact) {
-        setCurrentContact(contact);
-      }
-    }
-  }, [contactId, contacts]);
+    if (!open || !contactId) return;
+    api
+      .get(`/contacts/${contactId}`)
+      .then(({ data }) => data?.id && setCurrentContact(data))
+      .catch(() => {});
+  }, [contactId, open]);
 
   useEffect(() => {
     const { companyId } = user;
     if (open) {
       try {
         (async () => {
-          const { data: contactList } = await api.get("/contacts/list", {
-            params: { companyId: companyId }
-          });
-          let customList = contactList.map(c => ({ id: c.id, name: c.name }));
-          if (isArray(customList)) {
-            setContacts([{ id: "", name: "" }, ...customList]);
-          }
           if (contactId) {
             setSchedule(prevState => {
               return { ...prevState, contactId };
@@ -225,13 +270,17 @@ const ScheduleModal = ({
   };
 
   return (
-    <div className={classes.root}>
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        maxWidth="xs"
-        fullWidth
-        scroll="paper"
+    <div className={inline ? undefined : classes.root}>
+      <Wrapper
+        {...(inline
+          ? { in: open, className: classes.inlinePanel }
+          : {
+              open,
+              onClose: handleClose,
+              maxWidth: "xs",
+              fullWidth: true,
+              scroll: "paper"
+            })}
       >
         <DialogTitle id="form-dialog-title">
           {schedule.status === "ERRO"
@@ -253,29 +302,17 @@ const ScheduleModal = ({
             <Form>
               <DialogContent dividers>
                 <div className={classes.multFieldLine}>
-                  <FormControl variant="outlined" fullWidth>
-                    <Autocomplete
-                      fullWidth
+                  <div style={{ width: "100%" }}>
+                    <ContactPicker
                       value={currentContact}
-                      options={contacts}
-                      onChange={(e, contact) => {
-                        const contactId = contact ? contact.id : "";
-                        setFieldValue("contactId", contactId);
-                        setCurrentContact(contact ? contact : initialContact);
+                      autoFocus={inline && !scheduleId && !contactId}
+                      error={touched.contactId && errors.contactId}
+                      onChange={contact => {
+                        setFieldValue("contactId", contact ? contact.id : "");
+                        setCurrentContact(contact || initialContact);
                       }}
-                      getOptionLabel={option => option.name}
-                      getOptionSelected={(option, value) => {
-                        return value.id === option.id;
-                      }}
-                      renderInput={params => (
-                        <TextField
-                          {...params}
-                          variant="outlined"
-                          placeholder="Contato"
-                        />
-                      )}
                     />
-                  </FormControl>
+                  </div>
                 </div>
                 <br />
                 <div className={classes.multFieldLine}>
@@ -409,7 +446,7 @@ const ScheduleModal = ({
             </Form>
           )}
         </Formik>
-      </Dialog>
+      </Wrapper>
     </div>
   );
 };

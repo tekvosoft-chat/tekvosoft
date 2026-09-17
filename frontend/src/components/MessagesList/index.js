@@ -201,6 +201,7 @@ const useStyles = makeStyles(theme => ({
     boxShadow: "0 1px 3px rgba(12, 10, 20, 0.2)"
   },
   messageLeft: {
+    flexShrink: 0,
     marginRight: 20,
     marginTop: 2,
     minWidth: 100,
@@ -280,6 +281,7 @@ const useStyles = makeStyles(theme => ({
   },
 
   messageRight: {
+    flexShrink: 0,
     marginLeft: 20,
     marginTop: 2,
     minWidth: 100,
@@ -525,6 +527,10 @@ const useStyles = makeStyles(theme => ({
   // balão de foto/vídeo: largura própria, no tamanho do WhatsApp Web
   // foto/vídeo sem moldura: a imagem ocupa o balão de ponta a ponta
   bubbleMedia: {
+    // CRÍTICO: com overflow escondido, o item da lista (coluna flex) podia
+    // ser espremido até altura zero quando a conversa passava da tela — a
+    // foto/GIF ficava lá, mas invisível
+    flexShrink: 0,
     width: 340,
     maxWidth: "100%",
     padding: "0 !important",
@@ -2254,6 +2260,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
     // GIF do WhatsApp chega como vídeo; em conversa temporária ou de
     // visualização única ele vem embrulhado — desembrulha antes de checar
     const inner =
+      data?.message?.deviceSentMessage?.message ||
       data?.message?.ephemeralMessage?.message ||
       data?.message?.viewOnceMessage?.message ||
       data?.message?.viewOnceMessageV2?.message ||

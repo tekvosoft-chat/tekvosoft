@@ -586,6 +586,21 @@ const Schedules = () => {
   const [filter, setFilter] = useState("all");
   const [view, setView] = useState("month");
   const [modal, setModal] = useState({ open: false });
+  const formRef = React.useRef(null);
+  // abriu o formulário (por exemplo clicando num horário lá embaixo): leva
+  // a tela até ele
+  useEffect(() => {
+    if (modal.open) {
+      setTimeout(
+        () =>
+          formRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+          }),
+        60
+      );
+    }
+  }, [modal.open, modal.scheduleId, modal.defaultSendAt]);
   const [deleting, setDeleting] = useState(null);
   const [contactId, setContactId] = useState(+getUrlParam("contactId") || "");
 
@@ -1121,18 +1136,6 @@ const Schedules = () => {
       >
         {i18n.t("schedules.confirmationModal.deleteMessage")}
       </ConfirmationModal>
-      <ScheduleModal
-        open={modal.open}
-        onClose={() => {
-          setModal({ open: false });
-          setContactId("");
-        }}
-        reload={load}
-        scheduleId={modal.scheduleId}
-        contactId={contactId}
-        cleanContact={() => setContactId("")}
-        defaultSendAt={modal.defaultSendAt}
-      />
 
       <div className={classes.page}>
         <div className={classes.head}>
@@ -1169,6 +1172,24 @@ const Schedules = () => {
               {i18n.t("schedules.buttons.add")}
             </Button>
           </div>
+        </div>
+
+        {/* novo/editar agendamento: desce aqui mesmo, sem modal por cima */}
+        <div ref={formRef}>
+          <ScheduleModal
+            inline
+            key={`${modal.scheduleId || "new"}-${modal.defaultSendAt || ""}`}
+            open={modal.open}
+            onClose={() => {
+              setModal({ open: false });
+              setContactId("");
+            }}
+            reload={load}
+            scheduleId={modal.scheduleId}
+            contactId={contactId}
+            cleanContact={() => setContactId("")}
+            defaultSendAt={modal.defaultSendAt}
+          />
         </div>
 
         <div className={classes.toolbar}>

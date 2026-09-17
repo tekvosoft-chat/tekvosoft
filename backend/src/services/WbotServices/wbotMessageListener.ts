@@ -331,6 +331,9 @@ const getContactMessage = async (msg: WAMessage, wbot: Session) => {
 const getUnpackedMessage = (msg: proto.IWebMessageInfo) => {
   return (
     msg.message?.documentWithCaptionMessage?.message ||
+    // mensagem enviada por outro aparelho da mesma conta (celular) chega
+    // embrulhada: sem desembrulhar, a legenda da foto se perdia
+    msg.message?.deviceSentMessage?.message ||
     msg.message?.ephemeralMessage?.message ||
     msg.message?.viewOnceMessage?.message ||
     msg.message?.viewOnceMessageV2?.message ||
