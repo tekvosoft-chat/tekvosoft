@@ -925,41 +925,42 @@ const useStyles = makeStyles(theme => ({
    * baixo do balão, com o contorno da cor do fundo da conversa (parece
    * "recortada" do balão), emojis agrupados e a contagem quando repete.
    */
-  // o contêiner não ocupa altura dentro do balão; a margem de baixo "vaza"
-  // para fora dele e abre o espaço onde a pílula fica pendurada
+  // a pílula fica metade dentro, metade fora da borda de baixo do balão.
+  // O espaço reservado aqui é exatamente o que ela cobre: assim não sobra
+  // vão nenhum e a mensagem não fica mais alta do que precisa (com 24 a
+  // bolha crescia e ficava um buraco embaixo do texto)
   reactionsContainer: {
     display: "block",
     height: 0,
-    marginBottom: 24
+    marginBottom: 10
   },
   reactions: {
     position: "absolute",
-    bottom: -17,
+    bottom: -10,
     left: 8,
     zIndex: 1,
     display: "inline-flex",
     alignItems: "center",
     gap: 3,
     maxWidth: "calc(100% - 12px)",
-    height: 22,
-    padding: "0 7px",
-    borderRadius: 11,
+    height: 20,
+    padding: "0 6px",
+    borderRadius: 10,
     backgroundColor: theme.palette.tkv.chat.bubbleIn,
     border: `2px solid ${theme.palette.tkv.chat.wallpaper}`,
     boxShadow: "0 1px 2px rgba(11, 20, 26, 0.18)",
     cursor: "default",
     whiteSpace: "nowrap",
-    animation: "$reactionPop .28s cubic-bezier(.34, 1.56, .64, 1)"
+    // entrada discreta: aparece suave, sem salto
+    animation: "$reactionFade .22s ease-out both"
   },
-  reactionsRight: {
-    left: "auto",
-    right: 8
-  },
+  // sempre no canto de baixo à esquerda: no lado direito ela cobria o
+  // horário e os tiquinhos das suas mensagens
+  reactionsRight: {},
   reactionEmoji: {
     display: "inline-block",
     fontSize: 13,
-    lineHeight: 1,
-    animation: "$reactionBounce .5s cubic-bezier(.34, 1.56, .64, 1) both"
+    lineHeight: 1
   },
   reactionCount: {
     fontSize: "0.6875rem",
@@ -971,10 +972,9 @@ const useStyles = makeStyles(theme => ({
     from: { transform: "scale(0.4) translateY(6px)", opacity: 0 },
     to: { transform: "scale(1)", opacity: 1 }
   },
-  "@keyframes reactionBounce": {
-    "0%": { transform: "scale(0)" },
-    "60%": { transform: "scale(1.45) rotate(-8deg)" },
-    "100%": { transform: "scale(1) rotate(0)" }
+  "@keyframes reactionFade": {
+    from: { opacity: 0, transform: "translateY(3px) scale(0.94)" },
+    to: { opacity: 1, transform: "none" }
   },
 
   historyButton: {
@@ -2653,12 +2653,8 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
               [classes.reactionsRight]: fromMe
             })}
           >
-            {groups.slice(0, 3).map((group, i) => (
-              <span
-                key={group.emoji}
-                className={classes.reactionEmoji}
-                style={{ animationDelay: `${120 + i * 70}ms` }}
-              >
+            {groups.slice(0, 3).map(group => (
+              <span key={group.emoji} className={classes.reactionEmoji}>
                 {group.emoji}
               </span>
             ))}
