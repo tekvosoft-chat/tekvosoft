@@ -349,6 +349,15 @@ const FUN_GIFS: Record<string, string[]> = {
     "iceage-possum",
     "smiling-smiling-cat-4",
     "keanu-reeves-voll-gerne-2"
+  ],
+  // aviso de "sistema atualizado"
+  update: [
+    "happy-tears-tears-of-joy-1",
+    "monkey-birthday-1",
+    "excited-im-so-excited-22",
+    "gifs-engracados-1",
+    "cat-kitty-699",
+    "happy-dance-gif-4"
   ]
 };
 

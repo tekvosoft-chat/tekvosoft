@@ -578,6 +578,14 @@ const useStyles = makeStyles(theme => ({
     }
   },
   mediaWrap: { position: "relative", display: "block" },
+  mediaCaption: {
+    padding: "7px 12px 20px 12px",
+    fontSize: "0.9063rem",
+    lineHeight: 1.4,
+    whiteSpace: "pre-wrap",
+    overflowWrap: "anywhere",
+    textAlign: "left"
+  },
   uploadRing: {
     position: "absolute",
     top: "50%",
@@ -894,9 +902,14 @@ const useStyles = makeStyles(theme => ({
   messageHighlighted: {
     backgroundColor: theme.palette.primary.main
   },
+  // mídia que ainda não baixou: prévia grande e desfocada, não uma miniatura
   previewThumbnail: {
-    width: "383px",
-    maxWidth: "100%"
+    display: "block",
+    width: 340,
+    maxWidth: "100%",
+    height: "auto",
+    borderRadius: 13,
+    filter: "blur(1.5px)"
   },
   audioBottom: {
     marginBottom: "12px"
@@ -1300,6 +1313,65 @@ const ChatImage = ({ src, className, onClick }) => {
           ? { minHeight: 160, background: "rgba(127,127,127,0.15)" }
           : undefined
       }
+    />
+  );
+};
+
+/** GIF em loop, com lugar reservado e nova tentativa se não carregar. */
+const ChatGif = ({ src, className }) => {
+  const [attempt, setAttempt] = React.useState(0);
+  const [failed, setFailed] = React.useState(false);
+  const url =
+    attempt && src ? `${src}${src.includes("?") ? "&" : "?"}r=${attempt}` : src;
+  if (!src || failed) {
+    return (
+      <a
+        href={src || undefined}
+        target="_blank"
+        rel="noreferrer"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: 120,
+          padding: 16,
+          borderRadius: 14,
+          fontSize: 13,
+          color: "inherit",
+          textDecoration: "none",
+          background: "rgba(127,127,127,0.15)"
+        }}
+        onClick={e => {
+          if (!src) return;
+          e.preventDefault();
+          setFailed(false);
+          setAttempt(a => a + 1);
+        }}
+      >
+        👾 GIF não carregou · toque para tentar de novo
+      </a>
+    );
+  }
+  return (
+    <video
+      key={url}
+      className={className}
+      src={url}
+      autoPlay
+      loop
+      muted
+      playsInline
+      preload="auto"
+      style={{ minHeight: 80, background: "rgba(127,127,127,0.12)" }}
+      onError={() => {
+        // eslint-disable-next-line no-console
+        console.warn("[chat] gif não carregou:", url);
+        if (attempt < 3) {
+          setTimeout(() => setAttempt(a => a + 1), 1500 * (attempt + 1));
+        } else {
+          setFailed(true);
+        }
+      }}
     />
   );
 };
@@ -2122,22 +2194,17 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
               onClick={() => openLightboxForMessage(message.id)}
             />
           </div>
-          <>
+          {/* legenda da foto: com respiro dos lados e embaixo (o horário
+              fica no canto e não come o texto) */}
+          {message.body && !isFileName(message.body) && (
             <div
-              className={[
-                clsx({
-                  [classes.textContentItemDeleted]: message.isDeleted,
-                  [classes.textContentItem]: !message.isDeleted
-                })
-              ]}
+              className={clsx(classes.mediaCaption, {
+                [classes.textContentItemDeleted]: message.isDeleted
+              })}
             >
-              {message.body && !isFileName(message.body) && (
-                <>
-                  <WhatsMarked>{message.body}</WhatsMarked>
-                </>
-              )}
+              <WhatsMarked>{message.body}</WhatsMarked>
             </div>
-          </>
+          )}
         </>
       );
     }
@@ -2184,9 +2251,16 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
       );
     }
 
+    // GIF do WhatsApp chega como vídeo; em conversa temporária ou de
+    // visualização única ele vem embrulhado — desembrulha antes de checar
+    const inner =
+      data?.message?.ephemeralMessage?.message ||
+      data?.message?.viewOnceMessage?.message ||
+      data?.message?.viewOnceMessageV2?.message ||
+      data?.message;
     const isGif =
       message.mediaType === "video" &&
-      (!!data?.message?.videoMessage?.gifPlayback ||
+      (!!inner?.videoMessage?.gifPlayback ||
         /\/gif-[^/]*\.mp4/i.test(message.mediaUrl || ""));
     if (isGif) {
       return (
@@ -2195,15 +2269,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
             [classes.messageMediaDeleted]: message.isDeleted
           })}
         >
-          <video
-            className={classes.gifMedia}
-            src={message.mediaUrl}
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="auto"
-          />
+          <ChatGif className={classes.gifMedia} src={message.mediaUrl} />
         </div>
       );
     }

@@ -136,6 +136,8 @@ jobs:
           # Versão vinda do job "versao"; vazio em build sem release.
           TAG="${{ needs.versao.outputs.tag }}"
           BUILT_AT=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+          # título do commit, para o aviso de novidade no app (sem aspas/barras)
+          COMMIT_MSG=$(git log -1 --format=%s | tr -d '"\\' | cut -c1-140)
 
           cat > backend/src/gitinfo.ts <<EOF
           export const GitInfo = {
@@ -153,7 +155,8 @@ jobs:
               "commitTimestamp": "${COMMIT_AT}",
               "branchName": "${BRANCH}",
               "tagName": "${TAG}",
-              "buildTimestamp": "${BUILT_AT}"
+              "buildTimestamp": "${BUILT_AT}",
+              "commitMessage": "${COMMIT_MSG}"
           }
           EOF
 

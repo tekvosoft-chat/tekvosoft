@@ -45,6 +45,8 @@ import toastError from "../errors/toastError";
 import { SocketContext } from "../context/Socket/SocketContext";
 import ChatPopover from "../pages/Chat/ChatPopover";
 import ChatHead from "../components/ChatHead";
+import TopProgress from "../components/TopProgress";
+import UpdateAnnouncement from "../components/UpdateAnnouncement";
 
 import { useDate } from "../hooks/useDate";
 import useAuth from "../hooks/useAuth.js";
@@ -782,7 +784,21 @@ const LoggedInLayout = ({ children, themeToggle }) => {
       return undefined;
     }
 
-    return socketManager.subscribeWsConnectionIssue(setWsConnectionIssue);
+    // só avisa se a conexão ficar ruim por um tempo: ao entrar o sistema
+    // ainda está conectando, e o ícone piscava à toa na tela
+    let timer = null;
+    const unsubscribe = socketManager.subscribeWsConnectionIssue(active => {
+      clearTimeout(timer);
+      if (active) {
+        timer = setTimeout(() => setWsConnectionIssue(true), 8000);
+      } else {
+        setWsConnectionIssue(false);
+      }
+    });
+    return () => {
+      clearTimeout(timer);
+      if (typeof unsubscribe === "function") unsubscribe();
+    };
   }, [socketManager]);
 
   useEffect(() => {
@@ -1221,6 +1237,8 @@ const LoggedInLayout = ({ children, themeToggle }) => {
       />
       {user.id && <NotificationsPopOver volume={volume} headless />}
       <ChatHead />
+      <TopProgress />
+      <UpdateAnnouncement />
       {/* sem o balão no menu (o chat interno já está na lista), mas o som de
           mensagem nova do chat continua vindo dele */}
       <span style={{ display: "none" }} aria-hidden="true">

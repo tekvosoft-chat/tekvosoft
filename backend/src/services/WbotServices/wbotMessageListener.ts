@@ -720,7 +720,13 @@ export const verifyMediaMessage = async (
   const mediaType = mimetype.split("/")[0];
   const filename = mediaInfo?.filename || media?.filename || "file.bin";
 
-  let body = await getBodyMessage(msg?.message);
+  // legenda da foto/vídeo: mensagens de conversa temporária, visualização
+  // única etc. vêm embrulhadas — sem desembrulhar, a legenda se perdia
+  let body = await getBodyMessage(getUnpackedMessage(msg) as proto.IMessage);
+  if (!body || body.startsWith("unsupported")) {
+    body = (await getBodyMessage(msg?.message)) || "";
+    if (body.startsWith("unsupported")) body = "";
+  }
 
   if (
     mediaType === "audio" &&
