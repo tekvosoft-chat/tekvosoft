@@ -1653,12 +1653,8 @@ const MessageInputCustom = props => {
         transformOrigin={{ vertical: "bottom", horizontal: "left" }}
         PaperProps={{ className: classes.exprPopover }}
       >
-        <ExpressionPanel
-          ticketId={ticketId}
-          showEmoji
-          onEmoji={handleAddEmoji}
-          disabled={disableOption}
-        />
+        {/* só figurinhas e GIFs (os emojis vêm do teclado do aparelho) */}
+        <ExpressionPanel ticketId={ticketId} disabled={disableOption} />
       </Popover>
     );
     return (

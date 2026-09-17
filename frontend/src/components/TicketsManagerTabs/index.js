@@ -13,6 +13,7 @@ import MenuItem from "@material-ui/core/MenuItem";
 import ListItemIcon from "@material-ui/core/ListItemIcon";
 import Avatar from "@material-ui/core/Avatar";
 import Tooltip from "@material-ui/core/Tooltip";
+import Collapse from "@material-ui/core/Collapse";
 import SearchRoundedIcon from "@material-ui/icons/SearchRounded";
 import CloseRoundedIcon from "@material-ui/icons/CloseRounded";
 import AddRoundedIcon from "@material-ui/icons/AddRounded";
@@ -51,7 +52,12 @@ const useStyles = makeStyles(theme => {
       borderTopRightRadius: 0,
       borderBottomRightRadius: 0
     },
-    header: { flex: "none", padding: theme.spacing(1.5, 1.5, 1) },
+    header: {
+      position: "relative",
+      zIndex: 6,
+      flex: "none",
+      padding: theme.spacing(1.5, 1.5, 1)
+    },
     titleRow: {
       display: "flex",
       alignItems: "center",
@@ -190,6 +196,39 @@ const useStyles = makeStyles(theme => {
       fontWeight: 600,
       color: t.brand.text
     },
+    searchWrap: { position: "relative" },
+    // painel que abre embaixo da busca e empurra a lista para baixo
+    dropdown: {
+      marginTop: 8,
+      display: "flex",
+      flexDirection: "column",
+      borderRadius: 16,
+      overflow: "hidden",
+      backgroundColor: t.surfaceSunken
+    },
+    "@keyframes drop": {
+      from: { opacity: 0, transform: "translateY(-10px) scaleY(.92)" },
+      to: { opacity: 1, transform: "none" }
+    },
+    dropdownList: {
+      maxHeight: "min(320px, calc(var(--vh, 100vh) * 0.4))",
+      overflowY: "auto",
+      paddingBottom: 6
+    },
+    dropdownHint: {
+      padding: theme.spacing(1, 2.5, 2),
+      fontSize: 13.5,
+      color: theme.palette.text.secondary
+    },
+    // conversas atrás do painel ficam levemente escurecidas
+    dim: {
+      position: "absolute",
+      inset: 0,
+      zIndex: 5,
+      backgroundColor: "rgba(12, 10, 20, 0.18)",
+      animation: "$dimIn .2s ease both"
+    },
+    "@keyframes dimIn": { from: { opacity: 0 }, to: { opacity: 1 } },
     contacts: { flex: "none", maxHeight: "40%", overflowY: "auto" },
     contactsFull: { flex: 1, maxHeight: "none" },
     sectionRow: {
@@ -221,7 +260,12 @@ const useStyles = makeStyles(theme => {
       padding: theme.spacing(1, 2.5),
       textAlign: "left",
       transition: "background-color .12s ease",
+      animation: "$rowIn .22s ease both",
       "&:hover": { backgroundColor: t.surfaceHover }
+    },
+    "@keyframes rowIn": {
+      from: { opacity: 0, transform: "translateY(-4px)" },
+      to: { opacity: 1, transform: "none" }
     },
     contactAvatar: {
       flex: "none",
@@ -330,19 +374,20 @@ const TicketsManagerTabs = () => {
     const timer = setTimeout(
       async () => {
         setSearchParam(term.length >= 2 ? term.toLowerCase() : "");
-        if (!focused && term.length < 2) {
+        // só busca contatos quando a pessoa começa a digitar
+        if (term.length < 2) {
           setContacts([]);
+          setContactsLoaded(false);
           return;
         }
         try {
           const { data } = await api.get("/contacts", {
-            params: { searchParam: term.length >= 2 ? term : "", pageNumber: 1 }
+            params: { searchParam: term, pageNumber: 1 }
           });
           setContacts(
-            (data?.contacts || [])
-              .filter(c => !c.isGroup)
-              .slice(0, term.length >= 2 ? 10 : 40)
+            (data?.contacts || []).filter(c => !c.isGroup).slice(0, 8)
           );
+          setContactsLoaded(true);
         } catch (err) {
           setContacts([]);
         }
@@ -350,11 +395,11 @@ const TicketsManagerTabs = () => {
       term ? 300 : 0
     );
     return () => clearTimeout(timer);
-  }, [query, focused]);
+  }, [query]);
 
   const typed = searchParam.length >= 2;
-  // clicou na busca: já mostra os contatos; digitando, filtra
   const searching = focused || typed;
+  const [contactsLoaded, setContactsLoaded] = useState(false);
 
   const closeSearch = () => {
     setQuery("");
@@ -518,36 +563,93 @@ const TicketsManagerTabs = () => {
           </Menu>
         </div>
 
-        <label className={classes.search}>
-          <SearchRoundedIcon fontSize="small" />
-          <InputBase
-            className={classes.searchInput}
-            placeholder="Pesquisar ou começar uma nova conversa"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            onFocus={() => setFocused(true)}
-            onBlur={() =>
-              // espera o clique num contato acontecer antes de fechar
-              setTimeout(() => {
-                if (!searchRef.current?.value) setFocused(false);
-              }, 200)
-            }
-            inputRef={searchRef}
-            onKeyDown={e => e.key === "Escape" && closeSearch()}
-          />
-          {searching && (
-            <IconButton
-              size="small"
-              onMouseDown={e => e.preventDefault()}
-              onClick={closeSearch}
-              aria-label="Limpar"
-            >
-              <CloseRoundedIcon fontSize="small" />
-            </IconButton>
-          )}
-        </label>
+        <div className={classes.searchWrap}>
+          <label className={classes.search}>
+            <SearchRoundedIcon fontSize="small" />
+            <InputBase
+              className={classes.searchInput}
+              placeholder="Pesquisar ou começar uma nova conversa"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              onFocus={() => setFocused(true)}
+              onBlur={() =>
+                // espera o clique num contato acontecer antes de fechar
+                setTimeout(() => {
+                  if (!searchRef.current?.value) setFocused(false);
+                }, 200)
+              }
+              inputRef={searchRef}
+              onKeyDown={e => e.key === "Escape" && closeSearch()}
+            />
+            {searching && (
+              <IconButton
+                size="small"
+                onMouseDown={e => e.preventDefault()}
+                onClick={closeSearch}
+                aria-label="Limpar"
+              >
+                <CloseRoundedIcon fontSize="small" />
+              </IconButton>
+            )}
+          </label>
 
-        {!searching && (
+          {/* painel que desce da busca: contatos conforme digita; as conversas
+            continuam aparecendo atrás, levemente escurecidas */}
+          <Collapse in={focused} timeout={260} unmountOnExit>
+            <div className={classes.dropdown} role="listbox">
+              <div className={classes.sectionRow}>
+                <span className={classes.sectionLabel}>Contatos</span>
+                {user?.profile === "admin" && (
+                  <ButtonBase
+                    className={classes.deleteImported}
+                    onMouseDown={e => e.preventDefault()}
+                    onClick={() => setConfirmDeleteImported(true)}
+                  >
+                    Excluir importados
+                  </ButtonBase>
+                )}
+              </div>
+              {query.trim().length < 2 ? (
+                <div className={classes.dropdownHint}>
+                  Digite o nome ou o número para encontrar um contato
+                </div>
+              ) : contacts.length === 0 ? (
+                <div className={classes.dropdownHint}>
+                  {contactsLoaded ? "Nenhum contato encontrado" : "Buscando…"}
+                </div>
+              ) : (
+                <div className={classes.dropdownList}>
+                  {contacts.map((contact, index) => (
+                    <ButtonBase
+                      key={contact.id}
+                      className={classes.contactRow}
+                      style={{ animationDelay: `${index * 25}ms` }}
+                      onMouseDown={e => e.preventDefault()}
+                      onClick={() => startConversation(contact)}
+                    >
+                      <Avatar
+                        src={contact.profilePicUrl || undefined}
+                        className={classes.contactAvatar}
+                      >
+                        {(contact.name || "?").trim().charAt(0).toUpperCase()}
+                      </Avatar>
+                      <span className={classes.contactText}>
+                        <div className={classes.contactName}>
+                          {contact.name}
+                        </div>
+                        <div className={classes.contactNumber}>
+                          {contact.number}
+                        </div>
+                      </span>
+                    </ButtonBase>
+                  ))}
+                </div>
+              )}
+            </div>
+          </Collapse>
+        </div>
+
+        {
           <div className={classes.chips}>
             {chip(
               "all",
@@ -572,9 +674,9 @@ const TicketsManagerTabs = () => {
               () => setFilter(f => (f === "closed" ? "open" : "closed"))
             )}
           </div>
-        )}
+        }
         {/* filas em balõezinhos, embaixo: vão quebrando linha conforme a quantidade */}
-        {!searching && userQueues.length > 0 && (
+        {userQueues.length > 0 && (
           <div className={classes.queueChips}>
             {userQueues.map(queue =>
               chip(
@@ -589,58 +691,16 @@ const TicketsManagerTabs = () => {
         )}
       </div>
 
-      {searching ? (
+      {typed ? (
         <div className={classes.listArea} key="search">
-          {contacts.length > 0 && (
-            <>
-              <div className={classes.sectionRow}>
-                <span className={classes.sectionLabel}>Contatos</span>
-                {user?.profile === "admin" && (
-                  <ButtonBase
-                    className={classes.deleteImported}
-                    onMouseDown={e => e.preventDefault()}
-                    onClick={() => setConfirmDeleteImported(true)}
-                  >
-                    Excluir importados
-                  </ButtonBase>
-                )}
-              </div>
-              <div
-                className={`${classes.contacts}${typed ? "" : ` ${classes.contactsFull}`}`}
-              >
-                {contacts.map(contact => (
-                  <ButtonBase
-                    key={contact.id}
-                    className={classes.contactRow}
-                    onClick={() => startConversation(contact)}
-                  >
-                    <Avatar
-                      src={contact.profilePicUrl || undefined}
-                      className={classes.contactAvatar}
-                    >
-                      {(contact.name || "?").trim().charAt(0).toUpperCase()}
-                    </Avatar>
-                    <span className={classes.contactText}>
-                      <div className={classes.contactName}>{contact.name}</div>
-                      <div className={classes.contactNumber}>
-                        {contact.number}
-                      </div>
-                    </span>
-                  </ButtonBase>
-                ))}
-              </div>
-            </>
-          )}
-          {typed && <div className={classes.sectionLabel}>Conversas</div>}
-          {typed && (
-            <TicketsList
-              isSearch
-              searchParam={searchParam}
-              showAll
-              selectedQueueIds={selectedQueueIds}
-              showTabGroups={showTabGroups}
-            />
-          )}
+          <div className={classes.sectionLabel}>Conversas</div>
+          <TicketsList
+            isSearch
+            searchParam={searchParam}
+            showAll
+            selectedQueueIds={selectedQueueIds}
+            showTabGroups={showTabGroups}
+          />
         </div>
       ) : filter === "closed" ? (
         <div className={classes.listArea} key="closed">
