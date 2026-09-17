@@ -195,8 +195,11 @@ export default function Options(props) {
   const [groupsTab, setGroupsTab] = useState("disabled");
   const [apiToken, setApiToken] = useState("");
   const [openAiKey, setOpenAiKey] = useState("");
-  const [giphyApiKey, setGiphyApiKey] = useState("");
   const [klipyApiKey, setKlipyApiKey] = useState("");
+  // assistente de IA das filas (separado da chave de transcrição)
+  const [aiAgentProvider, setAiAgentProvider] = useState("openai");
+  const [aiAgentApiKey, setAiAgentApiKey] = useState("");
+  const [aiAgentModel, setAiAgentModel] = useState("");
   const [aiProvider, setAiProvider] = useState("openai");
   const [audioTranscriptions, setAudioTranscriptions] = useState("disabled");
   const [useMultiThreadedWbot, setUseMultiThreadedWbot] = useState("disabled");
@@ -332,9 +335,15 @@ export default function Options(props) {
       const openAiKey = settings.find(s => s.key === "openAiKey");
       setOpenAiKey(openAiKey?.value || "");
 
-      const giphyApiKey = settings.find(s => s.key === "giphyApiKey");
-      setGiphyApiKey(giphyApiKey?.value || "");
-
+      setAiAgentProvider(
+        settings.find(s => s.key === "aiAgentProvider")?.value || "openai"
+      );
+      setAiAgentApiKey(
+        settings.find(s => s.key === "aiAgentApiKey")?.value || ""
+      );
+      setAiAgentModel(
+        settings.find(s => s.key === "aiAgentModel")?.value || ""
+      );
       const klipyApiKey = settings.find(s => s.key === "klipyApiKey");
       setKlipyApiKey(klipyApiKey?.value || "");
 
@@ -1412,41 +1421,94 @@ export default function Options(props) {
 
         <Grid xs={12} sm={12} md={8} item>
           <div className={classes.fieldCard}>
-            <FormControl className={classes.selectContainer}>
-              <TextField
-                id="klipy-key-field"
-                label={i18n.t("settings.klipyApiKey.title")}
-                variant="standard"
-                type="password"
-                value={klipyApiKey}
-                onChange={e => setKlipyApiKey(e.target.value)}
-                onBlur={() => handleSetting("klipyApiKey", klipyApiKey.trim())}
-              />
-            </FormControl>
-            <Typography className={classes.hint}>
-              {i18n.t("settings.hints.klipyKey")}
+            <Typography style={{ fontWeight: 700, marginBottom: 4 }}>
+              Assistente de IA das filas
             </Typography>
+            <Typography className={classes.hint} style={{ marginBottom: 12 }}>
+              Chave usada pelas filas com o Assistente de IA ligado (Filas &
+              Chatbot › editar fila › Assistente de IA). É diferente da chave de
+              transcrição de áudio.
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  select
+                  fullWidth
+                  label="Provedor"
+                  variant="standard"
+                  value={aiAgentProvider}
+                  onChange={e =>
+                    handleSetting(
+                      "aiAgentProvider",
+                      e.target.value,
+                      setAiAgentProvider
+                    )
+                  }
+                >
+                  <MenuItem value="openai">OpenAI</MenuItem>
+                  <MenuItem value="gemini">Google Gemini</MenuItem>
+                  <MenuItem value="groq">Groq</MenuItem>
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={8}>
+                <TextField
+                  fullWidth
+                  label="API key da IA"
+                  variant="standard"
+                  value={aiAgentApiKey}
+                  onChange={e => setAiAgentApiKey(e.target.value)}
+                  onBlur={() =>
+                    handleSetting("aiAgentApiKey", aiAgentApiKey.trim())
+                  }
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Modelo (opcional)"
+                  placeholder={
+                    aiAgentProvider === "gemini"
+                      ? "gemini-2.0-flash"
+                      : aiAgentProvider === "groq"
+                        ? "llama-3.3-70b-versatile"
+                        : "gpt-4o-mini"
+                  }
+                  variant="standard"
+                  InputLabelProps={{ shrink: true }}
+                  value={aiAgentModel}
+                  onChange={e => setAiAgentModel(e.target.value)}
+                  onBlur={() =>
+                    handleSetting("aiAgentModel", aiAgentModel.trim())
+                  }
+                />
+              </Grid>
+            </Grid>
           </div>
         </Grid>
 
-        <Grid xs={12} sm={12} md={8} item>
-          <div className={classes.fieldCard}>
-            <FormControl className={classes.selectContainer}>
-              <TextField
-                id="giphy-key-field"
-                label={i18n.t("settings.giphyApiKey.title")}
-                variant="standard"
-                type="password"
-                value={giphyApiKey}
-                onChange={e => setGiphyApiKey(e.target.value)}
-                onBlur={() => handleSetting("giphyApiKey", giphyApiKey.trim())}
-              />
-            </FormControl>
-            <Typography className={classes.hint}>
-              {i18n.t("settings.hints.giphyKey")}
-            </Typography>
-          </div>
-        </Grid>
+        {/* GIFs e figurinhas: uma chave só, do dono do sistema, vale para todas
+            as empresas (o servidor usa a da empresa principal) */}
+        {currentUser?.super && (
+          <Grid xs={12} sm={12} md={8} item>
+            <div className={classes.fieldCard}>
+              <FormControl className={classes.selectContainer}>
+                <TextField
+                  id="klipy-key-field"
+                  label={i18n.t("settings.klipyApiKey.title")}
+                  variant="standard"
+                  value={klipyApiKey}
+                  onChange={e => setKlipyApiKey(e.target.value)}
+                  onBlur={() =>
+                    handleSetting("klipyApiKey", klipyApiKey.trim())
+                  }
+                />
+              </FormControl>
+              <Typography className={classes.hint}>
+                {i18n.t("settings.hints.klipyKey")}
+              </Typography>
+            </div>
+          </Grid>
+        )}
 
         <Grid xs={12} sm={6} md={4} item>
           <div className={classes.fieldCard}>

@@ -37,6 +37,12 @@ export async function ticketTagAdd(
     throw new AppError("ERR_UNKNOWN", 400);
   }
 
+  // coluna do Kanban com fila: o atendimento passa para essa fila, e só
+  // quem tem acesso a ela continua vendo o card
+  if (tag.kanban && tag.queueId && ticket.queueId !== tag.queueId) {
+    await ticket.update({ queueId: tag.queueId });
+  }
+
   await ticket.reload();
   websocketUpdateTicket(ticket);
 

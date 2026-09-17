@@ -64,6 +64,12 @@ contactRoutes.post(
 
 contactRoutes.post("/contacts", apiTokenAuth, isAuth, ContactController.store);
 
+contactRoutes.post(
+  "/contacts/:contactId/sync-phone",
+  isAuth,
+  ContactController.syncToPhone
+);
+
 contactRoutes.put(
   "/contacts/:contactId",
   apiTokenAuth,

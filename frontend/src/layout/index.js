@@ -387,6 +387,19 @@ const useStyles = makeStyles(theme => ({
   },
   // celular com a barra de baixo: a tela vai até o fim e reserva o espaço
   // da cápsula, que flutua por cima sem faixa de fundo
+  // enquanto a tela sob demanda baixa: uma barrinha fina animada no topo
+  pageLoading: {
+    height: 3,
+    width: "100%",
+    background: `linear-gradient(90deg, transparent, ${theme.palette.tkv.brand.main}, transparent)`,
+    backgroundSize: "40% 100%",
+    backgroundRepeat: "no-repeat",
+    animation: "$loadingBar 1s ease-in-out infinite"
+  },
+  "@keyframes loadingBar": {
+    from: { backgroundPosition: "-40% 0" },
+    to: { backgroundPosition: "140% 0" }
+  },
   contentWithNav: {
     paddingBottom: "var(--mobile-nav-space, 0px)",
     backgroundColor: theme.palette.tkv.canvas
@@ -1221,7 +1234,10 @@ const LoggedInLayout = ({ children, themeToggle }) => {
       >
         {!inConversation && <div className={classes.appBarSpacer} />}
         <OnlyForSuperUser user={currentUser} yes={() => <GoogleAnalytics />} />
-        {children ? children : null}
+        {/* a tela aberta carrega aqui dentro, sem derrubar o menu */}
+        <React.Suspense fallback={<div className={classes.pageLoading} />}>
+          {children ? children : null}
+        </React.Suspense>
       </main>
       {isPhone && !inConversation && (
         <MobileNav onOpenProfile={handleOpenUserModal} />

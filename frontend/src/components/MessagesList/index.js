@@ -65,6 +65,7 @@ import { downloadFile } from "../../helpers/downloadFile";
 import { Mutex } from "async-mutex";
 import BoxLoader from "../ui/BoxLoader";
 import AudioBubble from "./AudioBubble";
+import LocationMessage, { readLocation } from "./LocationMessage";
 import ReactionBar from "./ReactionBar";
 import {
   FAILED_EVENT,
@@ -80,7 +81,8 @@ import HistoryRoundedIcon from "@material-ui/icons/HistoryRounded";
 import ButtonBase from "@material-ui/core/ButtonBase";
 import ReplyRoundedIcon from "@material-ui/icons/ReplyRounded";
 import FileCopyOutlinedIcon from "@material-ui/icons/FileCopyOutlined";
-import MoreHorizRoundedIcon from "@material-ui/icons/MoreHorizRounded";
+import DeleteOutlineRoundedIcon from "@material-ui/icons/DeleteOutlineRounded";
+import ConfirmDeleteModal from "../ConfirmationModal";
 import ShortcutRoundedIcon from "@material-ui/icons/ForwardRounded";
 import { ReplyMessageContext } from "../../context/ReplyingMessage/ReplyingMessageContext";
 import {
@@ -362,7 +364,28 @@ const useStyles = makeStyles(theme => ({
       color: theme.palette.tkv.brand.text
     }
   },
-  messageActionsButtonSent: { right: "auto", left: -40 },
+  // minhas mensagens: a setinha fica DENTRO do balão, no canto de cima,
+  // sobre um degradê da cor do balão (fora dele o mouse "caía" no vão)
+  messageActionsButtonSent: {
+    left: "auto",
+    right: 4,
+    top: 4,
+    marginTop: 0,
+    width: 26,
+    height: 26,
+    backgroundColor: theme.palette.tkv.chat.bubbleOut,
+    boxShadow: `-8px 0 10px 2px ${theme.palette.tkv.chat.bubbleOut}`,
+    "&::before": { display: "none" },
+    "&:hover, &.Mui-focusVisible": {
+      backgroundColor: theme.palette.tkv.chat.bubbleOut,
+      transform: "scale(1.1)"
+    }
+  },
+  // mensagem que está sendo respondida: anel na cor da marca enquanto dura
+  replyingTarget: {
+    boxShadow: `0 0 0 2px ${theme.palette.tkv.brand.main}, 0 6px 20px -6px ${theme.palette.tkv.brand.main} !important`,
+    transition: "box-shadow .2s ease"
+  },
   messageActionsButtonOpen: {
     display: "flex !important",
     backgroundColor: theme.palette.tkv.brand.textSoft,
@@ -483,9 +506,14 @@ const useStyles = makeStyles(theme => ({
     display: "block"
   },
   // balão de foto/vídeo: largura própria, no tamanho do WhatsApp Web
+  // foto/vídeo sem moldura: a imagem ocupa o balão de ponta a ponta
   bubbleMedia: {
     width: 340,
     maxWidth: "100%",
+    padding: "0 !important",
+    overflow: "hidden",
+    "& $messageMedia": { borderRadius: 0 },
+    "& $textContentItem": { padding: "6px 70px 6px 10px" },
     [theme.breakpoints.down("xs")]: { width: "78%", minWidth: 200 }
   },
   // 8. encaminhar direto da foto, sempre visível (sem precisar do mouse em cima)
@@ -524,6 +552,23 @@ const useStyles = makeStyles(theme => ({
     pointerEvents: "none",
     animation: "$ringIn .25s ease",
     "& svg": { transform: "rotate(-90deg)" }
+  },
+  uploadRingSmall: {
+    top: "auto",
+    left: "auto",
+    right: 52,
+    bottom: 5,
+    width: 16,
+    height: 16,
+    margin: 0,
+    backgroundColor: "transparent",
+    backdropFilter: "none",
+    "& circle": { strokeWidth: 2 },
+    "& circle:first-child": {
+      stroke: theme.palette.tkv.chat.meta,
+      opacity: 0.35
+    },
+    "& circle:last-child": { stroke: theme.palette.tkv.brand.text }
   },
   uploadRingTrack: {
     fill: "none",
@@ -571,7 +616,7 @@ const useStyles = makeStyles(theme => ({
       right: -6
     }
   },
-  forwardTriggerSent: { right: "auto", left: -74 },
+  forwardTriggerSent: { right: "auto", left: -40 },
 
   messageMediaClickable: {
     cursor: "pointer"
@@ -1163,6 +1208,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
   const theme = useTheme();
   const isPhone = useMediaQuery(theme.breakpoints.down("xs"));
   const replyContext = useContext(ReplyMessageContext);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const canReply = !readOnly && !!replyContext?.setReplyingMessage;
   const swipeRef = useRef(null);
 
@@ -1237,9 +1283,15 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
 
   const replyTo = (message, element) => {
     replyContext.setReplyingMessage(message);
+    // "pulinho" no balão escolhido: fica claro qual mensagem foi selecionada
     element?.animate?.(
-      [{ filter: "brightness(0.88)" }, { filter: "brightness(1)" }],
-      { duration: 380, easing: "ease-out" }
+      [
+        { transform: "scale(1)", filter: "brightness(1)" },
+        { transform: "scale(1.035)", filter: "brightness(0.9)", offset: 0.35 },
+        { transform: "scale(0.99)", offset: 0.7 },
+        { transform: "scale(1)", filter: "brightness(1)" }
+      ],
+      { duration: 520, easing: "cubic-bezier(.3, 1.4, .5, 1)" }
     );
   };
 
@@ -1866,15 +1918,26 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
   // anel de envio sobre a foto/vídeo que ainda está subindo
   const renderUploadRing = message => {
     const progress = Math.max(4, Math.min(100, message.uploadProgress || 0));
-    const r = 18;
+    // áudio: só um anelzinho discreto no canto, sem cobrir o player
+    const small = message.mediaType === "audio";
+    const size = small ? 16 : 48;
+    const r = small ? 6 : 18;
     const c = 2 * Math.PI * r;
     return (
-      <div className={classes.uploadRing} aria-label={`${progress}%`}>
-        <svg width="48" height="48" viewBox="0 0 48 48">
-          <circle cx="24" cy="24" r={r} className={classes.uploadRingTrack} />
+      <div
+        className={`${classes.uploadRing}${small ? ` ${classes.uploadRingSmall}` : ""}`}
+        aria-label={`${progress}%`}
+      >
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
           <circle
-            cx="24"
-            cy="24"
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            className={classes.uploadRingTrack}
+          />
+          <circle
+            cx={size / 2}
+            cy={size / 2}
             r={r}
             className={classes.uploadRingBar}
             strokeDasharray={c}
@@ -2677,73 +2740,29 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
     return `${latitude}, ${longitude}`;
   };
 
-  const messageLocation = (data, createdAt) => {
-    const location = data?.message?.locationMessage;
-    if (!location) {
-      return <></>;
+  // posição mais recente enviada ao vivo nesta conversa (o mapa acompanha)
+  const latestLiveLocation = (() => {
+    for (let i = messagesList.length - 1; i >= 0; i -= 1) {
+      const m = messagesList[i];
+      if (m.fromMe || !m.dataJson || !m.dataJson.includes("liveLocation"))
+        continue;
+      try {
+        const loc = readLocation(JSON.parse(m.dataJson));
+        if (loc?.live) return loc;
+      } catch (e) {
+        // mensagem sem JSON válido
+      }
     }
+    return null;
+  })();
 
-    const mapUrl = `https://www.google.com/maps?q=${location?.degreesLatitude},${location?.degreesLongitude}`;
-
-    return (
-      <div
-        onClick={() => {
-          window.open(mapUrl, "_blank");
-        }}
-        className={[clsx(classes.textContentItem, classes.messageLocation)]}
-      >
-        <div>
-          {location?.jpegThumbnail ? (
-            <img
-              src={`data:image/png;base64, ${location.jpegThumbnail}`}
-              className={classes.imageLocation}
-            />
-          ) : (
-            <LocationOn
-              className={classes.imageLocation}
-              fontSize="large"
-              color="red"
-            />
-          )}
-        </div>
-        <div className={classes.messageLocationText}>
-          {location.name ? (
-            <>
-              <b>{location.name}</b>
-              <br />
-            </>
-          ) : (
-            ""
-          )}
-          {location.url ? (
-            <>
-              <a href={location.url} target="_blank" rel="noreferrer">
-                {location.url}
-              </a>
-              <br />
-            </>
-          ) : (
-            ""
-          )}
-          {location.address ? (
-            <>
-              {location.address}
-              <br />
-            </>
-          ) : (
-            ""
-          )}
-          {convertCoordinates(
-            location.degreesLatitude,
-            location.degreesLongitude
-          )}
-        </div>
-        <span className={classes.timestamp}>
-          {format(parseISO(createdAt), "HH:mm")}
-        </span>
-      </div>
-    );
-  };
+  const messageLocation = (data, message) => (
+    <LocationMessage
+      data={data}
+      latest={message?.fromMe ? null : latestLiveLocation}
+      contactName={ticket?.contact?.name}
+    />
+  );
 
   const getDataContextInfo = data => {
     if (!data) {
@@ -2816,6 +2835,8 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                   [classes.swipeable]: isPhone && canReply,
                   [classes.bubblePressed]:
                     reactTarget?.phone && reactTarget.message.id === message.id,
+                  [classes.replyingTarget]:
+                    replyContext?.replyingMessage?.id === message.id,
                   [classes.justArrived]:
                     !message.clientKey &&
                     Date.now() - new Date(message.createdAt).getTime() < 6000
@@ -2907,8 +2928,9 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                 />
               )}
 
-              {data?.message?.locationMessage ? (
-                messageLocation(data, message.createdAt)
+              {data?.message?.locationMessage ||
+              data?.message?.liveLocationMessage ? (
+                messageLocation(data, message)
               ) : isVCard(message.body) ? (
                 <div
                   className={[
@@ -2932,6 +2954,8 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                   {message.quotedMsg && renderQuotedMessage(message)}
                   {renderLinkPreview(message)}
                   {!isSticker &&
+                    !data?.message?.locationMessage &&
+                    !data?.message?.liveLocationMessage &&
                     (message.mediaUrl && !data?.message?.extendedTextMessage ? (
                       ""
                     ) : (
@@ -2992,6 +3016,8 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                   [classes.swipeable]: isPhone && canReply,
                   [classes.bubblePressed]:
                     reactTarget?.phone && reactTarget.message.id === message.id,
+                  [classes.replyingTarget]:
+                    replyContext?.replyingMessage?.id === message.id,
                   [classes.justArrived]:
                     !message.clientKey &&
                     Date.now() - new Date(message.createdAt).getTime() < 6000
@@ -3062,8 +3088,9 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                   />
                 )}
 
-                {data?.message?.locationMessage ? (
-                  messageLocation(data, message.createdAt)
+                {data?.message?.locationMessage ||
+                data?.message?.liveLocationMessage ? (
+                  messageLocation(data, message)
                 ) : isVCard(message.body) ? (
                   <div className={[classes.textContentItem]}>
                     {renderVCard(message.body)}
@@ -3073,6 +3100,8 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                 )}
                 {renderLinkPreview(message)}
                 {!isSticker &&
+                  !data?.message?.locationMessage &&
+                  !data?.message?.liveLocationMessage &&
                   (message.mediaUrl ? (
                     ""
                   ) : (
@@ -3125,6 +3154,18 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
 
   return (
     <div className={classes.messagesListWrapper}>
+      <ConfirmDeleteModal
+        title={i18n.t("messageOptionsMenu.confirmationModal.title")}
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => {
+          const target = deleteTarget;
+          setDeleteTarget(null);
+          if (target) api.delete(`/messages/${target.id}`).catch(toastError);
+        }}
+      >
+        {i18n.t("messageOptionsMenu.confirmationModal.message")}
+      </ConfirmDeleteModal>
       <ReactionBar
         open={!!reactTarget}
         anchor={reactTarget?.anchor}
@@ -3168,18 +3209,26 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                   icon: <ShortcutRoundedIcon />,
                   onClick: () => setForwarding(reactTarget.message)
                 },
-                {
-                  key: "more",
-                  label: i18n.t("messagesList.reactions.more"),
-                  icon: <MoreHorizRoundedIcon />,
-                  onClick: () => {
-                    setAnchorEl(reactTarget.el);
-                    setSelectedMessage(reactTarget.message);
-                    setSelectedMessageData(reactTarget.data);
+                reactTarget.message.fromMe &&
+                  !reactTarget.message.isDeleted && {
+                    key: "delete",
+                    danger: true,
+                    label: i18n.t("messageOptionsMenu.delete"),
+                    icon: <DeleteOutlineRoundedIcon />,
+                    onClick: () => setDeleteTarget(reactTarget.message)
                   }
-                }
               ].filter(Boolean)
-            : []
+            : reactTarget?.message?.fromMe && !reactTarget.message.isDeleted
+              ? [
+                  {
+                    key: "delete",
+                    danger: true,
+                    label: i18n.t("messageOptionsMenu.delete"),
+                    icon: <DeleteOutlineRoundedIcon />,
+                    onClick: () => setDeleteTarget(reactTarget.message)
+                  }
+                ]
+              : []
         }
       />
       {forwarding && (

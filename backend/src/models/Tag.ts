@@ -17,6 +17,7 @@ import Ticket from "./Ticket";
 import TicketTag from "./TicketTag";
 import Contact from "./Contact";
 import ContactTag from "./ContactTag";
+import Queue from "./Queue";
 
 @Table
 class Tag extends Model {
@@ -33,6 +34,14 @@ class Tag extends Model {
 
   @Column
   kanban: number;
+
+  // coluna do Kanban ligada a uma fila: quem entra na coluna vai para a fila
+  @ForeignKey(() => Queue)
+  @Column
+  queueId: number;
+
+  @BelongsTo(() => Queue)
+  queue: Queue;
 
   @HasMany(() => TicketTag)
   ticketTags: TicketTag[];

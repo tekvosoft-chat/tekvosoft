@@ -9,6 +9,7 @@ interface TagData {
   name?: string;
   color?: string;
   kanban?: number;
+  queueId?: number | null;
 }
 
 interface Request {
@@ -39,7 +40,10 @@ const UpdateUserService = async ({
   await tag.update({
     name,
     color,
-    kanban
+    kanban,
+    ...(tagData.queueId !== undefined
+      ? { queueId: tagData.queueId || null }
+      : {})
   });
 
   await tag.reload();

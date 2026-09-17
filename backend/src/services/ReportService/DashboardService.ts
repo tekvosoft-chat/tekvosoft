@@ -343,3 +343,101 @@ export async function usersReportService(
     userReport: await userReport(companyId, start, end)
   };
 }
+
+/**
+ * Indicadores extras do painel do admin, no período escolhido:
+ * volume de mensagens, horários de pico, atendimentos por fila, avaliações,
+ * base de contatos, conexões e agendamentos pendentes.
+ */
+export async function insightsService(
+  companyId: number,
+  params: DashboardDateRange
+) {
+  const tz = params.tz || "Z";
+  if (!params.date_from || !params.date_to) {
+    throw new Error("Invalid date range");
+  }
+  const start = new Date(`${params.date_from}T00:00:00${tz}`);
+  const end = new Date(`${params.date_to}T23:59:59${tz}`);
+  const replacements = { companyId, start, end };
+  const q = <T extends object>(sql: string): Promise<T[]> =>
+    sequelize.query<T>(sql, { replacements, type: QueryTypes.SELECT });
+
+  const [messages] = await q<{ received: string; sent: string }>(`
+    SELECT
+      COUNT(*) FILTER (WHERE NOT "fromMe") AS received,
+      COUNT(*) FILTER (WHERE "fromMe") AS sent
+    FROM "Messages"
+    WHERE "companyId" = :companyId
+      AND "createdAt" BETWEEN :start AND :end
+      AND COALESCE("mediaType", '') <> 'reactionMessage'
+  `);
+
+  const hours = await q<{ hour: number; count: string }>(`
+    SELECT EXTRACT(HOUR FROM "createdAt" AT TIME ZONE 'America/Sao_Paulo')::int AS hour,
+           COUNT(*) AS count
+    FROM "Messages"
+    WHERE "companyId" = :companyId
+      AND "createdAt" BETWEEN :start AND :end
+      AND NOT "fromMe"
+    GROUP BY 1
+  `);
+
+  const byQueue = await q<{
+    name: string;
+    color: string;
+    count: string;
+  }>(`
+    SELECT COALESCE(q."name", '') AS name, COALESCE(q."color", '') AS color,
+           COUNT(*) AS count
+    FROM "Tickets" t
+    LEFT JOIN "Queues" q ON q."id" = t."queueId"
+    WHERE t."companyId" = :companyId
+      AND t."createdAt" BETWEEN :start AND :end
+    GROUP BY q."name", q."color"
+    ORDER BY count DESC
+    LIMIT 8
+  `);
+
+  const [rating] = await q<{ avg: string; count: string }>(`
+    SELECT AVG("rate") AS avg, COUNT(*) AS count
+    FROM "UserRatings"
+    WHERE "companyId" = :companyId
+      AND "createdAt" BETWEEN :start AND :end
+  `);
+
+  const [base] = await q<{
+    contacts: string;
+    connections: string;
+    connected: string;
+    schedules: string;
+  }>(`
+    SELECT
+      (SELECT COUNT(*) FROM "Contacts" WHERE "companyId" = :companyId AND NOT "isGroup") AS contacts,
+      (SELECT COUNT(*) FROM "Whatsapps" WHERE "companyId" = :companyId) AS connections,
+      (SELECT COUNT(*) FROM "Whatsapps" WHERE "companyId" = :companyId AND "status" = 'CONNECTED') AS connected,
+      (SELECT COUNT(*) FROM "Schedules" WHERE "companyId" = :companyId AND "sentAt" IS NULL AND "sendAt" >= NOW()) AS schedules
+  `);
+
+  const peak = Array.from({ length: 24 }, (_, hour) => ({
+    hour,
+    count: Number(hours.find(h => Number(h.hour) === hour)?.count || 0)
+  }));
+
+  return {
+    messagesReceived: Number(messages?.received || 0),
+    messagesSent: Number(messages?.sent || 0),
+    peakHours: peak,
+    ticketsByQueue: byQueue.map(item => ({
+      name: item.name,
+      color: item.color,
+      count: Number(item.count)
+    })),
+    ratingAverage: rating?.avg ? Number(Number(rating.avg).toFixed(1)) : null,
+    ratingCount: Number(rating?.count || 0),
+    contactsTotal: Number(base?.contacts || 0),
+    connectionsTotal: Number(base?.connections || 0),
+    connectionsOnline: Number(base?.connected || 0),
+    schedulesPending: Number(base?.schedules || 0)
+  };
+}

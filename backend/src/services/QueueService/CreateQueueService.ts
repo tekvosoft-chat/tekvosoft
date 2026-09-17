@@ -11,6 +11,8 @@ interface QueueData {
   greetingMessage?: string;
   outOfHoursMessage?: string;
   schedules?: unknown[];
+  aiEnabled?: boolean;
+  aiConfig?: string;
 }
 
 const CreateQueueService = async (queueData: QueueData): Promise<Queue> => {

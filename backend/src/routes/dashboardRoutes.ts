@@ -31,4 +31,12 @@ routes.get(
   DashboardController.usersReport
 );
 
+routes.get(
+  "/dashboard/insights",
+  isAuth,
+  isAdmin,
+  isCompliant,
+  DashboardController.insights
+);
+
 export default routes;

@@ -1,3 +1,4 @@
+import QueueAiTab from "./QueueAiTab";
 import React, { useState, useEffect, useRef } from "react";
 
 import * as Yup from "yup";
@@ -106,6 +107,8 @@ const QueueModal = ({ open, onClose, queueId }) => {
   const [confirmationOpen, setConfirmationOpen] = useState(false);
 
   const [schedules, setSchedules] = useState({});
+  const [aiEnabled, setAiEnabled] = useState(false);
+  const [aiConfig, setAiConfig] = useState({});
 
   useEffect(() => {
     api.get(`/settings`).then(({ data }) => {
@@ -127,6 +130,12 @@ const QueueModal = ({ open, onClose, queueId }) => {
           return { ...prevState, ...data };
         });
         setSchedules(data.schedules);
+        setAiEnabled(!!data.aiEnabled);
+        try {
+          setAiConfig(data.aiConfig ? JSON.parse(data.aiConfig) : {});
+        } catch (e) {
+          setAiConfig({});
+        }
       } catch (err) {
         toastError(err);
       }
@@ -144,6 +153,9 @@ const QueueModal = ({ open, onClose, queueId }) => {
   const handleClose = () => {
     onClose();
     setQueue(initialState);
+    setAiEnabled(false);
+    setAiConfig({});
+    setTab(0);
   };
 
   const handleAttachmentFile = e => {
@@ -169,14 +181,24 @@ const QueueModal = ({ open, onClose, queueId }) => {
   const handleSaveQueue = async values => {
     try {
       if (queueId) {
-        await api.put(`/queue/${queueId}`, { ...values, schedules });
+        await api.put(`/queue/${queueId}`, {
+          ...values,
+          schedules,
+          aiEnabled,
+          aiConfig: JSON.stringify(aiConfig)
+        });
         if (attachment != null) {
           const formData = new FormData();
           formData.append("file", attachment);
           await api.post(`/queue/${queueId}/media-upload`, formData);
         }
       } else {
-        await api.post("/queue", { ...values, schedules });
+        await api.post("/queue", {
+          ...values,
+          schedules,
+          aiEnabled,
+          aiConfig: JSON.stringify(aiConfig)
+        });
         if (attachment != null) {
           const formData = new FormData();
           formData.append("file", attachment);
@@ -232,8 +254,11 @@ const QueueModal = ({ open, onClose, queueId }) => {
           onChange={(_, v) => setTab(v)}
           aria-label="disabled tabs example"
         >
-          <Tab label="Dados da Fila" />
-          {schedulesEnabled && <Tab label="Horários de Atendimento" />}
+          <Tab label="Dados da Fila" value={0} />
+          {schedulesEnabled && (
+            <Tab label="Horários de Atendimento" value={1} />
+          )}
+          <Tab label="Assistente de IA" value={2} />
         </Tabs>
         {tab === 0 && (
           <Paper>
@@ -410,6 +435,47 @@ const QueueModal = ({ open, onClose, queueId }) => {
                 </Form>
               )}
             </Formik>
+          </Paper>
+        )}
+        {tab === 2 && (
+          <Paper>
+            <QueueAiTab
+              enabled={aiEnabled}
+              config={aiConfig}
+              onChange={setAiConfig}
+              onToggle={setAiEnabled}
+            />
+            <DialogActions>
+              <Button onClick={() => setTab(0)} variant="outlined">
+                {i18n.t("common.back", "Voltar")}
+              </Button>
+              <Button
+                color="primary"
+                variant="contained"
+                onClick={async () => {
+                  if (!queueId) {
+                    toast.success(
+                      "Configuração guardada: clique em Adicionar na aba Dados da Fila"
+                    );
+                    setTab(0);
+                    return;
+                  }
+                  try {
+                    await api.put(`/queue/${queueId}`, {
+                      name: queue.name,
+                      color: queue.color,
+                      aiEnabled,
+                      aiConfig: JSON.stringify(aiConfig)
+                    });
+                    toast.success(i18n.t("queueModal.toasts.saved"));
+                  } catch (err) {
+                    toastError(err);
+                  }
+                }}
+              >
+                {i18n.t("common.save")}
+              </Button>
+            </DialogActions>
           </Paper>
         )}
         {tab === 1 && (

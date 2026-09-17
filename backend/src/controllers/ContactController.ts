@@ -425,3 +425,42 @@ export const media = async (req: Request, res: Response): Promise<Response> => {
 
   return res.status(200).json(result);
 };
+
+/**
+ * Salva o contato na agenda do celular conectado (WhatsApp da empresa),
+ * como se tivesse sido adicionado no próprio aparelho.
+ */
+export const syncToPhone = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { contactId } = req.params;
+  const { companyId } = req.user;
+
+  const contact = await ShowContactService(contactId, companyId);
+  if (contact.isGroup) {
+    throw new AppError("ERR_CONTACT_IS_GROUP", 400);
+  }
+  const number = String(contact.number || "").replace(/\D/g, "");
+  if (number.length < 8) {
+    throw new AppError("ERR_INVALID_NUMBER", 400);
+  }
+
+  const whatsapp = await GetDefaultWhatsApp(companyId);
+  const wbot = getWbot(whatsapp.id);
+
+  const [onWhatsApp] = (await wbot.onWhatsApp(number)) || [];
+  if (!onWhatsApp?.exists) {
+    throw new AppError("ERR_WAPP_INVALID_CONTACT", 400);
+  }
+
+  const fullName = (contact.name || number).trim();
+  await wbot.addOrEditContact(onWhatsApp.jid, {
+    fullName,
+    firstName: fullName.split(" ")[0],
+    saveOnPrimaryAddressbook: true
+  });
+
+  logger.info({ contactId, companyId }, "Contact saved to phone addressbook");
+  return res.status(200).json({ synced: true, jid: onWhatsApp.jid });
+};

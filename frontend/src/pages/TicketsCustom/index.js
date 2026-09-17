@@ -27,7 +27,15 @@ const useStyles = makeStyles(theme => ({
     height: "100%",
     flexDirection: "column",
     overflowY: "hidden",
-    maxWidth: 534
+    // coluna das conversas mais estreita: sobra mais espaço para a conversa
+    [theme.breakpoints.up("md")]: {
+      flex: "0 0 430px",
+      maxWidth: 430
+    },
+    [theme.breakpoints.up("xl")]: {
+      flex: "0 0 480px",
+      maxWidth: 480
+    }
   },
   messagesWrapper: {
     overflow: "hidden",
@@ -35,7 +43,8 @@ const useStyles = makeStyles(theme => ({
     height: "100%",
     flexDirection: "column",
     flexGrow: 1,
-    maxWidth: "unset"
+    maxWidth: "unset",
+    [theme.breakpoints.up("md")]: { flex: "1 1 0", minWidth: 0 }
   },
   welcomeMsg: {
     display: "flex",

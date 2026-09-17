@@ -50,6 +50,14 @@ class Queue extends Model {
   @Column
   outOfHoursMessage: string;
 
+  // assistente de IA da fila (configuração em JSON: ver QueueAiAgent)
+  @Default(false)
+  @Column
+  aiEnabled: boolean;
+
+  @Column(DataType.TEXT)
+  aiConfig: string;
+
   @Column({
     type: DataType.JSONB
   })

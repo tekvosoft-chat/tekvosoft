@@ -98,6 +98,10 @@ const useStyles = makeStyles(theme => {
       "& + $action": { borderTop: `1px solid ${t.border}` },
       "& svg": { fontSize: 20, color: theme.palette.text.secondary }
     },
+    actionDanger: {
+      color: t.semantic.danger,
+      "& svg": { color: t.semantic.danger }
+    },
     "@keyframes fade": { from: { opacity: 0 }, to: { opacity: 1 } },
     "@keyframes barIn": {
       from: { opacity: 0, transform: "scale(.5) translateY(8px)" },
@@ -257,7 +261,7 @@ const ReactionBar = ({
               {actions.map(item => (
                 <ButtonBase
                   key={item.key}
-                  className={classes.action}
+                  className={`${classes.action}${item.danger ? ` ${classes.actionDanger}` : ""}`}
                   onClick={() => {
                     onClose();
                     item.onClick();

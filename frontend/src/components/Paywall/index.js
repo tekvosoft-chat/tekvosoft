@@ -44,27 +44,43 @@ const useStyles = makeStyles(theme => ({
   },
   inner: {
     width: "100%",
-    maxWidth: 880,
+    maxWidth: 1080,
     margin: "auto",
     textAlign: "center"
   },
+  // o GIF é o centro da tela: grande, com brilho e emojis flutuando em volta
+  hero: {
+    position: "relative",
+    width: "min(520px, 88vw)",
+    margin: "0 auto"
+  },
   gifFrame: {
     position: "relative",
-    width: 260,
-    height: 200,
+    width: "100%",
+    aspectRatio: "4 / 3",
     margin: "0 auto",
-    borderRadius: 20,
+    borderRadius: 28,
     overflow: "hidden",
     background: "#171717",
-    boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
-    animation: "$wobble 3.2s ease-in-out infinite",
-    [theme.breakpoints.down("xs")]: { width: 220, height: 170 },
+    boxShadow:
+      "0 30px 80px -20px rgba(255,255,255,0.18), 0 0 0 1px rgba(255,255,255,0.08)",
+    animation: "$wobble 4s ease-in-out infinite",
     "& img": { width: "100%", height: "100%", objectFit: "cover" }
   },
   bigEmoji: {
-    fontSize: 88,
-    lineHeight: "200px",
-    [theme.breakpoints.down("xs")]: { lineHeight: "170px" }
+    fontSize: 120,
+    height: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  floatEmoji: {
+    position: "absolute",
+    fontSize: 38,
+    filter: "drop-shadow(0 6px 12px rgba(0,0,0,0.5))",
+    animation: "$bounce 2.4s ease-in-out infinite",
+    pointerEvents: "none",
+    [theme.breakpoints.down("xs")]: { fontSize: 28 }
   },
   emojis: {
     marginTop: theme.spacing(2),
@@ -88,37 +104,101 @@ const useStyles = makeStyles(theme => ({
     color: "#a3a3a3",
     fontSize: 15
   },
+  plansTitle: {
+    marginTop: theme.spacing(6),
+    fontSize: 13,
+    fontWeight: 700,
+    letterSpacing: "0.1em",
+    textTransform: "uppercase",
+    color: "#737373"
+  },
   plans: {
-    marginTop: theme.spacing(4),
+    marginTop: theme.spacing(2),
     display: "grid",
     gap: theme.spacing(2),
-    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
+    alignItems: "stretch",
     textAlign: "left"
   },
   plan: {
-    display: "block",
+    position: "relative",
+    display: "flex",
+    flexDirection: "column",
     width: "100%",
     textAlign: "left",
-    padding: theme.spacing(2.5),
-    borderRadius: 16,
+    alignItems: "stretch",
+    padding: theme.spacing(3, 2.5, 2.5),
+    borderRadius: 20,
     border: "1.5px solid #262626",
-    background: "#141414",
+    background: "#111",
     color: "#fff",
-    transition: "border-color .15s, transform .15s",
-    "&:hover": { borderColor: "#525252", transform: "translateY(-2px)" }
+    transition: "border-color .2s, transform .2s, box-shadow .2s",
+    animation: "$rise .45s cubic-bezier(.2, .8, .2, 1) both",
+    "&:hover": {
+      borderColor: "#525252",
+      transform: "translateY(-4px)",
+      boxShadow: "0 20px 40px -20px rgba(0,0,0,0.8)"
+    }
   },
-  planActive: { borderColor: "#fff !important", background: "#1c1c1c" },
-  planName: { fontSize: 16, fontWeight: 700 },
-  planPrice: { fontSize: 26, fontWeight: 800, margin: theme.spacing(1, 0) },
+  planActive: {
+    borderColor: "#fff !important",
+    background: "linear-gradient(180deg, #1c1c1c, #111)"
+  },
+  planPopular: {
+    position: "absolute",
+    top: -11,
+    left: "50%",
+    transform: "translateX(-50%)",
+    padding: "3px 12px",
+    borderRadius: 999,
+    fontSize: 11,
+    fontWeight: 800,
+    letterSpacing: "0.04em",
+    color: "#0a0a0a",
+    background: "#fff",
+    whiteSpace: "nowrap"
+  },
+  planName: { fontSize: 17, fontWeight: 700 },
+  planPrice: { fontSize: 30, fontWeight: 800, margin: theme.spacing(1, 0, 2) },
   planPer: { fontSize: 13, fontWeight: 500, color: "#a3a3a3" },
   planFeature: {
     display: "flex",
     alignItems: "center",
-    gap: 6,
-    fontSize: 13,
+    gap: 8,
+    fontSize: 13.5,
     color: "#d4d4d4",
-    marginTop: 4,
-    "& svg": { fontSize: 16, color: "#fff" }
+    padding: "5px 0",
+    borderTop: "1px solid #1f1f1f",
+    "& svg": { fontSize: 17, color: "#22c55e", flex: "none" }
+  },
+  planFeatureOff: {
+    color: "#525252",
+    textDecoration: "line-through",
+    "& svg": { color: "#404040" }
+  },
+  planPick: {
+    marginTop: "auto",
+    paddingTop: theme.spacing(2)
+  },
+  planPickBtn: {
+    width: "100%",
+    height: 42,
+    borderRadius: 999,
+    fontWeight: 700,
+    textTransform: "none",
+    color: "#fff",
+    border: "1.5px solid #404040",
+    "&:hover": { borderColor: "#fff", background: "rgba(255,255,255,0.06)" }
+  },
+  planPickBtnOn: {
+    color: "#0a0a0a",
+    background: "#fff",
+    borderColor: "#fff",
+    "&:hover": { background: "#e5e5e5" }
+  },
+  "@keyframes rise": {
+    from: { opacity: 0, transform: "translateY(16px)" },
+    to: { opacity: 1, transform: "none" }
   },
   actions: {
     marginTop: theme.spacing(4),
@@ -150,7 +230,7 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-const FunGif = ({ kind, fallback }) => {
+const FunGif = ({ kind, fallback, emojis }) => {
   const classes = useStyles();
   const [gif, setGif] = useState(null);
   const [failed, setFailed] = useState(false);
@@ -166,23 +246,29 @@ const FunGif = ({ kind, fallback }) => {
       .catch(() => setFailed(true));
   }, [kind]);
 
+  const spots = [
+    { top: "-6%", left: "-5%" },
+    { top: "12%", right: "-7%" },
+    { bottom: "-7%", left: "8%" },
+    { bottom: "4%", right: "-5%" },
+    { top: "-9%", right: "22%" }
+  ];
   return (
-    <div className={classes.gifFrame}>
-      {gif && !failed ? (
-        <img src={gif.url} alt="" onError={() => setFailed(true)} />
-      ) : (
-        failed && <div className={classes.bigEmoji}>{fallback}</div>
-      )}
-    </div>
-  );
-};
-
-const Emojis = ({ list }) => {
-  const classes = useStyles();
-  return (
-    <div className={classes.emojis} aria-hidden="true">
-      {list.map((emoji, index) => (
-        <span key={emoji} style={{ animationDelay: `${index * 0.15}s` }}>
+    <div className={classes.hero}>
+      <div className={classes.gifFrame}>
+        {gif && !failed ? (
+          <img src={gif.url} alt="" onError={() => setFailed(true)} />
+        ) : (
+          failed && <div className={classes.bigEmoji}>{fallback}</div>
+        )}
+      </div>
+      {(emojis || []).map((emoji, i) => (
+        <span
+          key={emoji}
+          className={classes.floatEmoji}
+          style={{ ...spots[i % spots.length], animationDelay: `${i * 0.3}s` }}
+          aria-hidden="true"
+        >
           {emoji}
         </span>
       ))}
@@ -236,16 +322,21 @@ const Paywall = ({ user, voluntary = false, onClose }) => {
     return () => socket.off(`company-${companyId}-payment`, onPayment);
   }, [socketManager, user?.companyId]);
 
-  const selectedPlan = useMemo(
-    () => plans.find(plan => plan.id === planId),
-    [plans, planId]
+  // do mais barato ao mais caro; o do meio ganha o selo de mais escolhido
+  const sortedPlans = useMemo(
+    () => [...plans].sort((a, b) => Number(a.value) - Number(b.value)),
+    [plans]
   );
+  const popularIndex = Math.floor((sortedPlans.length - 1) / 2);
 
-  const choose = async () => {
-    if (!planId) return;
+  const choose = async id => {
+    const target = id || planId;
+    if (!target) return;
     setLoading(true);
     try {
-      const { data } = await api.post("/subscription/plan", { planId });
+      const { data } = await api.post("/subscription/plan", {
+        planId: target
+      });
       setInvoice(data);
     } catch (err) {
       toastError(err);
@@ -257,8 +348,7 @@ const Paywall = ({ user, voluntary = false, onClose }) => {
     return (
       <div className={classes.root}>
         <div className={classes.inner}>
-          <FunGif kind="thanks" fallback="🥳" />
-          <Emojis list={THANKS_EMOJIS} />
+          <FunGif kind="thanks" fallback="🥳" emojis={THANKS_EMOJIS} />
           <h1 className={classes.title}>{i18n.t("paywall.thanksTitle")}</h1>
           <p className={classes.subtitle}>{i18n.t("paywall.thanksText")}</p>
           <div className={classes.actions}>
@@ -285,8 +375,7 @@ const Paywall = ({ user, voluntary = false, onClose }) => {
   return (
     <div className={classes.root}>
       <div className={classes.inner}>
-        <FunGif kind="paywall" fallback="💸" />
-        <Emojis list={PAYWALL_EMOJIS} />
+        <FunGif kind="paywall" fallback="💸" emojis={PAYWALL_EMOJIS} />
         <h1 className={classes.title}>
           {voluntary
             ? i18n.t("paywall.voluntaryTitle")
@@ -301,56 +390,80 @@ const Paywall = ({ user, voluntary = false, onClose }) => {
         </p>
 
         {isAdmin && plans.length > 0 && (
-          <div className={classes.plans}>
-            {plans.map(plan => (
-              <ButtonBase
-                key={plan.id}
-                className={`${classes.plan}${plan.id === planId ? ` ${classes.planActive}` : ""}`}
-                onClick={() => setPlanId(plan.id)}
-              >
-                <div className={classes.planName}>{plan.name}</div>
-                <div className={classes.planPrice}>
-                  {safeValueFormat(plan.value, plan.currency)}{" "}
-                  <span className={classes.planPer}>
-                    {i18n.t("paywall.perMonth")}
-                  </span>
-                </div>
-                <div className={classes.planFeature}>
-                  <CheckRoundedIcon />
-                  {i18n.t("paywall.users", { count: plan.users })}
-                </div>
-                <div className={classes.planFeature}>
-                  <CheckRoundedIcon />
-                  {i18n.t("paywall.connections", { count: plan.connections })}
-                </div>
-                <div className={classes.planFeature}>
-                  <CheckRoundedIcon />
-                  {i18n.t("paywall.queues", { count: plan.queues })}
-                </div>
-              </ButtonBase>
-            ))}
-          </div>
+          <>
+            <div className={classes.plansTitle}>
+              {i18n.t("paywall.choosePlan", "Escolha o seu plano")}
+            </div>
+            <div className={classes.plans}>
+              {sortedPlans.map((plan, index) => {
+                const on = plan.id === planId;
+                const features = [
+                  [true, i18n.t("paywall.users", { count: plan.users })],
+                  [
+                    true,
+                    i18n.t("paywall.connections", { count: plan.connections })
+                  ],
+                  [true, i18n.t("paywall.queues", { count: plan.queues })],
+                  [plan.useKanban, "Kanban"],
+                  [plan.useInternalChat, "Chat interno"],
+                  [plan.useSchedules, "Agendamentos"],
+                  [plan.useCampaigns, "Campanhas"],
+                  [plan.useExternalApi, "API de integração"]
+                ];
+                return (
+                  <ButtonBase
+                    key={plan.id}
+                    component="div"
+                    className={`${classes.plan}${on ? ` ${classes.planActive}` : ""}`}
+                    style={{ animationDelay: `${index * 80}ms` }}
+                    onClick={() => setPlanId(plan.id)}
+                  >
+                    {index === popularIndex && sortedPlans.length > 2 && (
+                      <span className={classes.planPopular}>
+                        {i18n.t("paywall.popular", "MAIS ESCOLHIDO")}
+                      </span>
+                    )}
+                    <div className={classes.planName}>{plan.name}</div>
+                    <div className={classes.planPrice}>
+                      {safeValueFormat(plan.value, plan.currency)}{" "}
+                      <span className={classes.planPer}>
+                        {i18n.t("paywall.perMonth")}
+                      </span>
+                    </div>
+                    {features.map(([enabled, label]) => (
+                      <div
+                        key={label}
+                        className={`${classes.planFeature}${enabled === false ? ` ${classes.planFeatureOff}` : ""}`}
+                      >
+                        <CheckRoundedIcon />
+                        {label}
+                      </div>
+                    ))}
+                    <div className={classes.planPick}>
+                      <Button
+                        className={`${classes.planPickBtn}${on ? ` ${classes.planPickBtnOn}` : ""}`}
+                        disabled={loading}
+                        onClick={e => {
+                          e.stopPropagation();
+                          setPlanId(plan.id);
+                          choose(plan.id);
+                        }}
+                      >
+                        {loading && on ? (
+                          <CircularProgress size={18} />
+                        ) : (
+                          i18n.t("paywall.subscribe", "Assinar este plano")
+                        )}
+                      </Button>
+                    </div>
+                  </ButtonBase>
+                );
+              })}
+            </div>
+          </>
         )}
 
         <div className={classes.actions}>
-          {isAdmin && (
-            <Button
-              className={classes.pay}
-              variant="contained"
-              disabled={!selectedPlan || loading}
-              onClick={choose}
-            >
-              {loading ? (
-                <CircularProgress size={22} />
-              ) : (
-                i18n.t("paywall.pay", {
-                  value: selectedPlan
-                    ? safeValueFormat(selectedPlan.value, selectedPlan.currency)
-                    : ""
-                })
-              )}
-            </Button>
-          )}
           {voluntary ? (
             <Button className={classes.logout} onClick={onClose}>
               {i18n.t("paywall.later")}

@@ -13,6 +13,7 @@ import SendRoundedIcon from "@material-ui/icons/SendRounded";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSignature } from "@fortawesome/free-solid-svg-icons";
 
+import RoomOutlinedIcon from "@material-ui/icons/RoomOutlined";
 import { i18n } from "../../translate/i18n";
 
 /**
@@ -203,7 +204,8 @@ export const AttachPanel = ({
   onFiles,
   onQuickReplies,
   signMessage,
-  onToggleSign
+  onToggleSign,
+  onLocation
 }) => {
   const classes = useStyles();
   const input = (id, props) => (
@@ -241,6 +243,13 @@ export const AttachPanel = ({
             icon={<InsertDriveFileOutlinedIcon />}
             label={i18n.t("messagesInput.phone.document")}
           />
+          {onLocation && (
+            <Tile
+              onClick={onLocation}
+              icon={<RoomOutlinedIcon />}
+              label="Localização"
+            />
+          )}
           <Tile
             onClick={onQuickReplies}
             icon={<FlashOnRoundedIcon />}

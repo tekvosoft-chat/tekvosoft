@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import SendWhatsAppLocation from "../services/WbotServices/SendWhatsAppLocation";
 import fs from "fs";
 import AppError from "../errors/AppError";
 
@@ -505,6 +506,31 @@ export const sendExpression = async (
   } else {
     throw new AppError("ERR_SYNTAX", 400);
   }
+
+  return res.send();
+};
+
+/** Envia a localização escolhida no mapa para o cliente. */
+export const sendLocation = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { ticketId } = req.params;
+  const { companyId } = req.user;
+  const { latitude, longitude, name, address } = req.body || {};
+
+  const ticket = await ShowTicketService(ticketId, companyId);
+  if (ticket.channel !== "whatsapp") {
+    throw new AppError("ERR_CHANNEL_NOT_SUPPORTED", 400);
+  }
+
+  await SendWhatsAppLocation({
+    ticket,
+    latitude: Number(latitude),
+    longitude: Number(longitude),
+    name: name ? String(name).slice(0, 120) : undefined,
+    address: address ? String(address).slice(0, 240) : undefined
+  });
 
   return res.send();
 };

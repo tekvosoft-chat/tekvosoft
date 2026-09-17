@@ -37,6 +37,13 @@ messageRoutes.get(
 );
 
 messageRoutes.post(
+  "/messages/:ticketId/location",
+  isAuth,
+  isCompliant,
+  MessageController.sendLocation
+);
+
+messageRoutes.post(
   "/messages/:ticketId/expression",
   isAuth,
   isCompliant,

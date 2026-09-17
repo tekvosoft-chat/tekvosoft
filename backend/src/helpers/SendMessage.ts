@@ -78,7 +78,15 @@ export const SendMessage = async (
           text: `${body}\n\n📎 *${originalFilename}*\n\n🔗 ${fileUrl}`
         };
       } else {
-        options = await getMessageFileOptions(body, messageData.mediaPath);
+        // o texto vai como legenda da imagem/vídeo (antes ia só o arquivo)
+        const fileName = messageData.mediaPath.split("/").pop() || "file";
+        options = await getMessageFileOptions(
+          fileName.replace(/^\d+-/, ""),
+          messageData.mediaPath
+        );
+        if (body.trim() && options && !("audio" in options)) {
+          (options as any).caption = body;
+        }
       }
       if (options) {
         message = await wbot.sendMessage(chatId, {

@@ -8,6 +8,7 @@ import { makeStyles } from "@material-ui/core/styles";
 import { green } from "@material-ui/core/colors";
 import Button from "@material-ui/core/Button";
 import TextField from "@material-ui/core/TextField";
+import MenuItem from "@material-ui/core/MenuItem";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
@@ -68,8 +69,19 @@ const TagModal = ({ open, onClose, tagId, reload, kanban }) => {
   const initialState = {
     name: "",
     color: "",
-    kanban: kanban
+    kanban: kanban,
+    queueId: ""
   };
+  const [queues, setQueues] = useState([]);
+
+  // coluna do Kanban: pode ser ligada a uma fila
+  useEffect(() => {
+    if (!open || kanban !== 1) return;
+    api
+      .get("/queue")
+      .then(({ data }) => setQueues(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, [open, kanban]);
 
   const [tag, setTag] = useState(initialState);
 
@@ -81,7 +93,7 @@ const TagModal = ({ open, onClose, tagId, reload, kanban }) => {
         const { data } = await api.get(`/tags/${tagId}`);
         //console.log(data);
         setTag(prevState => {
-          return { ...prevState, ...data };
+          return { ...prevState, ...data, queueId: data.queueId || "" };
         });
       })();
     } catch (err) {
@@ -96,7 +108,12 @@ const TagModal = ({ open, onClose, tagId, reload, kanban }) => {
   };
 
   const handleSaveTag = async values => {
-    const tagData = { ...values, userId: user.id, kanban: kanban };
+    const tagData = {
+      ...values,
+      userId: user.id,
+      kanban: kanban,
+      queueId: values.queueId || null
+    };
     try {
       if (tagId) {
         await api.put(`/tags/${tagId}`, tagData);
@@ -199,6 +216,48 @@ const TagModal = ({ open, onClose, tagId, reload, kanban }) => {
                     margin="dense"
                   />
                 </div>
+
+                {kanban === 1 && (
+                  <div className={classes.multFieldLine}>
+                    <Field
+                      as={TextField}
+                      select
+                      fullWidth
+                      name="queueId"
+                      label={i18n.t("tagModal.form.queue", "Fila desta coluna")}
+                      helperText={i18n.t(
+                        "tagModal.form.queueHelp",
+                        "Ao arrastar um atendimento para esta coluna, ele vai para esta fila. Só quem tem acesso à fila vê o card."
+                      )}
+                      variant="outlined"
+                      margin="dense"
+                      SelectProps={{ displayEmpty: true }}
+                      InputLabelProps={{ shrink: true }}
+                    >
+                      <MenuItem value="">
+                        {i18n.t(
+                          "tagModal.form.noQueue",
+                          "Sem fila (não muda a fila)"
+                        )}
+                      </MenuItem>
+                      {queues.map(queue => (
+                        <MenuItem key={queue.id} value={queue.id}>
+                          <span
+                            style={{
+                              display: "inline-block",
+                              width: 10,
+                              height: 10,
+                              borderRadius: "50%",
+                              marginRight: 8,
+                              backgroundColor: queue.color
+                            }}
+                          />
+                          {queue.name}
+                        </MenuItem>
+                      ))}
+                    </Field>
+                  </div>
+                )}
 
                 {colorPickerModalOpen && (
                   <div>

@@ -44,6 +44,7 @@ import formatBody from "../../helpers/Mustache";
 import TicketTraking from "../../models/TicketTraking";
 import UserRating from "../../models/UserRating";
 import SendWhatsAppMessage from "./SendWhatsAppMessage";
+import { handleQueueAi } from "../AiServices/QueueAiAgent";
 import Queue from "../../models/Queue";
 import QueueOption from "../../models/QueueOption";
 import VerifyCurrentSchedule, {
@@ -223,7 +224,7 @@ export const getBodyMessage = async (msg: proto.IMessage): Promise<string> => {
           ticketzvCard: msg.contactsArrayMessage.contacts
         }),
       locationMessage: msgLocationBody(msg?.locationMessage),
-      liveLocationMessage: `Latitude: ${msg?.liveLocationMessage?.degreesLatitude} - Longitude: ${msg?.liveLocationMessage?.degreesLongitude}`,
+      liveLocationMessage: `📍 Localização em tempo real\nhttps://maps.google.com/maps?q=${msg?.liveLocationMessage?.degreesLatitude}%2C${msg?.liveLocationMessage?.degreesLongitude}&z=17&hl=pt-BR`,
       documentMessage: msg?.documentMessage?.caption,
       documentWithCaptionMessage:
         msg?.documentWithCaptionMessage?.message?.documentMessage?.caption,
@@ -2085,6 +2086,9 @@ const handleMessage = async (
 
     if (ticket.queue && ticket.chatbot) {
       await handleChartbot(ticket, msg, wbot, dontReadTheFirstQuestion);
+    } else if (ticket.queueId && !ticket.userId) {
+      // assistente de IA da fila (se ligado): responde enquanto ninguém aceitou
+      await handleQueueAi(ticket, newMessage?.body || bodyMessage);
     }
   } catch (err) {
     console.log(err);

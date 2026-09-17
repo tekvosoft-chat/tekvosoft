@@ -10,6 +10,8 @@ interface QueueData {
   greetingMessage?: string;
   outOfHoursMessage?: string;
   schedules?: any[];
+  aiEnabled?: boolean;
+  aiConfig?: string;
 }
 
 const UpdateQueueService = async (

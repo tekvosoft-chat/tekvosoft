@@ -9,13 +9,15 @@ interface Request {
   color: string;
   kanban: number;
   companyId: number;
+  queueId?: number | null;
 }
 
 const CreateService = async ({
   name,
   color,
   kanban,
-  companyId
+  companyId,
+  queueId
 }: Request): Promise<Tag> => {
   const schema = Yup.object().shape({
     name: Yup.string().required().min(3)
@@ -39,6 +41,10 @@ const CreateService = async ({
     where: { name, color, kanban, companyId },
     defaults: { name, color, kanban, companyId }
   });
+
+  if (queueId !== undefined) {
+    await tag.update({ queueId: queueId || null });
+  }
 
   await tag.reload();
 

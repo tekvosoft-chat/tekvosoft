@@ -70,6 +70,8 @@ import InsertEmoticonRoundedIcon from "@material-ui/icons/InsertEmoticonRounded"
 import InsertDriveFileOutlinedIcon from "@material-ui/icons/InsertDriveFileOutlined";
 import PhotoLibraryOutlinedIcon from "@material-ui/icons/PhotoLibraryOutlined";
 import CheckRoundedIcon from "@material-ui/icons/CheckRounded";
+import RoomOutlinedIcon from "@material-ui/icons/RoomOutlined";
+import { SendLocationDialog } from "../MessagesList/LocationMessage";
 import { SocketContext } from "../../context/Socket/SocketContext";
 
 const Mp3Recorder = new MicRecorder({ bitRate: 128 });
@@ -330,26 +332,36 @@ const useStyles = makeStyles(theme => ({
   replyginMsgWrapper: {
     display: "flex",
     width: "100%",
-    alignItems: "stretch",
+    alignItems: "center",
     gap: 6,
-    padding: "8px 10px 2px",
-    animation: "$replySlide .22s ease both",
+    padding: "10px 12px 2px",
+    animation: "$replySlide .34s cubic-bezier(.3, 1.35, .5, 1) both",
     [theme.breakpoints.down("xs")]: { padding: "6px 6px 0" }
   },
 
   "@keyframes replySlide": {
-    from: { opacity: 0, transform: "translateY(8px)" },
+    from: { opacity: 0, transform: "translateY(14px) scale(.97)" },
     to: { opacity: 1, transform: "none" }
   },
 
+  // prévia da resposta: mais visível no computador, com a cor da marca
   replyginMsgContainer: {
     flex: 1,
     minWidth: 0,
     overflow: "hidden",
     backgroundColor: theme.palette.tkv.chat.quoteIn,
-    borderRadius: 10,
+    borderRadius: 12,
     display: "flex",
-    position: "relative"
+    position: "relative",
+    [theme.breakpoints.up("sm")]: {
+      backgroundColor: theme.palette.tkv.brand.soft,
+      boxShadow: `inset 0 0 0 1px ${theme.palette.tkv.brand.softHover}`,
+      "& $replyginMsgBody": { padding: "10px 14px", fontSize: "0.9375rem" },
+      "& $messageContactName": {
+        color: theme.palette.tkv.brand.text,
+        fontWeight: 700
+      }
+    }
   },
 
   replyginMsgBody: {
@@ -1062,6 +1074,29 @@ const MessageInputCustom = props => {
   const { user } = useContext(AuthContext);
 
   const [signMessage, setSignMessage] = useLocalStorage("signOption", true);
+  const [locationOpen, setLocationOpen] = useState(false);
+
+  const sendLocation = async point => {
+    try {
+      await api.post(`/messages/${ticketId}/location`, {
+        latitude: point.lat,
+        longitude: point.lon,
+        name: point.name,
+        address: point.address
+      });
+    } catch (err) {
+      toastError(err);
+      throw err;
+    }
+  };
+
+  const locationDialog = (
+    <SendLocationDialog
+      open={locationOpen}
+      onClose={() => setLocationOpen(false)}
+      onSend={sendLocation}
+    />
+  );
 
   const socketManager = useContext(SocketContext);
   const [socket, setSocket] = useState(null);
@@ -1504,6 +1539,7 @@ const MessageInputCustom = props => {
   else if (isPhone) {
     return (
       <Paper square elevation={0} className={classes.mainWrapper}>
+        {locationDialog}
         {(replyingMessage && renderReplyingMessage(replyingMessage)) ||
           (editingMessage && renderReplyingMessage(editingMessage))}
         {recording ? (
@@ -1591,6 +1627,10 @@ const MessageInputCustom = props => {
           open={attachOpen && !recording}
           disabled={disableOption}
           onFiles={handleChangeMedias}
+          onLocation={() => {
+            setAttachOpen(false);
+            setLocationOpen(true);
+          }}
           onQuickReplies={handleQuickReplies}
           signMessage={signMessage}
           onToggleSign={() => setSignMessage(!signMessage)}
@@ -1618,6 +1658,7 @@ const MessageInputCustom = props => {
     );
     return (
       <Paper square elevation={0} className={classes.mainWrapper}>
+        {locationDialog}
         {(replyingMessage && renderReplyingMessage(replyingMessage)) ||
           (editingMessage && renderReplyingMessage(editingMessage))}
 
@@ -1684,6 +1725,17 @@ const MessageInputCustom = props => {
                 <PhotoLibraryOutlinedIcon />
               </ListItemIcon>
               {i18n.t("messagesInput.phone.gallery")}
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                setAttachAnchor(null);
+                setLocationOpen(true);
+              }}
+            >
+              <ListItemIcon>
+                <RoomOutlinedIcon />
+              </ListItemIcon>
+              {i18n.t("messagesInput.location", "Localização")}
             </MenuItem>
             <MenuItem
               onClick={() => {

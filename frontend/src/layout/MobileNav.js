@@ -12,7 +12,6 @@ import { useHistory, useLocation } from "react-router-dom";
 import { makeStyles } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
 import ButtonBase from "@material-ui/core/ButtonBase";
-import Divider from "@material-ui/core/Divider";
 
 import WhatsAppIcon from "@material-ui/icons/WhatsApp";
 import DashboardOutlinedIcon from "@material-ui/icons/DashboardOutlined";
@@ -32,7 +31,6 @@ import CodeRoundedIcon from "@material-ui/icons/CodeRounded";
 import LocalAtmIcon from "@material-ui/icons/LocalAtm";
 import SettingsOutlinedIcon from "@material-ui/icons/SettingsOutlined";
 import ListIcon from "@material-ui/icons/ListAlt";
-import PersonOutlineIcon from "@material-ui/icons/PersonOutline";
 import Brightness4Icon from "@material-ui/icons/Brightness4";
 import Brightness7Icon from "@material-ui/icons/Brightness7";
 import ExitToAppIcon from "@material-ui/icons/ExitToApp";
@@ -42,6 +40,8 @@ import VolumeOffRoundedIcon from "@material-ui/icons/VolumeOffRounded";
 import Switch from "@material-ui/core/Switch";
 
 import BottomSheet from "../components/ui/BottomSheet";
+import UserAvatar from "../components/ui/UserAvatar";
+import ChevronRightRoundedIcon from "@material-ui/icons/ChevronRightRounded";
 import { AuthContext } from "../context/Auth/AuthContext";
 import ColorModeContext from "./themeContext";
 import { i18n } from "../translate/i18n";
@@ -228,9 +228,9 @@ const useStyles = makeStyles(theme => ({
     }
   },
   tileIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 18,
+    width: 52,
+    height: 52,
+    borderRadius: 17,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -246,28 +246,78 @@ const useStyles = makeStyles(theme => ({
   },
 
   // ── ações de conta ──
+  // preferências num cartão só, como nos ajustes do iPhone
   accountRow: {
     display: "flex",
     flexDirection: "column",
-    gap: 2,
-    paddingTop: theme.spacing(1)
+    marginTop: theme.spacing(2),
+    borderRadius: 18,
+    overflow: "hidden",
+    backgroundColor: theme.palette.tkv.surfaceSunken
   },
   accountItem: {
     display: "flex",
     alignItems: "center",
     gap: theme.spacing(1.5),
     width: "100%",
-    padding: theme.spacing(1.25, 1.5),
-    borderRadius: theme.palette.tkv.radius.sm,
+    minHeight: 50,
+    padding: theme.spacing(0.75, 1.75),
     justifyContent: "flex-start",
-    fontSize: "0.875rem",
+    fontSize: "0.9375rem",
     color: theme.palette.text.primary,
-    "&:hover": { backgroundColor: theme.palette.tkv.surfaceHover },
-    "& svg": { fontSize: 20, color: theme.palette.text.secondary }
+    "& + $accountItem": { borderTop: `1px solid ${theme.palette.tkv.border}` },
+    "&:active": { backgroundColor: theme.palette.tkv.surfaceHover },
+    "& > svg": { fontSize: 21, color: theme.palette.text.secondary }
   },
   danger: {
     color: theme.palette.tkv.semantic.danger,
     "& svg": { color: theme.palette.tkv.semantic.danger }
+  },
+  logoutBtn: {
+    width: "100%",
+    height: 50,
+    marginTop: theme.spacing(1.5),
+    borderRadius: 18,
+    gap: 8,
+    fontSize: "0.9375rem",
+    fontWeight: 600,
+    color: theme.palette.tkv.semantic.danger,
+    backgroundColor: theme.palette.tkv.semantic.dangerSoft,
+    "& svg": { fontSize: 20 }
+  },
+  profileCard: {
+    display: "flex",
+    alignItems: "center",
+    gap: theme.spacing(1.5),
+    width: "100%",
+    padding: theme.spacing(1.25, 1.5),
+    marginBottom: theme.spacing(1),
+    borderRadius: 18,
+    textAlign: "left",
+    backgroundColor: theme.palette.tkv.surfaceSunken,
+    "&:active": { transform: "scale(0.98)" },
+    transition: "transform .12s ease"
+  },
+  profileText: { flex: 1, minWidth: 0 },
+  profileName: {
+    fontSize: "1rem",
+    fontWeight: 700,
+    color: theme.palette.text.primary,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap"
+  },
+  profileMeta: {
+    fontSize: "0.8125rem",
+    color: theme.palette.text.secondary,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap"
+  },
+  tileEnter: { animation: "$tileIn .32s cubic-bezier(.2, .8, .2, 1) both" },
+  "@keyframes tileIn": {
+    from: { opacity: 0, transform: "translateY(10px) scale(.94)" },
+    to: { opacity: 1, transform: "none" }
   }
 }));
 
@@ -582,9 +632,26 @@ const MobileNav = ({ onOpenProfile }) => {
       <BottomSheet
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}
-        title={i18n.t("mainDrawer.listItems.menu")}
-        subtitle={user?.name}
+        showClose={false}
       >
+        <ButtonBase
+          className={classes.profileCard}
+          onClick={() => {
+            setSheetOpen(false);
+            onOpenProfile?.();
+          }}
+        >
+          <UserAvatar user={user} size={46} />
+          <span className={classes.profileText}>
+            <span className={classes.profileName} style={{ display: "block" }}>
+              {user?.name}
+            </span>
+            <span className={classes.profileMeta} style={{ display: "block" }}>
+              {user?.company?.name || user?.email}
+            </span>
+          </span>
+          <ChevronRightRoundedIcon color="disabled" />
+        </ButtonBase>
         <div className={classes.gridsWrap}>
           <span
             className={classes.tileSquare}
@@ -606,13 +673,14 @@ const MobileNav = ({ onOpenProfile }) => {
                 {section.label}
               </Typography>
               <div className={classes.grid}>
-                {section.items.map(item => (
+                {section.items.map((item, itemIndex) => (
                   <ButtonBase
                     key={item.to}
+                    style={{ animationDelay: `${itemIndex * 30}ms` }}
                     ref={el => {
                       tileRefs.current[item.to] = el;
                     }}
-                    className={`${classes.tile}${activeTile === item.to ? ` ${classes.tileActive}` : ""}`}
+                    className={`${classes.tile} ${classes.tileEnter}${activeTile === item.to ? ` ${classes.tileActive}` : ""}`}
                     onClick={() => pickTile(item.to)}
                     aria-current={isActive(item.to) ? "page" : undefined}
                   >
@@ -625,19 +693,7 @@ const MobileNav = ({ onOpenProfile }) => {
           ))}
         </div>
 
-        <Divider style={{ marginTop: 16 }} />
-
         <div className={classes.accountRow}>
-          <ButtonBase
-            className={classes.accountItem}
-            onClick={() => {
-              setSheetOpen(false);
-              onOpenProfile?.();
-            }}
-          >
-            <PersonOutlineIcon />
-            {i18n.t("mainDrawer.appBar.user.profile")}
-          </ButtonBase>
           {push === "off" && (
             <ButtonBase
               className={classes.accountItem}
@@ -672,21 +728,28 @@ const MobileNav = ({ onOpenProfile }) => {
             onClick={() => colorMode.toggleColorMode()}
           >
             {isDark ? <Brightness7Icon /> : <Brightness4Icon />}
-            {isDark
-              ? i18n.t("mainDrawer.appBar.user.lightmode")
-              : i18n.t("mainDrawer.appBar.user.darkmode")}
-          </ButtonBase>
-          <ButtonBase
-            className={`${classes.accountItem} ${classes.danger}`}
-            onClick={() => {
-              setSheetOpen(false);
-              handleLogout();
-            }}
-          >
-            <ExitToAppIcon />
-            {i18n.t("mainDrawer.appBar.user.logout")}
+            <span style={{ flex: 1, textAlign: "left" }}>
+              {i18n.t("mainDrawer.appBar.user.darkmode")}
+            </span>
+            <Switch
+              size="small"
+              color="primary"
+              checked={isDark}
+              tabIndex={-1}
+              style={{ pointerEvents: "none" }}
+            />
           </ButtonBase>
         </div>
+        <ButtonBase
+          className={classes.logoutBtn}
+          onClick={() => {
+            setSheetOpen(false);
+            handleLogout();
+          }}
+        >
+          <ExitToAppIcon />
+          {i18n.t("mainDrawer.appBar.user.logout")}
+        </ButtonBase>
       </BottomSheet>
     </>
   );

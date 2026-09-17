@@ -24,53 +24,53 @@ const SPEEDS = [1, 1.5, 2];
 const useStyles = makeStyles(theme => {
   const t = theme.palette.tkv;
   return {
+    // nova versão: [tocar] [ondas + tempo] [foto], tudo alinhado ao centro,
+    // com espaço embaixo para o horário da mensagem
     root: {
       display: "flex",
       alignItems: "center",
-      gap: 8,
-      width: 268,
+      gap: 10,
+      width: 300,
       maxWidth: "100%",
-      padding: "6px 4px 2px",
+      padding: "8px 6px 18px 4px",
       whiteSpace: "normal",
-      // celular: mais compacto e com espaço embaixo para o horário
       [theme.breakpoints.down("xs")]: {
-        width: 214,
-        gap: 6,
-        padding: "4px 2px 16px",
-        "& $side, & $avatar": { width: 36, height: 36 },
-        "& $avatar": { fontSize: "0.8125rem" },
-        "& $play": { width: 30, height: 30, "& svg": { fontSize: 30 } },
-        "& $wave": { height: 22 },
-        "& $body": { paddingTop: 4 },
-        "& $mic svg": { fontSize: 16 }
+        width: "min(270px, 72vw)",
+        gap: 8,
+        padding: "6px 4px 18px 2px"
       }
     },
     side: {
-      // foto à direita do player
       order: 3,
       position: "relative",
       flex: "none",
-      width: 48,
-      height: 48,
+      width: 46,
+      height: 46,
       display: "flex",
       alignItems: "center",
-      justifyContent: "center"
+      justifyContent: "center",
+      [theme.breakpoints.down("xs")]: { width: 42, height: 42 }
     },
     avatar: {
-      width: 48,
-      height: 48,
-      fontSize: "1rem",
+      width: "100%",
+      height: "100%",
+      fontSize: "0.9375rem",
       fontWeight: 700,
       color: "#FFFFFF"
     },
     mic: {
       position: "absolute",
-      left: -3,
-      bottom: -2,
+      left: -4,
+      bottom: -3,
+      width: 18,
+      height: 18,
+      borderRadius: "50%",
       display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
       color: t.brand.text,
-      filter: `drop-shadow(0 0 1.5px ${t.chat.bubbleIn})`,
-      "& svg": { fontSize: 20 }
+      backgroundColor: t.chat.bubbleIn,
+      "& svg": { fontSize: 14 }
     },
     speed: {
       minWidth: 44,
@@ -83,25 +83,29 @@ const useStyles = makeStyles(theme => {
       backgroundColor: "rgba(0, 0, 0, 0.32)"
     },
     play: {
+      order: 1,
       flex: "none",
-      width: 36,
-      height: 36,
+      width: 38,
+      height: 38,
       borderRadius: "50%",
       color: t.chat.icon,
-      "& svg": { fontSize: 36 }
+      transition: "transform .12s ease",
+      "&:active": { transform: "scale(0.9)" },
+      "& svg": { fontSize: 34 }
     },
     body: {
       order: 2,
       flex: 1,
       minWidth: 0,
+      position: "relative",
       display: "flex",
       flexDirection: "column",
-      gap: 2,
-      paddingTop: 10
+      justifyContent: "center",
+      height: 46
     },
     wave: {
       position: "relative",
-      height: 26,
+      height: 28,
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
@@ -132,6 +136,9 @@ const useStyles = makeStyles(theme => {
       pointerEvents: "none"
     },
     time: {
+      position: "absolute",
+      left: 0,
+      bottom: -12,
       fontSize: "0.6875rem",
       fontVariantNumeric: "tabular-nums",
       color: t.chat.meta

@@ -4,7 +4,8 @@ import {
   DashboardDateRange,
   statusSummaryService,
   ticketsStatisticsService,
-  usersReportService
+  usersReportService,
+  insightsService
 } from "../services/ReportService/DashboardService";
 
 export const ticketsStatistic = async (
@@ -37,4 +38,13 @@ export const statusSummary = async (
 
   const dashboardData = await statusSummaryService(companyId);
   return res.status(200).json(dashboardData);
+};
+
+export const insights = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const params: DashboardDateRange = req.query;
+  const { companyId } = req.user;
+  return res.status(200).json(await insightsService(companyId, params));
 };

@@ -30,7 +30,7 @@ const ShowTicketUUIDService = async (uuid: string): Promise<Ticket> => {
       {
         model: User,
         as: "user",
-        attributes: ["id", "name"]
+        attributes: ["id", "name", "profileImage"]
       },
       {
         model: Queue,

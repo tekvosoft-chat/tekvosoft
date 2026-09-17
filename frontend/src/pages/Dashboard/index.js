@@ -34,6 +34,7 @@ import { TicketCountersChart } from "./TicketCountersChart";
 import { getTimezoneOffset } from "../../helpers/getTimezoneOffset.js";
 
 import api from "../../services/api.js";
+import Insights from "./Insights";
 import { SocketContext } from "../../context/Socket/SocketContext.js";
 import { formatTimeInterval } from "../../helpers/formatTimeInterval.js";
 
@@ -278,6 +279,7 @@ const CompanyDashboard = ({ embedded = false }) => {
   const [ticketsData, setTicketsData] = useState({});
   const [usersData, setUsersData] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [insights, setInsights] = useState(null);
 
   const socketManager = useContext(SocketContext);
   const companyId = localStorage.getItem("companyId");
@@ -417,6 +419,19 @@ const CompanyDashboard = ({ embedded = false }) => {
           setTicketsData(result.data);
         }
       })
+      .catch(() => {});
+
+    api
+      .get("/dashboard/insights", {
+        params: {
+          ...params,
+          date_from:
+            params.date_from ||
+            moment().subtract(30, "days").format("YYYY-MM-DD"),
+          date_to: params.date_to || moment().format("YYYY-MM-DD")
+        }
+      })
+      .then(result => setInsights(result?.data || null))
       .catch(() => {});
 
     setLoadingUsers(true);
@@ -598,6 +613,11 @@ const CompanyDashboard = ({ embedded = false }) => {
             )}
             icon={<HourglassEmptyIcon />}
           />
+
+          {/* INDICADORES DO PERÍODO: mensagens, pico, filas, avaliação… */}
+          <Grid item xs={12}>
+            <Insights data={insights} />
+          </Grid>
 
           {/* DASHBOARD ATENDIMENTOS NO PERÍODO */}
           <Grid item xs={12}>
