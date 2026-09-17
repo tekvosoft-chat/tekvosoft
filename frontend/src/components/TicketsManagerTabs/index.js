@@ -58,26 +58,23 @@ const useStyles = makeStyles(theme => {
       flex: "none",
       padding: theme.spacing(1.5, 1.5, 1)
     },
-    titleRow: {
+    // filtros à esquerda e o "+" à direita, logo abaixo da busca
+    filterRow: {
       display: "flex",
       alignItems: "center",
-      gap: 4,
-      padding: theme.spacing(0, 0, 1.25, 0.5)
-    },
-    title: {
-      flex: 1,
-      fontSize: 22,
-      fontWeight: 700,
-      letterSpacing: "-0.02em",
-      color: theme.palette.text.primary
+      gap: 8,
+      marginTop: theme.spacing(1.25),
+      "& $chips": { flex: 1, minWidth: 0, marginTop: 0 }
     },
     plus: {
-      width: 40,
-      height: 40,
+      flex: "none",
+      width: 34,
+      height: 34,
       color: t.brand.contrastText,
       backgroundColor: t.brand.main,
       transition: "transform .15s ease, background-color .15s ease",
-      "&:hover": { backgroundColor: t.brand.hover, transform: "rotate(90deg)" }
+      "&:hover": { backgroundColor: t.brand.hover, transform: "rotate(90deg)" },
+      "& svg": { fontSize: 22 }
     },
     search: {
       display: "flex",
@@ -506,69 +503,16 @@ const TicketsManagerTabs = () => {
         onChange={importCsv}
       />
       <div className={classes.header}>
-        <div className={classes.titleRow}>
-          <span className={classes.title}>
-            {i18n.t("ticketsManager.title", "Conversas")}
-          </span>
-          <Tooltip title="Novo contato">
-            <IconButton
-              className={classes.plus}
-              onClick={e => setMenuAnchor(e.currentTarget)}
-              aria-label="Novo"
-            >
-              <AddRoundedIcon />
-            </IconButton>
-          </Tooltip>
-          <Menu
-            anchorEl={menuAnchor}
-            open={!!menuAnchor}
-            onClose={() => setMenuAnchor(null)}
-            getContentAnchorEl={null}
-            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-            transformOrigin={{ vertical: "top", horizontal: "right" }}
-          >
-            <MenuItem
-              onClick={() => {
-                setMenuAnchor(null);
-                setView("newContact");
-              }}
-            >
-              <ListItemIcon>
-                <PersonAddOutlinedIcon fontSize="small" />
-              </ListItemIcon>
-              Novo contato
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                setMenuAnchor(null);
-                importFromPhone();
-              }}
-            >
-              <ListItemIcon>
-                <PhoneAndroidRoundedIcon fontSize="small" />
-              </ListItemIcon>
-              Importar contatos do celular
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                setMenuAnchor(null);
-                csvInput.current?.click();
-              }}
-            >
-              <ListItemIcon>
-                <InsertDriveFileOutlinedIcon fontSize="small" />
-              </ListItemIcon>
-              Importar planilha (CSV)
-            </MenuItem>
-          </Menu>
-        </div>
-
         <div className={classes.searchWrap}>
           <label className={classes.search}>
             <SearchRoundedIcon fontSize="small" />
             <InputBase
               className={classes.searchInput}
-              placeholder="Pesquisar ou começar uma nova conversa"
+              placeholder={
+                isPhone
+                  ? "Pesquisar ou nova conversa"
+                  : "Pesquisar ou começar uma nova conversa"
+              }
               value={query}
               onChange={e => setQuery(e.target.value)}
               onFocus={() => setFocused(true)}
@@ -649,7 +593,7 @@ const TicketsManagerTabs = () => {
           </Collapse>
         </div>
 
-        {
+        <div className={classes.filterRow}>
           <div className={classes.chips}>
             {chip(
               "all",
@@ -674,7 +618,58 @@ const TicketsManagerTabs = () => {
               () => setFilter(f => (f === "closed" ? "open" : "closed"))
             )}
           </div>
-        }
+          <Tooltip title="Novo contato">
+            <IconButton
+              className={classes.plus}
+              onClick={e => setMenuAnchor(e.currentTarget)}
+              aria-label="Novo"
+            >
+              <AddRoundedIcon />
+            </IconButton>
+          </Tooltip>
+          <Menu
+            anchorEl={menuAnchor}
+            open={!!menuAnchor}
+            onClose={() => setMenuAnchor(null)}
+            getContentAnchorEl={null}
+            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+            transformOrigin={{ vertical: "top", horizontal: "right" }}
+          >
+            <MenuItem
+              onClick={() => {
+                setMenuAnchor(null);
+                setView("newContact");
+              }}
+            >
+              <ListItemIcon>
+                <PersonAddOutlinedIcon fontSize="small" />
+              </ListItemIcon>
+              Novo contato
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                setMenuAnchor(null);
+                importFromPhone();
+              }}
+            >
+              <ListItemIcon>
+                <PhoneAndroidRoundedIcon fontSize="small" />
+              </ListItemIcon>
+              Importar contatos do celular
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                setMenuAnchor(null);
+                csvInput.current?.click();
+              }}
+            >
+              <ListItemIcon>
+                <InsertDriveFileOutlinedIcon fontSize="small" />
+              </ListItemIcon>
+              Importar planilha (CSV)
+            </MenuItem>
+          </Menu>
+        </div>
         {/* filas em balõezinhos, embaixo: vão quebrando linha conforme a quantidade */}
         {userQueues.length > 0 && (
           <div className={classes.queueChips}>
