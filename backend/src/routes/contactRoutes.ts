@@ -77,6 +77,13 @@ contactRoutes.put(
   ContactController.update
 );
 
+// antes de /contacts/:contactId, senão "imported" vira um id
+contactRoutes.delete(
+  "/contacts/imported",
+  isAuth,
+  ContactController.removeImported
+);
+
 contactRoutes.delete(
   "/contacts/:contactId",
   apiTokenAuth,

@@ -433,6 +433,13 @@ const useStyles = makeStyles(theme => {
       color: t.brand.text
     },
     center: { display: "flex", justifyContent: "center", padding: 40 },
+    // carregando a visão geral: uma animação só, maior, no meio da tela
+    pageLoading: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      minHeight: "calc(var(--vh, 100vh) - 220px)"
+    },
     "@keyframes rise": {
       from: { opacity: 0, transform: "translateY(8px)" },
       to: { opacity: 1, transform: "none" }
@@ -795,6 +802,14 @@ const Overview = ({ classes, theme }) => {
   const cpu = system?.cpu.usage ?? 0;
   const memPct = system ? pct(system.memory.used, system.memory.total) : 0;
   const diskPct = system ? pct(system.disk.used, system.disk.total) : 0;
+
+  if (!system || !totals) {
+    return (
+      <div className={classes.pageLoading}>
+        <BoxLoader size={96} />
+      </div>
+    );
+  }
 
   return (
     <>

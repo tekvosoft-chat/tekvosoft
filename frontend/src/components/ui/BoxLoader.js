@@ -10,7 +10,7 @@ import { useTheme } from "@material-ui/core/styles";
  * A cor vem do tema (currentColor), então as keyframes são sempre as mesmas —
  * nada de gerar uma animação por cor ou tamanho. O tamanho muda por escala.
  */
-const BASE = 72; // lado total, com a borda — o tamanho padrão do sistema
+const BASE = 88; // lado total, com a borda — o tamanho padrão do sistema
 const BORDER = 5;
 const HALF = (BASE - BORDER * 2) / 2;
 

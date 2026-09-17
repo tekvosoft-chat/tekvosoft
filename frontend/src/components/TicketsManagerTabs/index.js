@@ -23,6 +23,7 @@ import { toast } from "react-toastify";
 
 import TicketsList from "../TicketsListCustom";
 import NewContactPanel from "./NewContactPanel";
+import ConfirmationModal from "../ConfirmationModal";
 import { i18n } from "../../translate/i18n";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import useSettings from "../../hooks/useSettings";
@@ -191,6 +192,26 @@ const useStyles = makeStyles(theme => {
     },
     contacts: { flex: "none", maxHeight: "40%", overflowY: "auto" },
     contactsFull: { flex: 1, maxHeight: "none" },
+    sectionRow: {
+      flex: "none",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingRight: theme.spacing(2),
+      "& $sectionLabel": { flex: "none" }
+    },
+    deleteImported: {
+      height: 24,
+      padding: "0 10px",
+      marginTop: 6,
+      borderRadius: 999,
+      fontSize: 11.5,
+      fontWeight: 700,
+      color: t.semantic.danger,
+      backgroundColor: t.semantic.dangerSoft,
+      transition: "transform .12s ease",
+      "&:active": { transform: "scale(0.95)" }
+    },
     contactRow: {
       display: "flex",
       alignItems: "center",
@@ -253,6 +274,20 @@ const TicketsManagerTabs = () => {
   const [showTabGroups, setShowTabGroups] = useState(false);
   const [contacts, setContacts] = useState([]);
   const [menuAnchor, setMenuAnchor] = useState(null);
+  const [confirmDeleteImported, setConfirmDeleteImported] = useState(false);
+
+  const deleteImported = async () => {
+    try {
+      const { data } = await api.delete("/contacts/imported");
+      toast.success(`${data?.deleted || 0} contatos excluídos`);
+      // fecha a busca: ao abrir de novo, a lista já vem atualizada
+      setContacts([]);
+      setQuery("");
+      setFocused(false);
+    } catch (err) {
+      toastError(err);
+    }
+  };
 
   // admin vê todas as filas da empresa; atendente, só as dele
   const [companyQueues, setCompanyQueues] = useState([]);
@@ -408,6 +443,16 @@ const TicketsManagerTabs = () => {
 
   return (
     <Paper elevation={0} variant="outlined" className={classes.root}>
+      <ConfirmationModal
+        title="Excluir contatos importados?"
+        open={confirmDeleteImported}
+        onClose={() => setConfirmDeleteImported(false)}
+        onConfirm={deleteImported}
+      >
+        Apaga todos os contatos que nunca tiveram conversa nem agendamento (os
+        importados do celular ou da planilha). Contatos com conversas continuam.
+        Nada é apagado no celular.
+      </ConfirmationModal>
       <input
         ref={csvInput}
         type="file"
@@ -548,7 +593,18 @@ const TicketsManagerTabs = () => {
         <div className={classes.listArea} key="search">
           {contacts.length > 0 && (
             <>
-              <div className={classes.sectionLabel}>Contatos</div>
+              <div className={classes.sectionRow}>
+                <span className={classes.sectionLabel}>Contatos</span>
+                {user?.profile === "admin" && (
+                  <ButtonBase
+                    className={classes.deleteImported}
+                    onMouseDown={e => e.preventDefault()}
+                    onClick={() => setConfirmDeleteImported(true)}
+                  >
+                    Excluir importados
+                  </ButtonBase>
+                )}
+              </div>
               <div
                 className={`${classes.contacts}${typed ? "" : ` ${classes.contactsFull}`}`}
               >

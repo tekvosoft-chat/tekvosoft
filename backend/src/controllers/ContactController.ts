@@ -464,3 +464,35 @@ export const syncToPhone = async (
   logger.info({ contactId, companyId }, "Contact saved to phone addressbook");
   return res.status(200).json({ synced: true, jid: onWhatsApp.jid });
 };
+
+/**
+ * Apaga os contatos importados que nunca conversaram: sem nenhum atendimento
+ * e sem agendamento. Contatos com conversa ficam (apagar o contato apagaria
+ * as conversas junto).
+ */
+export const removeImported = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { companyId, profile } = req.user;
+  if (profile !== "admin") {
+    throw new AppError("ERR_NO_PERMISSION", 403);
+  }
+
+  const [, meta] = (await Contact.sequelize.query(
+    `DELETE FROM "Contacts" c
+      WHERE c."companyId" = :companyId
+        AND c."isGroup" = false
+        AND NOT EXISTS (SELECT 1 FROM "Tickets" t WHERE t."contactId" = c."id")
+        AND NOT EXISTS (SELECT 1 FROM "Schedules" s WHERE s."contactId" = c."id")`,
+    { replacements: { companyId } }
+  )) as [unknown, { rowCount?: number }];
+
+  const io = getIO();
+  io.to(`company-${companyId}-mainchannel`).emit(
+    `company-${companyId}-contact`,
+    { action: "reload" }
+  );
+
+  return res.status(200).json({ deleted: meta?.rowCount ?? 0 });
+};

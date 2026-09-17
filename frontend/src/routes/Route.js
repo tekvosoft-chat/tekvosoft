@@ -27,8 +27,13 @@ const Route = ({ component: Component, isPrivate = false, ...rest }) => {
 
   return (
     <>
-      {loading && <BackdropLoading />}
-      <RouterRoute {...rest} component={Component} />
+      {/* uma animação só: enquanto confere o login, a tela não carrega a
+          dela por baixo (eram duas animações ao mesmo tempo) */}
+      {loading ? (
+        <BackdropLoading />
+      ) : (
+        <RouterRoute {...rest} component={Component} />
+      )}
     </>
   );
 };
