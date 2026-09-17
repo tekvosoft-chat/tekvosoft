@@ -142,6 +142,7 @@ const useStyles = makeStyles(theme => {
     filterCount: { opacity: 0.75, fontWeight: 700 },
     grid: {
       display: "grid",
+      alignItems: "start",
       gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
       gap: theme.spacing(2),
       paddingBottom: theme.spacing(2),
@@ -149,6 +150,11 @@ const useStyles = makeStyles(theme => {
         gridTemplateColumns: "1fr",
         gap: theme.spacing(1.25)
       }
+    },
+    // cartão em edição: fica parado (sem o "pulinho" do hover) e destacado
+    cardEditing: {
+      borderColor: t.brand.main,
+      "&:hover": { transform: "none" }
     },
     card: {
       position: "relative",
@@ -166,9 +172,16 @@ const useStyles = makeStyles(theme => {
       },
       [theme.breakpoints.down("xs")]: {
         flexDirection: "row",
+        flexWrap: "wrap",
         alignItems: "center",
         padding: theme.spacing(1.5),
-        gap: theme.spacing(1.5)
+        gap: theme.spacing(1.5),
+        // formulário de edição ocupa a largura toda, embaixo da linha
+        "& > .MuiCollapse-container": {
+          flexBasis: "100%",
+          width: "100%",
+          margin: theme.spacing(0, -1.5, -1.5)
+        }
       }
     },
     inactive: {
@@ -328,6 +341,17 @@ const Users = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [deletingUser, setDeletingUser] = useState(null);
   const [userModalOpen, setUserModalOpen] = useState(false);
+  const formRef = React.useRef(null);
+  // abriu o formulário (editar num cartão lá embaixo): leva a tela até ele
+  useEffect(() => {
+    // só o "adicionar" rola até o topo; editar abre dentro do próprio cartão
+    if (!userModalOpen || selectedUser) return;
+    setTimeout(
+      () =>
+        formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      60
+    );
+  }, [userModalOpen]);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [searchParam, setSearchParam] = useState("");
   const [filter, setFilter] = useState("all");
@@ -436,15 +460,6 @@ const Users = () => {
       >
         {i18n.t("users.confirmationModal.deleteMessage")}
       </ConfirmationModal>
-      <UserModal
-        open={userModalOpen}
-        onClose={() => {
-          setSelectedUser(null);
-          setUserModalOpen(false);
-        }}
-        aria-labelledby="form-dialog-title"
-        userId={selectedUser && selectedUser.id}
-      />
 
       <div className={classes.head}>
         <div className={classes.titleBox}>
@@ -477,6 +492,20 @@ const Users = () => {
             {i18n.t("users.buttons.add")}
           </span>
         </Button>
+      </div>
+
+      {/* adicionar/editar usuário: desce aqui mesmo, sem modal por cima */}
+      <div ref={formRef}>
+        <UserModal
+          inline
+          key="new"
+          open={userModalOpen && !selectedUser}
+          onClose={() => {
+            setSelectedUser(null);
+            setUserModalOpen(false);
+          }}
+          userId={selectedUser && selectedUser.id}
+        />
       </div>
 
       <div className={classes.filters} role="tablist">
@@ -520,7 +549,7 @@ const Users = () => {
             return (
               <div
                 key={user.id}
-                className={`${classes.card}${active ? "" : ` ${classes.inactive}`}`}
+                className={`${classes.card}${active ? "" : ` ${classes.inactive}`}${userModalOpen && selectedUser?.id === user.id ? ` ${classes.cardEditing}` : ""}`}
                 style={{ animationDelay: `${Math.min(index, 10) * 30}ms` }}
               >
                 <div className={classes.band} />
@@ -610,6 +639,17 @@ const Users = () => {
                     )}
                   </div>
                 </div>
+                {/* editar: o formulário desce aqui dentro do cartão */}
+                <UserModal
+                  inline
+                  compact
+                  open={userModalOpen && selectedUser?.id === user.id}
+                  onClose={() => {
+                    setSelectedUser(null);
+                    setUserModalOpen(false);
+                  }}
+                  userId={user.id}
+                />
               </div>
             );
           })}

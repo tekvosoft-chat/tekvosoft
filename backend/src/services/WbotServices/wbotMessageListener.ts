@@ -2135,6 +2135,16 @@ const handleMsgAck = async (
   const io = getIO();
 
   try {
+    // consulta leve antes: a maioria dos avisos (histórico de uma conexão
+    // nova) é de mensagens que nem estão no sistema ou que já têm esse status
+    const current = await Message.findOne({
+      where: { id },
+      attributes: ["id", "ack"]
+    });
+    if (!current || (update.status > 0 && update.status <= current.ack)) {
+      return;
+    }
+
     const messageToUpdate = await Message.findOne({
       where: {
         id
@@ -2346,22 +2356,29 @@ const wbotMessageListener = async (
         "wbotMessageListener: message-receipt.update"
       );
       if (messageReceipt.length === 0) return;
-      messageReceipt.forEach(async (receipt: any) => {
-        await ackMutex.runExclusive(async () => {
-          handleMsgAck(receipt.key.id, wbot.id, { status: 2 });
-        });
+      // em fila (um por vez): sem o await, a trava não segurava nada e uma
+      // conexão nova disparava milhares de consultas juntas, lotando o banco
+      // e atrasando o recebimento e o envio das mensagens
+      messageReceipt.forEach((receipt: any) => {
+        ackMutex
+          .runExclusive(() =>
+            handleMsgAck(receipt.key.id, wbot.id, { status: 2 })
+          )
+          .catch(() => {});
       });
     });
 
     wbot.ev.on("messages.update", (messageUpdate: WAMessageUpdate[]) => {
       logger.trace({ messageUpdate }, "wbotMessageListener: messages.update");
       if (messageUpdate.length === 0) return;
-      messageUpdate.forEach(async (message: WAMessageUpdate) => {
+      messageUpdate.forEach((message: WAMessageUpdate) => {
         (wbot as WASocket)!.readMessages([message.key]);
 
-        await ackMutex.runExclusive(async () => {
-          handleMsgAck(message.key.id, wbot.id, message.update);
-        });
+        ackMutex
+          .runExclusive(() =>
+            handleMsgAck(message.key.id, wbot.id, message.update)
+          )
+          .catch(() => {});
       });
     });
   } catch (error) {

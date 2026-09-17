@@ -1074,7 +1074,12 @@ const MessageInputCustom = props => {
   const { setEditingMessage, editingMessage } = useContext(EditMessageContext);
   const { user } = useContext(AuthContext);
 
-  const [signMessage, setSignMessage] = useLocalStorage("signOption", true);
+  // assinatura desligada por padrão: só vai com o nome quando a pessoa ligar
+  // (chave nova para todos começarem desligados)
+  const [signMessage, setSignMessage] = useLocalStorage(
+    "tkv:signMessage",
+    false
+  );
   const [locationOpen, setLocationOpen] = useState(false);
 
   const sendLocation = async point => {

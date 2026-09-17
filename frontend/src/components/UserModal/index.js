@@ -9,6 +9,7 @@ import { green } from "@material-ui/core/colors";
 import Button from "@material-ui/core/Button";
 import TextField from "@material-ui/core/TextField";
 import Dialog from "@material-ui/core/Dialog";
+import Collapse from "@material-ui/core/Collapse";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
@@ -28,6 +29,49 @@ import { Can } from "../Can";
 import ProfileImageField from "./ProfileImageField";
 
 const useStyles = makeStyles(theme => ({
+  // na página: cartão compacto que desce acima da lista de usuários
+  inlinePanel: {
+    marginBottom: theme.spacing(2),
+    maxWidth: 720,
+    borderRadius: 16,
+    overflow: "hidden",
+    backgroundColor: theme.palette.tkv.surface,
+    border: `1px solid ${theme.palette.tkv.border}`,
+    boxShadow: "0 10px 26px -18px rgba(12, 10, 20, 0.45)",
+    "& .MuiDialogTitle-root": {
+      padding: theme.spacing(1.5, 2.5, 0.5),
+      "& h2": { fontSize: 15, fontWeight: 700 }
+    },
+    "& .MuiDialogContent-root": {
+      padding: theme.spacing(1, 2.5),
+      border: "none",
+      overflow: "visible",
+      [theme.breakpoints.down("xs")]: { padding: theme.spacing(1, 1.5) }
+    },
+    "& .MuiDialogActions-root": {
+      padding: theme.spacing(1, 2.5, 1.5),
+      "& .MuiButton-root": { borderRadius: 999, textTransform: "none" }
+    }
+  },
+  inlineCompact: {
+    borderTop: `1px solid ${theme.palette.tkv.border}`,
+    textAlign: "left",
+    "& .MuiDialogTitle-root": { display: "none" },
+    "& .MuiDialogContent-root": {
+      padding: theme.spacing(1.5, 1.5, 0.5),
+      border: "none",
+      overflow: "visible"
+    },
+    "& $multFieldLine": {
+      flexDirection: "column",
+      gap: theme.spacing(1),
+      "& > *": { marginRight: "0 !important", width: "100%" }
+    },
+    "& .MuiDialogActions-root": {
+      padding: theme.spacing(1, 1.5, 1.5),
+      "& .MuiButton-root": { borderRadius: 999, textTransform: "none" }
+    }
+  },
   root: {
     display: "flex",
     flexWrap: "wrap"
@@ -66,8 +110,23 @@ const UserSchema = Yup.object().shape({
   email: Yup.string().email("Invalid email").required("Required")
 });
 
-const UserModal = ({ open, onClose, userId }) => {
+// versão "na página": o formulário desce suavemente, sem modal por cima
+const InlinePanel = ({ in: open, className, children }) => (
+  <Collapse in={open} timeout={300} unmountOnExit>
+    <div className={className}>{children}</div>
+  </Collapse>
+);
+
+const UserModal = ({
+  open,
+  onClose,
+  userId,
+  inline = false,
+  // dentro do cartão do usuário: sem moldura e com os campos um embaixo do outro
+  compact = false
+}) => {
   const classes = useStyles();
+  const Wrapper = inline ? InlinePanel : Dialog;
 
   const { user: loggedInUser } = useContext(AuthContext);
 
@@ -84,7 +143,8 @@ const UserModal = ({ open, onClose, userId }) => {
 
   useEffect(() => {
     const fetchUser = async () => {
-      if (!userId) return;
+      // só busca quando abre (há um formulário fechado em cada cartão)
+      if (!userId || !open) return;
       try {
         const { data } = await api.get(`/users/${userId}`);
         setUser(prevState => {
@@ -121,13 +181,20 @@ const UserModal = ({ open, onClose, userId }) => {
   };
 
   return (
-    <div className={classes.root}>
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        maxWidth="xs"
-        fullWidth
-        scroll="paper"
+    <div className={inline ? undefined : classes.root}>
+      <Wrapper
+        {...(inline
+          ? {
+              in: open,
+              className: compact ? classes.inlineCompact : classes.inlinePanel
+            }
+          : {
+              open,
+              onClose: handleClose,
+              maxWidth: "xs",
+              fullWidth: true,
+              scroll: "paper"
+            })}
       >
         <DialogTitle id="form-dialog-title">
           {userId
@@ -272,7 +339,7 @@ const UserModal = ({ open, onClose, userId }) => {
             </Form>
           )}
         </Formik>
-      </Dialog>
+      </Wrapper>
     </div>
   );
 };

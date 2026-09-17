@@ -407,7 +407,6 @@ const Paywall = ({ user, voluntary = false, onClose }) => {
                   [plan.useKanban, "Kanban"],
                   [plan.useInternalChat, "Chat interno"],
                   [plan.useSchedules, "Agendamentos"],
-                  [plan.useCampaigns, "Campanhas"],
                   [plan.useExternalApi, "API de integração"]
                 ];
                 return (

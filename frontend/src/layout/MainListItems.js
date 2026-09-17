@@ -385,7 +385,8 @@ const MainListItems = props => {
   const query = props.query || "";
   const searching = !!query.trim();
 
-  const campaignsBlock = showCampaigns && planAllows(user, "useCampaigns") && (
+  // campanhas não são usadas: o bloco não aparece mais no menu
+  const campaignsBlock = false && showCampaigns && (
     <>
       {/* Recolhida, a barra é estreita demais para o submenu: nesse estado o
           item vira atalho direto para a listagem, com o nome em tooltip. */}

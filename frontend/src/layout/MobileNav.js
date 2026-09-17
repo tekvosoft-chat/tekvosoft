@@ -412,13 +412,6 @@ const MobileNav = ({ onOpenProfile }) => {
       });
 
       const admin = [];
-      if (showCampaigns) {
-        admin.push({
-          to: "/campaigns",
-          label: t("campaigns"),
-          icon: <ListIcon />
-        });
-      }
       admin.push(
         { to: "/connections", label: t("connections"), icon: <SyncAltIcon /> },
         {

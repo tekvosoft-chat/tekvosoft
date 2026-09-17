@@ -45,6 +45,7 @@ import toastError from "../errors/toastError";
 import { SocketContext } from "../context/Socket/SocketContext";
 import ChatPopover from "../pages/Chat/ChatPopover";
 import ChatHead from "../components/ChatHead";
+import { planAllows } from "../helpers/planFeatures";
 import TopProgress from "../components/TopProgress";
 import UpdateAnnouncement from "../components/UpdateAnnouncement";
 
@@ -1236,14 +1237,16 @@ const LoggedInLayout = ({ children, themeToggle }) => {
         }}
       />
       {user.id && <NotificationsPopOver volume={volume} headless />}
-      <ChatHead />
+      {planAllows(user, "useInternalChat") && <ChatHead />}
       <TopProgress />
       <UpdateAnnouncement />
       {/* sem o balão no menu (o chat interno já está na lista), mas o som de
           mensagem nova do chat continua vindo dele */}
-      <span style={{ display: "none" }} aria-hidden="true">
-        <ChatPopover />
-      </span>
+      {planAllows(user, "useInternalChat") && (
+        <span style={{ display: "none" }} aria-hidden="true">
+          <ChatPopover />
+        </span>
+      )}
       <main
         className={clsx(
           classes.content,

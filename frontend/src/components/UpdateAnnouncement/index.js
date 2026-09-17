@@ -50,14 +50,35 @@ const useStyles = makeStyles(theme => {
       from: { opacity: 0, transform: "translateY(24px) scale(.92)" },
       to: { opacity: 1, transform: "none" }
     },
+    // o GIF aparece inteiro (sem corte): altura segue a proporção dele, com
+    // limite; se sobrar espaço dos lados, o fundo é o próprio GIF desfocado
     gif: {
-      height: 150,
+      position: "relative",
+      minHeight: 120,
+      maxHeight: 240,
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
+      overflow: "hidden",
       fontSize: 64,
-      backgroundColor: t.surfaceSunken,
-      "& img": { width: "100%", height: "100%", objectFit: "cover" }
+      backgroundColor: t.surfaceSunken
+    },
+    gifBlur: {
+      position: "absolute",
+      inset: -20,
+      width: "calc(100% + 40px)",
+      height: "calc(100% + 40px)",
+      objectFit: "cover",
+      filter: "blur(18px) brightness(0.8)",
+      transform: "scale(1.1)"
+    },
+    gifImg: {
+      position: "relative",
+      display: "block",
+      width: "100%",
+      height: "auto",
+      maxHeight: 240,
+      objectFit: "contain"
     },
     close: {
       position: "absolute",
@@ -149,7 +170,19 @@ const UpdateAnnouncement = () => {
   return (
     <div className={classes.card} role="dialog" aria-label="Atualização">
       <div className={classes.gif}>
-        {gif ? <img src={gif.url} alt="" /> : "🎉"}
+        {gif ? (
+          <>
+            <img
+              src={gif.url}
+              alt=""
+              aria-hidden="true"
+              className={classes.gifBlur}
+            />
+            <img src={gif.url} alt="" className={classes.gifImg} />
+          </>
+        ) : (
+          "🎉"
+        )}
       </div>
       <IconButton
         size="small"

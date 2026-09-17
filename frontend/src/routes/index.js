@@ -23,12 +23,7 @@ const Contacts = lazy(() => import("../pages/Contacts/"));
 const Queues = lazy(() => import("../pages/Queues/"));
 const MessagesAPI = lazy(() => import("../pages/MessagesAPI/"));
 const Helps = lazy(() => import("../pages/Helps/"));
-const ContactLists = lazy(() => import("../pages/ContactLists/"));
-const ContactListItems = lazy(() => import("../pages/ContactListItems/"));
 const Schedules = lazy(() => import("../pages/Schedules"));
-const Campaigns = lazy(() => import("../pages/Campaigns"));
-const CampaignsConfig = lazy(() => import("../pages/CampaignsConfig"));
-const CampaignReport = lazy(() => import("../pages/CampaignReport"));
 const Chat = lazy(() => import("../pages/Chat"));
 const Kanban = lazy(() => import("../pages/Kanban/"));
 const Subscription = lazy(() => import("../pages/Subscription/"));
@@ -38,11 +33,6 @@ const KanbanPage = withPlanFeature(Kanban, "useKanban");
 const ChatPage = withPlanFeature(Chat, "useInternalChat");
 const SchedulesPage = withPlanFeature(Schedules, "useSchedules");
 const MessagesAPIPage = withPlanFeature(MessagesAPI, "useExternalApi");
-const CampaignsPage = withPlanFeature(Campaigns, "useCampaigns");
-const CampaignsConfigPage = withPlanFeature(CampaignsConfig, "useCampaigns");
-const CampaignReportPage = withPlanFeature(CampaignReport, "useCampaigns");
-const ContactListsPage = withPlanFeature(ContactLists, "useCampaigns");
-const ContactListItemsPage = withPlanFeature(ContactListItems, "useCampaigns");
 
 const Routes = () => {
   const [showCampaigns, setShowCampaigns] = useState(false);
@@ -151,40 +141,6 @@ const Routes = () => {
                     component={ChatPage}
                     isPrivate
                   />
-                  {showCampaigns && (
-                    <>
-                      <Route
-                        exact
-                        path="/contact-lists"
-                        component={ContactListsPage}
-                        isPrivate
-                      />
-                      <Route
-                        exact
-                        path="/contact-lists/:contactListId/contacts"
-                        component={ContactListItemsPage}
-                        isPrivate
-                      />
-                      <Route
-                        exact
-                        path="/campaigns"
-                        component={CampaignsPage}
-                        isPrivate
-                      />
-                      <Route
-                        exact
-                        path="/campaign/:campaignId/report"
-                        component={CampaignReportPage}
-                        isPrivate
-                      />
-                      <Route
-                        exact
-                        path="/campaigns-config"
-                        component={CampaignsConfigPage}
-                        isPrivate
-                      />
-                    </>
-                  )}
                 </LoggedInLayout>
               </WhatsAppsProvider>
             </Switch>

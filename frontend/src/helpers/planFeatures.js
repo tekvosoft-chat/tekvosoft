@@ -9,7 +9,6 @@ export const PLAN_FEATURES = [
   "useKanban",
   "useInternalChat",
   "useSchedules",
-  "useCampaigns",
   "useExternalApi"
 ];
 
@@ -18,9 +17,6 @@ export const ROUTE_FEATURES = {
   "/kanban": "useKanban",
   "/chats": "useInternalChat",
   "/schedules": "useSchedules",
-  "/campaigns": "useCampaigns",
-  "/campaigns-config": "useCampaigns",
-  "/contact-lists": "useCampaigns",
   "/messages-api": "useExternalApi"
 };
 
