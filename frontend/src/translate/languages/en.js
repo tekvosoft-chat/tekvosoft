@@ -2286,6 +2286,8 @@ const messages = {
           "User creation has been disabled by the administrator.",
         ERR_NO_PERMISSION:
           "You do not have permission to access this resource.",
+        ERR_TOO_MANY_ATTEMPTS:
+          "Too many attempts. Please wait a few minutes and try again.",
         ERR_DUPLICATED_CONTACT: "A contact with this number already exists.",
         ERR_NO_SETTING_FOUND: "No setting found with this ID.",
         ERR_NO_CONTACT_FOUND: "No contact found with this ID.",

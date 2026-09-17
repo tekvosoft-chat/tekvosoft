@@ -191,7 +191,7 @@ const useStyles = makeStyles(theme => ({
   inAvatar: {
     position: "absolute",
     top: 0,
-    left: -34,
+    left: -36,
     width: 26,
     height: 26,
     fontSize: 12,
@@ -202,13 +202,15 @@ const useStyles = makeStyles(theme => ({
   },
   messageLeft: {
     marginRight: 20,
-    [theme.breakpoints.up("sm")]: { marginLeft: 34 },
     marginTop: 2,
     minWidth: 100,
     maxWidth: "min(600px, calc(100% - 48px))",
-    // no computador sobra espaço ao lado para rostinho, setinha e encaminhar
+    // computador: espaço à esquerda para a fotinho do contato e, à direita,
+    // para rostinho, setinha e encaminhar (numa regra só — duas regras
+    // iguais se sobrescreviam e a foto ficava cortada na borda)
     [theme.breakpoints.up("sm")]: {
-      maxWidth: "min(600px, calc(100% - 116px))"
+      marginLeft: 38,
+      maxWidth: "min(600px, calc(100% - 150px))"
     },
     height: "auto",
     display: "block",

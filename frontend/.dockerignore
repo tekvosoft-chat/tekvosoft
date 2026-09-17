@@ -1,3 +1,5 @@
 node_modules
 public/config.json
 dist
+# originais das imagens de fundo: não vão para a imagem do servidor
+media

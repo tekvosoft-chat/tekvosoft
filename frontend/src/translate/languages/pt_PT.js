@@ -715,7 +715,8 @@ const messages = {
           deleteTitle: "Eliminar",
           deleteMessage: "Tem a certeza? Esta ação não pode ser revertida.",
           disconnectTitle: "Desconectar",
-          disconnectMessage: "Tem a certeza? Todas as conversas e atendimentos desta ligação serão apagados do sistema (nada é apagado no WhatsApp) e terá de ler o QR Code novamente.",
+          disconnectMessage:
+            "Tem a certeza? Todas as conversas e atendimentos desta ligação serão apagados do sistema (nada é apagado no WhatsApp) e terá de ler o QR Code novamente.",
           closetTickets: "Fechar todos os atendimentos abertos desta conexão"
         },
         buttons: {
@@ -2236,6 +2237,8 @@ const messages = {
         ERR_USER_CREATION_DISABLED:
           "A criação do utilizador foi desabilitada pelo administrador.",
         ERR_NO_PERMISSION: "Você não tem permissão para acessar este recurso.",
+        ERR_TOO_MANY_ATTEMPTS:
+          "Demasiadas tentativas. Aguarde alguns minutos e tente novamente.",
         ERR_DUPLICATED_CONTACT: "Já existe um contacto com este número.",
         ERR_NO_SETTING_FOUND: "Nenhuma configuração encontrada com este ID.",
         ERR_NO_CONTACT_FOUND: "Nenhum contacto encontrado com este ID.",

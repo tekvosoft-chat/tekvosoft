@@ -8,7 +8,6 @@ import AppToaster from "../components/AppToaster";
 import LoggedInLayout from "../layout";
 import TicketResponsiveContainer from "../pages/TicketResponsiveContainer";
 import Login from "../pages/Login/";
-// import Companies from "../pages/Companies/";
 import { AuthProvider } from "../context/Auth/AuthContext";
 import { TicketsContextProvider } from "../context/Tickets/TicketsContext";
 import { WhatsAppsProvider } from "../context/WhatsApp/WhatsAppsContext";
@@ -63,7 +62,6 @@ const Routes = () => {
             <Switch>
               <Route exact path="/login" component={Login} />
               <Route exact path="/signup" component={Signup} />
-              {/* <Route exact path="/create-company" component={Companies} /> */}
               <WhatsAppsProvider>
                 <LoggedInLayout>
                   <Route exact path="/" component={Dashboard} isPrivate />

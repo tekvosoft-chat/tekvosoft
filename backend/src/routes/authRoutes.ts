@@ -2,10 +2,22 @@ import { Router } from "express";
 import * as SessionController from "../controllers/SessionController";
 import isAuth from "../middleware/isAuth";
 import isSuper from "../middleware/isAdmin";
+import rateLimit from "../middleware/rateLimit";
 
 const authRoutes = Router();
 
-authRoutes.post("/login", SessionController.store);
+// senha errada: até 10 por e-mail (50 por IP) a cada 15 minutos
+authRoutes.post(
+  "/login",
+  rateLimit({
+    name: "login",
+    max: 10,
+    windowSeconds: 900,
+    bodyField: "email",
+    onlyFailures: true
+  }),
+  SessionController.store
+);
 authRoutes.get(
   "/impersonate/:companyId",
   isAuth,

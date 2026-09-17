@@ -44,8 +44,25 @@ app.use(
 app.use(cookieParser());
 app.use(express.json({ limit: "10mb" }));
 app.use(Sentry.Handlers.requestHandler());
+// não revela a tecnologia do servidor e liga proteções básicas do navegador
+app.disable("x-powered-by");
+app.use((_req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  next();
+});
 app.get("/public/*", (req, res) => {
-  const filePath = path.join(uploadConfig.directory, req.params[0]);
+  // SEGURANÇA: "..%2f" no endereço saía da pasta pública e baixava qualquer
+  // arquivo do servidor (código, certificados). Só serve o que está dentro
+  // da pasta de uploads, e nunca arquivos ocultos (.env etc.).
+  const baseDir = path.resolve(uploadConfig.directory);
+  const filePath = path.resolve(baseDir, `.${path.sep}${req.params[0] || ""}`);
+  if (
+    !filePath.startsWith(baseDir + path.sep) ||
+    filePath.split(path.sep).some(part => part.startsWith("."))
+  ) {
+    return res.status(404).end();
+  }
 
   if (filePath.endsWith(".aac")) {
     res.setHeader("Content-Type", "audio/aac");

@@ -2216,6 +2216,8 @@ const messages = {
         ERR_USER_CREATION_DISABLED:
           "La creación de usuarios está deshabilitada por el administrador.",
         ERR_NO_PERMISSION: "No tiene permisos para acceder a este recurso.",
+        ERR_TOO_MANY_ATTEMPTS:
+          "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.",
         ERR_DUPLICATED_CONTACT: "Ya existe un contacto con este número.",
         ERR_NO_SETTING_FOUND:
           "No se encontró ninguna configuración con este ID.",

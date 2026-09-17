@@ -1,3 +1,4 @@
+import rateLimit from "../middleware/rateLimit";
 import express from "express";
 import isAuth from "../middleware/isAuth";
 import isSuper from "../middleware/isSuper";
@@ -29,5 +30,10 @@ companyRoutes.delete(
   isSuper,
   CompanyController.remove
 );
-companyRoutes.post("/companies/cadastro", CompanyController.signup);
+// cadastro aberto: até 5 por IP por hora (freia robôs criando empresas)
+companyRoutes.post(
+  "/companies/cadastro",
+  rateLimit({ name: "signup", max: 5, windowSeconds: 3600 }),
+  CompanyController.signup
+);
 export default companyRoutes;

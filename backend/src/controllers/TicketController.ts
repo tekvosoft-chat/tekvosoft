@@ -1,3 +1,4 @@
+import AppError from "../errors/AppError";
 import { Request, Response } from "express";
 import { Mutex } from "async-mutex";
 import { getIO } from "../libs/socket";
@@ -227,7 +228,12 @@ export const remove = async (
   res: Response
 ): Promise<Response> => {
   const { ticketId } = req.params;
-  const { companyId } = req.user;
+  const { companyId, profile } = req.user;
+
+  // apagar conversa é só para admin (a tela também só mostra para admin)
+  if (profile !== "admin") {
+    throw new AppError("ERR_NO_PERMISSION", 403);
+  }
 
   await ShowTicketService(ticketId, companyId);
 

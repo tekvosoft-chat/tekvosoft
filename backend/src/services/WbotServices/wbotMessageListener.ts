@@ -2103,7 +2103,11 @@ const handleMessage = async (
       await handleChartbot(ticket, msg, wbot, dontReadTheFirstQuestion);
     } else if (ticket.queueId && !ticket.userId) {
       // assistente de IA da fila (se ligado): responde enquanto ninguém aceitou
-      await handleQueueAi(ticket, newMessage?.body || bodyMessage);
+      // sem await: a resposta da IA (segundos) não segura o recebimento das
+      // próximas mensagens dessa conexão
+      handleQueueAi(ticket, newMessage?.body || bodyMessage).catch(error =>
+        logger.warn({ error: error?.message }, "QueueAiAgent")
+      );
     }
   } catch (err) {
     console.log(err);

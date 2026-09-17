@@ -8,6 +8,13 @@ const publicFolder = __dirname.endsWith("/dist")
 export default {
   directory: publicFolder,
 
+  // teto por arquivo e por envio: impede alguém de encher o disco do
+  // servidor com um upload gigante (o WhatsApp aceita até ~100 MB)
+  limits: {
+    fileSize: Number(process.env.UPLOAD_MAX_MB || 100) * 1024 * 1024,
+    files: 30
+  },
+
   storage: multer.diskStorage({
     destination: publicFolder,
     filename(req, file, cb) {
