@@ -2569,13 +2569,50 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
     }
   };
 
-  const getQuotedMessageText = quotedMsg => {
-    if (!quotedMsg?.body && quotedMsg?.mediaUrl) {
-      return "📎 " + quotedMsg.mediaUrl.split("/").pop();
+  // o conteúdo da mensagem citada, já sem os embrulhos do WhatsApp
+  const quotedContent = quotedMsg => {
+    try {
+      const data = JSON.parse(quotedMsg?.dataJson || "{}");
+      const m = data?.message || {};
+      return (
+        m.deviceSentMessage?.message ||
+        m.ephemeralMessage?.message ||
+        m.viewOnceMessage?.message ||
+        m.viewOnceMessageV2?.message ||
+        m.documentWithCaptionMessage?.message ||
+        m
+      );
+    } catch {
+      return {};
     }
+  };
 
+  const getQuotedMessageText = quotedMsg => {
     if (isVCard(quotedMsg?.body)) {
       return "🪪";
+    }
+
+    // mídia citada: emoji + tipo (e a legenda, quando houver), como no
+    // WhatsApp — antes aparecia o nome inteiro do arquivo
+    const content = quotedContent(quotedMsg);
+    const caption =
+      quotedMsg?.body && !isFileName(quotedMsg.body)
+        ? ` ${quotedMsg.body}`
+        : "";
+    if (content?.stickerMessage) return "💟 Figurinha";
+    if (content?.videoMessage?.gifPlayback) return "👾 GIF";
+    if (content?.imageMessage) return `📷 Foto${caption}`;
+    if (content?.videoMessage) return `🎥 Vídeo${caption}`;
+    if (content?.audioMessage) return "🎤 Áudio";
+    if (content?.documentMessage || content?.documentWithCaptionMessage) {
+      return `📄${caption || ` ${content?.documentMessage?.fileName || ""}`}`;
+    }
+    if (content?.locationMessage || content?.liveLocationMessage) {
+      return "📍 Localização";
+    }
+
+    if (!quotedMsg?.body && quotedMsg?.mediaUrl) {
+      return "📎 " + quotedMsg.mediaUrl.split("/").pop();
     }
 
     return quotedMsg?.body;
@@ -2584,11 +2621,16 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
   const renderQuotedMessage = message => {
     const data = JSON.parse(message.quotedMsg.dataJson);
 
-    const thumbnail = data?.message?.imageMessage?.jpegThumbnail;
-    const mediaUrl =
-      message.quotedMsg?.mediaType === "image"
-        ? message.quotedMsg.mediaUrl
-        : null;
+    // miniatura também de vídeo, GIF e figurinha (antes só de foto)
+    const content = quotedContent(message.quotedMsg);
+    const thumbnail =
+      content?.imageMessage?.jpegThumbnail ||
+      content?.videoMessage?.jpegThumbnail ||
+      content?.stickerMessage?.jpegThumbnail ||
+      data?.message?.imageMessage?.jpegThumbnail;
+    const mediaUrl = ["image", "sticker"].includes(message.quotedMsg?.mediaType)
+      ? message.quotedMsg.mediaUrl
+      : null;
     const imageUrl = thumbnail
       ? "data:image/png;base64, " + thumbnail
       : mediaUrl;

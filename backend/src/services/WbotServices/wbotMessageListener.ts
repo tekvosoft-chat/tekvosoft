@@ -274,9 +274,13 @@ type QuotedMessage = {
  * @return {QuotedMessage} - object containing quotedId and quotedMsg
  */
 const getQuotedMessage = (msg: proto.IWebMessageInfo): QuotedMessage => {
-  const message = extractMessageContent(msg.message)[
-    Object.keys(msg?.message).values().next().value
-  ];
+  // o conteúdo já vem desembrulhado (mensagem de outro aparelho, conversa
+  // temporária, visualização única). Antes a chave era procurada no
+  // embrulho e a citação se perdia: responder com GIF ou figurinha pelo
+  // celular chegava aqui sem a mensagem marcada.
+  const content = extractMessageContent(msg?.message) || {};
+  const key = Object.keys(content)[0];
+  const message = content[key];
 
   return {
     quotedId:
