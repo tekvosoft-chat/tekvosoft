@@ -22,6 +22,12 @@ const messages = {
         continue: "Continue"
       },
       payment: {
+        cardPreview: {
+          holder: "Cardholder",
+          holderPlaceholder: "Name on card",
+          expiry: "Expires",
+          ccv: "Security code"
+        },
         title: "Subscription payment",
         pix: "Pix",
         card: "Card",
@@ -348,6 +354,27 @@ const messages = {
         }
       },
       financePage: {
+        plansTitle: "Plans",
+        perMonth: "/month",
+        planUsers: "{{count}} user",
+        planUsers_plural: "{{count}} users",
+        planConnections: "{{count}} connection",
+        planConnections_plural: "{{count}} connections",
+        planQueues: "{{count}} queue",
+        planQueues_plural: "{{count}} queues",
+        planChat: "Internal chat",
+        planSchedules: "Schedules",
+        planApi: "Integration API",
+        planCurrent: "YOUR PLAN",
+        planYours: "Current plan",
+        planChoose: "Choose this plan",
+        planChoosing: "Preparing…",
+        methodsTitle: "Payment methods",
+        methodPix: "Pix",
+        methodCard: "Credit card",
+        methodBoleto: "Bank slip",
+        savedCardHint: "Charged automatically on this card every month.",
+        savedCardRemove: "Remove",
         title: "Billing",
         subtitle: "Keep track of your subscription and invoices.",
         days: "day",

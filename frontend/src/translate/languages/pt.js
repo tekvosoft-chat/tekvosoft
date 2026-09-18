@@ -23,6 +23,12 @@ const messages = {
         continue: "Continuar"
       },
       payment: {
+        cardPreview: {
+          holder: "Titular",
+          holderPlaceholder: "Nome no cartão",
+          expiry: "Validade",
+          ccv: "Cód. segurança"
+        },
         title: "Pagamento da assinatura",
         pix: "Pix",
         card: "Cartão",
@@ -348,6 +354,27 @@ const messages = {
         }
       },
       financePage: {
+        plansTitle: "Planos",
+        perMonth: "/mês",
+        planUsers: "{{count}} usuário",
+        planUsers_plural: "{{count}} usuários",
+        planConnections: "{{count}} conexão",
+        planConnections_plural: "{{count}} conexões",
+        planQueues: "{{count}} fila",
+        planQueues_plural: "{{count}} filas",
+        planChat: "Chat interno",
+        planSchedules: "Agendamentos",
+        planApi: "API de integração",
+        planCurrent: "SEU PLANO",
+        planYours: "Plano atual",
+        planChoose: "Escolher este plano",
+        planChoosing: "Preparando…",
+        methodsTitle: "Formas de pagamento",
+        methodPix: "Pix",
+        methodCard: "Cartão de crédito",
+        methodBoleto: "Boleto",
+        savedCardHint: "Cobrança automática todo mês neste cartão.",
+        savedCardRemove: "Remover",
         title: "Financeiro",
         subtitle: "Acompanhe sua assinatura e suas cobranças.",
         days: "dia",

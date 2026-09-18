@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import ButtonBase from "@material-ui/core/ButtonBase";
 import InputBase from "@material-ui/core/InputBase";
@@ -10,6 +10,7 @@ import api from "../../services/api";
 import toastError from "../../errors/toastError";
 import BoxLoader from "../ui/BoxLoader";
 import { i18n } from "../../translate/i18n";
+import { ReplyMessageContext } from "../../context/ReplyingMessage/ReplyingMessageContext";
 
 /**
  * Painel de expressões, como o do WhatsApp: emoji, figurinhas e GIFs.
@@ -140,6 +141,8 @@ const ExpressionPanel = ({
   const [provider, setProvider] = useState("");
   const [query, setQuery] = useState("");
   const [sending, setSending] = useState(null);
+  const { replyingMessage, setReplyingMessage } =
+    useContext(ReplyMessageContext);
   const timer = useRef(null);
   const t = key => i18n.t(`expressions.${key}`);
 
@@ -180,7 +183,13 @@ const ExpressionPanel = ({
     if (disabled || sending) return;
     setSending(payload.stickerMessageId || payload.gifId);
     try {
-      await api.post(`/messages/${ticketId}/expression`, payload);
+      // vai junto a mensagem que está sendo respondida (antes a figurinha
+      // e o GIF saíam soltos, sem a citação)
+      await api.post(`/messages/${ticketId}/expression`, {
+        ...payload,
+        quotedMsgId: replyingMessage?.id
+      });
+      if (replyingMessage) setReplyingMessage(null);
     } catch (err) {
       toastError(err);
     }

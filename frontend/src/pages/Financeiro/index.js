@@ -7,6 +7,9 @@ import CheckCircleRoundedIcon from "@material-ui/icons/CheckCircleRounded";
 import ScheduleRoundedIcon from "@material-ui/icons/ScheduleRounded";
 import ErrorOutlineRoundedIcon from "@material-ui/icons/ErrorOutlineRounded";
 import ReceiptRoundedIcon from "@material-ui/icons/ReceiptRounded";
+import RemoveCircleOutlineRoundedIcon from "@material-ui/icons/RemoveCircleOutlineRounded";
+import CreditCardRoundedIcon from "@material-ui/icons/CreditCardRounded";
+import FlashOnRoundedIcon from "@material-ui/icons/FlashOnRounded";
 import moment from "moment";
 
 import MainContainer from "../../components/MainContainer";
@@ -170,6 +173,128 @@ const useStyles = makeStyles(theme => {
       overflow: "hidden",
       textOverflow: "ellipsis",
       [theme.breakpoints.down("xs")]: { fontSize: "1rem" }
+    },
+
+    // ── planos ──
+    plans: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+      gap: theme.spacing(1.5)
+    },
+    plan: {
+      position: "relative",
+      display: "flex",
+      flexDirection: "column",
+      gap: theme.spacing(1),
+      padding: theme.spacing(2),
+      borderRadius: t.radius.lg,
+      border: `1px solid ${t.border}`,
+      backgroundColor: t.surface,
+      boxShadow: "0 1px 2px rgba(16, 24, 40, 0.04)",
+      transition: "border-color .15s ease, box-shadow .15s ease",
+      "&:hover": { boxShadow: "0 8px 22px -14px rgba(16, 24, 40, 0.4)" }
+    },
+    planCurrent: {
+      borderColor: t.brand.main,
+      boxShadow: `0 0 0 1px ${t.brand.main}`
+    },
+    planTop: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 8
+    },
+    planName: {
+      fontSize: "1rem",
+      fontWeight: 700,
+      color: theme.palette.text.primary
+    },
+    planTag: {
+      height: 22,
+      padding: "0 8px",
+      borderRadius: 999,
+      fontSize: "0.6875rem",
+      fontWeight: 700,
+      color: t.brand.text,
+      backgroundColor: t.brand.textSoft,
+      display: "inline-flex",
+      alignItems: "center"
+    },
+    planPrice: {
+      display: "flex",
+      alignItems: "baseline",
+      gap: 4,
+      fontSize: "1.75rem",
+      fontWeight: 700,
+      letterSpacing: "-0.02em",
+      color: theme.palette.text.primary
+    },
+    planCycle: {
+      fontSize: "0.8125rem",
+      fontWeight: 500,
+      color: theme.palette.text.secondary
+    },
+    planList: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 6,
+      margin: 0,
+      padding: 0,
+      listStyle: "none"
+    },
+    planItem: {
+      display: "flex",
+      alignItems: "center",
+      gap: 8,
+      fontSize: "0.8125rem",
+      color: theme.palette.text.primary,
+      "& svg": { fontSize: 16, color: sem.success, flex: "none" }
+    },
+    planItemOff: {
+      color: theme.palette.text.disabled,
+      textDecoration: "line-through",
+      "& svg": { color: theme.palette.text.disabled }
+    },
+    planBtn: {
+      marginTop: "auto",
+      borderRadius: 999,
+      textTransform: "none",
+      fontWeight: 700
+    },
+
+    // ── formas de pagamento ──
+    methods: { display: "flex", flexWrap: "wrap", gap: theme.spacing(1) },
+    methodChip: {
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 8,
+      height: 36,
+      padding: "0 14px",
+      borderRadius: 999,
+      border: `1px solid ${t.border}`,
+      backgroundColor: t.surface,
+      fontSize: "0.8125rem",
+      fontWeight: 600,
+      color: theme.palette.text.primary,
+      "& svg": { fontSize: 18, color: t.brand.main }
+    },
+    savedCard: {
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      marginTop: theme.spacing(1),
+      padding: theme.spacing(1.5, 2),
+      borderRadius: t.radius.lg,
+      border: `1px solid ${t.border}`,
+      backgroundColor: t.surface,
+      fontSize: "0.875rem",
+      color: theme.palette.text.primary,
+      "& svg": { color: sem.success }
+    },
+    savedCardText: { flex: 1, minWidth: 0 },
+    savedCardHint: {
+      fontSize: "0.75rem",
+      color: theme.palette.text.secondary
     },
 
     sectionTitle: {
@@ -339,6 +464,9 @@ const Invoices = () => {
   const [loading, setLoading] = useState(true);
   const [invoices, setInvoices] = useState([]);
   const [paying, setPaying] = useState(null);
+  const [plans, setPlans] = useState([]);
+  const [methods, setMethods] = useState(null);
+  const [choosing, setChoosing] = useState(null);
 
   // a rota devolve todas as faturas da empresa de uma vez
   useEffect(() => {
@@ -352,6 +480,50 @@ const Invoices = () => {
       alive = false;
     };
   }, []);
+
+  // planos públicos e formas de pagamento ligadas pelo dono da plataforma.
+  // Recarrega quando a aba volta ao foco: o que ele liberar aparece aqui
+  // sem a pessoa precisar sair e entrar de novo.
+  useEffect(() => {
+    let alive = true;
+    const load = () => {
+      api
+        .get("/plans/listpublic")
+        .then(({ data }) => alive && setPlans(Array.isArray(data) ? data : []))
+        .catch(() => {});
+      api
+        .get("/subscription/methods")
+        .then(({ data }) => alive && setMethods(data || null))
+        .catch(() => {});
+    };
+    load();
+    const onFocus = () => {
+      if (document.visibilityState === "visible") load();
+    };
+    document.addEventListener("visibilitychange", onFocus);
+    window.addEventListener("focus", onFocus);
+    return () => {
+      alive = false;
+      document.removeEventListener("visibilitychange", onFocus);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, []);
+
+  const choosePlan = async plan => {
+    setChoosing(plan.id);
+    try {
+      await api.post("/subscription/plan", { planId: plan.id });
+      const { data } = await api.get("/invoices/all");
+      const list = Array.isArray(data) ? data : [];
+      setInvoices(list);
+      const open = list.find(inv => inv.status !== "paid");
+      if (open) setPaying(open);
+    } catch (err) {
+      toastError(err);
+    } finally {
+      setChoosing(null);
+    }
+  };
 
   const sorted = useMemo(() => {
     const rank = { overdue: 0, soon: 1, open: 2, paid: 3 };
@@ -468,6 +640,129 @@ const Invoices = () => {
           <div className={classes.statValue}>{paidCount}</div>
         </div>
       </div>
+
+      {plans.length > 0 && (
+        <>
+          <Typography component="h2" className={classes.sectionTitle}>
+            {f("plansTitle")}
+          </Typography>
+          <div className={classes.plans}>
+            {plans.map(plan => {
+              const current = plan.id === user?.company?.planId;
+              const items = [
+                [true, f("planUsers", { count: plan.users })],
+                [true, f("planConnections", { count: plan.connections })],
+                [true, f("planQueues", { count: plan.queues })],
+                [plan.useKanban, "Kanban"],
+                [plan.useInternalChat, f("planChat")],
+                [plan.useSchedules, f("planSchedules")],
+                [plan.useExternalApi, f("planApi")]
+              ];
+              return (
+                <div
+                  key={plan.id}
+                  className={`${classes.plan}${current ? ` ${classes.planCurrent}` : ""}`}
+                >
+                  <div className={classes.planTop}>
+                    <span className={classes.planName}>{plan.name}</span>
+                    {current && (
+                      <span className={classes.planTag}>
+                        {f("planCurrent")}
+                      </span>
+                    )}
+                  </div>
+                  <div className={classes.planPrice}>
+                    {safeValueFormat(plan.value, plan.currency || "BRL")}
+                    <span className={classes.planCycle}>{f("perMonth")}</span>
+                  </div>
+                  <ul className={classes.planList}>
+                    {items.map(([on, label]) => (
+                      <li
+                        key={label}
+                        className={`${classes.planItem}${on ? "" : ` ${classes.planItemOff}`}`}
+                      >
+                        {on ? (
+                          <CheckCircleRoundedIcon />
+                        ) : (
+                          <RemoveCircleOutlineRoundedIcon />
+                        )}
+                        {label}
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    variant={current ? "outlined" : "contained"}
+                    color="primary"
+                    disableElevation
+                    disabled={current || choosing === plan.id}
+                    className={classes.planBtn}
+                    onClick={() => choosePlan(plan)}
+                  >
+                    {current
+                      ? f("planYours")
+                      : choosing === plan.id
+                        ? f("planChoosing")
+                        : f("planChoose")}
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {methods && (methods.pix || methods.card || methods.boleto) && (
+        <>
+          <Typography component="h2" className={classes.sectionTitle}>
+            {f("methodsTitle")}
+          </Typography>
+          <div className={classes.methods}>
+            {methods.pix && (
+              <span className={classes.methodChip}>
+                <FlashOnRoundedIcon />
+                {f("methodPix")}
+              </span>
+            )}
+            {methods.card && (
+              <span className={classes.methodChip}>
+                <CreditCardRoundedIcon />
+                {f("methodCard")}
+              </span>
+            )}
+            {methods.boleto && (
+              <span className={classes.methodChip}>
+                <ReceiptRoundedIcon />
+                {f("methodBoleto")}
+              </span>
+            )}
+          </div>
+          {methods.savedCard?.hasCard && (
+            <div className={classes.savedCard}>
+              <CheckCircleRoundedIcon />
+              <span className={classes.savedCardText}>
+                <div>{methods.savedCard.label}</div>
+                <div className={classes.savedCardHint}>
+                  {f("savedCardHint")}
+                </div>
+              </span>
+              <Button
+                size="small"
+                onClick={async () => {
+                  try {
+                    await api.delete("/subscription/card");
+                    const { data } = await api.get("/subscription/methods");
+                    setMethods(data || null);
+                  } catch (err) {
+                    toastError(err);
+                  }
+                }}
+              >
+                {f("savedCardRemove")}
+              </Button>
+            </div>
+          )}
+        </>
+      )}
 
       <Typography component="h2" className={classes.sectionTitle}>
         {f("history")}

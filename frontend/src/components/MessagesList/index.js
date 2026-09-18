@@ -401,9 +401,11 @@ const useStyles = makeStyles(theme => ({
     }
   },
   // mensagem que está sendo respondida: anel na cor da marca enquanto dura
+  // a mensagem que está sendo respondida fica só levemente marcada
+  // (antes tinha um anel forte com brilho, bem diferente do WhatsApp)
   replyingTarget: {
-    boxShadow: `0 0 0 2px ${theme.palette.tkv.brand.main}, 0 6px 20px -6px ${theme.palette.tkv.brand.main} !important`,
-    transition: "box-shadow .2s ease"
+    boxShadow: `inset 0 0 0 1.5px ${theme.palette.tkv.brand.main}55 !important`,
+    transition: "box-shadow .25s ease"
   },
   messageActionsButtonOpen: {
     display: "flex !important",
@@ -905,8 +907,13 @@ const useStyles = makeStyles(theme => ({
     textDecoration: "none",
     color: theme.mode === "light" ? "#303030" : "#ffffff"
   },
+  // ao pular para a mensagem citada: um piscar suave, sem pintar o balão
   messageHighlighted: {
-    backgroundColor: theme.palette.primary.main
+    animation: "$highlightFade 1.6s ease-out"
+  },
+  "@keyframes highlightFade": {
+    "0%": { filter: "brightness(1.18)" },
+    "100%": { filter: "none" }
   },
   // mídia que ainda não baixou: prévia grande e desfocada, não uma miniatura
   previewThumbnail: {

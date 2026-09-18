@@ -27,6 +27,7 @@ import BoxLoader from "../ui/BoxLoader";
 import { safeValueFormat } from "../../helpers/safeValueFormat";
 import { copyToClipboard } from "../../helpers/copyToClipboard";
 import { i18n } from "../../translate/i18n";
+import CardPreview, { formatCardNumber, formatExpiry } from "./CardPreview";
 
 /**
  * Pagamento da fatura pelo cliente.
@@ -152,6 +153,8 @@ const PaymentDialog = ({ open, invoice, onClose, onPaid }) => {
     addressNumber: ""
   });
   const [saveCard, setSaveCard] = useState(true);
+  // qual campo do cartão está em foco (o desenho acompanha e vira no CVV)
+  const [cardFocus, setCardFocus] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -436,6 +439,16 @@ const PaymentDialog = ({ open, invoice, onClose, onPaid }) => {
 
             {method === "CREDIT_CARD" && !methods.savedCard?.hasCard && (
               <div className={classes.form}>
+                <div className={classes.full}>
+                  <CardPreview
+                    number={form.number}
+                    holder={form.holderName}
+                    expiry={form.expiry}
+                    ccv={form.ccv}
+                    focus={cardFocus}
+                    flipped={cardFocus === "ccv"}
+                  />
+                </div>
                 <Typography className={`${classes.hint} ${classes.full}`}>
                   {p("cardIntro")}
                 </Typography>
@@ -446,15 +459,24 @@ const PaymentDialog = ({ open, invoice, onClose, onPaid }) => {
                   size="small"
                   value={form.holderName}
                   onChange={e => set("holderName", e.target.value)}
+                  onFocus={() => setCardFocus("holder")}
+                  onBlur={() => setCardFocus("")}
                 />
                 <TextField
                   className={classes.full}
                   label={p("form.number")}
                   variant="outlined"
                   size="small"
-                  value={form.number}
-                  onChange={e => set("number", e.target.value)}
-                  inputProps={{ inputMode: "numeric" }}
+                  value={formatCardNumber(form.number)}
+                  onChange={e =>
+                    set("number", formatCardNumber(e.target.value))
+                  }
+                  onFocus={() => setCardFocus("number")}
+                  onBlur={() => setCardFocus("")}
+                  inputProps={{
+                    inputMode: "numeric",
+                    autoComplete: "cc-number"
+                  }}
                 />
                 <TextField
                   label={p("form.expiry")}
@@ -462,15 +484,22 @@ const PaymentDialog = ({ open, invoice, onClose, onPaid }) => {
                   variant="outlined"
                   size="small"
                   value={form.expiry}
-                  onChange={e => set("expiry", e.target.value)}
+                  onChange={e => set("expiry", formatExpiry(e.target.value))}
+                  onFocus={() => setCardFocus("expiry")}
+                  onBlur={() => setCardFocus("")}
+                  inputProps={{ inputMode: "numeric", autoComplete: "cc-exp" }}
                 />
                 <TextField
                   label={p("form.ccv")}
                   variant="outlined"
                   size="small"
                   value={form.ccv}
-                  onChange={e => set("ccv", e.target.value)}
-                  inputProps={{ inputMode: "numeric" }}
+                  onChange={e =>
+                    set("ccv", onlyDigits(e.target.value).slice(0, 4))
+                  }
+                  onFocus={() => setCardFocus("ccv")}
+                  onBlur={() => setCardFocus("")}
+                  inputProps={{ inputMode: "numeric", autoComplete: "cc-csc" }}
                 />
                 <TextField
                   label={p("form.cpfCnpj")}

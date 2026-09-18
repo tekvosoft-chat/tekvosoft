@@ -493,19 +493,26 @@ export const sendExpression = async (
 ): Promise<Response> => {
   const { ticketId } = req.params;
   const { companyId } = req.user;
-  const { stickerMessageId, gifId } = req.body || {};
+  const { stickerMessageId, gifId, quotedMsgId } = req.body || {};
 
   const ticket = await ShowTicketService(ticketId, companyId);
   if (ticket.channel !== "whatsapp") {
     throw new AppError("ERR_CHANNEL_NOT_SUPPORTED", 400);
   }
 
+  // a mensagem que a pessoa escolheu responder na tela
+  const quotedMsg = quotedMsgId
+    ? await Message.findOne({
+        where: { id: String(quotedMsgId), companyId }
+      })
+    : null;
+
   if (stickerMessageId) {
-    await sendSticker(ticket, String(stickerMessageId), companyId);
+    await sendSticker(ticket, String(stickerMessageId), companyId, quotedMsg);
   } else if (gifId && String(gifId).startsWith("klipy:")) {
-    await sendKlipy(ticket, String(gifId), companyId);
+    await sendKlipy(ticket, String(gifId), companyId, quotedMsg);
   } else if (gifId) {
-    await sendGif(ticket, String(gifId), companyId);
+    await sendGif(ticket, String(gifId), companyId, quotedMsg);
   } else {
     throw new AppError("ERR_SYNTAX", 400);
   }

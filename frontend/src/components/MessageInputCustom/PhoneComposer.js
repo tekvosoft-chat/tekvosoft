@@ -80,25 +80,35 @@ const useStyles = makeStyles(theme => {
     hiddenInput: { display: "none" },
 
     // ── gravação ──
+    // uma linha só, como no WhatsApp: lixeira, tempo com o ponto vermelho,
+    // a onda e o enviar (antes eram duas linhas e a barra ficava alta)
     rec: {
       width: "100%",
       display: "flex",
-      flexDirection: "column",
+      alignItems: "center",
       gap: theme.spacing(1),
-      padding: theme.spacing(1.5, 1.5, 1),
-      animation: "tkvPreviewIn .2s ease-out"
+      padding: theme.spacing(0.75, 1),
+      animation: "$recIn .24s cubic-bezier(.3, 1.2, .5, 1) both"
+    },
+    "@keyframes recIn": {
+      from: { opacity: 0, transform: "translateY(10px)" },
+      to: { opacity: 1, transform: "none" }
     },
     recTop: {
+      flex: 1,
+      minWidth: 0,
       display: "flex",
       alignItems: "center",
-      gap: theme.spacing(2),
-      minHeight: 32,
-      paddingLeft: theme.spacing(0.5)
+      gap: theme.spacing(1.25),
+      minHeight: 32
     },
     recTime: {
       flex: "none",
-      minWidth: 44,
-      fontSize: "1.0625rem",
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 7,
+      minWidth: 62,
+      fontSize: "0.9375rem",
       fontVariantNumeric: "tabular-nums",
       color: t.chat.text
     },
@@ -120,27 +130,19 @@ const useStyles = makeStyles(theme => {
       backgroundColor: t.brand.text,
       opacity: 0.35,
       transform: "scaleY(0.12)",
-      transition: "transform .12s cubic-bezier(.3, 1.4, .5, 1)",
+      transition:
+        "transform .16s cubic-bezier(.3, 1.4, .5, 1), opacity .16s ease",
       // as barras mais recentes (à direita) ficam mais fortes
       "&:nth-last-child(-n+14)": { opacity: 0.65 },
       "&:nth-last-child(-n+6)": { opacity: 1 }
     },
-    recBottom: {
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between"
-    },
+    recBottom: { display: "contents" },
     trash: {
+      flex: "none",
       color: t.chat.icon,
-      "& svg": { fontSize: 28 }
-    },
-    live: {
-      display: "inline-flex",
-      alignItems: "center",
-      gap: 8,
-      fontSize: "0.8125rem",
-      fontWeight: 600,
-      color: t.semantic.danger
+      transition: "transform .15s ease, color .15s ease",
+      "&:active": { transform: "scale(0.88)", color: t.semantic.danger },
+      "& svg": { fontSize: 24 }
     },
     liveDot: {
       width: 10,
@@ -362,25 +364,22 @@ export const RecordingPanel = ({ recorder, loading, onCancel, onSend }) => {
   const classes = useStyles();
   return (
     <div className={classes.rec}>
+      <IconButton
+        className={classes.trash}
+        onClick={onCancel}
+        disabled={loading}
+        aria-label={i18n.t("messagesInput.phone.discardAudio")}
+      >
+        <DeleteOutlineRoundedIcon />
+      </IconButton>
       <div className={classes.recTop}>
         <span className={classes.recTime}>
+          <span className={classes.liveDot} />
           <Elapsed />
         </span>
         <Waveform recorder={recorder} />
       </div>
       <div className={classes.recBottom}>
-        <IconButton
-          className={classes.trash}
-          onClick={onCancel}
-          disabled={loading}
-          aria-label={i18n.t("messagesInput.phone.discardAudio")}
-        >
-          <DeleteOutlineRoundedIcon />
-        </IconButton>
-        <span className={classes.live}>
-          <span className={classes.liveDot} />
-          {i18n.t("messagesInput.phone.recording")}
-        </span>
         <IconButton
           className={classes.send}
           onClick={onSend}

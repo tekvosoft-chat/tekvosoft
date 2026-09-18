@@ -76,7 +76,8 @@ export const listStickers = async (
 export const sendSticker = async (
   ticket: Ticket,
   messageId: string,
-  companyId: number
+  companyId: number,
+  quotedMsg?: Message
 ): Promise<void> => {
   const message = await Message.findOne({
     where: { id: messageId, companyId }
@@ -98,7 +99,8 @@ export const sendSticker = async (
     { mediaUrl: raw, mimetype: "image/webp", filename: "sticker.webp" },
     {
       sticker: isRemote ? { url: raw } : fs.readFileSync(localPath)
-    }
+    },
+    quotedMsg
   );
 };
 
@@ -163,7 +165,8 @@ export const searchGifs = async (
 export const sendGif = async (
   ticket: Ticket,
   gifId: string,
-  companyId: number
+  companyId: number,
+  quotedMsg?: Message
 ): Promise<void> => {
   if (!/^[A-Za-z0-9]+$/.test(String(gifId || ""))) {
     throw new AppError("ERR_INVALID_GIF", 400);
@@ -202,7 +205,8 @@ export const sendGif = async (
   await sendWhatsappFile(
     ticket,
     { mediaUrl, mimetype: "video/mp4", filename },
-    { video: buffer, gifPlayback: true, mimetype: "video/mp4" }
+    { video: buffer, gifPlayback: true, mimetype: "video/mp4" },
+    quotedMsg
   );
 };
 
@@ -407,7 +411,8 @@ export const funGifs = async (
 export const sendKlipy = async (
   ticket: Ticket,
   id: string,
-  companyId: number
+  companyId: number,
+  quotedMsg?: Message
 ): Promise<void> => {
   const isSticker = id.startsWith("klipy:stickers:");
   const { url } = await klipyItemFile(
@@ -426,7 +431,8 @@ export const sendKlipy = async (
     await sendWhatsappFile(
       ticket,
       { mediaUrl, mimetype: "image/webp", filename },
-      { sticker: buffer }
+      { sticker: buffer },
+      quotedMsg
     );
     return;
   }
@@ -439,7 +445,8 @@ export const sendKlipy = async (
   await sendWhatsappFile(
     ticket,
     { mediaUrl, mimetype: "video/mp4", filename },
-    { video: buffer, gifPlayback: true, mimetype: "video/mp4" }
+    { video: buffer, gifPlayback: true, mimetype: "video/mp4" },
+    quotedMsg
   );
 };
 

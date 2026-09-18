@@ -22,6 +22,12 @@ const messages = {
         continue: "Continuar"
       },
       payment: {
+        cardPreview: {
+          holder: "Titular",
+          holderPlaceholder: "Nombre en la tarjeta",
+          expiry: "Vence",
+          ccv: "Código de seguridad"
+        },
         title: "Pago de la suscripción",
         pix: "Pix",
         card: "Tarjeta",
@@ -349,6 +355,27 @@ const messages = {
         }
       },
       financePage: {
+        plansTitle: "Planes",
+        perMonth: "/mes",
+        planUsers: "{{count}} usuario",
+        planUsers_plural: "{{count}} usuarios",
+        planConnections: "{{count}} conexión",
+        planConnections_plural: "{{count}} conexiones",
+        planQueues: "{{count}} fila",
+        planQueues_plural: "{{count}} filas",
+        planChat: "Chat interno",
+        planSchedules: "Programaciones",
+        planApi: "API de integración",
+        planCurrent: "TU PLAN",
+        planYours: "Plan actual",
+        planChoose: "Elegir este plan",
+        planChoosing: "Preparando…",
+        methodsTitle: "Formas de pago",
+        methodPix: "Pix",
+        methodCard: "Tarjeta de crédito",
+        methodBoleto: "Boleto",
+        savedCardHint: "Cobro automático todos los meses en esta tarjeta.",
+        savedCardRemove: "Quitar",
         title: "Finanzas",
         subtitle: "Sigue tu suscripción y tus cobros.",
         days: "día",

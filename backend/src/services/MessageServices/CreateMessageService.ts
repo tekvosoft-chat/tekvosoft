@@ -1,4 +1,5 @@
 import { checkCompanyCompliant } from "../../helpers/CheckCompanyCompliant";
+import { cacheLayer } from "../../libs/cache";
 import { getIO } from "../../libs/socket";
 import Contact from "../../models/Contact";
 import Message from "../../models/Message";
@@ -101,6 +102,18 @@ const CreateMessageService = async ({
 
   if (message.ticket.queueId !== null && message.queueId === null) {
     await message.update({ queueId: message.ticket.queueId });
+  }
+
+  // confirmação que chegou do WhatsApp antes desta mensagem ser salva:
+  // aplica agora, senão o balão ficaria com o relógio para sempre
+  if (message.fromMe) {
+    const pendingAck = Number(
+      (await cacheLayer.get(`msgack:${message.id}`).catch(() => null)) || 0
+    );
+    if (pendingAck > (message.ack || 0)) {
+      await message.update({ ack: pendingAck });
+      await cacheLayer.del(`msgack:${message.id}`).catch(() => {});
+    }
   }
 
   if (!message) {

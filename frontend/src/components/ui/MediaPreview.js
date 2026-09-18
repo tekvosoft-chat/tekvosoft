@@ -98,7 +98,7 @@ const useStyles = makeStyles(theme => {
       maxHeight: "100%",
       objectFit: "contain",
       display: "block",
-      borderRadius: 6,
+      borderRadius: 10,
       boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
       animation: "$enter .22s ease"
     },
@@ -152,34 +152,40 @@ const useStyles = makeStyles(theme => {
       scrollbarWidth: "none",
       "&::-webkit-scrollbar": { display: "none" }
     },
+    // miniaturas sem moldura: a escolhida ganha um anel branco por dentro,
+    // como no WhatsApp (antes cada uma tinha um quadrado em volta)
     thumb: {
       position: "relative",
       flex: "none",
-      width: 54,
-      height: 54,
-      borderRadius: 12,
+      width: 50,
+      height: 50,
+      borderRadius: 10,
       overflow: "hidden",
       cursor: "pointer",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: "rgba(255,255,255,0.08)",
-      border: "2px solid transparent",
-      opacity: 0.7,
-      transition: "opacity .15s ease, border-color .15s ease, transform .15s",
+      opacity: 0.55,
+      transition:
+        "opacity .2s ease, box-shadow .2s ease, transform .2s cubic-bezier(.34, 1.4, .64, 1)",
       "& img, & video": { width: "100%", height: "100%", objectFit: "cover" },
       "& svg": { color: "rgba(255,255,255,0.8)" },
       "&:active": { transform: "scale(0.94)" }
     },
     thumbActive: {
       opacity: 1,
-      borderColor: "var(--tkv-accent)"
+      boxShadow: "inset 0 0 0 2px rgba(255,255,255,0.95)",
+      transform: "translateY(-1px)"
     },
     addTile: {
-      opacity: 1,
-      border: "2px dashed rgba(255,255,255,0.3)",
-      backgroundColor: "transparent",
-      "&:hover": { borderColor: "rgba(255,255,255,0.6)" }
+      opacity: 0.85,
+      backgroundColor: "rgba(255,255,255,0.06)",
+      boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.18)",
+      "&:hover": {
+        opacity: 1,
+        boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.4)"
+      }
     },
     composer: {
       display: "flex",

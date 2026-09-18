@@ -89,9 +89,16 @@ const useStyles = makeStyles(theme => {
       height: 38,
       borderRadius: "50%",
       color: t.chat.icon,
-      transition: "transform .12s ease",
-      "&:active": { transform: "scale(0.9)" },
-      "& svg": { fontSize: 34 }
+      transition: "transform .18s cubic-bezier(.34, 1.4, .64, 1)",
+      "&:active": { transform: "scale(0.88)" },
+      "& svg": {
+        fontSize: 34,
+        animation: "$iconSwap .18s ease-out"
+      }
+    },
+    "@keyframes iconSwap": {
+      from: { opacity: 0.4, transform: "scale(0.82)" },
+      to: { opacity: 1, transform: "none" }
     },
     body: {
       order: 2,
@@ -117,12 +124,16 @@ const useStyles = makeStyles(theme => {
       borderRadius: 2,
       backgroundColor: t.chat.meta,
       opacity: 0.55,
-      transition: "background-color .15s linear, opacity .15s linear"
+      transformOrigin: "center",
+      transition:
+        "background-color .25s ease, opacity .25s ease, transform .25s ease"
     },
     barPlayed: {
       backgroundColor: t.brand.text,
       opacity: 1
     },
+    // enquanto toca, a onda respira de leve
+    barLive: { transform: "scaleY(1.12)" },
     thumb: {
       position: "absolute",
       top: "50%",
@@ -133,8 +144,10 @@ const useStyles = makeStyles(theme => {
       borderRadius: "50%",
       backgroundColor: t.brand.text,
       boxShadow: "0 1px 3px rgba(0, 0, 0, 0.25)",
-      pointerEvents: "none"
+      pointerEvents: "none",
+      transition: "left .12s linear, transform .2s ease"
     },
+    thumbPlaying: { transform: "scale(1.15)" },
     time: {
       position: "absolute",
       left: 0,
@@ -332,13 +345,20 @@ const AudioBubble = ({
                 started && (i + 0.5) / BARS <= progress
                   ? ` ${classes.barPlayed}`
                   : ""
+              }${
+                // as barrinhas em volta do ponto que está tocando crescem
+                playing && Math.abs((i + 0.5) / BARS - progress) < 0.06
+                  ? ` ${classes.barLive}`
+                  : ""
               }`}
               style={{ height: `${Math.round(height * 100)}%` }}
             />
           ))}
           {started && (
             <span
-              className={classes.thumb}
+              className={`${classes.thumb}${
+                playing ? ` ${classes.thumbPlaying}` : ""
+              }`}
               style={{ left: `${progress * 100}%` }}
             />
           )}

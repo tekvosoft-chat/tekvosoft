@@ -19,6 +19,7 @@ import saveMediaToFile from "../../helpers/saveMediaFile";
 import { getJidOf } from "./getJidOf";
 import { logger } from "../../utils/logger";
 import { URLCharEncoder } from "../../helpers/URLCharEncoder";
+import Message from "../../models/Message";
 
 interface Request {
   media: Express.Multer.File;
@@ -117,12 +118,28 @@ export const getMessageFileOptions = async (
 export const sendWhatsappFile = async (
   ticket: Ticket,
   mediaInfo: MediaInfo,
-  options: AnyMediaMessageContent
+  options: AnyMediaMessageContent,
+  // figurinha e GIF também saem como resposta quando a pessoa escolheu
+  // uma mensagem (antes iam soltos, sem a citação)
+  quotedMsg?: Message
 ): Promise<WAMessage> => {
   try {
     const wbot = await GetTicketWbot(ticket);
 
-    const sentMessage = await wbot.sendMessage(getJidOf(ticket), options);
+    const sendOptions = quotedMsg?.dataJson
+      ? {
+          quoted: {
+            key: JSON.parse(quotedMsg.dataJson)?.key || quotedMsg.id,
+            message: JSON.parse(quotedMsg.dataJson)?.message
+          }
+        }
+      : {};
+
+    const sentMessage = await wbot.sendMessage(
+      getJidOf(ticket),
+      options,
+      sendOptions
+    );
 
     await verifyMediaMessage(sentMessage, ticket, ticket.contact, {
       mediaInfo

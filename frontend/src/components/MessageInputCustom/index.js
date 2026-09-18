@@ -330,6 +330,15 @@ const useStyles = makeStyles(theme => ({
    * Mensagem longa não pode empurrar a barra de envio para fora da tela:
    * o texto fica preso em duas linhas, com reticências, como no WhatsApp.
    */
+  // o X ao lado da prévia: pequeno, para a barra não ficar alta
+  replyClose: {
+    flex: "none",
+    [theme.breakpoints.down("xs")]: {
+      padding: 6,
+      "& svg": { fontSize: 20 }
+    }
+  },
+
   replyginMsgWrapper: {
     display: "flex",
     width: "100%",
@@ -352,6 +361,7 @@ const useStyles = makeStyles(theme => ({
     overflow: "hidden",
     backgroundColor: theme.palette.tkv.chat.quoteIn,
     borderRadius: 12,
+    [theme.breakpoints.down("xs")]: { borderRadius: 9 },
     display: "flex",
     position: "relative",
     [theme.breakpoints.up("sm")]: {
@@ -368,7 +378,13 @@ const useStyles = makeStyles(theme => ({
   replyginMsgBody: {
     flex: 1,
     minWidth: 0,
-    padding: "7px 10px",
+    padding: "6px 10px",
+    // no celular a prévia é baixinha e de uma linha só, como no WhatsApp
+    [theme.breakpoints.down("xs")]: {
+      padding: "5px 9px",
+      fontSize: "0.8125rem",
+      "& > div, & > p": { WebkitLineClamp: 1, maxHeight: "1.35em" }
+    },
     display: "flex",
     flexDirection: "column",
     gap: 2,
@@ -388,13 +404,13 @@ const useStyles = makeStyles(theme => ({
 
   replyginContactMsgSideColor: {
     flex: "none",
-    width: "4px",
+    width: "3px",
     backgroundColor: theme.palette.tkv.brand.main
   },
 
   replyginSelfMsgSideColor: {
     flex: "none",
-    width: "4px",
+    width: "3px",
     backgroundColor: theme.palette.tkv.semantic.success
   },
 
@@ -1501,6 +1517,7 @@ const MessageInputCustom = props => {
         <IconButton
           aria-label="showRecorder"
           component="span"
+          className={classes.replyClose}
           disabled={disableOption}
           onClick={() => {
             setReplyingMessage(null);

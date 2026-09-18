@@ -75,6 +75,7 @@ import saveMediaToFile from "../../helpers/saveMediaFile";
 import { _t } from "../TranslationServices/i18nService";
 import WhatsappLidMap from "../../models/WhatsappLidMap";
 import normalizePhone from "../../helpers/NormalizePhone";
+import { cacheLayer } from "../../libs/cache";
 
 export interface ImessageUpsert {
   messages: proto.IWebMessageInfo[];
@@ -2144,7 +2145,18 @@ const handleMsgAck = async (
       where: { id },
       attributes: ["id", "ack"]
     });
-    if (!current || (update.status > 0 && update.status <= current.ack)) {
+    if (!current) {
+      // a confirmação chegou antes de a mensagem estar salva (acontece com o
+      // que a gente acabou de enviar). Guarda para aplicar na criação — sem
+      // isso o balão ficava com o relógio para sempre.
+      if (update.status > 1) {
+        await cacheLayer
+          .set(`msgack:${id}`, String(update.status), "EX", 300)
+          .catch(() => {});
+      }
+      return;
+    }
+    if (update.status > 0 && update.status <= current.ack) {
       return;
     }
 

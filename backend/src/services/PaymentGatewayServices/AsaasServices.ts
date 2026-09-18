@@ -7,6 +7,7 @@ import Setting from "../../models/Setting";
 import GetSuperSettingService from "../SettingServices/GetSuperSettingService";
 import { logger } from "../../utils/logger";
 import { processInvoicePaid } from "./PaymentGatewayServices";
+import { cacheLayer } from "../../libs/cache";
 
 /**
  * Asaas: cartão de crédito e boleto.
@@ -349,7 +350,24 @@ export const asaasChargeSavedCards = async (): Promise<void> => {
     const due = invoice.dueDate
       ? new Date(invoice.dueDate).toISOString().slice(0, 10)
       : null;
-    if (!due || due > today || invoice.txId) continue;
+    if (!due || due > today) continue;
+
+    // já existe cobrança no cartão para esta fatura: o Asaas cuida dela
+    let lastMethod = "";
+    try {
+      lastMethod = invoice.payGwData
+        ? JSON.parse(invoice.payGwData)?.method || ""
+        : "";
+    } catch {
+      lastMethod = "";
+    }
+    if (lastMethod === "CREDIT_CARD") continue;
+
+    // trava do dia: se um Pix foi gerado antes, a fatura tinha txId e o
+    // cartão salvo nunca era cobrado. Agora cobra, sem repetir no mesmo dia.
+    const guard = `asaas:autocharge:${invoice.id}:${today}`;
+    // eslint-disable-next-line no-await-in-loop
+    if (await cacheLayer.get(guard).catch(() => null)) continue;
 
     const company = invoice.company;
     if (!company) continue;
@@ -359,6 +377,8 @@ export const asaasChargeSavedCards = async (): Promise<void> => {
     if (!token) continue;
 
     try {
+      // eslint-disable-next-line no-await-in-loop
+      await cacheLayer.set(guard, "1", "EX", 172800).catch(() => {});
       // eslint-disable-next-line no-await-in-loop
       await asaasCreateCharge(invoice, company, "CREDIT_CARD", {});
       logger.info(

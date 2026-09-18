@@ -30,16 +30,18 @@ const useStyles = makeStyles(theme => {
       zIndex: theme.zIndex.modal + 1,
       WebkitTapHighlightColor: "transparent"
     },
+    // fundo escurece e desfoca de leve, como no WhatsApp
     dim: {
-      backgroundColor: "rgba(10, 9, 16, 0.18)",
-      animation: "$fade .18s ease both"
+      backgroundColor: "rgba(10, 9, 16, 0.22)",
+      backdropFilter: "blur(2px)",
+      animation: "$fade .2s ease both"
     },
     bar: {
       position: "fixed",
       display: "flex",
       alignItems: "center",
       gap: 2,
-      padding: 5,
+      padding: 4,
       borderRadius: 999,
       backgroundColor: surface,
       boxShadow:
@@ -47,11 +49,12 @@ const useStyles = makeStyles(theme => {
       transformOrigin: "var(--origin, 50% 100%)",
       animation: "$barIn .32s cubic-bezier(.34, 1.56, .64, 1) both"
     },
+    // barra de reações mais enxuta (estava bem maior que a do WhatsApp)
     emoji: {
-      width: 40,
-      height: 40,
+      width: 36,
+      height: 36,
       borderRadius: "50%",
-      fontSize: 26,
+      fontSize: 23,
       lineHeight: 1,
       fontFamily:
         "'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif",
@@ -63,12 +66,12 @@ const useStyles = makeStyles(theme => {
         backgroundColor: t.surfaceHover
       },
       "&:active": { transform: "scale(0.9)" },
-      [theme.breakpoints.down("xs")]: { width: 42, height: 42, fontSize: 28 }
+      [theme.breakpoints.down("xs")]: { width: 38, height: 38, fontSize: 25 }
     },
     mine: { backgroundColor: t.brand.textSoft },
     plus: {
-      width: 36,
-      height: 36,
+      width: 32,
+      height: 32,
       marginLeft: 2,
       borderRadius: "50%",
       color: theme.palette.text.secondary,
@@ -78,9 +81,9 @@ const useStyles = makeStyles(theme => {
     },
     actions: {
       position: "fixed",
-      minWidth: 210,
-      padding: "6px 0",
-      borderRadius: 14,
+      minWidth: 188,
+      padding: "4px 0",
+      borderRadius: 12,
       backgroundColor: surface,
       boxShadow: "0 10px 30px rgba(12, 10, 20, 0.22)",
       transformOrigin: "var(--origin, 50% 0%)",
@@ -92,11 +95,12 @@ const useStyles = makeStyles(theme => {
       display: "flex",
       justifyContent: "space-between",
       gap: 16,
-      padding: "11px 16px",
-      fontSize: "1rem",
+      padding: "9px 14px",
+      fontSize: "0.9375rem",
       color: theme.palette.text.primary,
+      transition: "background-color .15s ease",
       "& + $action": { borderTop: `1px solid ${t.border}` },
-      "& svg": { fontSize: 20, color: theme.palette.text.secondary }
+      "& svg": { fontSize: 18, color: theme.palette.text.secondary }
     },
     actionDanger: {
       color: t.semantic.danger,
