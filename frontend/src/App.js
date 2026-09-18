@@ -20,6 +20,7 @@ import Favicon from "react-favicon";
 import { getBackendURL } from "./services/config";
 
 import Routes from "./routes";
+import NetworkStatus from "./components/NetworkStatus";
 import PortraitLock from "./components/ui/PortraitLock";
 
 const queryClient = new QueryClient();
@@ -375,6 +376,9 @@ const App = () => {
               <SocketContext.Provider value={socketManager}>
                 <Routes />
                 <PortraitLock />
+                {/* aviso de internet lenta ou fora do ar (vale também na
+                    tela de entrar, antes de qualquer login) */}
+                <NetworkStatus />
               </SocketContext.Provider>
             </QueryClientProvider>
           </ThemeProvider>

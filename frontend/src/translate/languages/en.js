@@ -21,6 +21,13 @@ const messages = {
           "Thank you so much for trusting us. Your access is unlocked for 30 more days.",
         continue: "Continue"
       },
+      network: {
+        slow: "Slow connection",
+        backOnline: "Back online 🎉",
+        offlineTitle: "Your internet stepped out for coffee",
+        offlineText: "We whistled at the router and got nothing back. The moment it returns, we pick up right where you left off.",
+        retry: "Try again",
+      },
       payment: {
         cardPreview: {
           holder: "Cardholder",

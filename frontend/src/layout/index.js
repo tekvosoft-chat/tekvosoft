@@ -10,7 +10,6 @@ import {
   MenuItem,
   IconButton,
   Menu,
-  Badge,
   Tooltip,
   useTheme,
   useMediaQuery,
@@ -21,7 +20,6 @@ import SearchRoundedIcon from "@material-ui/icons/SearchRounded";
 import UnfoldMoreRoundedIcon from "@material-ui/icons/UnfoldMoreRounded";
 
 import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
-import SettingsEthernetIcon from "@material-ui/icons/SettingsEthernet";
 
 import MainListItems from "./MainListItems";
 import MobileNav from "./MobileNav";
@@ -300,26 +298,6 @@ const useStyles = makeStyles(theme => ({
   title: {
     flexGrow: 1,
     fontSize: 14
-  },
-  wsConnectionAlertButton: {
-    display: "inline-flex",
-    marginRight: theme.spacing(0.5),
-    color: theme.palette.tkv.semantic.warning,
-    padding: theme.spacing(0.5)
-  },
-  wsConnectionAlertIcon: {
-    fontSize: 20
-  },
-  wsConnectionBadge: {
-    "& .MuiBadge-badge": {
-      minWidth: 10,
-      width: 10,
-      height: 10,
-      borderRadius: "50%",
-      backgroundColor: "#ff4d4f",
-      border: "none",
-      boxShadow: "none"
-    }
   },
   userMenuInfoContainer: {
     padding: theme.spacing(1.5, 2),
@@ -681,7 +659,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
   const { dateToClient } = useDate();
 
   const socketManager = useContext(SocketContext);
-  const [wsConnectionIssue, setWsConnectionIssue] = useState(false);
+  // o aviso de conexão agora é do NetworkStatus, na tela inteira
 
   const [newTicketContact, setNewTicketContact] = useState(null);
 
@@ -779,28 +757,6 @@ const LoggedInLayout = ({ children, themeToggle }) => {
 
     persistDrawerOpenState(drawerOpen);
   }, [drawerOpen, greaterThenMd]);
-
-  useEffect(() => {
-    if (!socketManager?.subscribeWsConnectionIssue) {
-      return undefined;
-    }
-
-    // só avisa se a conexão ficar ruim por um tempo: ao entrar o sistema
-    // ainda está conectando, e o ícone piscava à toa na tela
-    let timer = null;
-    const unsubscribe = socketManager.subscribeWsConnectionIssue(active => {
-      clearTimeout(timer);
-      if (active) {
-        timer = setTimeout(() => setWsConnectionIssue(true), 8000);
-      } else {
-        setWsConnectionIssue(false);
-      }
-    });
-    return () => {
-      clearTimeout(timer);
-      if (typeof unsubscribe === "function") unsubscribe();
-    };
-  }, [socketManager]);
 
   useEffect(() => {
     const companyId = localStorage.getItem("companyId");
@@ -1039,27 +995,6 @@ const LoggedInLayout = ({ children, themeToggle }) => {
                   !drawerOpen && classes.sidebarToolsCollapsed
                 )}
               >
-                {wsConnectionIssue && (
-                  <Tooltip title={i18n.t("common.connection")} arrow>
-                    <span
-                      aria-label={i18n.t("common.connection")}
-                      className={classes.wsConnectionAlertButton}
-                    >
-                      <Badge
-                        variant="dot"
-                        overlap="circular"
-                        color="secondary"
-                        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-                        className={classes.wsConnectionBadge}
-                      >
-                        <SettingsEthernetIcon
-                          className={classes.wsConnectionAlertIcon}
-                        />
-                      </Badge>
-                    </span>
-                  </Tooltip>
-                )}
-
                 <PhoneCall />
               </div>
 
@@ -1202,27 +1137,6 @@ const LoggedInLayout = ({ children, themeToggle }) => {
       {/* sem a barra de cima: no celular só o que precisa aparecer na hora */}
       {isPhone && (
         <div className={classes.phoneFloatingTools}>
-          {wsConnectionIssue && (
-            <Tooltip title={i18n.t("common.connection")} arrow>
-              <span
-                aria-label={i18n.t("common.connection")}
-                className={classes.wsConnectionAlertButton}
-              >
-                <Badge
-                  variant="dot"
-                  overlap="circular"
-                  color="secondary"
-                  anchorOrigin={{ vertical: "top", horizontal: "right" }}
-                  className={classes.wsConnectionBadge}
-                >
-                  <SettingsEthernetIcon
-                    className={classes.wsConnectionAlertIcon}
-                  />
-                </Badge>
-              </span>
-            </Tooltip>
-          )}
-
           <PhoneCall />
         </div>
       )}

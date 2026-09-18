@@ -22,6 +22,13 @@ const messages = {
           "Muito obrigado por confiar na gente. Seu acesso foi liberado por mais 30 dias.",
         continue: "Continuar"
       },
+      network: {
+        slow: "Internet lenta",
+        backOnline: "Internet de volta 🎉",
+        offlineTitle: "A internet foi tomar um café",
+        offlineText: "Já assobiámos para o router, mas ele não respondeu. Assim que ela voltar, continuamos exatamente de onde parou.",
+        retry: "Tentar de novo",
+      },
       payment: {
         cardPreview: {
           holder: "Titular",
