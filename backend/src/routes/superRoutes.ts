@@ -32,4 +32,11 @@ superRoutes.get(
   SuperDashboardController.companyUsers
 );
 
+superRoutes.get(
+  "/super/companies/:companyId/billing",
+  isAuth,
+  isSuper,
+  SuperDashboardController.companyBilling
+);
+
 export default superRoutes;

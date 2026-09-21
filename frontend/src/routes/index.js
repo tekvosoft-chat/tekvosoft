@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect, useState } from "react";
+import React, { lazy, Suspense } from "react";
 import PageLoader from "../components/ui/PageLoader";
 
 // Telas carregadas sob demanda: o app abre só com o essencial (login e
@@ -36,15 +36,6 @@ const SchedulesPage = withPlanFeature(Schedules, "useSchedules");
 const MessagesAPIPage = withPlanFeature(MessagesAPI, "useExternalApi");
 
 const Routes = () => {
-  const [showCampaigns, setShowCampaigns] = useState(false);
-
-  useEffect(() => {
-    const cshow = localStorage.getItem("cshow");
-    if (cshow !== undefined) {
-      setShowCampaigns(true);
-    }
-  }, []);
-
   return (
     <BrowserRouter>
       <AuthProvider>

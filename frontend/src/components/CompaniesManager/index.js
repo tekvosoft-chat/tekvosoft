@@ -1,839 +1,897 @@
-import React, { useState, useEffect, useContext } from "react";
-import {
-  makeStyles,
-  Paper,
-  Grid,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  TextField,
-  Table,
-  TableHead,
-  TableBody,
-  TableCell,
-  TableRow,
-  IconButton,
-  Select
-} from "@material-ui/core";
-import { Formik, Form, Field } from "formik";
-import ButtonWithSpinner from "../ButtonWithSpinner";
-import ConfirmationModal from "../ConfirmationModal";
-
-import { Edit as EditIcon } from "@material-ui/icons";
-
+import React, { useContext, useEffect, useMemo, useState } from "react";
+import { makeStyles, useTheme } from "@material-ui/core/styles";
+import useMediaQuery from "@material-ui/core/useMediaQuery";
+import Button from "@material-ui/core/Button";
+import ButtonBase from "@material-ui/core/ButtonBase";
+import Drawer from "@material-ui/core/Drawer";
+import IconButton from "@material-ui/core/IconButton";
+import InputBase from "@material-ui/core/InputBase";
+import Switch from "@material-ui/core/Switch";
+import TextField from "@material-ui/core/TextField";
+import AddRoundedIcon from "@material-ui/icons/AddRounded";
+import CloseRoundedIcon from "@material-ui/icons/CloseRounded";
+import SearchRoundedIcon from "@material-ui/icons/SearchRounded";
+import CheckCircleRoundedIcon from "@material-ui/icons/CheckCircleRounded";
+import DeleteOutlineRoundedIcon from "@material-ui/icons/DeleteOutlineRounded";
+import LoginRoundedIcon from "@material-ui/icons/ExitToAppRounded";
+import PersonOutlineRoundedIcon from "@material-ui/icons/PersonOutlineRounded";
+import EventRoundedIcon from "@material-ui/icons/EventRounded";
+import moment from "moment";
 import { toast } from "react-toastify";
+import { head, isArray } from "lodash";
+
+import ConfirmationModal from "../ConfirmationModal";
+import ModalUsers from "../ModalUsers";
+import { SelectLanguage } from "../SelectLanguage";
 import useCompanies from "../../hooks/useCompanies";
 import usePlans from "../../hooks/usePlans";
-import ModalUsers from "../ModalUsers";
 import api from "../../services/api";
-import { head, isArray, has } from "lodash";
-import { useDate } from "../../hooks/useDate";
-import useSettings from "../../hooks/useSettings";
-import { SelectLanguage } from "../SelectLanguage";
+import { AuthContext } from "../../context/Auth/AuthContext";
+import { safeValueFormat } from "../../helpers/safeValueFormat";
 import { i18n } from "../../translate/i18n";
 
-import moment from "moment";
+/**
+ * Empresas (painel do super admin).
+ *
+ * A lista mostra cada empresa num cartão com o que importa de relance:
+ * plano, se está ativa e quando vence. Tocar abre o editor ao lado (no
+ * celular, uma folha que sobe de baixo) dividido em três partes — dados,
+ * plano e cobrança — em vez do formulário comprido em cima da tabela.
+ * Campanhas saíram: o sistema não usa mais.
+ */
 
-import { AuthContext } from "../../context/Auth/AuthContext";
-import useMediaQuery from "@material-ui/core/useMediaQuery";
-import { useTheme } from "@material-ui/core/styles";
-import clsx from "clsx";
+const RECURRENCES = [
+  ["MENSAL", "Mensal", 1],
+  ["BIMESTRAL", "Bimestral", 2],
+  ["TRIMESTRAL", "Trimestral", 3],
+  ["SEMESTRAL", "Semestral", 6],
+  ["ANUAL", "Anual", 12]
+];
 
-const useStyles = makeStyles(theme => ({
-  // celular: uma tabela de nove colunas não cabe; cada empresa vira um cartão
-  companyCards: {
-    display: "flex",
-    flexDirection: "column",
-    gap: theme.spacing(1.5),
-    padding: theme.spacing(1, 0, 2)
-  },
-  companyCard: {
-    borderRadius: theme.palette.tkv.radius.lg,
-    border: `1px solid ${theme.palette.tkv.border}`,
-    backgroundColor: theme.palette.tkv.surface,
-    padding: theme.spacing(1.5)
-  },
-  companyCardHead: {
-    display: "flex",
-    alignItems: "center",
-    gap: theme.spacing(1),
-    marginBottom: theme.spacing(1)
-  },
-  companyName: {
-    flex: 1,
-    minWidth: 0,
-    fontSize: "1rem",
-    fontWeight: 700,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap"
-  },
-  companyFacts: {
-    display: "grid",
-    gridTemplateColumns: "auto 1fr",
-    gap: "6px 12px",
-    margin: 0,
-    fontSize: "0.875rem",
-    "& dt": { color: theme.palette.text.secondary },
-    "& dd": { margin: 0, textAlign: "right", fontWeight: 500 }
-  },
-  companyBreak: { wordBreak: "break-all" },
-  root: {
-    width: "100%"
-  },
-  mainPaper: {
-    width: "100%",
-    flex: 1,
-    padding: theme.spacing(2)
-  },
-  fullWidth: {
-    width: "100%"
-  },
-  tableContainer: {
-    width: "100%",
-    overflowX: "scroll",
-    ...theme.scrollbarStyles
-  },
-  textfield: {
-    width: "100%"
-  },
-  textRight: {
-    textAlign: "right"
-  },
-  row: {
-    paddingTop: theme.spacing(2),
-    paddingBottom: theme.spacing(2)
-  },
-  control: {
-    paddingRight: theme.spacing(1),
-    paddingLeft: theme.spacing(1)
-  },
-  buttonContainer: {
-    textAlign: "right",
-    padding: theme.spacing(1)
-  },
-  inactive: {
-    color: "gray"
-  },
-  gracePeriod: {
-    color: "orange"
-  },
-  almostDue: {
-    color: theme.mode === "light" ? "blue" : "#38f"
-  }
-}));
-
-export function CompanyForm(props) {
-  const { onSubmit, onDelete, onImpersonate, onCancel, initialValue, loading } =
-    props;
-  const classes = useStyles();
-  const [plans, setPlans] = useState([]);
-  const [modalUser, setModalUser] = useState(false);
-  const [firstUser, setFirstUser] = useState({});
-
-  const [record, setRecord] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    language: "",
-    planId: "",
-    status: true,
-    campaignsEnabled: false,
-    dueDate: "",
-    recurrence: "",
-    ...initialValue
-  });
-
-  const { list: listPlans } = usePlans();
-
-  useEffect(() => {
-    async function fetchData() {
-      const list = await listPlans();
-      setPlans(list);
-    }
-    fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    setRecord(prev => {
-      if (moment(initialValue).isValid()) {
-        initialValue.dueDate = moment(initialValue.dueDate).format(
-          "YYYY-MM-DD"
-        );
-      }
-      return {
-        ...prev,
-        ...initialValue
-      };
-    });
-  }, [initialValue]);
-
-  const handleSubmit = async data => {
-    if (data.dueDate === "" || moment(data.dueDate).isValid() === false) {
-      data.dueDate = null;
-    }
-    onSubmit(data);
-    setRecord({ ...initialValue, dueDate: "" });
-  };
-
-  const handleOpenModalUsers = async () => {
-    try {
-      const { data } = await api.get("/users/list", {
-        params: {
-          companyId: initialValue.id
-        }
-      });
-      if (isArray(data) && data.length) {
-        setFirstUser(head(data));
-      }
-      setModalUser(true);
-    } catch (e) {
-      toast.error(e);
-    }
-  };
-
-  const handleCloseModalUsers = () => {
-    setFirstUser({});
-    setModalUser(false);
-  };
-
-  const incrementDueDate = () => {
-    const data = { ...record };
-    if (data.dueDate !== "" && data.dueDate !== null) {
-      switch (data.recurrence) {
-        case "MENSAL":
-          data.dueDate = moment(data.dueDate)
-            .add(1, "month")
-            .format("YYYY-MM-DD");
-          break;
-        case "BIMESTRAL":
-          data.dueDate = moment(data.dueDate)
-            .add(2, "month")
-            .format("YYYY-MM-DD");
-          break;
-        case "TRIMESTRAL":
-          data.dueDate = moment(data.dueDate)
-            .add(3, "month")
-            .format("YYYY-MM-DD");
-          break;
-        case "SEMESTRAL":
-          data.dueDate = moment(data.dueDate)
-            .add(6, "month")
-            .format("YYYY-MM-DD");
-          break;
-        case "ANUAL":
-          data.dueDate = moment(data.dueDate)
-            .add(12, "month")
-            .format("YYYY-MM-DD");
-          break;
-        default:
-          break;
-      }
-    }
-    setRecord(data);
-  };
-
-  return (
-    <>
-      <ModalUsers
-        userId={firstUser.id}
-        companyId={initialValue.id}
-        open={modalUser}
-        onClose={handleCloseModalUsers}
-      />
-      <Formik
-        enableReinitialize
-        className={classes.fullWidth}
-        initialValues={record}
-        onSubmit={(values, { resetForm }) =>
-          setTimeout(() => {
-            handleSubmit(values);
-            resetForm();
-          }, 500)
-        }
-      >
-        {(values, setValues) => (
-          <Form className={classes.fullWidth}>
-            <Grid spacing={2} justifyContent="flex-end" container>
-              <Grid xs={12} sm={6} md={4} item>
-                <Field
-                  as={TextField}
-                  label={i18n.t("common.name")}
-                  name="name"
-                  variant="outlined"
-                  className={classes.fullWidth}
-                  margin="dense"
-                />
-              </Grid>
-              <Grid xs={12} sm={6} md={4} item>
-                <Field
-                  as={TextField}
-                  label={i18n.t("common.email")}
-                  name="email"
-                  variant="outlined"
-                  className={classes.fullWidth}
-                  margin="dense"
-                  required
-                />
-              </Grid>
-              <Grid xs={12} sm={6} md={2} item>
-                <Field
-                  as={TextField}
-                  label={i18n.t("common.phone")}
-                  name="phone"
-                  variant="outlined"
-                  className={classes.fullWidth}
-                  margin="dense"
-                />
-              </Grid>
-              <Grid xs={12} sm={6} md={2} item>
-                <Field
-                  as={SelectLanguage}
-                  name="language"
-                  fullWidth
-                  variant="outlined"
-                  margin="dense"
-                />
-              </Grid>
-              <Grid xs={12} sm={6} md={2} item>
-                <FormControl margin="dense" variant="outlined" fullWidth>
-                  <InputLabel htmlFor="plan-selection">
-                    {i18n.t("companies.form.plan")}
-                  </InputLabel>
-                  <Field
-                    as={Select}
-                    id="plan-selection"
-                    label={i18n.t("companies.form.plan")}
-                    labelId="plan-selection-label"
-                    name="planId"
-                    margin="dense"
-                    required
-                  >
-                    {plans.map((plan, key) => (
-                      <MenuItem key={key} value={plan.id}>
-                        {plan.name}
-                      </MenuItem>
-                    ))}
-                  </Field>
-                </FormControl>
-              </Grid>
-              <Grid xs={12} sm={6} md={2} item>
-                <FormControl margin="dense" variant="outlined" fullWidth>
-                  <InputLabel htmlFor="status-selection">
-                    {i18n.t("common.status")}
-                  </InputLabel>
-                  <Field
-                    as={Select}
-                    id="status-selection"
-                    label={i18n.t("common.status")}
-                    labelId="status-selection-label"
-                    name="status"
-                    margin="dense"
-                  >
-                    <MenuItem value={true}>{i18n.t("common.yes")}</MenuItem>
-                    <MenuItem value={false}>{i18n.t("common.no")}</MenuItem>
-                  </Field>
-                </FormControl>
-              </Grid>
-              <Grid xs={12} sm={6} md={2} item>
-                <FormControl margin="dense" variant="outlined" fullWidth>
-                  <InputLabel htmlFor="campaigns-selection">
-                    {i18n.t("companiesManager.form.campaigns")}
-                  </InputLabel>
-                  <Field
-                    as={Select}
-                    id="campaigns-selection"
-                    label={i18n.t("companiesManager.form.campaigns")}
-                    labelId="campaigns-selection-label"
-                    name="campaignsEnabled"
-                    margin="dense"
-                  >
-                    <MenuItem value={true}>{i18n.t("common.enabled")}</MenuItem>
-                    <MenuItem value={false}>
-                      {i18n.t("common.disabled")}
-                    </MenuItem>
-                  </Field>
-                </FormControl>
-              </Grid>
-              <Grid xs={12} sm={6} md={2} item>
-                <FormControl variant="outlined" fullWidth>
-                  <Field
-                    as={TextField}
-                    label={i18n.t("common.dueDate")}
-                    type="date"
-                    name="dueDate"
-                    InputLabelProps={{
-                      shrink: true
-                    }}
-                    variant="outlined"
-                    fullWidth
-                    margin="dense"
-                  />
-                </FormControl>
-              </Grid>
-              <Grid xs={12} sm={6} md={2} item>
-                <FormControl margin="dense" variant="outlined" fullWidth>
-                  <InputLabel htmlFor="recorrencia-selection">
-                    {i18n.t("companiesManager.form.recurrence")}
-                  </InputLabel>
-                  <Field
-                    as={Select}
-                    label={i18n.t("companiesManager.form.recurrence")}
-                    labelId="recorrencia-selection-label"
-                    id="recurrence"
-                    name="recurrence"
-                    margin="dense"
-                  >
-                    <MenuItem value="MENSAL">
-                      {i18n.t("companiesManager.form.monthly")}
-                    </MenuItem>
-                    <MenuItem value="BIMESTRAL">
-                      {i18n.t("companiesManager.form.bimonthly")}
-                    </MenuItem>
-                    <MenuItem value="TRIMESTRAL">
-                      {i18n.t("companiesManager.form.quarterly")}
-                    </MenuItem>
-                    <MenuItem value="SEMESTRAL">
-                      {i18n.t("companiesManager.form.semiannual")}
-                    </MenuItem>
-                    <MenuItem value="ANUAL">
-                      {i18n.t("companiesManager.form.annual")}
-                    </MenuItem>
-                  </Field>
-                </FormControl>
-              </Grid>
-              <Grid xs={12} item>
-                <Grid justifyContent="flex-end" spacing={1} container>
-                  <Grid xs={4} md={1} item>
-                    <ButtonWithSpinner
-                      className={classes.fullWidth}
-                      style={{ marginTop: 7 }}
-                      loading={loading}
-                      onClick={() => onCancel()}
-                      variant="contained"
-                    >
-                      {i18n.t("companiesManager.buttons.clear")}
-                    </ButtonWithSpinner>
-                  </Grid>
-                  {record.id !== undefined ? (
-                    <>
-                      <Grid xs={6} md={2} item>
-                        <ButtonWithSpinner
-                          style={{ marginTop: 7 }}
-                          className={classes.fullWidth}
-                          loading={loading}
-                          onClick={() => onImpersonate(record)}
-                          variant="outlined"
-                          color="primary"
-                        >
-                          {i18n.t("companiesManager.buttons.accessAs")}
-                        </ButtonWithSpinner>
-                      </Grid>
-                      <Grid xs={6} md={1} item>
-                        <ButtonWithSpinner
-                          style={{ marginTop: 7 }}
-                          className={classes.fullWidth}
-                          loading={loading}
-                          onClick={() => onDelete(record)}
-                          variant="contained"
-                          color="secondary"
-                        >
-                          {i18n.t("common.delete")}
-                        </ButtonWithSpinner>
-                      </Grid>
-                      <Grid xs={6} md={2} item>
-                        <ButtonWithSpinner
-                          style={{ marginTop: 7 }}
-                          className={classes.fullWidth}
-                          loading={loading}
-                          onClick={() => incrementDueDate()}
-                          variant="contained"
-                          color="primary"
-                        >
-                          {i18n.t("companiesManager.buttons.incrementDueDate")}
-                        </ButtonWithSpinner>
-                      </Grid>
-                      <Grid xs={6} md={1} item>
-                        <ButtonWithSpinner
-                          style={{ marginTop: 7 }}
-                          className={classes.fullWidth}
-                          loading={loading}
-                          onClick={() => handleOpenModalUsers()}
-                          variant="contained"
-                          color="primary"
-                        >
-                          {i18n.t("common.user")}
-                        </ButtonWithSpinner>
-                      </Grid>
-                    </>
-                  ) : null}
-                  <Grid xs={6} md={1} item>
-                    <ButtonWithSpinner
-                      className={classes.fullWidth}
-                      style={{ marginTop: 7 }}
-                      loading={loading}
-                      type="submit"
-                      variant="contained"
-                      color="primary"
-                    >
-                      {i18n.t("common.save")}
-                    </ButtonWithSpinner>
-                  </Grid>
-                </Grid>
-              </Grid>
-            </Grid>
-          </Form>
-        )}
-      </Formik>
-    </>
-  );
-}
+const EMPTY = {
+  name: "",
+  email: "",
+  phone: "",
+  language: "",
+  planId: "",
+  status: true,
+  dueDate: "",
+  recurrence: "MENSAL"
+};
 
 const formatBytes = bytes => {
   if (!bytes) return "0 MB";
-  const mb = bytes / (1024 * 1024);
-  if (mb >= 1024) return `${(mb / 1024).toFixed(2)} GB`;
-  if (mb >= 1) return `${mb.toFixed(1)} MB`;
-  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let value = Number(bytes);
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit += 1;
+  }
+  return `${value.toFixed(value >= 10 || unit === 0 ? 0 : 1)} ${units[unit]}`;
 };
 
-export function CompaniesManagerGrid(props) {
-  const { records, onSelect } = props;
+const daysToDue = dueDate =>
+  dueDate
+    ? moment(dueDate).startOf("day").diff(moment().startOf("day"), "days")
+    : null;
+
+const useStyles = makeStyles(theme => {
+  const t = theme.palette.tkv;
+  const sem = t.semantic;
+  return {
+    root: {
+      display: "flex",
+      flexDirection: "column",
+      gap: theme.spacing(2)
+    },
+    toolbar: {
+      display: "flex",
+      alignItems: "center",
+      gap: theme.spacing(1),
+      flexWrap: "wrap"
+    },
+    search: {
+      flex: 1,
+      minWidth: 200,
+      display: "flex",
+      alignItems: "center",
+      gap: 8,
+      height: 42,
+      padding: "0 14px",
+      borderRadius: t.radius.pill,
+      border: `1px solid ${t.border}`,
+      backgroundColor: t.surface,
+      color: theme.palette.text.secondary,
+      [theme.breakpoints.down("xs")]: { minWidth: 0 }
+    },
+    addBtn: {
+      height: 42,
+      borderRadius: t.radius.pill,
+      textTransform: "none",
+      fontWeight: 700,
+      [theme.breakpoints.down("xs")]: {
+        minWidth: 42,
+        width: 42,
+        padding: 0,
+        "& .MuiButton-startIcon": { margin: 0 },
+        "& $addLabel": { display: "none" }
+      }
+    },
+    addLabel: {},
+    filters: {
+      display: "flex",
+      gap: 6,
+      overflowX: "auto",
+      scrollbarWidth: "none",
+      "&::-webkit-scrollbar": { display: "none" },
+      "& > *": { flex: "none" }
+    },
+    filter: {
+      height: 32,
+      padding: "0 14px",
+      borderRadius: t.radius.pill,
+      border: `1px solid ${t.border}`,
+      backgroundColor: t.surface,
+      fontSize: "0.8125rem",
+      fontWeight: 600,
+      color: theme.palette.text.secondary
+    },
+    filterOn: {
+      borderColor: t.brand.textBorder,
+      backgroundColor: t.brand.textSoft,
+      color: t.brand.text
+    },
+    count: { marginLeft: 6, opacity: 0.7 },
+    grid: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))",
+      gap: theme.spacing(1.5),
+      [theme.breakpoints.down("xs")]: { gridTemplateColumns: "1fr" }
+    },
+    card: {
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "stretch",
+      gap: theme.spacing(1.25),
+      padding: theme.spacing(2),
+      borderRadius: t.radius.lg,
+      border: `1px solid ${t.border}`,
+      backgroundColor: t.surface,
+      textAlign: "left",
+      transition: "border-color .15s ease, transform .15s ease",
+      animation: "$rise .3s ease both",
+      "&:hover": {
+        borderColor: t.brand.textBorder,
+        transform: "translateY(-2px)"
+      }
+    },
+    "@keyframes rise": {
+      from: { opacity: 0, transform: "translateY(6px)" },
+      to: { opacity: 1, transform: "none" }
+    },
+    cardTop: { display: "flex", alignItems: "center", gap: 12, minWidth: 0 },
+    avatar: {
+      flex: "none",
+      width: 42,
+      height: 42,
+      borderRadius: 12,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontWeight: 800,
+      fontSize: "1.0625rem",
+      color: t.brand.text,
+      backgroundColor: t.brand.textSoft
+    },
+    name: {
+      fontSize: "0.9688rem",
+      fontWeight: 700,
+      color: theme.palette.text.primary,
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap"
+    },
+    email: {
+      fontSize: "0.8125rem",
+      color: theme.palette.text.secondary,
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap"
+    },
+    chips: { display: "flex", flexWrap: "wrap", gap: 6 },
+    chip: {
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 4,
+      height: 24,
+      padding: "0 9px",
+      borderRadius: t.radius.pill,
+      fontSize: "0.75rem",
+      fontWeight: 600,
+      whiteSpace: "nowrap",
+      "& svg": { fontSize: 14 }
+    },
+    plain: {
+      color: theme.palette.text.secondary,
+      backgroundColor: t.surfaceSunken
+    },
+    brand: { color: t.brand.text, backgroundColor: t.brand.textSoft },
+    ok: { color: sem.success, backgroundColor: sem.successSoft },
+    soon: { color: sem.warning, backgroundColor: sem.warningSoft },
+    late: { color: sem.danger, backgroundColor: sem.dangerSoft },
+    empty: {
+      padding: theme.spacing(6, 2),
+      textAlign: "center",
+      color: theme.palette.text.secondary
+    },
+
+    // ── editor ──
+    drawerPaper: {
+      width: 480,
+      maxWidth: "100vw",
+      display: "flex",
+      flexDirection: "column",
+      backgroundColor: t.surface,
+      [theme.breakpoints.down("xs")]: {
+        width: "100%",
+        height: "calc(var(--vh, 100vh) - 24px)",
+        borderRadius: "22px 22px 0 0"
+      }
+    },
+    edHead: {
+      flex: "none",
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      padding: theme.spacing(2, 2, 1.5, 2.5),
+      borderBottom: `1px solid ${t.border}`
+    },
+    edTitle: {
+      flex: 1,
+      minWidth: 0,
+      fontSize: "1.125rem",
+      fontWeight: 700,
+      color: theme.palette.text.primary,
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap"
+    },
+    edBody: {
+      flex: 1,
+      minHeight: 0,
+      overflowY: "auto",
+      padding: theme.spacing(1, 2.5, 3),
+      ...theme.scrollbarStyles
+    },
+    section: {
+      paddingTop: theme.spacing(2.5),
+      display: "flex",
+      flexDirection: "column",
+      gap: theme.spacing(1.5)
+    },
+    sectionTitle: {
+      fontSize: "0.75rem",
+      fontWeight: 700,
+      letterSpacing: "0.06em",
+      textTransform: "uppercase",
+      color: theme.palette.text.secondary
+    },
+    two: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: theme.spacing(1.5),
+      [theme.breakpoints.down("xs")]: { gridTemplateColumns: "1fr" }
+    },
+    plans: { display: "flex", flexDirection: "column", gap: 8 },
+    plan: {
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      width: "100%",
+      padding: theme.spacing(1.5, 1.75),
+      borderRadius: t.radius.md,
+      border: `1.5px solid ${t.border}`,
+      textAlign: "left",
+      justifyContent: "flex-start",
+      transition: "border-color .15s ease, background-color .15s ease"
+    },
+    planOn: {
+      borderColor: t.brand.main,
+      backgroundColor: t.brand.textSoft
+    },
+    planCheck: {
+      flex: "none",
+      width: 22,
+      height: 22,
+      borderRadius: "50%",
+      border: `2px solid ${t.borderStrong}`,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      color: t.brand.main,
+      "& svg": { fontSize: 24 }
+    },
+    planCheckOn: { border: "none" },
+    planText: { flex: 1, minWidth: 0 },
+    planName: {
+      fontSize: "0.9375rem",
+      fontWeight: 700,
+      color: theme.palette.text.primary
+    },
+    planSub: { fontSize: "0.8125rem", color: theme.palette.text.secondary },
+    planPrice: {
+      flex: "none",
+      fontSize: "0.9375rem",
+      fontWeight: 700,
+      color: theme.palette.text.primary
+    },
+    segment: { display: "flex", flexWrap: "wrap", gap: 6 },
+    dueRow: { display: "flex", alignItems: "center", gap: 8 },
+    plusBtn: {
+      flex: "none",
+      height: 40,
+      borderRadius: t.radius.md,
+      textTransform: "none",
+      fontWeight: 600,
+      whiteSpace: "nowrap"
+    },
+    switchRow: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      padding: theme.spacing(1, 1.5),
+      borderRadius: t.radius.md,
+      border: `1px solid ${t.border}`
+    },
+    switchLabel: {
+      fontSize: "0.9375rem",
+      fontWeight: 600,
+      color: theme.palette.text.primary
+    },
+    switchSub: { fontSize: "0.8125rem", color: theme.palette.text.secondary },
+    actions: { display: "flex", flexWrap: "wrap", gap: 8 },
+    actionBtn: {
+      borderRadius: t.radius.pill,
+      textTransform: "none",
+      fontWeight: 600
+    },
+    danger: { color: sem.danger, borderColor: sem.dangerSoft },
+    edFoot: {
+      flex: "none",
+      display: "flex",
+      justifyContent: "flex-end",
+      gap: 8,
+      padding: theme.spacing(1.5, 2.5),
+      paddingBottom: `calc(${theme.spacing(1.5)}px + var(--safe-bottom, 0px))`,
+      borderTop: `1px solid ${t.border}`
+    },
+    saveBtn: {
+      borderRadius: t.radius.pill,
+      textTransform: "none",
+      fontWeight: 700,
+      minWidth: 120
+    }
+  };
+});
+
+const dueTone = (classes, days) =>
+  days === null
+    ? [classes.plain, "Sem vencimento"]
+    : days < 0
+      ? [classes.late, `Vencida há ${-days} dia${days === -1 ? "" : "s"}`]
+      : days === 0
+        ? [classes.soon, "Vence hoje"]
+        : days <= 7
+          ? [classes.soon, `Vence em ${days} dia${days === 1 ? "" : "s"}`]
+          : [classes.ok, `Vence ${moment().add(days, "days").format("DD/MM")}`];
+
+const CompanyEditor = ({
+  open,
+  initial,
+  plans,
+  onClose,
+  onSave,
+  onDelete,
+  onImpersonate,
+  saving
+}) => {
   const classes = useStyles();
   const theme = useTheme();
-  const isPhone = useMediaQuery(theme.breakpoints.down("sm"));
-  const [storage, setStorage] = useState({});
-
-  // espaço em disco usado por cada empresa (mídias das conversas)
-  useEffect(() => {
-    api
-      .get("/companies/storage")
-      .then(({ data }) => setStorage(data || {}))
-      .catch(() => setStorage({}));
-  }, []);
-  const { dateToClient } = useDate();
-  const { getSetting } = useSettings();
-  const [gracePeriod, setGracePeriod] = useState(5);
+  const isPhone = useMediaQuery(theme.breakpoints.down("xs"));
+  const [form, setForm] = useState(EMPTY);
+  const [usersOpen, setUsersOpen] = useState(false);
+  const [firstUser, setFirstUser] = useState({});
 
   useEffect(() => {
-    getSetting("gracePeriod").then(value => {
-      if (!isNaN(Number(value))) {
-        setGracePeriod(Number(value));
-      }
-    });
-  }, [getSetting]);
-
-  const renderStatus = row => {
-    return row.status === false ? i18n.t("common.no") : i18n.t("common.yes");
-  };
-
-  const renderPlan = row => {
-    return row.planId !== null ? row.plan.name : i18n.t("common.undefined");
-  };
-
-  const renderCampaignsStatus = row => {
-    if (
-      has(row, "settings") &&
-      isArray(row.settings) &&
-      row.settings.length > 0
-    ) {
-      const setting = row.settings.find(s => s.key === "campaignsEnabled");
-      if (setting) {
-        return setting.value === "true"
-          ? i18n.t("common.enabled")
-          : i18n.t("common.disabled");
-      }
-    }
-    return i18n.t("common.disabled");
-  };
-
-  const rowClass = record => {
-    if (moment(record.dueDate).isValid()) {
-      const now = moment();
-      const dueDate = moment(record.dueDate);
-      const diff = dueDate.diff(now, "days");
-      if (diff < -gracePeriod) {
-        return classes.inactive;
-      }
-      if (diff < 0) {
-        return classes.gracePeriod;
-      }
-      if (diff < 7) {
-        return classes.almostDue;
-      }
-    }
-    return classes.active;
-  };
-
-  if (isPhone) {
-    return (
-      <div className={classes.companyCards}>
-        {records.map(row => (
-          <div
-            key={row.id}
-            className={clsx(classes.companyCard, rowClass(row))}
-          >
-            <div className={classes.companyCardHead}>
-              <span className={classes.companyName}>{row.name || "-"}</span>
-              <IconButton size="small" onClick={() => onSelect(row)}>
-                <EditIcon fontSize="small" />
-              </IconButton>
-            </div>
-            <dl className={classes.companyFacts}>
-              <dt>{i18n.t("companies.form.plan")}</dt>
-              <dd>{renderPlan(row)}</dd>
-              <dt>{i18n.t("common.status")}</dt>
-              <dd>{renderStatus(row)}</dd>
-              <dt>{i18n.t("common.dueDate")}</dt>
-              <dd>
-                {dateToClient(row.dueDate)}
-                {row.recurrence ? ` · ${row.recurrence}` : ""}
-              </dd>
-              <dt>{i18n.t("companiesManager.table.storage")}</dt>
-              <dd>{formatBytes(storage[row.id])}</dd>
-              <dt>{i18n.t("common.email")}</dt>
-              <dd className={classes.companyBreak}>{row.email || "-"}</dd>
-              <dt>{i18n.t("common.phone")}</dt>
-              <dd>{row.phone || "-"}</dd>
-              <dt>{i18n.t("companiesManager.table.campaigns")}</dt>
-              <dd>{renderCampaignsStatus(row)}</dd>
-            </dl>
-          </div>
-        ))}
-      </div>
+    if (!open) return;
+    // campos nulos no banco (empresa sem e-mail ou telefone) viram texto
+    // vazio: o editor trabalha só com texto
+    const clean = Object.fromEntries(
+      Object.entries(initial || {}).map(([key, value]) => [
+        key,
+        value === null && key in EMPTY ? EMPTY[key] : value
+      ])
     );
-  }
+    setForm({
+      ...EMPTY,
+      ...clean,
+      recurrence: initial?.recurrence || "MENSAL",
+      dueDate: initial?.dueDate
+        ? moment(initial.dueDate).format("YYYY-MM-DD")
+        : ""
+    });
+  }, [open, initial]);
+
+  const set = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
+  const editing = !!form.id;
+
+  const addPeriod = () => {
+    const months =
+      RECURRENCES.find(([key]) => key === form.recurrence)?.[2] || 1;
+    const base =
+      form.dueDate && moment(form.dueDate).isAfter(moment())
+        ? moment(form.dueDate)
+        : moment();
+    set("dueDate", base.add(months, "month").format("YYYY-MM-DD"));
+  };
+
+  const openUsers = async () => {
+    try {
+      const { data } = await api.get("/users/list", {
+        params: { companyId: form.id }
+      });
+      if (isArray(data) && data.length) setFirstUser(head(data));
+      setUsersOpen(true);
+    } catch (err) {
+      toast.error(i18n.t("companiesManager.toasts.loadError"));
+    }
+  };
+
+  const valid =
+    String(form.name || "").trim() && String(form.email || "").trim();
 
   return (
-    <Paper className={classes.tableContainer}>
-      <Table
-        className={classes.fullWidth}
-        size="small"
-        aria-label="a dense table"
-      >
-        <TableHead>
-          <TableRow>
-            <TableCell align="center" style={{ width: "1%" }}>
-              #
-            </TableCell>
-            <TableCell align="left">{i18n.t("common.name")}</TableCell>
-            <TableCell align="left">{i18n.t("common.email")}</TableCell>
-            <TableCell align="left">{i18n.t("common.phone")}</TableCell>
-            <TableCell align="left">{i18n.t("companies.form.plan")}</TableCell>
-            <TableCell align="left">
-              {i18n.t("companiesManager.table.campaigns")}
-            </TableCell>
-            <TableCell align="left">{i18n.t("common.status")}</TableCell>
-            <TableCell align="left">
-              {i18n.t("companiesManager.table.createdAt")}
-            </TableCell>
-            <TableCell align="left">{i18n.t("common.dueDate")}</TableCell>
-            <TableCell align="left">
-              {i18n.t("companiesManager.table.storage")}
-            </TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {records.map((row, key) => (
-            <TableRow className={rowClass(row)} key={key}>
-              <TableCell align="center" style={{ width: "1%" }}>
-                <IconButton onClick={() => onSelect(row)} aria-label="delete">
-                  <EditIcon />
-                </IconButton>
-              </TableCell>
-              <TableCell align="left" style={{ color: "unset" }}>
-                {row.name || "-"}
-              </TableCell>
-              <TableCell align="left" style={{ color: "unset" }}>
-                {row.email || "-"}
-              </TableCell>
-              <TableCell align="left" style={{ color: "unset" }}>
-                {row.phone || "-"}
-              </TableCell>
-              <TableCell align="left" style={{ color: "unset" }}>
-                {renderPlan(row)}
-              </TableCell>
-              <TableCell align="left" style={{ color: "unset" }}>
-                {renderCampaignsStatus(row)}
-              </TableCell>
-              <TableCell align="left" style={{ color: "unset" }}>
-                {renderStatus(row)}
-              </TableCell>
-              <TableCell align="left" style={{ color: "unset" }}>
-                {dateToClient(row.createdAt)}
-              </TableCell>
-              <TableCell align="left" style={{ color: "unset" }}>
-                {dateToClient(row.dueDate)}
-                <br />
-                <span>{row.recurrence}</span>
-              </TableCell>
-              <TableCell align="left" style={{ color: "unset" }}>
-                {formatBytes(storage[row.id])}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </Paper>
-  );
-}
+    <Drawer
+      anchor={isPhone ? "bottom" : "right"}
+      open={open}
+      onClose={onClose}
+      classes={{ paper: classes.drawerPaper }}
+    >
+      <div className={classes.edHead}>
+        <span className={classes.avatar}>
+          {(form.name || "?").trim().charAt(0).toUpperCase()}
+        </span>
+        <span className={classes.edTitle}>
+          {editing ? form.name || "Empresa" : "Nova empresa"}
+        </span>
+        <IconButton onClick={onClose} aria-label="Fechar">
+          <CloseRoundedIcon />
+        </IconButton>
+      </div>
 
-export default function CompaniesManager() {
+      <div className={classes.edBody}>
+        <div className={classes.section}>
+          <span className={classes.sectionTitle}>Dados da empresa</span>
+          <TextField
+            label={i18n.t("common.name")}
+            variant="outlined"
+            size="small"
+            fullWidth
+            value={form.name}
+            onChange={e => set("name", e.target.value)}
+          />
+          <TextField
+            label={i18n.t("common.email")}
+            variant="outlined"
+            size="small"
+            fullWidth
+            required
+            value={form.email}
+            onChange={e => set("email", e.target.value)}
+          />
+          <div className={classes.two}>
+            <TextField
+              label={i18n.t("common.phone")}
+              variant="outlined"
+              size="small"
+              fullWidth
+              value={form.phone}
+              onChange={e => set("phone", e.target.value)}
+            />
+            <SelectLanguage
+              variant="outlined"
+              margin="dense"
+              fullWidth
+              value={form.language}
+              onChange={e => set("language", e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className={classes.section}>
+          <span className={classes.sectionTitle}>Plano</span>
+          <div className={classes.plans}>
+            {plans.map(plan => {
+              const on = plan.id === form.planId;
+              return (
+                <ButtonBase
+                  key={plan.id}
+                  className={`${classes.plan}${on ? ` ${classes.planOn}` : ""}`}
+                  onClick={() => set("planId", plan.id)}
+                >
+                  <span
+                    className={`${classes.planCheck}${on ? ` ${classes.planCheckOn}` : ""}`}
+                  >
+                    {on && <CheckCircleRoundedIcon />}
+                  </span>
+                  <span className={classes.planText}>
+                    <div className={classes.planName}>
+                      {plan.name}
+                      {plan.isPublic === false ? " · interno" : ""}
+                    </div>
+                    <div className={classes.planSub}>
+                      {plan.users} usuários · {plan.connections} conexões ·{" "}
+                      {plan.queues} filas
+                    </div>
+                  </span>
+                  <span className={classes.planPrice}>
+                    {safeValueFormat(plan.value, plan.currency || "BRL")}
+                  </span>
+                </ButtonBase>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className={classes.section}>
+          <span className={classes.sectionTitle}>Cobrança</span>
+          <div className={classes.segment}>
+            {RECURRENCES.map(([key, label]) => (
+              <ButtonBase
+                key={key}
+                className={`${classes.filter}${form.recurrence === key ? ` ${classes.filterOn}` : ""}`}
+                onClick={() => set("recurrence", key)}
+              >
+                {label}
+              </ButtonBase>
+            ))}
+          </div>
+          <div className={classes.dueRow}>
+            <TextField
+              label="Vencimento"
+              type="date"
+              variant="outlined"
+              size="small"
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              value={form.dueDate}
+              onChange={e => set("dueDate", e.target.value)}
+            />
+            <Button
+              variant="outlined"
+              className={classes.plusBtn}
+              startIcon={<EventRoundedIcon />}
+              onClick={addPeriod}
+            >
+              +1 período
+            </Button>
+          </div>
+          <div className={classes.switchRow}>
+            <div>
+              <div className={classes.switchLabel}>
+                {form.status ? "Empresa ativa" : "Empresa bloqueada"}
+              </div>
+              <div className={classes.switchSub}>
+                {form.status
+                  ? "Usa o sistema normalmente"
+                  : "Ninguém da empresa consegue entrar"}
+              </div>
+            </div>
+            <Switch
+              color="primary"
+              checked={!!form.status}
+              onChange={e => set("status", e.target.checked)}
+            />
+          </div>
+        </div>
+
+        {editing && (
+          <div className={classes.section}>
+            <span className={classes.sectionTitle}>Ações</span>
+            <div className={classes.actions}>
+              <Button
+                variant="outlined"
+                className={classes.actionBtn}
+                startIcon={<PersonOutlineRoundedIcon />}
+                onClick={openUsers}
+              >
+                Usuário principal
+              </Button>
+              <Button
+                variant="outlined"
+                className={classes.actionBtn}
+                startIcon={<LoginRoundedIcon />}
+                onClick={() => onImpersonate(form)}
+              >
+                Acessar como esta empresa
+              </Button>
+              <Button
+                variant="outlined"
+                className={`${classes.actionBtn} ${classes.danger}`}
+                startIcon={<DeleteOutlineRoundedIcon />}
+                onClick={() => onDelete(form)}
+              >
+                Excluir
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className={classes.edFoot}>
+        <Button onClick={onClose} className={classes.actionBtn}>
+          {i18n.t("common.cancel")}
+        </Button>
+        <Button
+          variant="contained"
+          color="primary"
+          disableElevation
+          className={classes.saveBtn}
+          disabled={!valid || saving}
+          onClick={() => onSave(form)}
+        >
+          {saving ? "Salvando…" : i18n.t("common.save")}
+        </Button>
+      </div>
+
+      {usersOpen && (
+        <ModalUsers
+          userId={firstUser.id}
+          companyId={form.id}
+          open={usersOpen}
+          onClose={() => {
+            setFirstUser({});
+            setUsersOpen(false);
+          }}
+        />
+      )}
+    </Drawer>
+  );
+};
+
+const FILTERS = [
+  ["all", "Todas"],
+  ["active", "Ativas"],
+  ["late", "Vencidas"],
+  ["blocked", "Bloqueadas"]
+];
+
+export default function CompaniesManager({ selectId, onSelectHandled }) {
   const classes = useStyles();
   const { list, save, update, remove } = useCompanies();
-
-  const [showConfirmDeleteDialog, setShowConfirmDeleteDialog] = useState(false);
-  const [showConfirmImpersonateDialog, setShowConfirmImpersonateDialog] =
-    useState(false);
-  const [loading, setLoading] = useState(false);
-  const [records, setRecords] = useState([]);
-  const [record, setRecord] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    language: "",
-    planId: "",
-    status: true,
-    campaignsEnabled: false,
-    dueDate: "",
-    recurrence: ""
-  });
-
+  const { list: listPlans } = usePlans();
   const { handleImpersonate } = useContext(AuthContext);
 
-  useEffect(() => {
-    loadPlans();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const [records, setRecords] = useState([]);
+  const [plans, setPlans] = useState([]);
+  const [storage, setStorage] = useState({});
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState("all");
+  const [editing, setEditing] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [confirmImpersonate, setConfirmImpersonate] = useState(null);
 
-  const loadPlans = async () => {
-    setLoading(true);
+  const load = async () => {
     try {
-      const companyList = await list();
-      setRecords(companyList);
+      setRecords(await list());
     } catch (e) {
       toast.error(i18n.t("companiesManager.toasts.loadError"));
     }
-    setLoading(false);
   };
 
-  const handleSubmit = async data => {
-    setLoading(true);
+  useEffect(() => {
+    load();
+    listPlans()
+      .then(data => setPlans(Array.isArray(data) ? data : []))
+      .catch(() => {});
+    api
+      .get("/companies/storage")
+      .then(({ data }) => setStorage(data || {}))
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // veio de "Editar empresa e plano" em Clientes: abre direto nela
+  useEffect(() => {
+    if (!selectId || !records.length) return;
+    const found = records.find(r => r.id === selectId);
+    if (found) setEditing(found);
+    onSelectHandled?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectId, records]);
+
+  const counts = useMemo(() => {
+    const c = { all: records.length, active: 0, late: 0, blocked: 0 };
+    records.forEach(r => {
+      if (r.status === false) c.blocked += 1;
+      else c.active += 1;
+      const days = daysToDue(r.dueDate);
+      if (days !== null && days < 0) c.late += 1;
+    });
+    return c;
+  }, [records]);
+
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return records
+      .filter(r => {
+        if (filter === "active") return r.status !== false;
+        if (filter === "blocked") return r.status === false;
+        if (filter === "late") {
+          const days = daysToDue(r.dueDate);
+          return days !== null && days < 0;
+        }
+        return true;
+      })
+      .filter(
+        r =>
+          !q ||
+          `${r.name || ""} ${r.email || ""} ${r.phone || ""}`
+            .toLowerCase()
+            .includes(q)
+      )
+      .sort((a, b) => String(a.name).localeCompare(String(b.name), "pt-BR"));
+  }, [records, query, filter]);
+
+  const handleSave = async form => {
+    setSaving(true);
+    const data = {
+      id: form.id,
+      name: String(form.name || "").trim(),
+      email: String(form.email || "").trim(),
+      phone: form.phone,
+      language: form.language,
+      planId: form.planId || null,
+      status: !!form.status,
+      recurrence: form.recurrence,
+      dueDate:
+        form.dueDate && moment(form.dueDate).isValid() ? form.dueDate : null
+    };
     try {
-      if (data.id !== undefined) {
-        await update(data);
-      } else {
-        await save(data);
-      }
-      await loadPlans();
-      handleCancel();
+      if (data.id !== undefined) await update(data);
+      else await save(data);
+      await load();
+      setEditing(null);
       toast.success(i18n.t("companiesManager.toasts.operationSuccess"));
     } catch (e) {
       toast.error(i18n.t("companiesManager.toasts.operationErrorDuplicate"));
     }
-    setLoading(false);
+    setSaving(false);
   };
 
   const handleDelete = async () => {
-    setLoading(true);
     try {
-      await remove(record.id);
-      await loadPlans();
-      handleCancel();
+      await remove(confirmDelete.id);
+      await load();
+      setEditing(null);
       toast.success(i18n.t("companiesManager.toasts.operationSuccess"));
     } catch (e) {
       toast.error(i18n.t("companiesManager.toasts.operationError"));
     }
-    setLoading(false);
-  };
-
-  const onImpersonate = async () => {
-    handleImpersonate(record.id);
-  };
-
-  const handleOpenDeleteDialog = () => {
-    setShowConfirmDeleteDialog(true);
-  };
-
-  const handleOpenImpersonateDialog = () => {
-    setShowConfirmImpersonateDialog(true);
-  };
-
-  const handleCancel = () => {
-    setRecord(prev => ({
-      ...prev,
-      name: "",
-      email: "",
-      phone: "",
-      language: "",
-      planId: "",
-      status: true,
-      campaignsEnabled: false,
-      dueDate: "",
-      recurrence: ""
-    }));
-  };
-
-  const handleSelect = data => {
-    let campaignsEnabled = false;
-
-    const setting = data.settings.find(
-      s => s.key.indexOf("campaignsEnabled") > -1
-    );
-    if (setting) {
-      campaignsEnabled =
-        setting.value === "true" || setting.value === "enabled";
-    }
-
-    setRecord(prev => ({
-      ...prev,
-      id: data.id,
-      name: data.name || "",
-      phone: data.phone || "",
-      language: data.language || "",
-      email: data.email || "",
-      planId: data.planId || "",
-      status: data.status === false ? false : true,
-      campaignsEnabled,
-      dueDate: data.dueDate || "",
-      recurrence: data.recurrence || ""
-    }));
   };
 
   return (
-    <Paper className={classes.mainPaper} elevation={0}>
-      <Grid spacing={2} container>
-        <Grid xs={12} item>
-          <CompanyForm
-            initialValue={record}
-            onDelete={handleOpenDeleteDialog}
-            onImpersonate={handleOpenImpersonateDialog}
-            onSubmit={handleSubmit}
-            onCancel={handleCancel}
-            loading={loading}
+    <div className={classes.root}>
+      <div className={classes.toolbar}>
+        <label className={classes.search}>
+          <SearchRoundedIcon fontSize="small" />
+          <InputBase
+            fullWidth
+            placeholder="Buscar empresa, e-mail ou telefone"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
           />
-        </Grid>
-        <Grid xs={12} item>
-          <CompaniesManagerGrid records={records} onSelect={handleSelect} />
-        </Grid>
-      </Grid>
+        </label>
+        <Button
+          variant="contained"
+          color="primary"
+          disableElevation
+          className={classes.addBtn}
+          startIcon={<AddRoundedIcon />}
+          onClick={() => setEditing({ ...EMPTY })}
+          aria-label="Nova empresa"
+        >
+          <span className={classes.addLabel}>Nova empresa</span>
+        </Button>
+      </div>
+
+      <div className={classes.filters}>
+        {FILTERS.map(([key, label]) => (
+          <ButtonBase
+            key={key}
+            className={`${classes.filter}${filter === key ? ` ${classes.filterOn}` : ""}`}
+            onClick={() => setFilter(key)}
+          >
+            {label}
+            <span className={classes.count}>{counts[key]}</span>
+          </ButtonBase>
+        ))}
+      </div>
+
+      {visible.length === 0 ? (
+        <div className={classes.empty}>Nenhuma empresa encontrada.</div>
+      ) : (
+        <div className={classes.grid}>
+          {visible.map((row, index) => {
+            const [tone, dueLabel] = dueTone(classes, daysToDue(row.dueDate));
+            return (
+              <ButtonBase
+                key={row.id}
+                component="div"
+                className={classes.card}
+                style={{ animationDelay: `${Math.min(index, 12) * 25}ms` }}
+                onClick={() => setEditing(row)}
+              >
+                <div className={classes.cardTop}>
+                  <span className={classes.avatar}>
+                    {(row.name || "?").trim().charAt(0).toUpperCase()}
+                  </span>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div className={classes.name}>{row.name || "—"}</div>
+                    <div className={classes.email}>
+                      {row.email || row.phone || "—"}
+                    </div>
+                  </div>
+                </div>
+                <div className={classes.chips}>
+                  <span className={`${classes.chip} ${classes.brand}`}>
+                    {row.plan?.name || "Sem plano"}
+                  </span>
+                  <span
+                    className={`${classes.chip} ${row.status === false ? classes.late : classes.ok}`}
+                  >
+                    {row.status === false ? "Bloqueada" : "Ativa"}
+                  </span>
+                  <span className={`${classes.chip} ${tone}`}>{dueLabel}</span>
+                  <span className={`${classes.chip} ${classes.plain}`}>
+                    {formatBytes(storage[row.id])}
+                  </span>
+                </div>
+              </ButtonBase>
+            );
+          })}
+        </div>
+      )}
+
+      <CompanyEditor
+        open={!!editing}
+        initial={editing}
+        plans={plans}
+        saving={saving}
+        onClose={() => setEditing(null)}
+        onSave={handleSave}
+        onDelete={form => setConfirmDelete(form)}
+        onImpersonate={form => setConfirmImpersonate(form)}
+      />
+
       <ConfirmationModal
         title={i18n.t("companiesManager.confirmationModal.deleteTitle")}
-        open={showConfirmDeleteDialog}
-        onClose={() => setShowConfirmDeleteDialog(false)}
-        onConfirm={() => handleDelete()}
+        open={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={handleDelete}
       >
         {i18n.t("companiesManager.confirmationModal.deleteMessage")}
       </ConfirmationModal>
       <ConfirmationModal
         title={i18n.t("companiesManager.confirmationModal.impersonateTitle")}
-        open={showConfirmImpersonateDialog}
-        onClose={() => setShowConfirmImpersonateDialog(false)}
-        onConfirm={() => onImpersonate()}
+        open={!!confirmImpersonate}
+        onClose={() => setConfirmImpersonate(null)}
+        onConfirm={() => handleImpersonate(confirmImpersonate.id)}
       >
         {i18n.t("companiesManager.confirmationModal.impersonateMessage")}
       </ConfirmationModal>
-    </Paper>
+    </div>
   );
 }

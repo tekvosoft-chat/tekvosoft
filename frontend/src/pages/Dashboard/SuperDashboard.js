@@ -44,6 +44,10 @@ import FolderRoundedIcon from "@material-ui/icons/FolderRounded";
 import SearchRoundedIcon from "@material-ui/icons/SearchRounded";
 import ExpandMoreRoundedIcon from "@material-ui/icons/ExpandMoreRounded";
 import PersonAddRoundedIcon from "@material-ui/icons/PersonAddRounded";
+import AutorenewRoundedIcon from "@material-ui/icons/AutorenewRounded";
+import EventRoundedIcon from "@material-ui/icons/EventRounded";
+import ErrorOutlineRoundedIcon from "@material-ui/icons/ErrorOutlineRounded";
+import CreditCardRoundedIcon from "@material-ui/icons/CreditCardRounded";
 
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
@@ -51,7 +55,8 @@ import BoxLoader from "../../components/ui/BoxLoader";
 import PageLoader from "../../components/ui/PageLoader";
 import UserAvatar from "../../components/ui/UserAvatar";
 import CompaniesManager from "../../components/CompaniesManager";
-import Revenue from "./Revenue";
+import CompanyBilling from "./CompanyBilling";
+import { safeValueFormat } from "../../helpers/safeValueFormat";
 import { i18n } from "../../translate/i18n";
 
 /**
@@ -715,8 +720,10 @@ const CompanyUsers = ({ company, classes, theme, refreshKey }) => {
 
 const METRICS = ["messages30d", "tickets30d", "storage", "users"];
 
-const Overview = ({ classes, theme }) => {
+const Overview = ({ classes, theme, onEditCompany }) => {
   const [system, setSystem] = useState(null);
+  // recebimentos da plataforma (antes era uma aba separada)
+  const [revenue, setRevenue] = useState(null);
   const [samples, setSamples] = useState({ cpu: [], mem: [] });
   const [overview, setOverview] = useState(null);
   const [metric, setMetric] = useState("messages30d");
@@ -753,8 +760,12 @@ const Overview = ({ classes, theme }) => {
   const loadOverview = useCallback(async () => {
     if (!visibleRef.current) return;
     try {
-      const { data } = await api.get("/super/overview");
+      const [{ data }, rev] = await Promise.all([
+        api.get("/super/overview"),
+        api.get("/super/revenue").catch(() => null)
+      ]);
       setOverview(data);
+      if (rev?.data) setRevenue(rev.data);
       setTick(t => t + 1);
     } catch (err) {
       toastError(err);
@@ -1101,6 +1112,52 @@ const Overview = ({ classes, theme }) => {
         </div>
       )}
 
+      {revenue?.totals && (
+        <div>
+          <Typography component="h2" className={classes.sectionTitle}>
+            Recebimentos
+          </Typography>
+          <div className={classes.grid4}>
+            <Tile
+              classes={classes}
+              tone={accents[0]}
+              delay={0}
+              icon={<AutorenewRoundedIcon />}
+              label="Previsto no mês"
+              value={safeValueFormat(revenue.totals.monthly || 0, "BRL")}
+              sub={`${revenue.totals.companies || 0} empresas pagantes`}
+            />
+            <Tile
+              classes={classes}
+              tone={accents[1]}
+              delay={30}
+              icon={<EventRoundedIcon />}
+              label="Próximos 30 dias"
+              value={safeValueFormat(revenue.totals.next30 || 0, "BRL")}
+              sub="a receber"
+            />
+            <Tile
+              classes={classes}
+              tone={accents[3]}
+              delay={60}
+              icon={<ErrorOutlineRoundedIcon />}
+              label="Em atraso"
+              value={safeValueFormat(revenue.totals.overdue || 0, "BRL")}
+              sub={`${revenue.totals.overdueCompanies || 0} empresas`}
+            />
+            <Tile
+              classes={classes}
+              tone={accents[2]}
+              delay={90}
+              icon={<CreditCardRoundedIcon />}
+              label="No cartão automático"
+              value={revenue.totals.autoCharge || 0}
+              sub="renovam sozinhas"
+            />
+          </div>
+        </div>
+      )}
+
       {overview && (
         <div>
           <div className={classes.chartHead} style={{ marginBottom: 12 }}>
@@ -1252,6 +1309,11 @@ const Overview = ({ classes, theme }) => {
                     />
                   </ButtonBase>
                   <Collapse in={open} unmountOnExit timeout={220}>
+                    <CompanyBilling
+                      companyId={company.id}
+                      refreshKey={tick}
+                      onEdit={onEditCompany}
+                    />
                     <CompanyUsers
                       company={company}
                       classes={classes}
@@ -1273,6 +1335,8 @@ const SuperDashboard = ({ companyDashboard }) => {
   const classes = useStyles();
   const theme = useTheme();
   const [tab, setTab] = useState("platform");
+  // "Editar empresa e plano" em Clientes abre a aba Empresas já nela
+  const [editCompanyId, setEditCompanyId] = useState(null);
   const [now, setNow] = useState(moment());
   const s = key => i18n.t(`superDashboard.${key}`);
 
@@ -1294,7 +1358,7 @@ const SuperDashboard = ({ companyDashboard }) => {
           </span>
         </div>
         <div className={classes.tabs} role="tablist">
-          {["platform", "revenue", "companies", "mine"].map(key => (
+          {["platform", "companies", "mine"].map(key => (
             <ButtonBase
               key={key}
               role="tab"
@@ -1308,12 +1372,21 @@ const SuperDashboard = ({ companyDashboard }) => {
         </div>
       </div>
 
-      {tab === "platform" && <Overview classes={classes} theme={theme} />}
-      {tab === "revenue" && <Revenue />}
+      {tab === "platform" && (
+        <Overview
+          classes={classes}
+          theme={theme}
+          onEditCompany={id => {
+            setEditCompanyId(id);
+            setTab("companies");
+          }}
+        />
+      )}
       {tab === "companies" && (
-        <div className={classes.card} style={{ padding: 0 }}>
-          <CompaniesManager />
-        </div>
+        <CompaniesManager
+          selectId={editCompanyId}
+          onSelectHandled={() => setEditCompanyId(null)}
+        />
       )}
       {tab === "mine" && companyDashboard}
     </Container>
