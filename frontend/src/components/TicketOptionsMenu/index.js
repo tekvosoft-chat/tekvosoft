@@ -7,19 +7,16 @@ import Divider from "@material-ui/core/Divider";
 import ButtonBase from "@material-ui/core/ButtonBase";
 import UndoRoundedIcon from "@material-ui/icons/UndoRounded";
 import SwapHorizRoundedIcon from "@material-ui/icons/SwapHorizRounded";
-import EventRoundedIcon from "@material-ui/icons/EventRounded";
 import DeleteOutlineRoundedIcon from "@material-ui/icons/DeleteOutlineRounded";
 
 import { i18n } from "../../translate/i18n";
 import api from "../../services/api";
 import ConfirmationModal from "../ConfirmationModal";
 import TransferTicketModalCustom from "../TransferTicketModalCustom";
-import ScheduleModal from "../ScheduleModal";
 import BottomSheet from "../ui/BottomSheet";
 import toastError from "../../errors/toastError";
 import { Can } from "../Can";
 import { AuthContext } from "../../context/Auth/AuthContext";
-import { planAllows } from "../../helpers/planFeatures";
 
 /**
  * Mais ações do atendimento.
@@ -99,9 +96,6 @@ const TicketOptionsMenu = ({
   const isMounted = useRef(true);
   const { user } = useContext(AuthContext);
 
-  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
-  const [contactId, setContactId] = useState(null);
-
   useEffect(() => {
     return () => {
       isMounted.current = false;
@@ -120,11 +114,6 @@ const TicketOptionsMenu = ({
     if (isMounted.current) {
       setTransferTicketModalOpen(false);
     }
-  };
-
-  const handleCloseScheduleModal = () => {
-    setScheduleModalOpen(false);
-    setContactId(null);
   };
 
   const a = key => i18n.t(`ticketHeaderActions.${key}`);
@@ -146,17 +135,8 @@ const TicketOptionsMenu = ({
       label: a("transfer"),
       hint: a("transferHint"),
       onClick: () => setTransferTicketModalOpen(true)
-    },
-    planAllows(user, "useSchedules") && {
-      key: "schedule",
-      icon: <EventRoundedIcon />,
-      label: a("schedule"),
-      hint: a("scheduleHint"),
-      onClick: () => {
-        setContactId(ticket.contact?.id);
-        setScheduleModalOpen(true);
-      }
     }
+    // "Agendar" saiu daqui: agora é o reloginho na barra de envio
   ].filter(Boolean);
 
   const deleteItem = {
@@ -276,12 +256,6 @@ const TicketOptionsMenu = ({
         onClose={handleCloseTransferTicketModal}
         ticketid={ticket.id}
         hideUserSelection={showTabGroups && ticket.isGroup}
-      />
-      <ScheduleModal
-        open={scheduleModalOpen}
-        onClose={handleCloseScheduleModal}
-        aria-labelledby="form-dialog-title"
-        contactId={contactId}
       />
     </>
   );

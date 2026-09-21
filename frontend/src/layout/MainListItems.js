@@ -73,8 +73,9 @@ const useStyles = makeStyles(theme => ({
   },
   itemCollapsed: {
     justifyContent: "center",
-    margin: theme.spacing(0.25, 1),
-    padding: theme.spacing(1.125, 0)
+    margin: theme.spacing(0.375, 1),
+    padding: theme.spacing(1.375, 0),
+    "& $itemIcon svg": { fontSize: 24 }
   },
   itemIcon: {
     minWidth: 34,

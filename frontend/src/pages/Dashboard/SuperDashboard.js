@@ -48,6 +48,7 @@ import PersonAddRoundedIcon from "@material-ui/icons/PersonAddRounded";
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
 import BoxLoader from "../../components/ui/BoxLoader";
+import PageLoader from "../../components/ui/PageLoader";
 import UserAvatar from "../../components/ui/UserAvatar";
 import CompaniesManager from "../../components/CompaniesManager";
 import Revenue from "./Revenue";
@@ -804,11 +805,7 @@ const Overview = ({ classes, theme }) => {
   const diskPct = system ? pct(system.disk.used, system.disk.total) : 0;
 
   if (!system || !totals) {
-    return (
-      <div className={classes.pageLoading}>
-        <BoxLoader size={96} />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   return (

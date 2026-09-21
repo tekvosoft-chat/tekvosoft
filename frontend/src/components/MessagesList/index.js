@@ -64,6 +64,7 @@ import { getInitials } from "../../helpers/getInitials";
 import { downloadFile } from "../../helpers/downloadFile";
 import { Mutex } from "async-mutex";
 import BoxLoader from "../ui/BoxLoader";
+import PageLoader from "../../components/ui/PageLoader";
 import AudioBubble from "./AudioBubble";
 import useSettings from "../../hooks/useSettings";
 import { participantColor } from "../../helpers/participantColor";
@@ -471,9 +472,13 @@ const useStyles = makeStyles(theme => ({
   textContentItem: {
     fontSize: "0.9063rem",
     lineHeight: 1.4,
-    [theme.breakpoints.down("xs")]: { padding: "3px 66px 6px 6px" },
+    [theme.breakpoints.down("xs")]: { padding: "3px 72px 6px 6px" },
     overflowWrap: "break-word",
-    padding: "3px 80px 6px 6px"
+    padding: "3px 86px 6px 6px",
+    // o formatador só troca a PRIMEIRA quebra de linha por <br>; as outras
+    // viravam espaço. Só dentro do parágrafo: na caixa inteira, a quebra que
+    // ele deixa depois de cada parágrafo virava uma linha em branco no balão
+    "& > .whatsmarked p": { whiteSpace: "pre-wrap" }
   },
 
   messageLocation: {
@@ -645,6 +650,7 @@ const useStyles = makeStyles(theme => ({
   },
   mediaCaption: {
     padding: "7px 12px 20px 12px",
+    "& > .whatsmarked p": { whiteSpace: "pre-wrap" },
     fontSize: "0.9063rem",
     lineHeight: 1.4,
     whiteSpace: "pre-wrap",
@@ -759,10 +765,10 @@ const useStyles = makeStyles(theme => ({
   timestamp: {
     fontSize: 11,
     position: "absolute",
-    // um respiro do canto: colado em 0 o horário passava da borda do balão
-    bottom: 3,
+    // respiro do canto: colado, o horário parecia espremido na borda
+    bottom: 4,
     lineHeight: "16px",
-    right: 5,
+    right: 9,
     color: theme.palette.tkv.chat.meta
   },
 
@@ -3877,11 +3883,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
             </span>
           </div>
         ))}
-      {loading && (
-        <div>
-          <BoxLoader className={classes.circleLoading} />
-        </div>
-      )}
+      {loading && <PageLoader />}
       <MediaGalleryLightbox
         open={lightboxOpen}
         onClose={closeLightbox}

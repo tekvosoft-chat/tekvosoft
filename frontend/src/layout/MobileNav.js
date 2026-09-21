@@ -94,7 +94,10 @@ const useStyles = makeStyles(theme => ({
     paddingBottom: "max(8px, calc(var(--safe-bottom, 0px) - 6px))",
     backgroundColor: "transparent",
     pointerEvents: "none",
-    "& > *": { pointerEvents: "auto" }
+    "& > *": { pointerEvents: "auto" },
+    // teclado aberto (busca, mensagem, agendamento): o menu não sobe junto,
+    // some até o teclado fechar — como nos apps nativos
+    "html.kb-open &": { display: "none" }
   },
   bar: {
     position: "relative",

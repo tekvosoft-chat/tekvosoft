@@ -29,7 +29,7 @@ import EventRoundedIcon from "@material-ui/icons/EventRounded";
 import MainContainer from "../../components/MainContainer";
 import ScheduleModal from "../../components/ScheduleModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
-import BoxLoader from "../../components/ui/BoxLoader";
+import PageLoader from "../../components/ui/PageLoader";
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
 import { i18n } from "../../translate/i18n";
@@ -75,13 +75,28 @@ const useStyles = makeStyles(theme => {
       overflow: "auto",
       ...theme.scrollbarStyles
     },
+    // topo enxuto: busca e "novo" na mesma linha, sem título
     head: {
       display: "flex",
-      alignItems: "flex-end",
-      justifyContent: "space-between",
-      flexWrap: "wrap",
-      gap: theme.spacing(1.5)
+      alignItems: "center",
+      gap: theme.spacing(1),
+      [theme.breakpoints.down("xs")]: { paddingTop: theme.spacing(1) }
     },
+    addBtn: {
+      flex: "none",
+      height: 40,
+      borderRadius: t.radius.pill,
+      textTransform: "none",
+      fontWeight: 700,
+      [theme.breakpoints.down("xs")]: {
+        minWidth: 40,
+        width: 40,
+        padding: 0,
+        "& .MuiButton-startIcon": { margin: 0 },
+        "& $addLabel": { display: "none" }
+      }
+    },
+    addLabel: {},
     title: {
       fontSize: "1.5rem",
       fontWeight: 700,
@@ -96,14 +111,24 @@ const useStyles = makeStyles(theme => {
       [theme.breakpoints.down("xs")]: { width: "100%" }
     },
     search: {
-      minWidth: 240,
-      [theme.breakpoints.down("xs")]: { minWidth: 0, flex: 1 }
+      flex: 1,
+      maxWidth: 360,
+      "& .MuiOutlinedInput-root": { borderRadius: t.radius.pill, height: 40 },
+      [theme.breakpoints.down("xs")]: { maxWidth: "none" }
     },
     toolbar: {
       display: "flex",
       alignItems: "center",
       flexWrap: "wrap",
-      gap: theme.spacing(1)
+      gap: theme.spacing(1),
+      // celular: mês numa linha, visões na outra (largura toda), filtros
+      // numa terceira que rola para o lado
+      [theme.breakpoints.down("xs")]: {
+        gap: theme.spacing(0.75),
+        "& $views": { order: 5, width: "100%", display: "flex" },
+        "& $viewBtn": { flex: 1 },
+        "& $filters": { order: 6 }
+      }
     },
     monthNav: { display: "flex", alignItems: "center", gap: 2 },
     monthLabel: {
@@ -124,7 +149,8 @@ const useStyles = makeStyles(theme => {
       border: `1px solid ${t.border}`,
       borderRadius: t.radius.sm,
       width: 36,
-      height: 36
+      height: 36,
+      [theme.breakpoints.down("xs")]: { width: 32, height: 32 }
     },
     filters: {
       display: "flex",
@@ -147,6 +173,11 @@ const useStyles = makeStyles(theme => {
       gap: 6,
       height: 32,
       padding: "0 12px",
+      [theme.breakpoints.down("xs")]: {
+        height: 28,
+        padding: "0 10px",
+        fontSize: "0.75rem"
+      },
       borderRadius: t.radius.pill,
       fontSize: "0.8125rem",
       fontWeight: 600,
@@ -386,9 +417,9 @@ const useStyles = makeStyles(theme => {
       "&:hover $dayNumber": { transform: "scale(1.12)" },
       "&:hover": { backgroundColor: t.surfaceHover },
       [theme.breakpoints.down("xs")]: {
-        minHeight: 52,
+        minHeight: 46,
         alignItems: "center",
-        padding: "6px 0",
+        padding: "5px 0",
         borderRight: "none",
         borderBottom: "none"
       }
@@ -1139,39 +1170,34 @@ const Schedules = () => {
 
       <div className={classes.page}>
         <div className={classes.head}>
-          <div>
-            <Typography component="h1" className={classes.title}>
-              {i18n.t("schedules.title")}
-            </Typography>
-            <Typography className={classes.subtitle}>
-              {t("subtitle")}
-            </Typography>
-          </div>
-          <div className={classes.headActions}>
-            <TextField
-              className={classes.search}
-              variant="outlined"
-              size="small"
-              placeholder={i18n.t("contacts.searchPlaceholder")}
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon fontSize="small" />
-                  </InputAdornment>
-                )
-              }}
-            />
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddRoundedIcon />}
-              onClick={() => newOnDay(selected)}
-            >
+          <TextField
+            className={classes.search}
+            variant="outlined"
+            size="small"
+            placeholder={i18n.t("contacts.searchPlaceholder")}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              )
+            }}
+          />
+          <Button
+            variant="contained"
+            color="primary"
+            disableElevation
+            className={classes.addBtn}
+            startIcon={<AddRoundedIcon />}
+            onClick={() => newOnDay(selected)}
+            aria-label={i18n.t("schedules.buttons.add")}
+          >
+            <span className={classes.addLabel}>
               {i18n.t("schedules.buttons.add")}
-            </Button>
-          </div>
+            </span>
+          </Button>
         </div>
 
         {/* novo/editar agendamento: desce aqui mesmo, sem modal por cima */}
@@ -1228,9 +1254,7 @@ const Schedules = () => {
         </div>
 
         {loading ? (
-          <div className={classes.loading}>
-            <BoxLoader />
-          </div>
+          <PageLoader />
         ) : (
           <div key={view} className={classes.viewEnter}>
             {view === "list" ? (

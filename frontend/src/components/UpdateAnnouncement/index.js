@@ -7,6 +7,35 @@ import CloseRoundedIcon from "@material-ui/icons/CloseRounded";
 import api from "../../services/api";
 
 const SEEN_KEY = "tkv:lastSeenVersion";
+const CHECK_EVERY = 5 * 60 * 1000;
+
+const fetchVersion = () =>
+  fetch(`/gitinfo.json?t=${Date.now()}`, { cache: "no-store" })
+    .then(r => r.json())
+    .then(data => (data?.commitHash !== "custom" && data?.commitHash) || null)
+    .catch(() => null);
+
+/**
+ * Pega a versão nova de verdade: apaga o cache do navegador (Cache Storage),
+ * pede ao service worker do PWA para se atualizar e recarrega a página sem
+ * reaproveitar nada guardado.
+ */
+export const applyUpdate = async () => {
+  try {
+    if (window.caches?.keys) {
+      const keys = await window.caches.keys();
+      await Promise.all(keys.map(key => window.caches.delete(key)));
+    }
+    const registrations =
+      (await navigator.serviceWorker?.getRegistrations?.()) || [];
+    await Promise.all(registrations.map(reg => reg.update().catch(() => {})));
+  } catch (e) {
+    // sem cache ou service worker: só recarrega
+  }
+  const url = new URL(window.location.href);
+  url.searchParams.set("v", Date.now().toString(36));
+  window.location.replace(url.toString());
+};
 
 const TITLES = [
   "Tem novidade fresquinha no ar! 🎉",
@@ -119,6 +148,32 @@ const UpdateAnnouncement = () => {
   const classes = useStyles();
   const [info, setInfo] = useState(null);
   const [gif, setGif] = useState(null);
+  // versão nova publicada enquanto o app está aberto (principalmente o PWA,
+  // que fica dias sem recarregar): avisa e oferece atualizar na hora
+  const [pending, setPending] = useState(false);
+  const [updating, setUpdating] = useState(false);
+
+  useEffect(() => {
+    let boot = null;
+    let stop = false;
+    const check = async () => {
+      const version = await fetchVersion();
+      if (stop || !version) return;
+      if (!boot) boot = version;
+      else if (version !== boot) setPending(true);
+    };
+    check();
+    const timer = setInterval(check, CHECK_EVERY);
+    const onVisible = () => document.visibilityState === "visible" && check();
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("online", check);
+    return () => {
+      stop = true;
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("online", check);
+    };
+  }, []);
   const [title] = useState(
     () => TITLES[Math.floor(Math.random() * TITLES.length)]
   );
@@ -153,6 +208,33 @@ const UpdateAnnouncement = () => {
       alive = false;
     };
   }, []);
+
+  if (pending) {
+    return (
+      <div className={classes.card} role="alertdialog" aria-label="Atualização">
+        <div className={classes.gif}>🚀</div>
+        <div className={classes.body}>
+          <div className={classes.title}>Tem versão nova do sistema!</div>
+          <div className={classes.text}>
+            Toque em atualizar para limpar o cache e carregar a versão mais
+            recente. Leva só um segundo e nada do que você fez se perde.
+          </div>
+          <Button
+            variant="contained"
+            color="primary"
+            className={classes.ok}
+            disabled={updating}
+            onClick={() => {
+              setUpdating(true);
+              applyUpdate();
+            }}
+          >
+            {updating ? "Atualizando…" : "Atualizar agora"}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (!info) return null;
 

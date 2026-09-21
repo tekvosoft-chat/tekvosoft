@@ -21,7 +21,7 @@ import ErrorOutlineRoundedIcon from "@material-ui/icons/ErrorOutlineRounded";
 import AutorenewRoundedIcon from "@material-ui/icons/AutorenewRounded";
 
 import api from "../../services/api";
-import BoxLoader from "../../components/ui/BoxLoader";
+import PageLoader from "../../components/ui/PageLoader";
 import { safeValueFormat } from "../../helpers/safeValueFormat";
 import { i18n } from "../../translate/i18n";
 
@@ -201,11 +201,7 @@ const Revenue = () => {
   }));
 
   if (!data) {
-    return (
-      <div className={classes.center}>
-        <BoxLoader />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   const totals = data.totals || {};

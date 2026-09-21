@@ -57,7 +57,7 @@ import OnlyForSuperUser from "../components/OnlyForSuperUser";
 import NewTicketModal from "../components/NewTicketModal/index.js";
 
 const drawerWidth = 264;
-const drawerWidthCollapsed = 72;
+const drawerWidthCollapsed = 88;
 const appBarHeight = 56;
 const DRAWER_STORAGE_KEY = "drawerOpen";
 
@@ -86,6 +86,8 @@ const useStyles = makeStyles(theme => ({
       position: "relative",
       "--mobile-nav-space":
         "calc(76px + max(0px, var(--safe-bottom, 0px) - 6px))",
+      // teclado aberto: o menu de baixo some, e o espaço dele junto
+      "html.kb-open &": { "--mobile-nav-space": "0px" },
       // No celular a pilha é vertical: conteúdo e, embaixo, a navegação.
       // A barra inferior ocupa o próprio espaço no fluxo em vez de flutuar
       // por cima com position: fixed — flutuando, ela ficava presa atrás da
@@ -337,6 +339,8 @@ const useStyles = makeStyles(theme => ({
       duration: theme.transitions.duration.leavingScreen
     }),
     width: drawerWidthCollapsed,
+    // um respiro da borda esquerda da tela
+    paddingLeft: theme.spacing(1),
     [theme.breakpoints.up("sm")]: {
       width: drawerWidthCollapsed
     }

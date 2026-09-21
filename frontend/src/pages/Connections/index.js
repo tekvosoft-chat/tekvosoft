@@ -6,7 +6,7 @@ import { Button, Typography } from "@material-ui/core";
 import AddRoundedIcon from "@material-ui/icons/AddRounded";
 
 import MainContainer from "../../components/MainContainer";
-import BoxLoader from "../../components/ui/BoxLoader";
+import PageLoader from "../../components/ui/PageLoader";
 import {
   InstanceCard,
   InstanceDetails,
@@ -319,9 +319,7 @@ const Connections = () => {
       </div>
 
       {loading ? (
-        <div className={classes.center}>
-          <BoxLoader />
-        </div>
+        <PageLoader />
       ) : (
         <InstanceGrid>
           {(whatsApps || []).map((whatsApp, index) => (

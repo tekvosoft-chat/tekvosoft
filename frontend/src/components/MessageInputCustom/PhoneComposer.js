@@ -119,8 +119,18 @@ const useStyles = makeStyles(theme => {
       display: "flex",
       alignItems: "center",
       justifyContent: "flex-end",
+      overflow: "hidden",
+      // as barras somem suavemente na ponta esquerda
+      WebkitMaskImage: "linear-gradient(90deg, transparent, #000 18%)",
+      maskImage: "linear-gradient(90deg, transparent, #000 18%)"
+    },
+    waveTrack: {
+      flex: "none",
+      display: "flex",
+      alignItems: "center",
       gap: 3,
-      overflow: "hidden"
+      height: "100%",
+      willChange: "transform"
     },
     bar: {
       flex: "none",
@@ -129,9 +139,9 @@ const useStyles = makeStyles(theme => {
       borderRadius: 3,
       backgroundColor: t.brand.text,
       opacity: 0.35,
-      transform: "scaleY(0.12)",
-      transition:
-        "transform .16s cubic-bezier(.3, 1.4, .5, 1), opacity .16s ease",
+      transform: "scaleY(0.1)",
+      // sem transição: quem anima é o quadro a quadro da onda
+      willChange: "transform",
       // as barras mais recentes (à direita) ficam mais fortes
       "&:nth-last-child(-n+14)": { opacity: 0.65 },
       "&:nth-last-child(-n+6)": { opacity: 1 }
@@ -274,19 +284,25 @@ export const AttachPanel = ({
   );
 };
 
-const BARS = 34;
+// barras suficientes para a barra larga do computador; no celular as mais
+// antigas ficam escondidas à esquerda
+const BARS = 96;
+const STEP_MS = 70; // uma barra nova a cada 70ms
+const STEP_PX = 6; // largura da barra + espaço
 
 /**
- * Onda do áudio sendo gravado. Lê o volume do próprio microfone que o
- * gravador já abriu (um segundo pedido de microfone no iPhone pode silenciar
- * o primeiro). Sem acesso a ele, a onda só respira, sem inventar volume.
+ * Onda do áudio enquanto grava. Lida a cada quadro da tela (não mais em
+ * saltos de 90ms): o volume é suavizado, a faixa desliza para a esquerda
+ * continuamente entre uma barra e outra, e a barra da ponta acompanha a voz
+ * ao vivo — o movimento fica fluido no celular e no computador.
  */
 const Waveform = ({ recorder }) => {
   const classes = useStyles();
   const bars = useRef([]);
+  const track = useRef(null);
 
   useEffect(() => {
-    const levels = new Array(BARS).fill(0.12);
+    const levels = new Array(BARS).fill(0.1);
     let analyser = null;
     let data = null;
     try {
@@ -300,8 +316,15 @@ const Waveform = ({ recorder }) => {
       analyser = null;
     }
 
-    let tick = 0;
-    const timer = setInterval(() => {
+    const paint = () =>
+      bars.current.forEach((el, i) => {
+        if (el) el.style.transform = `scaleY(${levels[i]})`;
+      });
+
+    let smooth = 0.1;
+    let last = performance.now();
+    let raf;
+    const frame = now => {
       let level;
       if (analyser) {
         analyser.getByteTimeDomainData(data);
@@ -312,18 +335,32 @@ const Waveform = ({ recorder }) => {
         }
         level = Math.min(1, Math.sqrt(sum / data.length) * 4.5);
       } else {
-        tick += 1;
-        level = 0.25 + 0.18 * Math.sin(tick / 2.2) * Math.sin(tick / 5.3);
+        level = 0.3 + 0.2 * Math.sin(now / 180) * Math.sin(now / 470);
       }
-      levels.shift();
-      levels.push(Math.max(0.12, level));
-      bars.current.forEach((el, i) => {
-        if (el) el.style.transform = `scaleY(${levels[i]})`;
-      });
-    }, 90);
+      // sobe rápido, desce devagar: a onda "respira" em vez de tremer
+      smooth += (level - smooth) * (level > smooth ? 0.45 : 0.18);
+      const live = Math.max(0.1, smooth);
+
+      if (now - last >= STEP_MS) {
+        levels.shift();
+        levels.push(live);
+        last = now;
+        paint();
+      } else {
+        levels[BARS - 1] = live;
+        const el = bars.current[BARS - 1];
+        if (el) el.style.transform = `scaleY(${live})`;
+      }
+      if (track.current) {
+        const frac = Math.min(1, (now - last) / STEP_MS);
+        track.current.style.transform = `translateX(${-frac * STEP_PX}px)`;
+      }
+      raf = requestAnimationFrame(frame);
+    };
+    raf = requestAnimationFrame(frame);
 
     return () => {
-      clearInterval(timer);
+      cancelAnimationFrame(raf);
       try {
         if (analyser) recorder.microphone.disconnect(analyser);
       } catch (err) {
@@ -334,15 +371,17 @@ const Waveform = ({ recorder }) => {
 
   return (
     <div className={classes.wave} aria-hidden="true">
-      {Array.from({ length: BARS }, (_, i) => (
-        <span
-          key={i}
-          ref={el => {
-            bars.current[i] = el;
-          }}
-          className={classes.bar}
-        />
-      ))}
+      <div ref={track} className={classes.waveTrack}>
+        {Array.from({ length: BARS }, (_, i) => (
+          <span
+            key={i}
+            ref={el => {
+              bars.current[i] = el;
+            }}
+            className={classes.bar}
+          />
+        ))}
+      </div>
     </div>
   );
 };

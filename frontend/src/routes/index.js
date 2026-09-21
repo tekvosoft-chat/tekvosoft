@@ -1,4 +1,5 @@
 import React, { lazy, Suspense, useEffect, useState } from "react";
+import PageLoader from "../components/ui/PageLoader";
 
 // Telas carregadas sob demanda: o app abre só com o essencial (login e
 // atendimentos) e cada outra tela baixa na primeira vez que é aberta.
@@ -48,7 +49,7 @@ const Routes = () => {
     <BrowserRouter>
       <AuthProvider>
         <TicketsContextProvider>
-          <Suspense fallback={null}>
+          <Suspense fallback={<PageLoader />}>
             <Switch>
               <Route exact path="/login" component={Login} />
               <Route exact path="/signup" component={Signup} />

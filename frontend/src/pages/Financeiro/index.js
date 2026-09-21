@@ -22,7 +22,7 @@ import moment from "moment";
 import MainContainer from "../../components/MainContainer";
 import PaymentDialog from "../../components/PaymentDialog";
 import ConfirmationModal from "../../components/ConfirmationModal";
-import BoxLoader from "../../components/ui/BoxLoader";
+import PageLoader from "../../components/ui/PageLoader";
 import api from "../../services/api";
 import { safeValueFormat } from "../../helpers/safeValueFormat";
 import toastError from "../../errors/toastError";
@@ -596,9 +596,7 @@ const Financeiro = () => {
   if (loading && !invoices.length) {
     return (
       <MainContainer className={classes.page}>
-        <div className={classes.center}>
-          <BoxLoader size={48} />
-        </div>
+        <PageLoader />
       </MainContainer>
     );
   }

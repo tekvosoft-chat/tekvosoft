@@ -57,6 +57,9 @@ import { AttachPanel, RecordingPanel } from "./PhoneComposer";
 import QuickRepliesModal from "../QuickRepliesModal";
 import ExpressionPanel from "./ExpressionPanel";
 import LinkPreviewBar, { useLinkPreview } from "./LinkPreviewBar";
+import ScheduleSheet from "./ScheduleSheet";
+import AccessTimeRoundedIcon from "@material-ui/icons/AccessTimeRounded";
+import { planAllows } from "../../helpers/planFeatures";
 import { overlayOpen } from "../../helpers/escapeKey";
 import {
   announceFailed,
@@ -178,6 +181,26 @@ const useStyles = makeStyles(theme => ({
    * respostas rápidas e assinatura), o rosto abre emoji, figurinhas e GIFs,
    * e à direita fica o microfone, que vira enviar quando há texto.
    */
+  // alça no topo da barra (computador): arrastar muda a altura da caixa
+  resizeHandle: {
+    width: "100%",
+    height: 12,
+    marginBottom: -6,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "ns-resize",
+    touchAction: "none",
+    "& span": {
+      width: 40,
+      height: 4,
+      borderRadius: 4,
+      backgroundColor: theme.palette.tkv.borderStrong,
+      opacity: 0,
+      transition: "opacity .15s ease"
+    },
+    "&:hover span, &:active span": { opacity: 1 }
+  },
   webBar: {
     width: "100%",
     display: "flex",
@@ -344,6 +367,8 @@ const useStyles = makeStyles(theme => ({
   // o X ao lado da prévia: pequeno, para a barra não ficar alta
   replyClose: {
     flex: "none",
+    padding: 8,
+    "& svg": { fontSize: 20 },
     [theme.breakpoints.down("xs")]: {
       padding: 6,
       "& svg": { fontSize: 20 }
@@ -355,7 +380,7 @@ const useStyles = makeStyles(theme => ({
     width: "100%",
     alignItems: "center",
     gap: 6,
-    padding: "10px 12px 2px",
+    padding: "6px 12px 0",
     animation: "$replySlide .34s cubic-bezier(.3, 1.35, .5, 1) both",
     [theme.breakpoints.down("xs")]: { padding: "6px 6px 0" }
   },
@@ -378,7 +403,12 @@ const useStyles = makeStyles(theme => ({
     [theme.breakpoints.up("sm")]: {
       backgroundColor: theme.palette.tkv.brand.soft,
       boxShadow: `inset 0 0 0 1px ${theme.palette.tkv.brand.softHover}`,
-      "& $replyginMsgBody": { padding: "10px 14px", fontSize: "0.9375rem" },
+      // compacta: nome + uma linha, sem ocupar meia tela acima da barra
+      "& $replyginMsgBody": {
+        padding: "6px 12px",
+        fontSize: "0.875rem",
+        "& > div, & > p": { WebkitLineClamp: 1, maxHeight: "1.4em" }
+      },
       "& $messageContactName": {
         color: theme.palette.tkv.brand.text,
         fontWeight: 700
@@ -624,7 +654,8 @@ const CustomInput = props => {
     onQuickReplies,
     onFocusInput,
     quickVersion,
-    quickIcon
+    quickIcon,
+    rows
   } = props;
   const classes = useStyles();
   const [quickMessages, setQuickMessages] = useState([]);
@@ -915,7 +946,8 @@ const CustomInput = props => {
                 placeholder={renderPlaceholder()}
                 multiline
                 className={classes.messageInput}
-                maxRows={5}
+                minRows={rows > 1 ? rows : 1}
+                maxRows={rows > 1 ? rows : 5}
                 onFocus={onFocusInput}
                 endAdornment={
                   phone ? (
@@ -1102,6 +1134,41 @@ const MessageInputCustom = props => {
   // prévia do link digitado; fechada no X, a mensagem sai sem prévia
   const linkPreview = useLinkPreview(inputMessage);
   const [closedLink, setClosedLink] = useState(null);
+  // altura da caixa de texto no computador (1 = automática, cresce até 5)
+  const [composerRows, setComposerRows] = useState(() => {
+    try {
+      return Number(localStorage.getItem("tkv:composerRows")) || 1;
+    } catch {
+      return 1;
+    }
+  });
+  const saveRows = value => {
+    setComposerRows(value);
+    try {
+      localStorage.setItem("tkv:composerRows", String(value));
+    } catch {
+      // modo privado: vale só nesta aba
+    }
+  };
+  const startResize = e => {
+    e.preventDefault();
+    const startY = e.clientY;
+    const startRows = composerRows;
+    const onMove = ev => {
+      const rows = Math.round(startRows + (startY - ev.clientY) / 20);
+      setComposerRows(Math.max(1, Math.min(20, rows)));
+    };
+    const onUp = ev => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      const rows = Math.round(startRows + (startY - ev.clientY) / 20);
+      saveRows(Math.max(1, Math.min(20, rows)));
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+  // reloginho: agenda a mensagem digitada (painel que sobe de baixo)
+  const [scheduleOpen, setScheduleOpen] = useState(false);
   // grupo em que a conexão não pode escrever: só admins, ou já saiu dele
   const [groupLock, setGroupLock] = useState(null);
   useEffect(() => {
@@ -1599,6 +1666,41 @@ const MessageInputCustom = props => {
     );
   };
 
+  const canScheduleHere =
+    !!inputMessage.trim() &&
+    !!ticket?.contact?.id &&
+    !editingMessage &&
+    planAllows(user, "useSchedules");
+  const scheduleButton = canScheduleHere && (
+    <Tooltip title={i18n.t("scheduleSheet.title", "Agendar envio")}>
+      <IconButton
+        aria-label={i18n.t("scheduleSheet.title", "Agendar envio")}
+        className={isPhone ? classes.phoneIconButton : classes.webIcon}
+        disabled={disableOption}
+        onClick={() => setScheduleOpen(true)}
+      >
+        <AccessTimeRoundedIcon />
+      </IconButton>
+    </Tooltip>
+  );
+  const scheduleSheet = (
+    <ScheduleSheet
+      open={scheduleOpen}
+      onClose={() => setScheduleOpen(false)}
+      contactId={ticket?.contact?.id}
+      body={
+        signMessage
+          ? `*${user?.name}:*\n${inputMessage.trim()}`
+          : inputMessage.trim()
+      }
+      onScheduled={() => {
+        setScheduleOpen(false);
+        setInputMessage("");
+        setReplyingMessage(null);
+      }}
+    />
+  );
+
   if (groupLock)
     return (
       <Paper square elevation={0} className={classes.mainWrapper}>
@@ -1722,6 +1824,7 @@ const MessageInputCustom = props => {
               </IconButton>
             )}
 
+            {scheduleButton}
             <ActionButtons
               phone
               inputMessage={inputMessage}
@@ -1760,6 +1863,7 @@ const MessageInputCustom = props => {
           onToggleSign={() => setSignMessage(!signMessage)}
         />
         {quickRepliesModal}
+        {scheduleSheet}
       </Paper>
     );
   } else {
@@ -1785,6 +1889,17 @@ const MessageInputCustom = props => {
     return (
       <Paper square elevation={0} className={classes.mainWrapper}>
         {locationDialog}
+        <div
+          className={classes.resizeHandle}
+          onPointerDown={startResize}
+          onDoubleClick={() => saveRows(1)}
+          title={i18n.t(
+            "messagesInput.resize",
+            "Arraste para aumentar ou diminuir (clique duplo: automático)"
+          )}
+        >
+          <span />
+        </div>
         {(replyingMessage && renderReplyingMessage(replyingMessage)) ||
           (editingMessage && renderReplyingMessage(editingMessage))}
         {showLinkPreview && (
@@ -1794,147 +1909,162 @@ const MessageInputCustom = props => {
           />
         )}
 
-        <div className={classes.webBar}>
-          <input
-            multiple
-            type="file"
-            id="upload-button"
-            disabled={disableOption}
-            className={classes.uploadInput}
-            onChange={handleChangeMedias}
-          />
-          <input
-            multiple
-            type="file"
-            id="gallery-button"
-            accept="image/*,video/*"
-            disabled={disableOption}
-            className={classes.uploadInput}
-            onChange={handleChangeMedias}
-          />
-          <Tooltip title={i18n.t("messagesInput.phone.attach")}>
-            <span>
-              <IconButton
-                aria-label="upload"
-                className={classes.webIcon}
-                disabled={disableOption}
-                onClick={e => setAttachAnchor(e.currentTarget)}
-              >
-                <AddRoundedIcon
-                  className={classes.plusRotate}
-                  style={{
-                    transform: attachAnchor ? "rotate(45deg)" : "none"
-                  }}
-                />
-              </IconButton>
-            </span>
-          </Tooltip>
-          <Menu
-            className={classes.attachMenu}
-            anchorEl={attachAnchor}
-            open={!!attachAnchor}
-            onClose={() => setAttachAnchor(null)}
-            getContentAnchorEl={null}
-            anchorOrigin={{ vertical: "top", horizontal: "left" }}
-            transformOrigin={{ vertical: "bottom", horizontal: "left" }}
-          >
-            <MenuItem
-              component="label"
-              htmlFor="upload-button"
-              onClick={() => setAttachAnchor(null)}
-            >
-              <ListItemIcon>
-                <InsertDriveFileOutlinedIcon />
-              </ListItemIcon>
-              {i18n.t("messagesInput.phone.document")}
-            </MenuItem>
-            <MenuItem
-              component="label"
-              htmlFor="gallery-button"
-              onClick={() => setAttachAnchor(null)}
-            >
-              <ListItemIcon>
-                <PhotoLibraryOutlinedIcon />
-              </ListItemIcon>
-              {i18n.t("messagesInput.phone.gallery")}
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                setAttachAnchor(null);
-                setLocationOpen(true);
-              }}
-            >
-              <ListItemIcon>
-                <RoomOutlinedIcon />
-              </ListItemIcon>
-              {i18n.t("messagesInput.location", "Localização")}
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                setAttachAnchor(null);
-                handleQuickReplies();
-              }}
-            >
-              <ListItemIcon>
-                <FlashOnRoundedIcon />
-              </ListItemIcon>
-              {i18n.t("quickReplies.title")}
-            </MenuItem>
-            <MenuItem onClick={() => setSignMessage(!signMessage)}>
-              <ListItemIcon>
-                <FontAwesomeIcon icon={faSignature} />
-              </ListItemIcon>
-              <span style={{ flex: 1 }}>
-                {i18n.t("messagesInput.signMessage")}
+        {/* gravando: a mesma barra do celular, com a onda ao vivo */}
+        {recording ? (
+          <div className={classes.webBar}>
+            <RecordingPanel
+              recorder={Mp3Recorder}
+              loading={loading}
+              onCancel={handleCancelAudio}
+              onSend={handleUploadAudio}
+            />
+          </div>
+        ) : (
+          <div className={classes.webBar}>
+            <input
+              multiple
+              type="file"
+              id="upload-button"
+              disabled={disableOption}
+              className={classes.uploadInput}
+              onChange={handleChangeMedias}
+            />
+            <input
+              multiple
+              type="file"
+              id="gallery-button"
+              accept="image/*,video/*"
+              disabled={disableOption}
+              className={classes.uploadInput}
+              onChange={handleChangeMedias}
+            />
+            <Tooltip title={i18n.t("messagesInput.phone.attach")}>
+              <span>
+                <IconButton
+                  aria-label="upload"
+                  className={classes.webIcon}
+                  disabled={disableOption}
+                  onClick={e => setAttachAnchor(e.currentTarget)}
+                >
+                  <AddRoundedIcon
+                    className={classes.plusRotate}
+                    style={{
+                      transform: attachAnchor ? "rotate(45deg)" : "none"
+                    }}
+                  />
+                </IconButton>
               </span>
-              {signMessage && <CheckRoundedIcon fontSize="small" />}
-            </MenuItem>
-          </Menu>
-
-          <Tooltip title={i18n.t("expressions.title")}>
-            <span>
-              <IconButton
-                ref={exprAnchorRef}
-                aria-label={i18n.t("expressions.title")}
-                className={`${classes.webIcon}${exprOpen ? ` ${classes.webIconOn}` : ""}`}
-                disabled={disableOption}
-                onClick={toggleExpressions}
+            </Tooltip>
+            <Menu
+              className={classes.attachMenu}
+              anchorEl={attachAnchor}
+              open={!!attachAnchor}
+              onClose={() => setAttachAnchor(null)}
+              getContentAnchorEl={null}
+              anchorOrigin={{ vertical: "top", horizontal: "left" }}
+              transformOrigin={{ vertical: "bottom", horizontal: "left" }}
+            >
+              <MenuItem
+                component="label"
+                htmlFor="upload-button"
+                onClick={() => setAttachAnchor(null)}
               >
-                <InsertEmoticonRoundedIcon />
-              </IconButton>
-            </span>
-          </Tooltip>
+                <ListItemIcon>
+                  <InsertDriveFileOutlinedIcon />
+                </ListItemIcon>
+                {i18n.t("messagesInput.phone.document")}
+              </MenuItem>
+              <MenuItem
+                component="label"
+                htmlFor="gallery-button"
+                onClick={() => setAttachAnchor(null)}
+              >
+                <ListItemIcon>
+                  <PhotoLibraryOutlinedIcon />
+                </ListItemIcon>
+                {i18n.t("messagesInput.phone.gallery")}
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  setAttachAnchor(null);
+                  setLocationOpen(true);
+                }}
+              >
+                <ListItemIcon>
+                  <RoomOutlinedIcon />
+                </ListItemIcon>
+                {i18n.t("messagesInput.location", "Localização")}
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  setAttachAnchor(null);
+                  handleQuickReplies();
+                }}
+              >
+                <ListItemIcon>
+                  <FlashOnRoundedIcon />
+                </ListItemIcon>
+                {i18n.t("quickReplies.title")}
+              </MenuItem>
+              <MenuItem onClick={() => setSignMessage(!signMessage)}>
+                <ListItemIcon>
+                  <FontAwesomeIcon icon={faSignature} />
+                </ListItemIcon>
+                <span style={{ flex: 1 }}>
+                  {i18n.t("messagesInput.signMessage")}
+                </span>
+                {signMessage && <CheckRoundedIcon fontSize="small" />}
+              </MenuItem>
+            </Menu>
 
-          <CustomInput
-            loading={loading}
-            inputRef={inputRef}
-            ticketStatus={(isGroup && "open") || ticketStatus}
-            inputMessage={inputMessage}
-            setInputMessage={setInputMessage}
-            handleSendMessage={handleSendMessage}
-            handleInputPaste={handleInputPaste}
-            handleChangeMedias={handleChangeMedias}
-            handlePresenceUpdate={handlePresenceUpdate}
-            disableOption={disableOption}
-            quickVersion={quickVersion}
-            onFocusInput={() => setExprOpen(false)}
-          />
+            <Tooltip title={i18n.t("expressions.title")}>
+              <span>
+                <IconButton
+                  ref={exprAnchorRef}
+                  aria-label={i18n.t("expressions.title")}
+                  className={`${classes.webIcon}${exprOpen ? ` ${classes.webIconOn}` : ""}`}
+                  disabled={disableOption}
+                  onClick={toggleExpressions}
+                >
+                  <InsertEmoticonRoundedIcon />
+                </IconButton>
+              </span>
+            </Tooltip>
 
-          <ActionButtons
-            web
-            inputMessage={inputMessage}
-            loading={loading}
-            recording={recording}
-            ticketStatus={ticketStatus}
-            disabeleOption={disableOption}
-            handleSendMessage={handleSendMessage}
-            handleCancelAudio={handleCancelAudio}
-            handleUploadAudio={handleUploadAudio}
-            handleStartRecording={handleStartRecording}
-          />
-        </div>
+            <CustomInput
+              loading={loading}
+              inputRef={inputRef}
+              ticketStatus={(isGroup && "open") || ticketStatus}
+              inputMessage={inputMessage}
+              setInputMessage={setInputMessage}
+              handleSendMessage={handleSendMessage}
+              handleInputPaste={handleInputPaste}
+              handleChangeMedias={handleChangeMedias}
+              handlePresenceUpdate={handlePresenceUpdate}
+              disableOption={disableOption}
+              quickVersion={quickVersion}
+              onFocusInput={() => setExprOpen(false)}
+              rows={composerRows}
+            />
+
+            {scheduleButton}
+            <ActionButtons
+              web
+              inputMessage={inputMessage}
+              loading={loading}
+              recording={recording}
+              ticketStatus={ticketStatus}
+              disabeleOption={disableOption}
+              handleSendMessage={handleSendMessage}
+              handleCancelAudio={handleCancelAudio}
+              handleUploadAudio={handleUploadAudio}
+              handleStartRecording={handleStartRecording}
+            />
+          </div>
+        )}
         {expressionPopover}
         {quickRepliesModal}
+        {scheduleSheet}
       </Paper>
     );
   }

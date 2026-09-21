@@ -8,11 +8,13 @@ import { makeStyles } from "@material-ui/core/styles";
 import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
 import Tooltip from "@material-ui/core/Tooltip";
+import IconButton from "@material-ui/core/IconButton";
 import ButtonBase from "@material-ui/core/ButtonBase";
 
 import WhatsAppIcon from "@material-ui/icons/WhatsApp";
 import AndroidIcon from "@material-ui/icons/Android";
 import DoneRoundedIcon from "@material-ui/icons/DoneRounded";
+import CloseRoundedIcon from "@material-ui/icons/CloseRounded";
 import SyncAltRoundedIcon from "@material-ui/icons/SyncAltRounded";
 import AccountTreeOutlinedIcon from "@material-ui/icons/AccountTreeOutlined";
 import WhatsMarked from "react-whatsmarked";
@@ -55,7 +57,7 @@ const useStyles = makeStyles(theme => {
       gap: theme.spacing(1.25),
       width: "calc(100% - 12px)",
       margin: "2px 6px",
-      padding: theme.spacing(0.875, 1.25, 0.875, 1.5),
+      padding: theme.spacing(1.25, 1.5, 1.25, 1.75),
       borderRadius: 12,
       overflow: "hidden",
       textAlign: "left",
@@ -94,9 +96,9 @@ const useStyles = makeStyles(theme => {
     },
     avatar: {
       flex: "none",
-      width: 42,
-      height: 42,
-      fontSize: "0.95rem",
+      width: 50,
+      height: 50,
+      fontSize: "1.05rem",
       color: "#FFFFFF",
       fontWeight: 700
     },
@@ -112,7 +114,7 @@ const useStyles = makeStyles(theme => {
       display: "flex",
       alignItems: "center",
       gap: 4,
-      fontSize: "0.875rem",
+      fontSize: "0.9688rem",
       fontWeight: 600,
       letterSpacing: "-0.005em",
       color: theme.palette.text.primary,
@@ -141,7 +143,7 @@ const useStyles = makeStyles(theme => {
     previewText: {
       flex: 1,
       minWidth: 0,
-      fontSize: "0.8125rem",
+      fontSize: "0.875rem",
       color: theme.palette.text.secondary,
       overflow: "hidden",
       textOverflow: "ellipsis",
@@ -310,6 +312,16 @@ const TicketListItemCustom = ({
       isMounted.current = false;
     };
   }, []);
+
+  // recusar quem está aguardando: encerra sem mensagem de despedida nem
+  // pesquisa de avaliação (o contato não recebe nada)
+  const handleRejectTicket = async id => {
+    try {
+      await api.put(`/tickets/${id}`, { status: "closed", justClose: true });
+    } catch (err) {
+      toastError(err);
+    }
+  };
 
   const handleAcceptTicket = async id => {
     try {
@@ -494,6 +506,21 @@ const TicketListItemCustom = ({
               >
                 {i18n.t("messagesList.header.buttons.accept")}
               </Button>
+              <Tooltip
+                title={i18n.t("ticketsList.reject", "Não aceitar")}
+                placement="top"
+              >
+                <IconButton
+                  className={`${classes.secondaryAction} ${classes.danger}`}
+                  aria-label={i18n.t("ticketsList.reject", "Não aceitar")}
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleRejectTicket(ticket.id);
+                  }}
+                >
+                  <CloseRoundedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
             </div>
           )}
         </div>

@@ -19,7 +19,7 @@ import FormatQuoteRoundedIcon from "@material-ui/icons/FormatQuoteRounded";
 
 import MainContainer from "../../components/MainContainer";
 import EmptyState from "../../components/ui/EmptyState";
-import BoxLoader from "../../components/ui/BoxLoader";
+import PageLoader from "../../components/ui/PageLoader";
 import QueueModal from "../../components/QueueModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import { i18nToast } from "../../helpers/i18nToast";
@@ -374,9 +374,7 @@ const Queues = () => {
       </div>
 
       {loading ? (
-        <div className={classes.center}>
-          <BoxLoader />
-        </div>
+        <PageLoader />
       ) : queues.length === 0 ? (
         <EmptyState
           icon={<AccountTreeOutlinedIcon />}

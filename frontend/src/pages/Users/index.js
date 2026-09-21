@@ -24,7 +24,7 @@ import PeopleAltOutlinedIcon from "@material-ui/icons/PeopleAltOutlined";
 import MainContainer from "../../components/MainContainer";
 import UserAvatar from "../../components/ui/UserAvatar";
 import EmptyState from "../../components/ui/EmptyState";
-import BoxLoader from "../../components/ui/BoxLoader";
+import PageLoader from "../../components/ui/PageLoader";
 import UserModal from "../../components/UserModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import api from "../../services/api";
@@ -524,9 +524,7 @@ const Users = () => {
       </div>
 
       {loading && users.length === 0 ? (
-        <div className={classes.center}>
-          <BoxLoader />
-        </div>
+        <PageLoader />
       ) : visible.length === 0 ? (
         <EmptyState
           icon={<PeopleAltOutlinedIcon />}
