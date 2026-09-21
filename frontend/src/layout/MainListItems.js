@@ -38,6 +38,7 @@ import { makeStyles } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
 import { loadJSON } from "../helpers/loadJSON";
 import { planAllows } from "../helpers/planFeatures";
+import useSupportUnread from "../hooks/useSupportUnread";
 
 const gitinfo = loadJSON("/gitinfo.json");
 
@@ -283,6 +284,8 @@ const MainListItems = props => {
   const { whatsApps } = useContext(WhatsAppsContext);
   const { user, handleLogout } = useContext(AuthContext);
   const [connectionWarning, setConnectionWarning] = useState(false);
+  // chamados de suporte com novidade (selo no "Ajuda")
+  const supportUnread = useSupportUnread();
   const [openCampaignSubmenu, setOpenCampaignSubmenu] = useState(false);
 
   const [showCampaigns, setShowCampaigns] = useState(false);
@@ -599,7 +602,11 @@ const MainListItems = props => {
         <ListItemLink
           to="/helps"
           primary={i18n.t("mainDrawer.listItems.helps")}
-          icon={<HelpOutlineIcon />}
+          icon={
+            <Badge badgeContent={supportUnread} color="primary" max={99}>
+              <HelpOutlineIcon />
+            </Badge>
+          }
         />
         {drawerOpen && !searching && user.profile === "admin" && (
           <Typography className={classes.buildInfo}>

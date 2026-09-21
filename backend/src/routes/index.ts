@@ -16,6 +16,7 @@ import ticketNoteRoutes from "./ticketNoteRoutes";
 import quickMessageRoutes from "./quickMessageRoutes";
 import pushRoutes from "./pushRoutes";
 import groupRoutes from "./groupRoutes";
+import supportRoutes from "./supportRoutes";
 import helpRoutes from "./helpRoutes";
 import dashboardRoutes from "./dashboardRoutes";
 import queueOptionRoutes from "./queueOptionRoutes";
@@ -70,5 +71,6 @@ routes.use(wavoipRoutes);
 routes.use(dockerRoutes);
 routes.use(pushRoutes);
 routes.use(groupRoutes);
+routes.use(supportRoutes);
 
 export default routes;

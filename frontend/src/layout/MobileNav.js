@@ -50,6 +50,8 @@ import {
 } from "../components/NotificationSoundSetting";
 import NotificationsActiveRoundedIcon from "@material-ui/icons/NotificationsActiveRounded";
 import { routeAllowed } from "../helpers/planFeatures";
+import Badge from "@material-ui/core/Badge";
+import useSupportUnread from "../hooks/useSupportUnread";
 
 /**
  * Navegação do celular.
@@ -330,6 +332,7 @@ const MobileNav = ({ onOpenProfile }) => {
   const { colorMode } = useContext(ColorModeContext);
 
   const [sheetOpen, setSheetOpen] = useState(false);
+  const supportUnread = useSupportUnread();
   const [soundOn, setSoundOn] = useNotificationSound();
   const [push, setPush] = useState(pushState);
 
@@ -401,7 +404,15 @@ const MobileNav = ({ onOpenProfile }) => {
           { to: "/kanban", label: t("kanban"), icon: <ViewWeekOutlinedIcon /> },
           { to: "/schedules", label: t("schedules"), icon: <EventIcon /> },
           { to: "/chats", label: t("chats"), icon: <ForumIcon /> },
-          { to: "/helps", label: t("helps"), icon: <HelpOutlineIcon /> }
+          {
+            to: "/helps",
+            label: t("helps"),
+            icon: (
+              <Badge badgeContent={supportUnread} color="primary" max={99}>
+                <HelpOutlineIcon />
+              </Badge>
+            )
+          }
         ]
       }
     ];
@@ -450,7 +461,7 @@ const MobileNav = ({ onOpenProfile }) => {
       }))
       .filter(section => section.items.length > 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAdmin, showCampaigns, barItems, user?.super]);
+  }, [isAdmin, showCampaigns, barItems, user?.super, supportUnread]);
 
   const isActive = to =>
     to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
