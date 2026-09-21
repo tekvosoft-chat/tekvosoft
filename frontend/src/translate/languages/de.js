@@ -1349,6 +1349,10 @@ const messages = {
         openPaymentLink: "Zahlungslink öffnen"
       },
       messagesInput: {
+        linkPreview: {
+          loading: "Linkvorschau wird geladen…",
+          remove: "Ohne Vorschau senden"
+        },
         phone: {
           attach: "Anhängen",
           camera: "Kamera",

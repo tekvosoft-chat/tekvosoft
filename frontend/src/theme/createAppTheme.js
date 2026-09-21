@@ -32,6 +32,7 @@ import {
   monoStack,
   neutralDark,
   neutralLight,
+  neutralize,
   radius,
   semanticDark,
   semanticLight,
@@ -56,8 +57,11 @@ export default function createAppTheme({
   calculatedLogoDark
 } = {}) {
   const isDark = mode === "dark";
-  // neutros no matiz da cor principal: o tema escolhido tinge o sistema todo
-  const n = tintNeutrals(isDark ? neutralDark : neutralLight, primaryColor);
+  // claro: neutros com uma pitada do matiz da cor principal. Escuro: preto
+  // e cinzas puros — tingido, o fundo ficava roxo ou esverdeado
+  const n = isDark
+    ? neutralize(neutralDark)
+    : tintNeutrals(neutralLight, primaryColor);
   const sem = isDark ? semanticDark : semanticLight;
   const b = brandStates(primaryColor, isDark);
   // ícones e textos na cor da marca: legíveis mesmo quando a cor escolhida
@@ -74,20 +78,20 @@ export default function createAppTheme({
     "&::-webkit-scrollbar": { width: 8, height: 8 },
     "&::-webkit-scrollbar-track": { background: "transparent" },
     "&::-webkit-scrollbar-thumb": {
-      backgroundColor: isDark ? "#3C3452" : "#D6D1E6",
+      backgroundColor: isDark ? "#3D3D3D" : "#D6D1E6",
       borderRadius: radius.pill,
       border: "2px solid transparent",
       backgroundClip: "content-box"
     },
     "&::-webkit-scrollbar-thumb:hover": {
-      backgroundColor: isDark ? "#4E4468" : "#C0B9D6"
+      backgroundColor: isDark ? "#525252" : "#C0B9D6"
     }
   };
 
   const scrollbarStylesSoft = {
     "&::-webkit-scrollbar": { width: 6 },
     "&::-webkit-scrollbar-thumb": {
-      backgroundColor: isDark ? "#2E2842" : "#E2DEEE",
+      backgroundColor: isDark ? "#2F2F2F" : "#E2DEEE",
       borderRadius: radius.pill
     }
   };
@@ -138,7 +142,7 @@ export default function createAppTheme({
           selected: b.soft,
           selectedOpacity: 0.1,
           disabled: n.textDisabled,
-          disabledBackground: isDark ? "#262134" : "#EFEDF5",
+          disabledBackground: isDark ? "#262626" : "#EFEDF5",
           focus: b.focusRing
         },
 
@@ -187,7 +191,7 @@ export default function createAppTheme({
         },
         dark: { main: isDark ? n.textSecondary : "#333333" },
         light: { main: isDark ? n.surfaceSunken : "#F3F3F3" },
-        chatBubbleFromMe: { main: isDark ? "#2E2547" : "#EDE6FE" },
+        chatBubbleFromMe: { main: isDark ? "#2C2C2C" : "#EDE6FE" },
         chatBubbleReceived: { main: isDark ? n.surfaceRaised : "#FFFFFF" },
         chatBackground: { main: n.canvas },
         tabHeaderBackground: n.surfaceSunken,
@@ -921,7 +925,7 @@ export default function createAppTheme({
         MuiBackdrop: {
           root: {
             backgroundColor: isDark
-              ? "rgba(6, 4, 12, 0.72)"
+              ? "rgba(0, 0, 0, 0.72)"
               : "rgba(26, 22, 38, 0.45)"
           }
         },
@@ -949,14 +953,14 @@ export default function createAppTheme({
         // ── feedback ──
         MuiTooltip: {
           tooltip: {
-            backgroundColor: isDark ? "#3A3350" : "#2A2440",
+            backgroundColor: isDark ? "#3A3A3A" : "#2A2440",
             color: "#FFFFFF",
             fontSize: "0.75rem",
             fontWeight: 500,
             borderRadius: radius.xs,
             padding: "7px 10px"
           },
-          arrow: { color: isDark ? "#3A3350" : "#2A2440" }
+          arrow: { color: isDark ? "#3A3A3A" : "#2A2440" }
         },
         MuiChip: {
           root: {
@@ -996,7 +1000,7 @@ export default function createAppTheme({
           bar: { borderRadius: radius.pill }
         },
         MuiSkeleton: {
-          root: { backgroundColor: isDark ? "#272134" : "#EDEAF5" },
+          root: { backgroundColor: isDark ? "#272727" : "#EDEAF5" },
           text: { borderRadius: radius.xs, transform: "none" }
         },
         MuiAlert: {

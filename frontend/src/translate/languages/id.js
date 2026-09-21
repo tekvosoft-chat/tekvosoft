@@ -1364,6 +1364,10 @@ const messages = {
         openPaymentLink: "Buka tautan pembayaran"
       },
       messagesInput: {
+        linkPreview: {
+          loading: "Memuat pratinjau tautan…",
+          remove: "Kirim tanpa pratinjau"
+        },
         phone: {
           attach: "Lampirkan",
           camera: "Kamera",

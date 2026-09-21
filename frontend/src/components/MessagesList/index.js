@@ -933,23 +933,68 @@ const useStyles = makeStyles(theme => ({
   wavebar5: {
     animationName: "quiet"
   },
-  linkPreviewThumbnail: {
-    width: "328px",
-    height: "172px"
-  },
-  linkPreviewTitle: {
-    fontWeight: "bold",
-    marginBottom: "4px"
-  },
-  linkPreviewDescription: {
-    marginBottom: "4px"
-  },
-  linkPreviewUrl: {
-    opacity: 0.6
-  },
-  linkPreviewAnchor: {
+  // prévia de link no jeito do WhatsApp: cartão discreto e neutro (não na
+  // cor do tema), título, descrição e site; a miniatura, quando vem, fica
+  // pequena ao lado — ela é de baixa resolução e esticada ficava borrada
+  linkCard: {
+    display: "flex",
+    alignItems: "stretch",
+    margin: "-1px -74px 6px -1px",
+    [theme.breakpoints.down("xs")]: { marginRight: -60 },
+    borderRadius: 10,
+    overflow: "hidden",
+    whiteSpace: "normal",
     textDecoration: "none",
-    color: theme.mode === "light" ? "#303030" : "#ffffff"
+    backgroundColor:
+      theme.mode === "light" ? "rgba(0, 0, 0, 0.05)" : "rgba(0, 0, 0, 0.24)",
+    transition: "background-color .15s ease",
+    "&:hover": {
+      backgroundColor:
+        theme.mode === "light" ? "rgba(0, 0, 0, 0.08)" : "rgba(0, 0, 0, 0.32)"
+    }
+  },
+  linkCardThumb: {
+    flex: "none",
+    width: 72,
+    minHeight: 72,
+    objectFit: "cover"
+  },
+  linkCardText: {
+    flex: 1,
+    minWidth: 0,
+    display: "flex",
+    flexDirection: "column",
+    gap: 2,
+    padding: "8px 10px",
+    fontWeight: 400
+  },
+  linkCardTitle: {
+    fontSize: "0.875rem",
+    fontWeight: 600,
+    lineHeight: 1.3,
+    color: theme.palette.tkv.chat.text,
+    display: "-webkit-box",
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
+    overflowWrap: "anywhere"
+  },
+  linkCardDescription: {
+    fontSize: "0.8125rem",
+    lineHeight: 1.35,
+    color: theme.palette.tkv.chat.meta,
+    display: "-webkit-box",
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
+    overflowWrap: "anywhere"
+  },
+  linkCardSite: {
+    fontSize: "0.75rem",
+    color: theme.palette.tkv.chat.meta,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap"
   },
   // ao pular para a mensagem citada: um piscar suave, sem pintar o balão
   messageHighlighted: {
@@ -1456,6 +1501,19 @@ const ChatGif = ({ src, className }) => {
 };
 
 // corpo de mídia que é só o nome do arquivo (não é legenda de verdade)
+// dados da prévia de link da mensagem (título, descrição, site), se houver
+const linkPreviewOf = data => {
+  const ext = data?.message?.extendedTextMessage;
+  const href = ext?.canonicalUrl || ext?.matchedText;
+  if (!ext?.title && !ext?.description) return null;
+  return {
+    title: ext.title,
+    description: ext.description,
+    href,
+    thumbnail: ext.jpegThumbnail
+  };
+};
+
 const isFileName = text =>
   /^[^\s]+\.[a-z0-9]{2,5}$/i.test(String(text || "").trim());
 
@@ -2862,44 +2920,40 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
 
   const renderLinkPreview = message => {
     const data = JSON.parse(message.dataJson);
+    const preview = linkPreviewOf(data);
+    if (!preview) return null;
+    const { title, description, href } = preview;
 
-    const title = data?.message?.extendedTextMessage?.title;
-    const description = data?.message?.extendedTextMessage?.description;
-    const canonicalUrl = data?.message?.extendedTextMessage?.canonicalUrl;
-    const url = canonicalUrl && new URL(canonicalUrl);
-
-    if (!title && !description && !url) {
-      return <></>;
+    let site = "";
+    try {
+      site = new URL(href).hostname.replace(/^www\./, "");
+    } catch {
+      site = "";
     }
+    // a baixada pelo servidor tem resolução melhor que a embutida
+    const thumbnail = preview.thumbnail;
+    const imageUrl =
+      message.thumbnailUrl ||
+      (typeof thumbnail === "string" && thumbnail
+        ? `data:image/jpeg;base64,${thumbnail}`
+        : "");
 
-    const thumbnail = data?.message?.extendedTextMessage?.jpegThumbnail;
-    const imageUrl = thumbnail ? "data:image/png;base64, " + thumbnail : "";
     return (
       <a
-        href={canonicalUrl}
-        className={classes.linkPreviewAnchor}
+        href={href}
+        className={classes.linkCard}
         target="_blank"
         rel="noreferrer"
       >
-        <div
-          className={clsx(classes.quotedContainerLeft, {
-            [classes.quotedContainerRight]: message.fromMe
-          })}
-        >
-          <div className={classes.quotedMsg}>
-            {title && <div className={classes.linkPreviewTitle}>{title}</div>}
-            {description && (
-              <div className={classes.linkPreviewDescription}>
-                {description}
-              </div>
-            )}
-            {url?.hostname && (
-              <div className={classes.linkPreviewUrl}>{url.hostname}</div>
-            )}
-          </div>
-          {!message.thumbnailUrl && imageUrl && (
-            <img className={classes.quotedThumbnail} src={imageUrl} />
+        {imageUrl && (
+          <img className={classes.linkCardThumb} src={imageUrl} alt="" />
+        )}
+        <div className={classes.linkCardText}>
+          {title && <div className={classes.linkCardTitle}>{title}</div>}
+          {description && (
+            <div className={classes.linkCardDescription}>{description}</div>
           )}
+          {site && <div className={classes.linkCardSite}>{site}</div>}
         </div>
       </a>
     );
@@ -3368,12 +3422,14 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                 </span>
               )}
 
-              {message.thumbnailUrl && !message.mediaUrl && (
-                <img
-                  className={classes.previewThumbnail}
-                  src={message.thumbnailUrl}
-                />
-              )}
+              {message.thumbnailUrl &&
+                !message.mediaUrl &&
+                !linkPreviewOf(data) && (
+                  <img
+                    className={classes.previewThumbnail}
+                    src={message.thumbnailUrl}
+                  />
+                )}
 
               {data?.message?.locationMessage ||
               data?.message?.liveLocationMessage ? (
@@ -3520,12 +3576,14 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                 </span>
               )}
 
-              {message.thumbnailUrl && !message.mediaUrl && (
-                <img
-                  className={classes.previewThumbnail}
-                  src={message.thumbnailUrl}
-                />
-              )}
+              {message.thumbnailUrl &&
+                !message.mediaUrl &&
+                !linkPreviewOf(data) && (
+                  <img
+                    className={classes.previewThumbnail}
+                    src={message.thumbnailUrl}
+                  />
+                )}
 
               <div
                 className={clsx(classes.textContentItem, {

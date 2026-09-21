@@ -16,13 +16,16 @@ interface Request {
   ticket: Ticket;
   userId?: number;
   quotedMsg?: Message;
+  // false: a pessoa fechou a prévia do link antes de enviar
+  linkPreview?: boolean;
 }
 
 const SendWhatsAppMessage = async ({
   body,
   ticket,
   userId,
-  quotedMsg
+  quotedMsg,
+  linkPreview
 }: Request): Promise<WAMessage> => {
   let options = {};
 
@@ -63,7 +66,9 @@ const SendWhatsAppMessage = async ({
     const sentMessage = await wbot.sendMessage(
       getJidOf(ticket),
       {
-        text: formattedBody
+        text: formattedBody,
+        // null desliga a prévia que o Baileys gera sozinho
+        ...(linkPreview === false ? { linkPreview: null } : {})
       },
       {
         ...options

@@ -34,6 +34,7 @@ import Ticket from "../models/Ticket";
 import OldMessage from "../models/OldMessage";
 import ForwardMessageService from "../services/MessageServices/ForwardMessageService";
 import TranscribeMessageService from "../services/MessageServices/TranscribeMessageService";
+import LinkPreviewService from "../services/MessageServices/LinkPreviewService";
 import { getWbot } from "../libs/wbot";
 import { verifyMessage } from "../services/WbotServices/wbotMessageListener";
 import { getJidOf } from "../services/WbotServices/getJidOf";
@@ -170,6 +171,7 @@ export const historyByMessageId = async (
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const { ticketId } = req.params;
   const { body, quotedMsg }: MessageData = req.body;
+  const linkPreview = req.body?.linkPreview === false ? false : undefined;
   const medias = req.files as Express.Multer.File[];
   // legenda de cada foto/vídeo, na mesma ordem dos arquivos
   const captions: string[] = []
@@ -209,7 +211,13 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
       );
     }
   } else if (channel === "whatsapp") {
-    await SendWhatsAppMessage({ body, ticket, userId, quotedMsg });
+    await SendWhatsAppMessage({
+      body,
+      ticket,
+      userId,
+      quotedMsg,
+      linkPreview
+    });
   }
 
   return res.send();
@@ -275,6 +283,18 @@ export const edit = async (req: Request, res: Response): Promise<Response> => {
   });
 
   return res.send();
+};
+
+export const linkPreview = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const url = String(req.query.url || "").trim();
+  if (!url || url.length > 2048) {
+    throw new AppError("ERR_INVALID_URL", 400);
+  }
+
+  return res.json(await LinkPreviewService(url));
 };
 
 export const transcribe = async (

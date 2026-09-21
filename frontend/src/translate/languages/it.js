@@ -1343,6 +1343,10 @@ const messages = {
         openPaymentLink: "Apri link di pagamento"
       },
       messagesInput: {
+        linkPreview: {
+          loading: "Caricamento anteprima…",
+          remove: "Invia senza anteprima"
+        },
         phone: {
           attach: "Allega",
           camera: "Fotocamera",

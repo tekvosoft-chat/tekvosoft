@@ -2106,6 +2106,10 @@ const messages = {
         openPaymentLink: "Abrir link de pagamento"
       },
       messagesInput: {
+        linkPreview: {
+          loading: "A carregar a pré-visualização…",
+          remove: "Enviar sem pré-visualização"
+        },
         phone: {
           attach: "Anexar",
           camera: "Câmara",

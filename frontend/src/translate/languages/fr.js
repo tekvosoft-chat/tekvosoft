@@ -1348,6 +1348,10 @@ const messages = {
         openPaymentLink: "Ouvrir le lien de paiement"
       },
       messagesInput: {
+        linkPreview: {
+          loading: "Chargement de l'aperçu…",
+          remove: "Envoyer sans aperçu"
+        },
         phone: {
           attach: "Joindre",
           camera: "Appareil photo",

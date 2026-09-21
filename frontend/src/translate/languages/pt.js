@@ -2164,6 +2164,10 @@ const messages = {
         openPaymentLink: "Abrir link de pagamento"
       },
       messagesInput: {
+        linkPreview: {
+          loading: "Carregando prévia do link…",
+          remove: "Enviar sem prévia"
+        },
         phone: {
           attach: "Anexar",
           camera: "Câmera",

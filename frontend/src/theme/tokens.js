@@ -229,6 +229,20 @@ export function tintNeutrals(base, brandHex) {
 }
 
 /**
+ * Neutros sem matiz nenhum: preto e cinzas puros, mantendo a luminosidade
+ * de cada tom. É o que o modo escuro usa — com a pitada da cor do tema, o
+ * fundo ficava roxo ou esverdeado.
+ */
+export function neutralize(base) {
+  const out = {};
+  Object.entries(base).forEach(([key, value]) => {
+    const hsl = rgbToHsl(hexToRgb(value));
+    out[key] = rgbToHex(hslToRgb({ ...hsl, s: 0 }));
+  });
+  return out;
+}
+
+/**
  * Paleta de apoio derivada da cor da marca.
  *
  * Serve para os cartões de números, ícones e gráficos não ficarem todos da

@@ -30,6 +30,13 @@ messageRoutes.get(
 messageRoutes.get("/gifs/search", isAuth, isCompliant, MessageController.gifs);
 
 messageRoutes.get(
+  "/link-preview",
+  isAuth,
+  isCompliant,
+  MessageController.linkPreview
+);
+
+messageRoutes.get(
   "/expressions/search",
   isAuth,
   isCompliant,

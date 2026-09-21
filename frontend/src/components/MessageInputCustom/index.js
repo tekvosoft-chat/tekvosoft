@@ -56,6 +56,7 @@ import MediaPreview from "../ui/MediaPreview";
 import { AttachPanel, RecordingPanel } from "./PhoneComposer";
 import QuickRepliesModal from "../QuickRepliesModal";
 import ExpressionPanel from "./ExpressionPanel";
+import LinkPreviewBar, { useLinkPreview } from "./LinkPreviewBar";
 import { overlayOpen } from "../../helpers/escapeKey";
 import {
   announceFailed,
@@ -1089,6 +1090,11 @@ const MessageInputCustom = props => {
   const { setReplyingMessage, replyingMessage } =
     useContext(ReplyMessageContext);
   const { setEditingMessage, editingMessage } = useContext(EditMessageContext);
+  // prévia do link digitado; fechada no X, a mensagem sai sem prévia
+  const linkPreview = useLinkPreview(inputMessage);
+  const [closedLink, setClosedLink] = useState(null);
+  const showLinkPreview =
+    !editingMessage && !!linkPreview.url && closedLink !== linkPreview.url;
   const { user } = useContext(AuthContext);
 
   // assinatura desligada por padrão: só vai com o nome quando a pessoa ligar
@@ -1407,7 +1413,10 @@ const MessageInputCustom = props => {
       body: signMessage
         ? `*${user?.name}:*\n${inputMessage.trim()}`
         : inputMessage.trim(),
-      quotedMsg: replyingMessage
+      quotedMsg: replyingMessage,
+      ...(linkPreview.url && closedLink === linkPreview.url
+        ? { linkPreview: false }
+        : {})
     };
 
     handlePresenceUpdate(null);
@@ -1433,6 +1442,7 @@ const MessageInputCustom = props => {
     });
 
     setInputMessage("");
+    setClosedLink(null);
     setShowEmoji(false);
     setLoading(false);
     setReplyingMessage(null);
@@ -1600,6 +1610,12 @@ const MessageInputCustom = props => {
         {locationDialog}
         {(replyingMessage && renderReplyingMessage(replyingMessage)) ||
           (editingMessage && renderReplyingMessage(editingMessage))}
+        {showLinkPreview && (
+          <LinkPreviewBar
+            state={linkPreview}
+            onClose={() => setClosedLink(linkPreview.url)}
+          />
+        )}
         {recording ? (
           <RecordingPanel
             recorder={Mp3Recorder}
@@ -1721,6 +1737,12 @@ const MessageInputCustom = props => {
         {locationDialog}
         {(replyingMessage && renderReplyingMessage(replyingMessage)) ||
           (editingMessage && renderReplyingMessage(editingMessage))}
+        {showLinkPreview && (
+          <LinkPreviewBar
+            state={linkPreview}
+            onClose={() => setClosedLink(linkPreview.url)}
+          />
+        )}
 
         <div className={classes.webBar}>
           <input

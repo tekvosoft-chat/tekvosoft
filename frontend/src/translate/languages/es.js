@@ -2083,6 +2083,10 @@ const messages = {
         openPaymentLink: "Abrir enlace de pago"
       },
       messagesInput: {
+        linkPreview: {
+          loading: "Cargando vista previa…",
+          remove: "Enviar sin vista previa"
+        },
         phone: {
           attach: "Adjuntar",
           camera: "Cámara",

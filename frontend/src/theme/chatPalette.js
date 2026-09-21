@@ -137,20 +137,20 @@ export function buildChatPalette({ brand, accent, isDark, wallpaper, base }) {
       ? wallpaper
       : DEFAULT_WALLPAPER;
   const secondary = accent || brand;
-  const ink = "#0A0910";
+  const ink = "#0A0A0A";
   const text = base.text;
 
+  // No escuro, só o balão das minhas mensagens leva a cor do tema; fundo,
+  // barras, campo de digitar e balão recebido ficam em preto e cinza puros.
   const bubbleOut = keepReadable(
-    isDark ? mix(brand, "#121019", 0.6) : mix(brand, "#FFFFFF", 0.82),
+    isDark ? mix(brand, "#121212", 0.6) : mix(brand, "#FFFFFF", 0.82),
     text,
     isDark ? 7 : 9
   );
   const quoteOut = isDark
     ? mix(bubbleOut, ink, 0.22)
     : mix(bubbleOut, brand, 0.08);
-  let wallpaperColor = isDark
-    ? mix(brand, "#0B0A11", 0.9)
-    : mix(brand, "#F4F2EE", 0.9);
+  let wallpaperColor = isDark ? "#0B0B0B" : mix(brand, "#F4F2EE", 0.9);
 
   let wallpaperImage = "none";
   let wallpaperSize = "cover";
@@ -158,9 +158,9 @@ export function buildChatPalette({ brand, accent, isDark, wallpaper, base }) {
   if (style.startsWith("bg:")) {
     // imagem ou GIF escolhido: um véu leve deixa os balões legíveis
     const id = style.slice(3).replace(/[^a-z0-9-]/gi, "");
-    const veil = isDark ? "rgba(8, 8, 12, 0.28)" : "rgba(255, 255, 255, 0.12)";
+    const veil = isDark ? "rgba(8, 8, 8, 0.28)" : "rgba(255, 255, 255, 0.12)";
     wallpaperImage = `linear-gradient(${veil}, ${veil}), url(/backgrounds/${id}.webp)`;
-    wallpaperColor = isDark ? "#0B0A11" : "#E9E4DC";
+    wallpaperColor = isDark ? "#0B0B0B" : "#E9E4DC";
   } else if (style.startsWith("color:")) {
     const hex = style.slice(6);
     if (/^#[0-9a-f]{6}$/i.test(hex)) wallpaperColor = hex;
@@ -197,11 +197,11 @@ export function buildChatPalette({ brand, accent, isDark, wallpaper, base }) {
     wallpaperBlend,
     bubbleOut,
     quoteOut,
-    bubbleIn: isDark ? mix(brand, "#1D1B24", 0.9) : "#FFFFFF",
-    quoteIn: isDark ? mix(brand, "#16141C", 0.9) : mix(brand, "#F5F5F7", 0.94),
-    bar: isDark ? mix(brand, "#1B1A21", 0.92) : mix(brand, "#F2F1F5", 0.94),
-    input: isDark ? mix(brand, "#26242E", 0.9) : "#FFFFFF",
-    datePill: isDark ? mix(brand, "#1B1A21", 0.9) : "#FFFFFF",
+    bubbleIn: isDark ? "#1F1F1F" : "#FFFFFF",
+    quoteIn: isDark ? "#171717" : mix(brand, "#F5F5F7", 0.94),
+    bar: isDark ? "#1A1A1A" : mix(brand, "#F2F1F5", 0.94),
+    input: isDark ? "#262626" : "#FFFFFF",
+    datePill: isDark ? "#1A1A1A" : "#FFFFFF",
     // sombra macia e um brilho leve no balão enviado: dá volume sem pesar
     bubbleShadow: isDark
       ? "0 1px 2px rgba(0, 0, 0, 0.45)"
