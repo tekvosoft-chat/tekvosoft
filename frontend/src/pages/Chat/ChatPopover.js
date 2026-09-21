@@ -31,6 +31,7 @@ import notifySound from "../../assets/chat_notify.mp3";
 import useSound from "use-sound";
 import { i18n } from "../../translate/i18n";
 import { isNotificationSoundOn } from "../../hooks/useNotificationSound";
+import { titleOf } from "./chatShared";
 
 const useStyles = makeStyles(theme => ({
   mainPaper: {
@@ -280,6 +281,7 @@ export default function ChatPopover() {
                     secondary={
                       <>
                         <Typography component="span" style={{ fontSize: 12 }}>
+                          {titleOf(item, user?.id)} ·{" "}
                           {datetimeToClient(item.updatedAt)}
                         </Typography>
                         <span style={{ marginTop: 5, display: "block" }}></span>

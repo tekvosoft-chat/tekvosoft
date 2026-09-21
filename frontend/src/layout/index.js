@@ -55,6 +55,8 @@ import NestedMenuItem from "material-ui-nested-menu-item";
 import GoogleAnalytics from "../components/GoogleAnalytics";
 import OnlyForSuperUser from "../components/OnlyForSuperUser";
 import NewTicketModal from "../components/NewTicketModal/index.js";
+import PullToRefresh from "../components/PullToRefresh";
+import HapticsBridge from "../components/Haptics/HapticsBridge";
 
 const drawerWidth = 264;
 const drawerWidthCollapsed = 88;
@@ -589,6 +591,14 @@ const useStyles = makeStyles(theme => ({
 }));
 
 const LoggedInLayout = ({ children, themeToggle }) => {
+  // puxar para atualizar (celular): muda a chave e a tela aberta recarrega
+  const [refreshKey, setRefreshKey] = React.useState(0);
+  const pullRefresh = () =>
+    new Promise(resolve => {
+      window.dispatchEvent(new CustomEvent("tkv:refresh"));
+      setRefreshKey(key => key + 1);
+      setTimeout(resolve, 400);
+    });
   const classes = useStyles();
   const history = useHistory();
   const location = useLocation();
@@ -1175,9 +1185,14 @@ const LoggedInLayout = ({ children, themeToggle }) => {
         <OnlyForSuperUser user={currentUser} yes={() => <GoogleAnalytics />} />
         {/* a tela aberta carrega aqui dentro, sem derrubar o menu */}
         <React.Suspense fallback={<div className={classes.pageLoading} />}>
-          {children ? children : null}
+          {/* puxar para atualizar remonta a tela: ela busca tudo de novo */}
+          <React.Fragment key={refreshKey}>
+            {children ? children : null}
+          </React.Fragment>
         </React.Suspense>
       </main>
+      <HapticsBridge />
+      {isPhone && <PullToRefresh onRefresh={pullRefresh} />}
       {isPhone && !inConversation && (
         <MobileNav onOpenProfile={handleOpenUserModal} />
       )}

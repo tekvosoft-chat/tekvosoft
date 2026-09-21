@@ -10,6 +10,7 @@ import {
   BelongsTo,
   ForeignKey,
   BeforeCreate,
+  DataType,
   Default
 } from "sequelize-typescript";
 
@@ -44,6 +45,19 @@ class Chat extends Model<Chat> {
   // área da empresa (vendas, suporte…): agrupa os canais do chat interno
   @Column
   area: string;
+
+  // "direct": conversa avulsa entre duas pessoas; "group": sala (grupo)
+  @Default("group")
+  @Column
+  kind: string;
+
+  // grupo público: aparece na busca da empresa e qualquer um pode entrar
+  @Default(false)
+  @Column
+  isPublic: boolean;
+
+  @Column(DataType.TEXT)
+  description: string;
 
   @ForeignKey(() => Company)
   @Column

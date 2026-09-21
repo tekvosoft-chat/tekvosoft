@@ -52,6 +52,8 @@ import NotificationsActiveRoundedIcon from "@material-ui/icons/NotificationsActi
 import { routeAllowed } from "../helpers/planFeatures";
 import Badge from "@material-ui/core/Badge";
 import useSupportUnread from "../hooks/useSupportUnread";
+import VibrationRoundedIcon from "@material-ui/icons/VibrationRounded";
+import { useHaptics } from "../helpers/haptics";
 
 /**
  * Navegação do celular.
@@ -334,6 +336,7 @@ const MobileNav = ({ onOpenProfile }) => {
   const [sheetOpen, setSheetOpen] = useState(false);
   const supportUnread = useSupportUnread();
   const [soundOn, setSoundOn] = useNotificationSound();
+  const [hapticsOn, setHapticsOn] = useHaptics();
   const [push, setPush] = useState(pushState);
 
   const isAdmin = user?.profile === "admin";
@@ -717,6 +720,24 @@ const MobileNav = ({ onOpenProfile }) => {
               size="small"
               color="primary"
               checked={soundOn}
+              tabIndex={-1}
+              style={{ pointerEvents: "none" }}
+            />
+          </ButtonBase>
+          <ButtonBase
+            className={classes.accountItem}
+            onClick={() => setHapticsOn(!hapticsOn)}
+            role="switch"
+            aria-checked={hapticsOn}
+          >
+            <VibrationRoundedIcon
+              style={hapticsOn ? undefined : { opacity: 0.5 }}
+            />
+            <span style={{ flex: 1, textAlign: "left" }}>Vibração</span>
+            <Switch
+              size="small"
+              color="primary"
+              checked={hapticsOn}
               tabIndex={-1}
               style={{ pointerEvents: "none" }}
             />

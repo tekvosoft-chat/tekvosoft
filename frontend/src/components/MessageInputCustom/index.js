@@ -79,6 +79,7 @@ import CheckRoundedIcon from "@material-ui/icons/CheckRounded";
 import RoomOutlinedIcon from "@material-ui/icons/RoomOutlined";
 import { SendLocationDialog } from "../MessagesList/LocationMessage";
 import { SocketContext } from "../../context/Socket/SocketContext";
+import { haptic } from "../../helpers/haptics";
 
 const Mp3Recorder = new MicRecorder({ bitRate: 128 });
 
@@ -1514,6 +1515,7 @@ const MessageInputCustom = props => {
     };
 
     handlePresenceUpdate(null);
+    haptic("send");
 
     // o balão entra na conversa na hora, saindo da barra de envio
     const pendingId =

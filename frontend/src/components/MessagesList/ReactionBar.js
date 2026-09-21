@@ -7,6 +7,7 @@ import AddRoundedIcon from "@material-ui/icons/AddRounded";
 import "emoji-mart/css/emoji-mart.css";
 import { Picker } from "emoji-mart";
 import { emojiMartI18n } from "../../helpers/emojiMartI18n";
+import { haptic } from "../../helpers/haptics";
 
 /**
  * Barra de reações que "salta" da mensagem.
@@ -207,7 +208,7 @@ const ReactionBar = ({
   if (!open && !pickerOpen) return null;
 
   const pick = emoji => {
-    if (navigator.vibrate) navigator.vibrate(8);
+    haptic("selection");
     onPick(emoji);
     onClose();
   };

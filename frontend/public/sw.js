@@ -42,6 +42,8 @@ self.addEventListener("push", event => {
       tag: data.tag,
       renotify: !!data.tag,
       silent: !!data.silent,
+      // Android: o celular vibra com o mesmo padrão de "mensagem nova" do app
+      vibrate: data.silent ? undefined : [18, 110, 18],
       timestamp: Date.now(),
       data: { url }
     });

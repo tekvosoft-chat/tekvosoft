@@ -54,6 +54,7 @@ import UserSocketSession from "../models/UserSocketSession";
 import { GetCompanySetting } from "../helpers/CheckSettings";
 import { DecoupledDriverServices } from "../services/DecoupledDriverServices/DecoupledDriverServices";
 import { corsOrigin } from "../helpers/corsOrigin";
+import { registerCallHandlers } from "./chatCalls";
 
 const decoupledDriverServices = DecoupledDriverServices.getInstance();
 
@@ -83,6 +84,11 @@ const notifyOnlineChange = (companyId: number, userId: number, online) => {
   io.to("super")
     .to(`company-${companyId}-admin`)
     .emit("userOnlineChange", { userId, online });
+  // bolinha verde/cinza no chat interno: todo mundo da empresa vê
+  io.to(`company-${companyId}-mainchannel`).emit(
+    `company-${companyId}-chat-presence`,
+    { userId, online }
+  );
 };
 
 export const initIO = (httpServer: Server): SocketIO => {
@@ -177,6 +183,9 @@ export const initIO = (httpServer: Server): SocketIO => {
     if (user.profile === "admin") {
       socket.join(`company-${user.companyId}-admin`);
     }
+
+    // chamadas de voz e vídeo das salas do chat interno
+    registerCallHandlers(io, socket, user);
 
     const canAccessBackendlog = user.super || tokenData?.impersonated === true;
 

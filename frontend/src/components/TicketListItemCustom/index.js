@@ -35,6 +35,7 @@ import {
   prefetchMessages,
   rememberTicket
 } from "../../helpers/conversationCache";
+import { haptic } from "../../helpers/haptics";
 
 /**
  * Item da lista de atendimentos.
@@ -405,7 +406,7 @@ const TicketListItemCustom = ({
           // segurar abre a prévia da conversa
           longPress.current.timer = setTimeout(() => {
             longPress.current.fired = true;
-            if (navigator.vibrate) navigator.vibrate(12);
+            haptic("longPress");
             setOpenTicketMessageDialog(true);
           }, 480);
           if (isPending && canAct) return;

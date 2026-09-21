@@ -94,6 +94,7 @@ import {
   cachedMessages,
   rememberMessages
 } from "../../helpers/conversationCache";
+import { haptic } from "../../helpers/haptics";
 
 // seta de responder (branca), usada no gesto de arrastar a mensagem
 const REPLY_ICON = `url("data:image/svg+xml,${encodeURIComponent(
@@ -1763,7 +1764,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
           longPressRef.current.timer = null;
           longPressRef.current.fired = true;
           swipeRef.current = null;
-          if (navigator.vibrate) navigator.vibrate(14);
+          haptic("longPress");
           window.getSelection?.()?.removeAllRanges();
           openReactions(message, data, bubble, true);
         }, 430);
@@ -1798,7 +1799,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
         );
         if (swipe.dx >= 56 && !swipe.buzzed) {
           swipe.buzzed = true;
-          if (navigator.vibrate) navigator.vibrate(12);
+          haptic("swipe");
         } else if (swipe.dx < 56) {
           swipe.buzzed = false;
         }
@@ -3814,6 +3815,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
       />
       <div
         id="messagesList"
+        data-no-pull
         className={classes.messagesList}
         onScroll={handleScroll}
         onDoubleClick={handleRowDoubleClick}

@@ -66,7 +66,7 @@ const useStyles = makeStyles(theme => {
       overflow: "hidden",
       borderRadius: 0,
       boxShadow: "none",
-      backgroundColor: t.canvas
+      backgroundColor: t.surface
     },
     messageList: {
       position: "relative",
@@ -76,28 +76,70 @@ const useStyles = makeStyles(theme => {
       minHeight: 0,
       overflowY: "auto",
       overscrollBehavior: "contain",
-      padding: theme.spacing(2, 3, 1),
+      padding: theme.spacing(2, 0, 1),
       scrollBehavior: "smooth",
-      // pontilhado bem leve no fundo, para não ficar chapado
-      backgroundImage: `radial-gradient(${t.border} 1px, transparent 1px)`,
-      backgroundSize: "22px 22px",
       ...theme.scrollbarStyles,
       [theme.breakpoints.down("xs")]: { padding: theme.spacing(1.5, 1, 1) }
     },
 
+    // separador de dia: linha fina com a data no meio (como no Discord)
     daySeparator: {
-      alignSelf: "center",
-      margin: theme.spacing(1.5, 0, 1),
-      padding: "4px 12px",
-      borderRadius: t.radius.pill,
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      margin: theme.spacing(2, 2, 1),
       fontSize: "0.6875rem",
       fontWeight: 600,
-      letterSpacing: "0.02em",
       color: theme.palette.text.secondary,
-      backgroundColor: t.surface,
-      border: `1px solid ${t.border}`,
-      boxShadow: "0 2px 8px -4px rgba(12, 10, 20, 0.2)",
-      animation: "$fadeIn .3s ease"
+      "&::before, &::after": {
+        content: "''",
+        flex: 1,
+        height: 1,
+        backgroundColor: t.border
+      }
+    },
+    dRow: {
+      position: "relative",
+      display: "flex",
+      gap: 14,
+      padding: "2px 48px 2px 16px",
+      transition: "background-color .1s ease",
+      "&:hover": { backgroundColor: t.surfaceHover },
+      "&:hover $dHoverTime": { opacity: 1 },
+      [theme.breakpoints.down("xs")]: { padding: "2px 12px", gap: 10 }
+    },
+    dRowFirst: { marginTop: theme.spacing(1.75) },
+    dRowNew: { animation: "$fadeIn .3s ease" },
+    dGutter: {
+      flex: "none",
+      width: 40,
+      display: "flex",
+      justifyContent: "center",
+      [theme.breakpoints.down("xs")]: { width: 36 }
+    },
+    dHoverTime: {
+      opacity: 0,
+      paddingTop: 3,
+      fontSize: "0.625rem",
+      color: theme.palette.text.secondary,
+      transition: "opacity .1s ease"
+    },
+    dBody: { flex: 1, minWidth: 0 },
+    dHead: { display: "flex", alignItems: "baseline", gap: 8 },
+    dName: {
+      fontSize: "0.9375rem",
+      fontWeight: 600,
+      color: theme.palette.text.primary
+    },
+    dNameMine: { color: t.brand.text },
+    dTime: { fontSize: "0.6875rem", color: theme.palette.text.secondary },
+    dText: {
+      fontSize: "0.9375rem",
+      lineHeight: 1.4,
+      color: theme.palette.text.primary,
+      whiteSpace: "pre-wrap",
+      overflowWrap: "anywhere",
+      "& img, & video": { maxWidth: "min(360px, 100%)", borderRadius: 8 }
     },
 
     bubbleRow: {
@@ -195,10 +237,9 @@ const useStyles = makeStyles(theme => {
       display: "flex",
       alignItems: "flex-end",
       gap: theme.spacing(0.75),
-      padding: theme.spacing(1, 2, 1.5),
+      padding: theme.spacing(0.5, 2, 2),
       backgroundColor: t.surface,
-      borderTop: `1px solid ${t.border}`,
-      paddingBottom: `calc(${theme.spacing(1.5)}px + var(--safe-bottom, 0px))`,
+      paddingBottom: `calc(${theme.spacing(2)}px + var(--safe-bottom, 0px))`,
       [theme.breakpoints.down("xs")]: {
         padding: theme.spacing(0.75, 1),
         paddingBottom: `calc(${theme.spacing(1)}px + var(--safe-bottom, 0px))`
@@ -218,11 +259,11 @@ const useStyles = makeStyles(theme => {
       minWidth: 0,
       display: "flex",
       alignItems: "center",
-      minHeight: 44,
+      minHeight: 46,
       padding: "2px 6px 2px 4px",
-      borderRadius: 22,
+      borderRadius: 12,
       backgroundColor: t.surfaceSunken,
-      border: `1px solid ${t.border}`,
+      border: `1px solid transparent`,
       transition:
         "border-color .15s ease, box-shadow .2s ease, background-color .2s ease",
       "&:focus-within": {
@@ -371,6 +412,7 @@ const Mp3Recorder = new MicRecorder({ bitRate: 128 });
 
 export default function ChatMessages({
   chat,
+  placeholder,
   messages,
   handleSendMessage,
   handleLoadMore,
@@ -706,36 +748,41 @@ export default function ChatMessages({
           )}
           <div
             className={clsx(
-              classes.bubbleRow,
-              !sameRun && classes.bubbleRowFirst,
-              mine && classes.bubbleRowMine
+              classes.dRow,
+              !sameRun && classes.dRowFirst,
+              created.getTime() > openedAt.current - 1500 && classes.dRowNew
             )}
           >
-            {!mine && (
-              <span className={classes.rowAvatar}>
-                {!sameRun && <UserAvatar user={item.sender} size={30} />}
-              </span>
-            )}
-            <div
-              className={clsx(
-                classes.bubble,
-                mine ? classes.bubbleMine : classes.bubbleTheirs,
-                created.getTime() > openedAt.current - 1500 &&
-                  (mine ? classes.bubbleInMine : classes.bubbleInTheirs),
-                sameRun &&
-                  (mine ? classes.bubbleMineFollow : classes.bubbleTheirsFollow)
+            <span className={classes.dGutter}>
+              {sameRun ? (
+                <span className={classes.dHoverTime}>
+                  {Number.isNaN(created.getTime())
+                    ? ""
+                    : format(created, "HH:mm")}
+                </span>
+              ) : (
+                <UserAvatar user={item.sender} size={40} />
               )}
-            >
-              {!mine && !sameRun && (
-                <span className={classes.sender}>{item.sender?.name}</span>
+            </span>
+            <div className={classes.dBody}>
+              {!sameRun && (
+                <div className={classes.dHead}>
+                  <span
+                    className={clsx(classes.dName, mine && classes.dNameMine)}
+                  >
+                    {item.sender?.name}
+                  </span>
+                  <span className={classes.dTime}>
+                    {Number.isNaN(created.getTime())
+                      ? datetimeToClient(item.createdAt)
+                      : `${dayLabel(item.createdAt)} às ${format(created, "HH:mm")}`}
+                  </span>
+                </div>
               )}
-              {item.mediaPath && checkMessageMedia(item)}
-              {captionOf(item)}
-              <span className={classes.bubbleMeta}>
-                {Number.isNaN(created.getTime())
-                  ? datetimeToClient(item.createdAt)
-                  : format(created, "HH:mm")}
-              </span>
+              <div className={classes.dText}>
+                {item.mediaPath && checkMessageMedia(item)}
+                {captionOf(item)}
+              </div>
             </div>
           </div>
         </React.Fragment>
@@ -745,7 +792,7 @@ export default function ChatMessages({
 
   return (
     <Paper className={classes.mainContainer} elevation={0} square>
-      <div onScroll={handleScroll} className={classes.messageList}>
+      <div onScroll={handleScroll} className={classes.messageList} data-no-pull>
         {renderMessages()}
         <div ref={baseRef}></div>
       </div>
@@ -798,7 +845,7 @@ export default function ChatMessages({
                 multiline
                 maxRows={6}
                 value={contentMessage}
-                placeholder={i18n.t("internalChat.typeMessage")}
+                placeholder={placeholder || i18n.t("internalChat.typeMessage")}
                 onKeyDown={e => {
                   // Enter envia; Shift+Enter quebra a linha
                   if (e.key === "Enter" && !e.shiftKey) {

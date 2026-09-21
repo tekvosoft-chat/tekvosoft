@@ -23,6 +23,7 @@ import { SocketContext } from "../../context/Socket/SocketContext";
 import useSettings from "../../hooks/useSettings";
 import { isNotificationSoundOn } from "../../hooks/useNotificationSound";
 import { isPushActive } from "../../services/push";
+import { haptic } from "../../helpers/haptics";
 
 const useStyles = makeStyles(theme => ({
   tabContainer: {
@@ -267,6 +268,7 @@ const NotificationsPopOver = props => {
     }
 
     if (isNotificationSoundOn()) soundAlertRef.current();
+    haptic("notify");
   };
 
   const handleClick = () => {
