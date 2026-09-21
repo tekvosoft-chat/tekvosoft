@@ -61,10 +61,8 @@ import { makeRandomId } from "../../helpers/MakeRandomId";
 import CheckSettings, { GetCompanySetting } from "../../helpers/CheckSettings";
 import Whatsapp from "../../models/Whatsapp";
 import { SimpleObjectCache } from "../../helpers/simpleObjectCache";
-import { getPublicPath } from "../../helpers/GetPublicPath";
 import { Session } from "../../libs/wbot";
 import { checkCompanyCompliant } from "../../helpers/CheckCompanyCompliant";
-import { transcriber } from "../../helpers/transcriber";
 import { parseToMilliseconds } from "../../helpers/parseToMilliseconds";
 import { randomValue } from "../../helpers/randomValue";
 import { getJidOf } from "./getJidOf";
@@ -736,41 +734,8 @@ export const verifyMediaMessage = async (
     if (body.startsWith("unsupported")) body = "";
   }
 
-  if (
-    mediaType === "audio" &&
-    (await GetCompanySetting(
-      ticket.companyId,
-      "audioTranscriptions",
-      "disabled"
-    )) === "enabled"
-  ) {
-    const apiKey = await GetCompanySetting(ticket.companyId, "openAiKey", null);
-    const provider = await GetCompanySetting(
-      ticket.companyId,
-      "aiProvider",
-      "openai"
-    );
-
-    if (apiKey) {
-      try {
-        const audioTranscription = await transcriber(
-          mediaUrl.startsWith("http")
-            ? mediaUrl
-            : `${getPublicPath()}/${mediaUrl}`,
-          { apiKey, provider },
-          filename
-        );
-        if (audioTranscription) {
-          body = audioTranscription;
-        }
-      } catch (error) {
-        logger.error(
-          { message: error?.message },
-          "Error transcribing audio message"
-        );
-      }
-    }
-  }
+  // áudio não é mais transcrito sozinho: o atendente clica em
+  // "transcrever" no balão (TranscribeMessageService)
 
   const messageData = {
     id: msg.key.id,

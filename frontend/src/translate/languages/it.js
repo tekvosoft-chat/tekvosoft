@@ -1308,6 +1308,10 @@ const messages = {
         }
       },
       messagesList: {
+        transcribe: {
+          action: "trascrivi",
+          loading: "trascrizione…"
+        },
         reactions: {
           you: "Tu"
         },
@@ -1473,6 +1477,10 @@ const messages = {
           "Il backend si sta avviando e non è ancora pronto. Nuovo tentativo automatico."
       },
       backendErrors: {
+        ERR_TRANSCRIPTION_DISABLED:
+          "La trascrizione audio è disattivata o nessuna chiave IA è configurata.",
+        ERR_TRANSCRIPTION_FAILED: "Impossibile trascrivere l'audio.",
+        ERR_NOT_AUDIO: "Questo messaggio non è un audio.",
         ERR_INTERNAL:
           "Errore interno del server. Si prega di contattare il supporto.",
         ERR_NO_OTHER_WHATSAPP: "Deve esserci almeno un WhatsApp predefinito.",

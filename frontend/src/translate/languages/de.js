@@ -1314,6 +1314,10 @@ const messages = {
         }
       },
       messagesList: {
+        transcribe: {
+          action: "transkribieren",
+          loading: "wird transkribiert…"
+        },
         reactions: {
           you: "Du"
         },
@@ -1484,6 +1488,10 @@ const messages = {
           "Das Backend startet noch und ist noch nicht bereit. Automatischer neuer Versuch."
       },
       backendErrors: {
+        ERR_TRANSCRIPTION_DISABLED:
+          "Audio-Transkription ist deaktiviert oder kein KI-Schlüssel konfiguriert.",
+        ERR_TRANSCRIPTION_FAILED: "Audio konnte nicht transkribiert werden.",
+        ERR_NOT_AUDIO: "Diese Nachricht ist kein Audio.",
         ERR_INTERNAL:
           "Interner Serverfehler. Bitte kontaktieren Sie den Support.",
         ERR_NO_OTHER_WHATSAPP:

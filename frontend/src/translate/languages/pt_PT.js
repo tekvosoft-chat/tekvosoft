@@ -26,8 +26,9 @@ const messages = {
         slow: "Internet lenta",
         backOnline: "Internet de volta 🎉",
         offlineTitle: "A internet foi tomar um café",
-        offlineText: "Já assobiámos para o router, mas ele não respondeu. Assim que ela voltar, continuamos exatamente de onde parou.",
-        retry: "Tentar de novo",
+        offlineText:
+          "Já assobiámos para o router, mas ele não respondeu. Assim que ela voltar, continuamos exatamente de onde parou.",
+        retry: "Tentar de novo"
       },
       payment: {
         cardPreview: {
@@ -1765,7 +1766,7 @@ const messages = {
             "Serviço de inteligência artificial que faz a transcrição dos áudios.",
           aiKey: "Chave de acesso do serviço escolhido ao lado.",
           audioTranscriptions:
-            "Transforma os áudios recebidos em texto, que aparece junto do áudio na conversa.",
+            'Mostra "transcrever" nos áudios da conversa. O áudio só vira texto quando alguém clica.',
           allowSignup:
             "Permite que novas empresas criem conta sozinhas pela página de cadastro.",
           multithread:
@@ -2058,6 +2059,10 @@ const messages = {
         }
       },
       messagesList: {
+        transcribe: {
+          action: "transcrever",
+          loading: "a transcrever…"
+        },
         history: {
           load: "Recuperar histórico de mensagens",
           more: "Carregar mensagens mais antigas",
@@ -2242,6 +2247,10 @@ const messages = {
           "O backend está a iniciar e ainda não está pronto. A tentar novamente automaticamente."
       },
       backendErrors: {
+        ERR_TRANSCRIPTION_DISABLED:
+          "Transcrição de áudio desativada ou sem chave de IA configurada.",
+        ERR_TRANSCRIPTION_FAILED: "Não foi possível transcrever o áudio.",
+        ERR_NOT_AUDIO: "Esta mensagem não é um áudio.",
         ERR_INTERNAL:
           "Erro interno do servidor. Por favor, contacte o suporte.",
         ERR_UNAUTHORIZED: "Não autorizado. Por favor, faça o login novamente.",

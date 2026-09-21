@@ -1329,6 +1329,10 @@ const messages = {
         }
       },
       messagesList: {
+        transcribe: {
+          action: "transkripsi",
+          loading: "mentranskripsi…"
+        },
         reactions: {
           you: "Anda"
         },
@@ -1497,6 +1501,10 @@ const messages = {
           "Backend sedang memulai dan belum siap. Mencoba lagi secara otomatis."
       },
       backendErrors: {
+        ERR_TRANSCRIPTION_DISABLED:
+          "Transkripsi audio dinonaktifkan atau kunci AI belum diatur.",
+        ERR_TRANSCRIPTION_FAILED: "Tidak dapat mentranskripsi audio.",
+        ERR_NOT_AUDIO: "Pesan ini bukan audio.",
         ERR_INTERNAL: "Kesalahan internal server. Silakan hubungi dukungan.",
         ERR_FORBIDDEN: "Akses ditolak. Periksa izin Anda.",
         ERR_CHECK_NUMBER: "Nomor ini tidak terdaftar di WhatsApp.",

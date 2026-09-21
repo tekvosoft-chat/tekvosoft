@@ -65,6 +65,7 @@ import { downloadFile } from "../../helpers/downloadFile";
 import { Mutex } from "async-mutex";
 import BoxLoader from "../ui/BoxLoader";
 import AudioBubble from "./AudioBubble";
+import useSettings from "../../hooks/useSettings";
 import LocationMessage, { readLocation } from "./LocationMessage";
 import ReactionBar from "./ReactionBar";
 import {
@@ -265,6 +266,25 @@ const useStyles = makeStyles(theme => ({
     whiteSpace: "pre-wrap",
     overflowWrap: "anywhere",
     overflow: "hidden"
+  },
+
+  // mensagem respondida dentro do balão: uma linha só, com "…" no fim
+  quotedReply: {
+    display: "block",
+    padding: "6px 10px",
+    whiteSpace: "nowrap"
+  },
+  quotedReplyText: {
+    overflow: "hidden",
+    whiteSpace: "nowrap",
+    textOverflow: "ellipsis",
+    "& .whatsmarked, & .whatsmarked p": {
+      margin: 0,
+      overflow: "hidden",
+      whiteSpace: "nowrap",
+      textOverflow: "ellipsis"
+    },
+    "& .whatsmarked br": { display: "none" }
   },
 
   quotedSideColorLeft: {
@@ -586,6 +606,30 @@ const useStyles = makeStyles(theme => ({
     }
   },
   mediaWrap: { position: "relative", display: "block" },
+  // "transcrever" miúdo ao lado da duração do áudio
+  transcribeLink: {
+    padding: 0,
+    border: 0,
+    background: "none",
+    font: "inherit",
+    fontSize: 11,
+    fontWeight: 600,
+    color: theme.palette.tkv.brand.text,
+    cursor: "pointer",
+    opacity: 0.85,
+    "&:hover": { opacity: 1, textDecoration: "underline" },
+    "&:disabled": { cursor: "default", opacity: 0.6, textDecoration: "none" }
+  },
+  transcription: {
+    margin: "-10px 8px 0 8px",
+    padding: "4px 0 20px 8px",
+    borderLeft: `2px solid ${theme.palette.tkv.chat.meta}`,
+    fontSize: "0.8438rem",
+    lineHeight: 1.4,
+    fontStyle: "italic",
+    whiteSpace: "pre-wrap",
+    overflowWrap: "anywhere"
+  },
   mediaCaption: {
     padding: "7px 12px 20px 12px",
     fontSize: "0.9063rem",
@@ -1415,6 +1459,13 @@ const ChatGif = ({ src, className }) => {
 const isFileName = text =>
   /^[^\s]+\.[a-z0-9]{2,5}$/i.test(String(text || "").trim());
 
+// áudio só tem texto de verdade depois de transcrito; antes o body é o
+// marcador do WhatsApp ("🔊") ou o nome do arquivo
+const hasTranscription = message => {
+  const body = String(message.body || "").trim();
+  return !!body && !["🔊", "Áudio"].includes(body) && !isFileName(body);
+};
+
 const detectSticker = (message, data) => {
   const find = (node, depth = 0) => {
     if (!node || typeof node !== "object" || depth > 5) return false;
@@ -1444,6 +1495,34 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
   const longPressRef = useRef({ timer: null, fired: false });
 
   const closeReactions = useCallback(() => setReactTarget(null), []);
+
+  // transcrição de áudio sob demanda (botão "transcrever")
+  const { getSetting } = useSettings();
+  const [transcriptionsEnabled, setTranscriptionsEnabled] = useState(false);
+  const [transcribing, setTranscribing] = useState(() => new Set());
+
+  useEffect(() => {
+    getSetting("audioTranscriptions", "disabled")
+      .then(value => setTranscriptionsEnabled(value === "enabled"))
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const transcribeAudio = async message => {
+    setTranscribing(prev => new Set(prev).add(message.id));
+    try {
+      const { data } = await api.post(`/messages/${message.id}/transcribe`);
+      dispatch({ type: "UPDATE_MESSAGE", payload: data });
+    } catch (err) {
+      toastError(err);
+    } finally {
+      setTranscribing(prev => {
+        const next = new Set(prev);
+        next.delete(message.id);
+        return next;
+      });
+    }
+  };
 
   const sendReaction = (message, emoji) => {
     const localId = `local-reaction-${Date.now()}`;
@@ -2278,6 +2357,23 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
           <AudioBubble
             id={message.id}
             src={message.mediaUrl}
+            footer={
+              transcriptionsEnabled &&
+              !hasTranscription(message) &&
+              !message.isDeleted &&
+              !message.pending && (
+                <button
+                  type="button"
+                  className={classes.transcribeLink}
+                  disabled={transcribing.has(message.id)}
+                  onClick={() => transcribeAudio(message)}
+                >
+                  {transcribing.has(message.id)
+                    ? i18n.t("messagesList.transcribe.loading")
+                    : i18n.t("messagesList.transcribe.action")}
+                </button>
+              )
+            }
             fromMe={message.fromMe}
             avatarUrl={
               message.contact?.profilePicUrl || ticket?.contact?.profilePicUrl
@@ -2296,8 +2392,8 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                   )
             }
           />
-          {message.body && !["🔊", "Áudio"].includes(message.body) && (
-            <div className={classes.mediaDescription}>{message.body}</div>
+          {hasTranscription(message) && (
+            <div className={classes.transcription}>{message.body}</div>
           )}
         </>
       );
@@ -2646,13 +2742,20 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
             [classes.quotedSideColorRight]: message.quotedMsg?.fromMe
           })}
         ></span>
-        <div className={classes.quotedMsg}>
+        <div className={clsx(classes.quotedMsg, classes.quotedReply)}>
           {!message.quotedMsg?.fromMe && (
             <span className={classes.messageContactName}>
               {message.quotedMsg?.contact?.name}
             </span>
           )}
-          <WhatsMarked>{getQuotedMessageText(message.quotedMsg)}</WhatsMarked>
+          <div className={classes.quotedReplyText}>
+            <WhatsMarked>
+              {String(getQuotedMessageText(message.quotedMsg) || "").replace(
+                /\s*\n+\s*/g,
+                " "
+              )}
+            </WhatsMarked>
+          </div>
         </div>
         {imageUrl && <img className={classes.quotedThumbnail} src={imageUrl} />}
       </div>

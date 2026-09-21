@@ -93,6 +93,13 @@ messageRoutes.post(
   MessageController.react
 );
 
+messageRoutes.post(
+  "/messages/:messageId/transcribe",
+  isAuth,
+  isCompliant,
+  MessageController.transcribe
+);
+
 messageRoutes.delete(
   "/messages/:messageId",
   isAuth,

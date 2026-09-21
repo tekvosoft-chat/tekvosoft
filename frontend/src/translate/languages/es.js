@@ -25,8 +25,9 @@ const messages = {
         slow: "Internet lenta",
         backOnline: "Internet de vuelta 🎉",
         offlineTitle: "Tu internet salió a tomar un café",
-        offlineText: "Le silbamos al router y no contestó. En cuanto vuelva, seguimos justo donde lo dejaste.",
-        retry: "Intentar de nuevo",
+        offlineText:
+          "Le silbamos al router y no contestó. En cuanto vuelva, seguimos justo donde lo dejaste.",
+        retry: "Intentar de nuevo"
       },
       payment: {
         cardPreview: {
@@ -2034,6 +2035,10 @@ const messages = {
         }
       },
       messagesList: {
+        transcribe: {
+          action: "transcribir",
+          loading: "transcribiendo…"
+        },
         history: {
           load: "Recuperar historial de mensajes",
           more: "Cargar mensajes más antiguos",
@@ -2222,6 +2227,10 @@ const messages = {
           "El backend se está iniciando y aún no está listo. Reintentando automáticamente."
       },
       backendErrors: {
+        ERR_TRANSCRIPTION_DISABLED:
+          "La transcripción de audio está desactivada o no hay clave de IA configurada.",
+        ERR_TRANSCRIPTION_FAILED: "No se pudo transcribir el audio.",
+        ERR_NOT_AUDIO: "Este mensaje no es un audio.",
         ERR_INTERNAL:
           "Error interno del servidor. Por favor, contacte con soporte.",
         ERR_FORBIDDEN: "No tienes permisos para acceder a este recurso.",

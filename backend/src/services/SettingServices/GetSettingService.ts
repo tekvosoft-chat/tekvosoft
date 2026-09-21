@@ -16,6 +16,8 @@ export const safeSettingsKeys = {
   CheckMsgIsGroup: "disabled",
   soundGroupNotifications: "disabled",
   tagsMode: "ticket",
+  // atendentes precisam saber se mostram o botão "transcrever" nos áudios
+  audioTranscriptions: "disabled",
   // Tema de cores da conta (Configurações > Aparência). Só o admin grava,
   // mas todo usuário da empresa precisa ler para ver o sistema na cor
   // escolhida — e, estando nesta lista, a troca chega pelo socket e muda a

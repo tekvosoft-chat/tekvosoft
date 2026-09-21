@@ -14,7 +14,8 @@ const safeSettingsKeys = new Set([
   "CheckMsgIsGroup",
   "soundGroupNotifications",
   "tagsMode",
-  "appTheme"
+  "appTheme",
+  "audioTranscriptions"
 ]);
 
 const useSettings = () => {

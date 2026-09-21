@@ -145,13 +145,18 @@ const useStyles = makeStyles(theme => {
       backgroundColor: t.brand.text,
       boxShadow: "0 1px 3px rgba(0, 0, 0, 0.25)",
       pointerEvents: "none",
-      transition: "left .12s linear, transform .2s ease"
+      transition: "transform .2s ease"
     },
     thumbPlaying: { transform: "scale(1.15)" },
+    // duração + o que vier ao lado dela (ex.: "transcrever")
     time: {
       position: "absolute",
       left: 0,
       bottom: -12,
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      whiteSpace: "nowrap",
       fontSize: "0.6875rem",
       fontVariantNumeric: "tabular-nums",
       color: t.chat.meta
@@ -212,6 +217,7 @@ const useConnectionPicture = whatsappId => {
 
 const AudioBubble = ({
   id,
+  footer,
   src,
   fromMe,
   avatarUrl,
@@ -229,6 +235,19 @@ const AudioBubble = ({
   const bars = useMemo(() => hashBars(id || src), [id, src]);
   const ownPicture = useConnectionPicture(fromMe ? whatsappId : null);
   const picture = fromMe ? ownPicture : avatarUrl;
+
+  // o "timeupdate" do navegador vem só ~4x por segundo e a bolinha andava
+  // aos trancos; tocando, a posição é lida a cada quadro da tela
+  useEffect(() => {
+    if (!playing) return undefined;
+    let frame;
+    const tick = () => {
+      if (audioRef.current) setCurrent(audioRef.current.currentTime);
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [playing]);
 
   useEffect(() => {
     const onOtherPlay = event => {
@@ -365,6 +384,7 @@ const AudioBubble = ({
         </div>
         <span className={classes.time}>
           {clock(started ? current : duration)}
+          {footer}
         </span>
       </div>
     </div>

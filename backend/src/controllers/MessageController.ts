@@ -33,6 +33,7 @@ import Contact from "../models/Contact";
 import Ticket from "../models/Ticket";
 import OldMessage from "../models/OldMessage";
 import ForwardMessageService from "../services/MessageServices/ForwardMessageService";
+import TranscribeMessageService from "../services/MessageServices/TranscribeMessageService";
 import { getWbot } from "../libs/wbot";
 import { verifyMessage } from "../services/WbotServices/wbotMessageListener";
 import { getJidOf } from "../services/WbotServices/getJidOf";
@@ -274,6 +275,24 @@ export const edit = async (req: Request, res: Response): Promise<Response> => {
   });
 
   return res.send();
+};
+
+export const transcribe = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { messageId } = req.params;
+  const { companyId } = req.user;
+
+  const message = await TranscribeMessageService({ messageId, companyId });
+
+  const io = getIO();
+  io.to(message.ticketId.toString()).emit(`company-${companyId}-appMessage`, {
+    action: "update",
+    message
+  });
+
+  return res.json(message);
 };
 
 export const remove = async (

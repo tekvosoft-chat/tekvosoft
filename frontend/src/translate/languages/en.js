@@ -25,8 +25,9 @@ const messages = {
         slow: "Slow connection",
         backOnline: "Back online 🎉",
         offlineTitle: "Your internet stepped out for coffee",
-        offlineText: "We whistled at the router and got nothing back. The moment it returns, we pick up right where you left off.",
-        retry: "Try again",
+        offlineText:
+          "We whistled at the router and got nothing back. The moment it returns, we pick up right where you left off.",
+        retry: "Try again"
       },
       payment: {
         cardPreview: {
@@ -1788,7 +1789,7 @@ const messages = {
           aiProvider: "Artificial intelligence service that transcribes audio.",
           aiKey: "Access key for the service chosen next to it.",
           audioTranscriptions:
-            "Turns received audio into text, shown next to the audio in the conversation.",
+            'Shows "transcribe" on audio messages. Audio is only turned into text when someone clicks it.',
           allowSignup:
             "Lets new companies create an account on their own through the sign-up page.",
           multithread:
@@ -2108,6 +2109,10 @@ const messages = {
         }
       },
       messagesList: {
+        transcribe: {
+          action: "transcribe",
+          loading: "transcribing…"
+        },
         history: {
           load: "Recover message history",
           more: "Load older messages",
@@ -2292,6 +2297,10 @@ const messages = {
           "Backend is starting up and not ready yet. Retrying automatically."
       },
       backendErrors: {
+        ERR_TRANSCRIPTION_DISABLED:
+          "Audio transcription is disabled or no AI key is configured.",
+        ERR_TRANSCRIPTION_FAILED: "Could not transcribe the audio.",
+        ERR_NOT_AUDIO: "This message is not an audio.",
         ERR_INTERNAL: "Internal server error. Please contact support.",
         ERR_UNAUTHORIZED: "You are not authorized to perform this action.",
         ERR_FORBIDDEN: "You do not have permission to access this resource.",
