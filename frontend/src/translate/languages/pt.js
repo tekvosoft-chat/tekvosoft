@@ -2,6 +2,18 @@ const messages = {
   pt: {
     translations: {
       paywall: {
+        changeTitle: "Bora mudar de plano?",
+        changeText:
+          "Aumente ou diminua quando quiser. No upgrade você paga a diferença de plano agora; no downgrade nada é cobrado hoje — a próxima cobrança já vem com o valor novo.",
+        currentBadge: "SEU PLANO ATUAL",
+        upgradeBadge: "UPGRADE ↑",
+        downgradeBadge: "DOWNGRADE ↓",
+        currentBtn: "Plano atual",
+        upgradeBtn: "Fazer upgrade",
+        downgradeBtn: "Mudar para este plano",
+        changedTitle: "Plano alterado!",
+        changedText:
+          "Agora você está no {{plan}}. A próxima cobrança, em {{date}}, já vem com o novo valor.",
         title: "Opa! Seu acesso expirou",
         voluntaryTitle: "Escolha seu plano",
         adminText:
@@ -362,6 +374,62 @@ const messages = {
         }
       },
       financePage: {
+        changePlan: "Alterar plano",
+        pageTitle: "Minha Assinatura",
+        pageSubtitle:
+          "Gerencie seu plano, pagamento e histórico em um só lugar.",
+        currentPlan: "Assinatura atual",
+        planBenefits: "Benefícios do plano",
+        noPlan: "Sem plano",
+        valuePaid: "Valor pago",
+        planValue: "Valor do plano",
+        expiresOn: "Expira em",
+        expiredOn: "Venceu em",
+        upgradeTitle: "Evolua seu plano para",
+        upgradeText:
+          "Com o upgrade, você passa para {{users}} usuários e {{connections}} conexões e desbloqueia novos recursos para a sua operação.",
+        upgradeBtn: "Fazer upgrade",
+        historyTitle: "Histórico de pagamento",
+        seeAll: "Ver tudo",
+        seeLess: "Ver menos",
+        statusPaid: "Aprovado",
+        renewalTitle: "Renovação",
+        cardActive: "Ativo",
+        cardPaused: "Pausado",
+        cardExpires: "Expira {{date}}",
+        cardSaved: "Cartão salvo",
+        cardMenu: "Opções do cartão",
+        cardRemove: "Remover cartão",
+        cardRemoveConfirm:
+          "Remover o cartão salvo? A renovação automática deixa de funcionar até você salvar outro cartão.",
+        autoRenewOn: "Renovação automática ligada",
+        autoRenewOff: "Renovação automática desligada",
+        cardNote: "Este cartão é usado para renovar sua assinatura atual.",
+        noCard: "Nenhum cartão salvo",
+        noCardNote:
+          'Ao pagar com cartão, marque "Salvar cartão" para renovar automaticamente.',
+        addCard: "Adicionar cartão",
+        addressTitle: "Endereço",
+        addressUpdate: "Atualizar endereço",
+        addressEmpty: "Nenhum endereço cadastrado.",
+        addressNumber: "nº {{number}}",
+        alertOpen: "Fatura de {{value}} em aberto",
+        plansDialogTitle: "Planos e benefícios",
+        close: "Fechar",
+        address: {
+          title: "Endereço de cobrança",
+          postalCode: "CEP",
+          street: "Rua",
+          number: "Número",
+          complement: "Complemento",
+          district: "Bairro",
+          city: "Cidade",
+          state: "UF",
+          save: "Salvar",
+          cancel: "Cancelar",
+          saved: "Endereço atualizado",
+          cepNotFound: "CEP não encontrado"
+        },
         plansTitle: "Planos",
         perMonth: "/mês",
         planUsers: "{{count}} usuário",
@@ -2326,6 +2394,7 @@ const messages = {
           "O backend está iniciando e ainda não está pronto. Tentando novamente automaticamente."
       },
       backendErrors: {
+        ERR_INVALID_ADDRESS: "Endereço inválido. Confira o CEP e o número.",
         ERR_TRANSCRIPTION_DISABLED:
           "Transcrição de áudio desativada ou sem chave de IA configurada.",
         ERR_TRANSCRIPTION_FAILED: "Não foi possível transcrever o áudio.",

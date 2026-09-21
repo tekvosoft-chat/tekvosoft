@@ -163,6 +163,14 @@ const PaymentDialog = ({ open, invoice, onClose, onPaid }) => {
       .get("/subscription/methods")
       .then(({ data }) => {
         setMethods(data);
+        // endereço salvo em Minha Assinatura já vem preenchido
+        if (data?.address?.postalCode) {
+          setForm(prev => ({
+            ...prev,
+            postalCode: prev.postalCode || data.address.postalCode,
+            addressNumber: prev.addressNumber || data.address.number || ""
+          }));
+        }
         setMethod(
           data.pix
             ? "PIX"

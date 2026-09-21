@@ -33,6 +33,18 @@ subscriptionRoutes.delete(
   SubscriptionController.removeCard
 );
 
+subscriptionRoutes.put(
+  "/subscription/auto-renew",
+  isAuth,
+  SubscriptionController.setAutoRenew
+);
+
+subscriptionRoutes.put(
+  "/subscription/address",
+  isAuth,
+  SubscriptionController.updateAddress
+);
+
 subscriptionRoutes.post(
   "/subscription/ticketz/webhook/:type?",
   SubscriptionController.webhook

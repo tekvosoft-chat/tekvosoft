@@ -2,6 +2,18 @@ const messages = {
   en: {
     translations: {
       paywall: {
+        changeTitle: "Time to switch plans?",
+        changeText:
+          "Go up or down whenever you want. Upgrades are paid now; downgrades cost nothing today — your next charge already comes with the new price.",
+        currentBadge: "YOUR CURRENT PLAN",
+        upgradeBadge: "UPGRADE ↑",
+        downgradeBadge: "DOWNGRADE ↓",
+        currentBtn: "Current plan",
+        upgradeBtn: "Upgrade",
+        downgradeBtn: "Switch to this plan",
+        changedTitle: "Plan changed!",
+        changedText:
+          "You're now on {{plan}}. Your next charge, on {{date}}, already comes with the new price.",
         title: "Oops! Your access has expired",
         voluntaryTitle: "Choose your plan",
         adminText:
@@ -362,6 +374,61 @@ const messages = {
         }
       },
       financePage: {
+        changePlan: "Change plan",
+        pageTitle: "My Subscription",
+        pageSubtitle: "Manage your plan, payment and history in one place.",
+        currentPlan: "Current subscription",
+        planBenefits: "Plan benefits",
+        noPlan: "No plan",
+        valuePaid: "Amount paid",
+        planValue: "Plan price",
+        expiresOn: "Expires on",
+        expiredOn: "Expired on",
+        upgradeTitle: "Upgrade your plan to",
+        upgradeText:
+          "With the upgrade you get {{users}} users and {{connections}} connections and unlock new features for your operation.",
+        upgradeBtn: "Upgrade",
+        historyTitle: "Payment history",
+        seeAll: "See all",
+        seeLess: "See less",
+        statusPaid: "Approved",
+        renewalTitle: "Renewal",
+        cardActive: "Active",
+        cardPaused: "Paused",
+        cardExpires: "Expires {{date}}",
+        cardSaved: "Saved card",
+        cardMenu: "Card options",
+        cardRemove: "Remove card",
+        cardRemoveConfirm:
+          "Remove the saved card? Automatic renewal stops until you save another card.",
+        autoRenewOn: "Automatic renewal on",
+        autoRenewOff: "Automatic renewal off",
+        cardNote: "This card is used to renew your current subscription.",
+        noCard: "No saved card",
+        noCardNote:
+          'When paying by card, check "Save card" to renew automatically.',
+        addCard: "Add card",
+        addressTitle: "Address",
+        addressUpdate: "Update address",
+        addressEmpty: "No address on file.",
+        addressNumber: "No. {{number}}",
+        alertOpen: "{{value}} invoice open",
+        plansDialogTitle: "Plans and benefits",
+        close: "Close",
+        address: {
+          title: "Billing address",
+          postalCode: "ZIP code",
+          street: "Street",
+          number: "Number",
+          complement: "Complement",
+          district: "District",
+          city: "City",
+          state: "State",
+          save: "Save",
+          cancel: "Cancel",
+          saved: "Address updated",
+          cepNotFound: "ZIP code not found"
+        },
         plansTitle: "Plans",
         perMonth: "/month",
         planUsers: "{{count}} user",
@@ -2316,6 +2383,7 @@ const messages = {
           "Backend is starting up and not ready yet. Retrying automatically."
       },
       backendErrors: {
+        ERR_INVALID_ADDRESS: "Invalid address. Check the ZIP code and number.",
         ERR_TRANSCRIPTION_DISABLED:
           "Audio transcription is disabled or no AI key is configured.",
         ERR_TRANSCRIPTION_FAILED: "Could not transcribe the audio.",

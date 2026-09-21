@@ -25,6 +25,9 @@ import { cacheLayer } from "../../libs/cache";
  *   asaasCustomerId   id do cliente no Asaas
  *   asaasCardToken    cartão salvo (token), nunca o número
  *   asaasCardLabel    "VISA •••• 1234", só para mostrar na tela
+ *   asaasCardExpiry   "09/34", validade do cartão salvo (só para mostrar)
+ *   asaasAutoRenew    "disabled" pausa a cobrança automática no cartão
+ *   billingAddress    endereço de cobrança (JSON), tela Minha Assinatura
  */
 const BASES = {
   sandbox: "https://api-sandbox.asaas.com/v3",
@@ -203,6 +206,29 @@ export const asaasCreateCharge = async (
     }`.trim();
     await saveCompanySetting(company.id, "asaasCardToken", token);
     await saveCompanySetting(company.id, "asaasCardLabel", cardLabel);
+    const month = String(extra.creditCard?.expiryMonth || "").padStart(2, "0");
+    const year = String(extra.creditCard?.expiryYear || "").slice(-2);
+    await saveCompanySetting(
+      company.id,
+      "asaasCardExpiry",
+      /^\d{2}$/.test(year) && month !== "00" ? `${month}/${year}` : ""
+    );
+    // primeiro pagamento no cartão: o CEP e o número do titular viram o
+    // endereço de cobrança, se a empresa ainda não tinha um
+    const holder = extra.creditCardHolderInfo;
+    if (
+      holder?.postalCode &&
+      !(await companySetting(company.id, "billingAddress"))
+    ) {
+      await saveCompanySetting(
+        company.id,
+        "billingAddress",
+        JSON.stringify({
+          postalCode: String(holder.postalCode).replace(/\D/g, "").slice(0, 8),
+          number: String(holder.addressNumber || "").slice(0, 20)
+        })
+      );
+    }
   }
 
   let pixCopyPaste = "";
@@ -270,13 +296,55 @@ export const asaasCreateSubscription = async (
 /** Cartão salvo da empresa (para a tela mostrar "cobrança automática"). */
 export const asaasSavedCard = async (companyId: number) => ({
   label: await companySetting(companyId, "asaasCardLabel"),
-  hasCard: !!(await companySetting(companyId, "asaasCardToken"))
+  hasCard: !!(await companySetting(companyId, "asaasCardToken")),
+  expiry: await companySetting(companyId, "asaasCardExpiry"),
+  autoRenew: (await companySetting(companyId, "asaasAutoRenew")) !== "disabled"
 });
 
 export const asaasRemoveCard = async (companyId: number): Promise<void> => {
   await saveCompanySetting(companyId, "asaasCardToken", "");
   await saveCompanySetting(companyId, "asaasCardLabel", "");
+  await saveCompanySetting(companyId, "asaasCardExpiry", "");
 };
+
+/** Liga ou pausa a cobrança automática no cartão salvo. */
+export const asaasSetAutoRenew = async (
+  companyId: number,
+  enabled: boolean
+): Promise<void> =>
+  saveCompanySetting(
+    companyId,
+    "asaasAutoRenew",
+    enabled ? "enabled" : "disabled"
+  );
+
+export type BillingAddress = {
+  postalCode?: string;
+  street?: string;
+  number?: string;
+  complement?: string;
+  district?: string;
+  city?: string;
+  state?: string;
+};
+
+export const getBillingAddress = async (
+  companyId: number
+): Promise<BillingAddress | null> => {
+  try {
+    return (
+      JSON.parse(await companySetting(companyId, "billingAddress")) || null
+    );
+  } catch {
+    return null;
+  }
+};
+
+export const saveBillingAddress = async (
+  companyId: number,
+  address: BillingAddress
+): Promise<void> =>
+  saveCompanySetting(companyId, "billingAddress", JSON.stringify(address));
 
 /** Confere no Asaas se uma fatura já foi paga. */
 export const asaasCheckStatus = async (invoice: Invoices): Promise<boolean> => {
@@ -366,20 +434,23 @@ export const asaasChargeSavedCards = async (): Promise<void> => {
     // trava do dia: se um Pix foi gerado antes, a fatura tinha txId e o
     // cartão salvo nunca era cobrado. Agora cobra, sem repetir no mesmo dia.
     const guard = `asaas:autocharge:${invoice.id}:${today}`;
-    // eslint-disable-next-line no-await-in-loop
+
     if (await cacheLayer.get(guard).catch(() => null)) continue;
 
     const company = invoice.company;
     if (!company) continue;
 
-    // eslint-disable-next-line no-await-in-loop
     const token = await companySetting(company.id, "asaasCardToken");
     if (!token) continue;
 
+    // renovação automática pausada na tela Minha Assinatura
+
+    if ((await companySetting(company.id, "asaasAutoRenew")) === "disabled")
+      continue;
+
     try {
-      // eslint-disable-next-line no-await-in-loop
       await cacheLayer.set(guard, "1", "EX", 172800).catch(() => {});
-      // eslint-disable-next-line no-await-in-loop
+
       await asaasCreateCharge(invoice, company, "CREDIT_CARD", {});
       logger.info(
         { invoice: invoice.id, company: company.id },

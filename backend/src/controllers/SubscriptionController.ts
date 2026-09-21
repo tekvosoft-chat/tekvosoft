@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import moment from "moment";
 import Plan from "../models/Plan";
 import Company from "../models/Company";
 import Invoices from "../models/Invoices";
@@ -13,7 +14,10 @@ import {
 } from "../services/PaymentGatewayServices/PaymentGatewayServices";
 import {
   asaasRemoveCard,
-  asaasSavedCard
+  asaasSavedCard,
+  asaasSetAutoRenew,
+  getBillingAddress,
+  saveBillingAddress
 } from "../services/PaymentGatewayServices/AsaasServices";
 
 export const createSubscription = async (
@@ -42,17 +46,71 @@ export const methods = async (
   res: Response
 ): Promise<Response> => {
   const { companyId } = req.user;
-  const [enabled, card] = await Promise.all([
+  const [enabled, card, address] = await Promise.all([
     paymentMethods(),
-    asaasSavedCard(companyId)
+    asaasSavedCard(companyId),
+    getBillingAddress(companyId)
   ]);
-  return res.json({ ...enabled, savedCard: card });
+  return res.json({ ...enabled, savedCard: card, address });
+};
+
+/** Renovação automática no cartão salvo: liga ou pausa. */
+export const setAutoRenew = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { companyId, profile } = req.user;
+  if (profile !== "admin") throw new AppError("ERR_NO_PERMISSION", 403);
+  await asaasSetAutoRenew(companyId, req.body?.enabled === true);
+  return res.json(await asaasSavedCard(companyId));
+};
+
+/** Endereço de cobrança da empresa (tela Minha Assinatura). */
+export const updateAddress = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { companyId, profile } = req.user;
+  if (profile !== "admin") throw new AppError("ERR_NO_PERMISSION", 403);
+
+  const schema = Yup.object().shape({
+    postalCode: Yup.string()
+      .matches(/^\d{8}$/)
+      .required(),
+    street: Yup.string().max(200),
+    number: Yup.string().max(20).required(),
+    complement: Yup.string().max(100),
+    district: Yup.string().max(100),
+    city: Yup.string().max(100),
+    state: Yup.string().max(2)
+  });
+  const body = req.body || {};
+  const address = {
+    postalCode: String(body.postalCode || "").replace(/\D/g, ""),
+    street: String(body.street || "").trim(),
+    number: String(body.number || "").trim(),
+    complement: String(body.complement || "").trim(),
+    district: String(body.district || "").trim(),
+    city: String(body.city || "").trim(),
+    state: String(body.state || "")
+      .trim()
+      .toUpperCase()
+  };
+  if (!(await schema.isValid(address))) {
+    throw new AppError("ERR_INVALID_ADDRESS", 400);
+  }
+
+  await saveBillingAddress(companyId, address);
+  return res.json(address);
 };
 
 export const removeCard = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
+  // SEGURANÇA: só o admin mexe na cobrança da empresa
+  if (req.user.profile !== "admin")
+    throw new AppError("ERR_NO_PERMISSION", 403);
   await asaasRemoveCard(req.user.companyId);
   return res.json({ ok: true });
 };
@@ -82,9 +140,20 @@ export const choosePlan = async (
   if (!plan.isPublic && company.planId !== plan.id) {
     throw new AppError("ERR_NO_PLAN_FOUND", 404);
   }
+  const current = company.planId ? await Plan.findByPk(company.planId) : null;
+  const downgrade = !!current && Number(plan.value) < Number(current.value);
   await company.update({ planId: plan.id });
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = moment().format("YYYY-MM-DD");
+  // Downgrade no meio do período: nada a pagar agora. A próxima cobrança
+  // sai no vencimento atual, já com o valor menor. Upgrade (ou acesso já
+  // vencido) continua cobrando hoje.
+  const renewal =
+    company.dueDate && moment(company.dueDate).format("YYYY-MM-DD") > today
+      ? moment(company.dueDate).format("YYYY-MM-DD")
+      : today;
+  const dueDate = downgrade ? renewal : today;
+
   let invoice = await Invoices.findOne({
     where: { companyId, status: "open" },
     order: [["id", "DESC"]]
@@ -98,7 +167,8 @@ export const choosePlan = async (
       currency: plan.currency || "BRL",
       txId: null,
       payGw: null,
-      payGwData: null
+      payGwData: null,
+      ...(downgrade ? { dueDate } : {})
     });
   } else {
     invoice = await Invoices.create({
@@ -106,12 +176,13 @@ export const choosePlan = async (
       value: plan.value,
       detail,
       status: "open",
-      dueDate: today,
+      dueDate,
       currency: plan.currency || "BRL"
     });
   }
 
-  return res.json(invoice);
+  const invoiceDue = moment(invoice.dueDate).format("YYYY-MM-DD");
+  return res.json({ ...invoice.toJSON(), payNow: invoiceDue <= today });
 };
 
 /** GIFs do aviso de pagamento e do agradecimento. */

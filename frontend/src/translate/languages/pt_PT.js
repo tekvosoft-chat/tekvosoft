@@ -2,6 +2,18 @@ const messages = {
   pt_PT: {
     translations: {
       paywall: {
+        changeTitle: "Vamos mudar de plano?",
+        changeText:
+          "Aumente ou diminua quando quiser. No upgrade paga o novo plano agora; no downgrade nada é cobrado hoje — a próxima cobrança já vem com o valor novo.",
+        currentBadge: "O SEU PLANO ATUAL",
+        upgradeBadge: "UPGRADE ↑",
+        downgradeBadge: "DOWNGRADE ↓",
+        currentBtn: "Plano atual",
+        upgradeBtn: "Fazer upgrade",
+        downgradeBtn: "Mudar para este plano",
+        changedTitle: "Plano alterado!",
+        changedText:
+          "Agora está no {{plan}}. A próxima cobrança, a {{date}}, já vem com o novo valor.",
         title: "Opa! Seu acesso expirou",
         voluntaryTitle: "Escolha seu plano",
         adminText:
@@ -362,6 +374,61 @@ const messages = {
         }
       },
       financePage: {
+        changePlan: "Alterar plano",
+        pageTitle: "A Minha Subscrição",
+        pageSubtitle: "Gira o seu plano, pagamento e histórico num só lugar.",
+        currentPlan: "Subscrição atual",
+        planBenefits: "Benefícios do plano",
+        noPlan: "Sem plano",
+        valuePaid: "Valor pago",
+        planValue: "Valor do plano",
+        expiresOn: "Expira em",
+        expiredOn: "Expirou em",
+        upgradeTitle: "Evolua o seu plano para",
+        upgradeText:
+          "Com o upgrade, passa para {{users}} utilizadores e {{connections}} ligações e desbloqueia novos recursos para a sua operação.",
+        upgradeBtn: "Fazer upgrade",
+        historyTitle: "Histórico de pagamentos",
+        seeAll: "Ver tudo",
+        seeLess: "Ver menos",
+        statusPaid: "Aprovado",
+        renewalTitle: "Renovação",
+        cardActive: "Ativo",
+        cardPaused: "Em pausa",
+        cardExpires: "Expira {{date}}",
+        cardSaved: "Cartão guardado",
+        cardMenu: "Opções do cartão",
+        cardRemove: "Remover cartão",
+        cardRemoveConfirm:
+          "Remover o cartão guardado? A renovação automática deixa de funcionar até guardar outro cartão.",
+        autoRenewOn: "Renovação automática ligada",
+        autoRenewOff: "Renovação automática desligada",
+        cardNote: "Este cartão é usado para renovar a sua subscrição atual.",
+        noCard: "Nenhum cartão guardado",
+        noCardNote:
+          'Ao pagar com cartão, marque "Guardar cartão" para renovar automaticamente.',
+        addCard: "Adicionar cartão",
+        addressTitle: "Morada",
+        addressUpdate: "Atualizar morada",
+        addressEmpty: "Nenhuma morada registada.",
+        addressNumber: "n.º {{number}}",
+        alertOpen: "Fatura de {{value}} em aberto",
+        plansDialogTitle: "Planos e benefícios",
+        close: "Fechar",
+        address: {
+          title: "Morada de faturação",
+          postalCode: "Código postal",
+          street: "Rua",
+          number: "Número",
+          complement: "Complemento",
+          district: "Bairro",
+          city: "Cidade",
+          state: "UF",
+          save: "Guardar",
+          cancel: "Cancelar",
+          saved: "Morada atualizada",
+          cepNotFound: "Código postal não encontrado"
+        },
         plansTitle: "Planos",
         perMonth: "/mês",
         planUsers: "{{count}} utilizador",
@@ -2266,6 +2333,8 @@ const messages = {
           "O backend está a iniciar e ainda não está pronto. A tentar novamente automaticamente."
       },
       backendErrors: {
+        ERR_INVALID_ADDRESS:
+          "Morada inválida. Verifique o código postal e o número.",
         ERR_TRANSCRIPTION_DISABLED:
           "Transcrição de áudio desativada ou sem chave de IA configurada.",
         ERR_TRANSCRIPTION_FAILED: "Não foi possível transcrever o áudio.",

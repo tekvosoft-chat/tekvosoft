@@ -28,6 +28,7 @@ export const isCompanyExpired = user => {
 
 const PAYWALL_EMOJIS = ["💸", "🥺", "🙏", "💰", "😅"];
 const THANKS_EMOJIS = ["🎉", "🥳", "💚", "🙌", "✨"];
+const CHANGE_EMOJIS = ["🚀", "📈", "⚡", "💎", "✨"];
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -158,6 +159,9 @@ const useStyles = makeStyles(theme => ({
     background: "#fff",
     whiteSpace: "nowrap"
   },
+  // troca de plano: selo verde no upgrade, cinza no downgrade
+  planUp: { background: "#22c55e", color: "#0a0a0a" },
+  planDown: { background: "#404040", color: "#fff" },
   planName: { fontSize: 17, fontWeight: 700 },
   planPrice: { fontSize: 30, fontWeight: 800, margin: theme.spacing(1, 0, 2) },
   planPer: { fontSize: 13, fontWeight: 500, color: "#a3a3a3" },
@@ -280,18 +284,33 @@ const FunGif = ({ kind, fallback, emojis }) => {
  * Tela cheia de quando o período (teste ou assinatura) acabou.
  * Admin escolhe o plano e paga ali mesmo; usuário comum só é avisado.
  * Com `voluntary`, é aberta de propósito durante o teste (tem botão de fechar).
+ * Com `mode="change"`, é a troca de plano de Minha Assinatura: o plano atual
+ * fica marcado e cada outro mostra se é upgrade ou downgrade. Upgrade abre
+ * o pagamento; downgrade só troca (a próxima cobrança já vem menor).
  */
-const Paywall = ({ user, voluntary = false, onClose }) => {
+const Paywall = ({
+  user,
+  voluntary = false,
+  mode,
+  preselect,
+  onChanged,
+  onClose
+}) => {
   const classes = useStyles();
   const { handleLogout } = useContext(AuthContext);
   const socketManager = useContext(SocketContext);
   const isAdmin = user?.profile === "admin";
+  const changing = mode === "change";
+  const currentPlanId = user?.company?.planId || null;
 
   const [plans, setPlans] = useState([]);
-  const [planId, setPlanId] = useState(user?.company?.planId || null);
+  const [planId, setPlanId] = useState(
+    (changing && preselect) || currentPlanId
+  );
   const [invoice, setInvoice] = useState(null);
   const [loading, setLoading] = useState(false);
   const [paid, setPaid] = useState(false);
+  const [changed, setChanged] = useState(null);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -329,6 +348,8 @@ const Paywall = ({ user, voluntary = false, onClose }) => {
   );
   const popularIndex = Math.floor((sortedPlans.length - 1) / 2);
 
+  const currentPlan = plans.find(plan => plan.id === currentPlanId);
+
   const choose = async id => {
     const target = id || planId;
     if (!target) return;
@@ -337,12 +358,49 @@ const Paywall = ({ user, voluntary = false, onClose }) => {
       const { data } = await api.post("/subscription/plan", {
         planId: target
       });
-      setInvoice(data);
+      if (changing) onChanged?.();
+      // downgrade no meio do período: nada a pagar agora
+      if (changing && data?.payNow === false) {
+        setChanged({
+          plan: plans.find(plan => plan.id === target),
+          dueDate: data.dueDate
+        });
+      } else {
+        setInvoice(data);
+      }
     } catch (err) {
       toastError(err);
     }
     setLoading(false);
   };
+
+  if (changed) {
+    return (
+      <div className={classes.root}>
+        <div className={classes.inner}>
+          <FunGif kind="thanks" fallback="🎉" emojis={THANKS_EMOJIS} />
+          <h1 className={classes.title}>{i18n.t("paywall.changedTitle")}</h1>
+          <p className={classes.subtitle}>
+            {i18n.t("paywall.changedText", {
+              plan: changed.plan?.name || "",
+              date: new Date(changed.dueDate).toLocaleDateString(undefined, {
+                timeZone: "UTC"
+              })
+            })}
+          </p>
+          <div className={classes.actions}>
+            <Button
+              className={classes.pay}
+              variant="contained"
+              onClick={() => window.location.reload()}
+            >
+              {i18n.t("paywall.continue")}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (paid) {
     return (
@@ -375,18 +433,26 @@ const Paywall = ({ user, voluntary = false, onClose }) => {
   return (
     <div className={classes.root}>
       <div className={classes.inner}>
-        <FunGif kind="paywall" fallback="💸" emojis={PAYWALL_EMOJIS} />
+        <FunGif
+          kind={changing ? "update" : "paywall"}
+          fallback={changing ? "🚀" : "💸"}
+          emojis={changing ? CHANGE_EMOJIS : PAYWALL_EMOJIS}
+        />
         <h1 className={classes.title}>
-          {voluntary
-            ? i18n.t("paywall.voluntaryTitle")
-            : i18n.t("paywall.title")}
+          {changing
+            ? i18n.t("paywall.changeTitle")
+            : voluntary
+              ? i18n.t("paywall.voluntaryTitle")
+              : i18n.t("paywall.title")}
         </h1>
         <p className={classes.subtitle}>
-          {voluntary
-            ? i18n.t("paywall.voluntaryText")
-            : isAdmin
-              ? i18n.t("paywall.adminText", { count: daysAgo })
-              : i18n.t("paywall.userText")}
+          {changing
+            ? i18n.t("paywall.changeText")
+            : voluntary
+              ? i18n.t("paywall.voluntaryText")
+              : isAdmin
+                ? i18n.t("paywall.adminText", { count: daysAgo })
+                : i18n.t("paywall.userText")}
         </p>
 
         {isAdmin && plans.length > 0 && (
@@ -397,6 +463,12 @@ const Paywall = ({ user, voluntary = false, onClose }) => {
             <div className={classes.plans}>
               {sortedPlans.map((plan, index) => {
                 const on = plan.id === planId;
+                const isCurrent = changing && plan.id === currentPlanId;
+                const up =
+                  changing &&
+                  !isCurrent &&
+                  (!currentPlan ||
+                    Number(plan.value) > Number(currentPlan.value));
                 const features = [
                   [true, i18n.t("paywall.users", { count: plan.users })],
                   [
@@ -417,10 +489,27 @@ const Paywall = ({ user, voluntary = false, onClose }) => {
                     style={{ animationDelay: `${index * 80}ms` }}
                     onClick={() => setPlanId(plan.id)}
                   >
-                    {index === popularIndex && sortedPlans.length > 2 && (
-                      <span className={classes.planPopular}>
-                        {i18n.t("paywall.popular", "MAIS ESCOLHIDO")}
+                    {changing ? (
+                      <span
+                        className={`${classes.planPopular}${
+                          isCurrent
+                            ? ""
+                            : ` ${up ? classes.planUp : classes.planDown}`
+                        }`}
+                      >
+                        {isCurrent
+                          ? i18n.t("paywall.currentBadge")
+                          : up
+                            ? i18n.t("paywall.upgradeBadge")
+                            : i18n.t("paywall.downgradeBadge")}
                       </span>
+                    ) : (
+                      index === popularIndex &&
+                      sortedPlans.length > 2 && (
+                        <span className={classes.planPopular}>
+                          {i18n.t("paywall.popular", "MAIS ESCOLHIDO")}
+                        </span>
+                      )
                     )}
                     <div className={classes.planName}>{plan.name}</div>
                     <div className={classes.planPrice}>
@@ -441,7 +530,7 @@ const Paywall = ({ user, voluntary = false, onClose }) => {
                     <div className={classes.planPick}>
                       <Button
                         className={`${classes.planPickBtn}${on ? ` ${classes.planPickBtnOn}` : ""}`}
-                        disabled={loading}
+                        disabled={loading || isCurrent}
                         onClick={e => {
                           e.stopPropagation();
                           setPlanId(plan.id);
@@ -450,6 +539,12 @@ const Paywall = ({ user, voluntary = false, onClose }) => {
                       >
                         {loading && on ? (
                           <CircularProgress size={18} />
+                        ) : isCurrent ? (
+                          i18n.t("paywall.currentBtn")
+                        ) : changing ? (
+                          i18n.t(
+                            up ? "paywall.upgradeBtn" : "paywall.downgradeBtn"
+                          )
                         ) : (
                           i18n.t("paywall.subscribe", "Assinar este plano")
                         )}
@@ -463,7 +558,7 @@ const Paywall = ({ user, voluntary = false, onClose }) => {
         )}
 
         <div className={classes.actions}>
-          {voluntary ? (
+          {voluntary || changing ? (
             <Button className={classes.logout} onClick={onClose}>
               {i18n.t("paywall.later")}
             </Button>
