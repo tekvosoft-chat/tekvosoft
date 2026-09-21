@@ -2201,6 +2201,33 @@ const messages = {
         edited: "Editada"
       },
       contactDrawer: {
+        group: {
+          header: "Dados do grupo",
+          kind: "Grupo",
+          members: "{{count}} membro",
+          members_plural: "{{count}} membros",
+          actionSearch: "Pesquisar",
+          actionMembers: "Membros",
+          search: "Pesquisar membros",
+          you: "Você",
+          admin: "Admin do grupo",
+          showAll: "Ver todos ({{count}})",
+          showMore: "Ver mais",
+          readMore: "Ler mais",
+          readLess: "Ver menos",
+          noResults: "Nenhum membro encontrado",
+          leave: "Sair do grupo",
+          leaveConfirmTitle: "Sair deste grupo?",
+          leaveConfirmText:
+            "A ligação sai do grupo no WhatsApp e deixa de receber as mensagens dele. Para voltar, será preciso um link de convite.",
+          left: "Saiu do grupo",
+          notMember: "A ligação já não participa neste grupo.",
+          join: "Entrar no grupo",
+          joinTitle: "Entrar pelo link de convite",
+          joinLink: "Link de convite",
+          joinHint: "Cole o link de convite deste grupo (chat.whatsapp.com/…).",
+          joined: "Pronto! A ligação voltou ao grupo."
+        },
         media: {
           title: "Multimédia, ligações e docs",
           media: "Multimédia",
@@ -2333,6 +2360,11 @@ const messages = {
           "O backend está a iniciar e ainda não está pronto. A tentar novamente automaticamente."
       },
       backendErrors: {
+        ERR_NOT_A_GROUP: "Esta conversa não é de um grupo.",
+        ERR_GROUP_LEAVE:
+          "Não foi possível sair do grupo agora. Tente novamente.",
+        ERR_INVALID_INVITE: "Link de convite inválido ou expirado.",
+        ERR_INVITE_OTHER_GROUP: "Esse link é de outro grupo.",
         ERR_INVALID_ADDRESS:
           "Morada inválida. Verifique o código postal e o número.",
         ERR_TRANSCRIPTION_DISABLED:

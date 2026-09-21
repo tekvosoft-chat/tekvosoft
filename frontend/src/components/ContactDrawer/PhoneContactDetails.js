@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useRef, useState } from "react";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { planAllows } from "../../helpers/planFeatures";
 import { createPortal } from "react-dom";
@@ -24,7 +24,6 @@ import LocalOfferOutlinedIcon from "@material-ui/icons/LocalOfferOutlined";
 import AccountTreeOutlinedIcon from "@material-ui/icons/AccountTreeOutlined";
 import PersonOutlineRoundedIcon from "@material-ui/icons/PersonOutlineRounded";
 import SyncAltRoundedIcon from "@material-ui/icons/SyncAltRounded";
-import ConfirmationNumberOutlinedIcon from "@material-ui/icons/ConfirmationNumberOutlined";
 import MailOutlineRoundedIcon from "@material-ui/icons/MailOutlineRounded";
 import InfoOutlinedIcon from "@material-ui/icons/InfoOutlined";
 import DescriptionOutlinedIcon from "@material-ui/icons/DescriptionOutlined";
@@ -45,6 +44,24 @@ import ContactMedia from "./ContactMedia";
 import ContactSchedules from "./ContactSchedules";
 import CloseRoundedIcon from "@material-ui/icons/CloseRounded";
 import EditOutlinedIcon from "@material-ui/icons/EditOutlined";
+import SearchRoundedIcon from "@material-ui/icons/SearchRounded";
+import PeopleOutlineRoundedIcon from "@material-ui/icons/PeopleOutlineRounded";
+import PersonAddOutlinedIcon from "@material-ui/icons/PersonAddOutlined";
+import BusinessOutlinedIcon from "@material-ui/icons/BusinessOutlined";
+import InstagramIcon from "@material-ui/icons/Instagram";
+import FacebookIcon from "@material-ui/icons/Facebook";
+import Dialog from "@material-ui/core/Dialog";
+import DialogTitle from "@material-ui/core/DialogTitle";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogActions from "@material-ui/core/DialogActions";
+import Button from "@material-ui/core/Button";
+import TextField from "@material-ui/core/TextField";
+import {
+  GroupDescription,
+  GroupMembers,
+  GroupMembership,
+  useGroupInfo
+} from "./GroupDetails";
 
 /**
  * "Dados do contato" no celular, no desenho do WhatsApp do iPhone: tela
@@ -139,6 +156,9 @@ const useStyles = makeStyles(theme => {
       fontSize: "1.0625rem",
       color: theme.palette.text.secondary
     },
+    groupCount: { color: t.brand.text, fontWeight: 600 },
+    // dados de um membro do grupo, por cima do painel do grupo
+    nested: { position: "absolute", inset: 0, zIndex: 3 },
     actions: {
       display: "grid",
       gridTemplateColumns: "repeat(3, 1fr)",
@@ -349,6 +369,70 @@ const PhoneContactDetails = ({
   const photo = contact?.profileHiresPictureUrl || contact?.profilePicUrl;
   const t = key => i18n.t(`contactDrawer.phone.${key}`);
 
+  // grupo: membros, descrição e sair/entrar vêm do WhatsApp
+  // o contato do atendimento às vezes chega sem isGroup: vale o do ticket
+  const isGroup = !!(contact?.isGroup || ticket?.isGroup);
+  const [memberContact, setMemberContact] = useState(null);
+  const openMember = async member => {
+    try {
+      const { data } = member.contactId
+        ? await api.get(`/contacts/${member.contactId}`)
+        : await api.post("/contacts", {
+            name: member.name || member.number,
+            number: member.number
+          });
+      setMemberContact(data);
+    } catch (err) {
+      toastError(err);
+    }
+  };
+
+  // detalhes do contato: e-mail no próprio contato; sobrenome, empresa e
+  // redes sociais em "informações extras" (sem mudar o banco)
+  const [saved, setSaved] = useState(null);
+  const current = saved?.id === contact?.id ? saved : contact;
+  const [editing, setEditing] = useState(null);
+  const DETAILS = [
+    ["Sobrenome", <PersonAddOutlinedIcon />],
+    ["Empresa", <BusinessOutlinedIcon />],
+    ["Instagram", <InstagramIcon />],
+    ["Facebook", <FacebookIcon />]
+  ];
+  const detailNames = DETAILS.map(([key]) => key);
+  const extraOf = key =>
+    current?.extraInfo?.find(info => info.name === key)?.value || "";
+  const saveDetail = async () => {
+    const { key, value } = editing;
+    const extra = (current?.extraInfo || []).filter(
+      info => key === "email" || info.name !== key
+    );
+    const old = current?.extraInfo?.find(info => info.name === key);
+    if (key !== "email" && value.trim()) {
+      extra.push({ ...(old?.id ? { id: old.id } : {}), name: key, value });
+    }
+    try {
+      const { data } = await api.put(`/contacts/${current.id}`, {
+        name: current.name,
+        number: current.number,
+        email: key === "email" ? value.trim() : current.email || "",
+        extraInfo: extra
+      });
+      setSaved(data);
+      setEditing(null);
+    } catch (err) {
+      toastError(err);
+    }
+  };
+  const { info: groupInfo, reload: reloadGroup } = useGroupInfo(
+    ticket?.id,
+    open && isGroup
+  );
+  const memberSearch = useRef(null);
+  const membersRef = useRef(null);
+  const header = isGroup
+    ? i18n.t("contactDrawer.group.header")
+    : i18n.t("contactDrawer.header");
+
   const copyNumber = async () => {
     try {
       await navigator.clipboard.writeText(digits ? `+${digits}` : number);
@@ -357,8 +441,6 @@ const PhoneContactDetails = ({
       toast.error(t("copyFailed"));
     }
   };
-
-  const statusLabel = ticket?.status ? t(`status.${ticket.status}`) : "";
 
   return (
     <>
@@ -394,7 +476,7 @@ const PhoneContactDetails = ({
                 <CloseRoundedIcon />
               </IconButton>
               <Typography className={classes.topTitle} component="h2">
-                {i18n.t("contactDrawer.header")}
+                {header}
               </Typography>
               <IconButton
                 className={classes.iconBtn}
@@ -414,7 +496,7 @@ const PhoneContactDetails = ({
                 <ArrowBackIosRoundedIcon />
               </IconButton>
               <Typography className={classes.topTitle} component="h2">
-                {i18n.t("contactDrawer.header")}
+                {header}
               </Typography>
               <ButtonBase
                 className={classes.edit}
@@ -439,38 +521,92 @@ const PhoneContactDetails = ({
               <Typography className={classes.name} component="h1">
                 {name}
               </Typography>
-              {number && (
-                <Typography className={classes.number}>{number}</Typography>
+              {isGroup ? (
+                <Typography className={classes.number}>
+                  {i18n.t("contactDrawer.group.kind")}
+                  {groupInfo?.size > 0 && (
+                    <>
+                      {" · "}
+                      <span className={classes.groupCount}>
+                        {i18n.t("contactDrawer.group.members", {
+                          count: groupInfo.size
+                        })}
+                      </span>
+                    </>
+                  )}
+                </Typography>
+              ) : (
+                number && (
+                  <Typography className={classes.number}>{number}</Typography>
+                )
               )}
             </div>
 
-            <div className={classes.actions}>
-              <ButtonBase
-                className={classes.actionCard}
-                component="a"
-                href={digits ? `tel:+${digits}` : undefined}
-                disabled={!digits || contact?.isGroup}
-              >
-                <PhoneOutlinedIcon />
-                {t("call")}
-              </ButtonBase>
-              <ButtonBase
-                className={classes.actionCard}
-                onClick={copyNumber}
-                disabled={!number}
-              >
-                <FileCopyOutlinedIcon />
-                {t("copy")}
-              </ButtonBase>
-              <ButtonBase
-                className={classes.actionCard}
-                onClick={() => setScheduleOpen(true)}
-                disabled={!contact?.id || !canSchedule}
-              >
-                <EventOutlinedIcon />
-                {t("schedule")}
-              </ButtonBase>
-            </div>
+            {isGroup ? (
+              <div className={classes.actions}>
+                <ButtonBase
+                  className={classes.actionCard}
+                  onClick={() => memberSearch.current?.()}
+                  disabled={!groupInfo?.participants?.length}
+                >
+                  <SearchRoundedIcon />
+                  {i18n.t("contactDrawer.group.actionSearch")}
+                </ButtonBase>
+                <ButtonBase
+                  className={classes.actionCard}
+                  onClick={() =>
+                    membersRef.current?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start"
+                    })
+                  }
+                  disabled={!groupInfo?.participants?.length}
+                >
+                  <PeopleOutlineRoundedIcon />
+                  {i18n.t("contactDrawer.group.actionMembers")}
+                </ButtonBase>
+                <ButtonBase
+                  className={classes.actionCard}
+                  onClick={() => setScheduleOpen(true)}
+                  disabled={!contact?.id || !canSchedule}
+                >
+                  <EventOutlinedIcon />
+                  {t("schedule")}
+                </ButtonBase>
+              </div>
+            ) : (
+              <div className={classes.actions}>
+                <ButtonBase
+                  className={classes.actionCard}
+                  component="a"
+                  href={digits ? `tel:+${digits}` : undefined}
+                  disabled={!digits || contact?.isGroup}
+                >
+                  <PhoneOutlinedIcon />
+                  {t("call")}
+                </ButtonBase>
+                <ButtonBase
+                  className={classes.actionCard}
+                  onClick={copyNumber}
+                  disabled={!number}
+                >
+                  <FileCopyOutlinedIcon />
+                  {t("copy")}
+                </ButtonBase>
+                <ButtonBase
+                  className={classes.actionCard}
+                  onClick={() => setScheduleOpen(true)}
+                  disabled={!contact?.id || !canSchedule}
+                >
+                  <EventOutlinedIcon />
+                  {t("schedule")}
+                </ButtonBase>
+              </div>
+            )}
+
+            {isGroup && (
+              <GroupDescription info={groupInfo} className={classes.group} />
+            )}
 
             {contact?.id && (
               <div className={classes.group}>
@@ -479,6 +615,18 @@ const PhoneContactDetails = ({
                   galleryHost={node =>
                     panelEl ? createPortal(node, panelEl) : null
                   }
+                />
+              </div>
+            )}
+
+            {isGroup && (
+              <div ref={membersRef}>
+                <GroupMembers
+                  info={groupInfo}
+                  ticketId={ticket?.id}
+                  searchRef={memberSearch}
+                  onSelect={openMember}
+                  className={classes.group}
                 />
               </div>
             )}
@@ -510,13 +658,6 @@ const PhoneContactDetails = ({
             </div>
 
             <div className={classes.group}>
-              {contact?.email && (
-                <Row
-                  icon={<MailOutlineRoundedIcon />}
-                  label={t("email")}
-                  value={contact.email}
-                />
-              )}
               {showTags && (
                 <>
                   <Row
@@ -538,27 +679,57 @@ const PhoneContactDetails = ({
                   )}
                 </>
               )}
-              <Row
-                icon={<AccountTreeOutlinedIcon />}
-                label={t("queue")}
-                value={ticket?.queue?.name || t("noQueue")}
-              />
-              <Row
-                icon={<PersonOutlineRoundedIcon />}
-                label={t("attendant")}
-                value={ticket?.user?.name || t("unassigned")}
-              />
-              <Row
-                icon={<SyncAltRoundedIcon />}
-                label={t("connection")}
-                value={ticket?.whatsapp?.name || "—"}
-              />
-              <Row
-                icon={<ConfirmationNumberOutlinedIcon />}
-                label={t("ticket")}
-                value={`#${ticket?.id ?? ""}${statusLabel ? ` · ${statusLabel}` : ""}`}
-              />
+              {!isGroup && contact?.id && (
+                <>
+                  <Row
+                    icon={<MailOutlineRoundedIcon />}
+                    label={t("email")}
+                    value={current?.email || "—"}
+                    onClick={() =>
+                      setEditing({ key: "email", value: current?.email || "" })
+                    }
+                  />
+                  {DETAILS.map(([key, icon]) => (
+                    <Row
+                      key={key}
+                      icon={icon}
+                      label={i18n.t(`contactDrawer.details.${key}`, key)}
+                      value={extraOf(key) || "—"}
+                      onClick={() => setEditing({ key, value: extraOf(key) })}
+                    />
+                  ))}
+                </>
+              )}
+              {ticket && (
+                <>
+                  <Row
+                    icon={<AccountTreeOutlinedIcon />}
+                    label={t("queue")}
+                    value={ticket?.queue?.name || t("noQueue")}
+                  />
+                  <Row
+                    icon={<PersonOutlineRoundedIcon />}
+                    label={t("attendant")}
+                    value={ticket?.user?.name || t("unassigned")}
+                  />
+                  <Row
+                    icon={<SyncAltRoundedIcon />}
+                    label={t("connection")}
+                    value={ticket?.whatsapp?.name || "—"}
+                  />
+                </>
+              )}
             </div>
+
+            {isGroup && (
+              <GroupMembership
+                info={groupInfo}
+                ticketId={ticket?.id}
+                isAdmin={user?.profile === "admin"}
+                onChange={reloadGroup}
+                className={classes.group}
+              />
+            )}
 
             {user?.profile === "admin" && ticket?.id && (
               <div className={classes.group}>
@@ -572,26 +743,82 @@ const PhoneContactDetails = ({
               </div>
             )}
 
-            {contact?.extraInfo?.length > 0 && (
+            {current?.extraInfo?.some(i => !detailNames.includes(i.name)) && (
               <>
                 <Typography className={classes.groupTitle} component="h3">
                   {i18n.t("contactModal.form.extraInfo")}
                 </Typography>
                 <div className={classes.group}>
-                  {contact.extraInfo.map(info => (
-                    <Row
-                      key={info.id || info.name}
-                      icon={<InfoOutlinedIcon />}
-                      label={info.name}
-                      value={info.value}
-                    />
-                  ))}
+                  {current.extraInfo
+                    .filter(info => !detailNames.includes(info.name))
+                    .map(info => (
+                      <Row
+                        key={info.id || info.name}
+                        icon={<InfoOutlinedIcon />}
+                        label={info.name}
+                        value={info.value}
+                      />
+                    ))}
                 </div>
               </>
             )}
           </div>
+          {memberContact && (
+            <div className={classes.nested}>
+              <PhoneContactDetails
+                variant="desktop"
+                open
+                contact={memberContact}
+                ticket={null}
+                showTags={false}
+                onClose={() => setMemberContact(null)}
+              />
+            </div>
+          )}
         </div>
       </Slide>
+
+      <Dialog
+        open={!!editing}
+        onClose={() => setEditing(null)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>
+          {editing?.key === "email"
+            ? t("email")
+            : i18n.t(
+                `contactDrawer.details.${editing?.key}`,
+                editing?.key || ""
+              )}
+        </DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            fullWidth
+            variant="outlined"
+            size="small"
+            value={editing?.value || ""}
+            onChange={e =>
+              setEditing(prev => ({ ...prev, value: e.target.value }))
+            }
+            onKeyDown={e => e.key === "Enter" && saveDetail()}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditing(null)}>
+            {i18n.t("common.cancel")}
+          </Button>
+          <Button
+            color="primary"
+            variant="contained"
+            disableElevation
+            onClick={saveDetail}
+          >
+            {i18n.t("common.save", "Salvar")}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <ConfirmationModal
         title="Excluir esta conversa?"

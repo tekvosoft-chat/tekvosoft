@@ -2253,6 +2253,33 @@ const messages = {
       },
 
       contactDrawer: {
+        group: {
+          header: "Group info",
+          kind: "Group",
+          members: "{{count}} member",
+          members_plural: "{{count}} members",
+          actionSearch: "Search",
+          actionMembers: "Members",
+          search: "Search members",
+          you: "You",
+          admin: "Group admin",
+          showAll: "See all ({{count}})",
+          showMore: "See more",
+          readMore: "Read more",
+          readLess: "Show less",
+          noResults: "No members found",
+          leave: "Exit group",
+          leaveConfirmTitle: "Exit this group?",
+          leaveConfirmText:
+            "The connection leaves the group on WhatsApp and stops receiving its messages. To come back you'll need an invite link.",
+          left: "You left the group",
+          notMember: "This connection is no longer in this group.",
+          join: "Join group",
+          joinTitle: "Join with invite link",
+          joinLink: "Invite link",
+          joinHint: "Paste this group's invite link (chat.whatsapp.com/…).",
+          joined: "Done! The connection is back in the group."
+        },
         media: {
           title: "Media, links and docs",
           media: "Media",
@@ -2383,6 +2410,10 @@ const messages = {
           "Backend is starting up and not ready yet. Retrying automatically."
       },
       backendErrors: {
+        ERR_NOT_A_GROUP: "This conversation is not a group.",
+        ERR_GROUP_LEAVE: "Couldn't leave the group right now. Try again.",
+        ERR_INVALID_INVITE: "Invalid or expired invite link.",
+        ERR_INVITE_OTHER_GROUP: "That link belongs to another group.",
         ERR_INVALID_ADDRESS: "Invalid address. Check the ZIP code and number.",
         ERR_TRANSCRIPTION_DISABLED:
           "Audio transcription is disabled or no AI key is configured.",

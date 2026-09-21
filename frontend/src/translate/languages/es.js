@@ -2179,6 +2179,34 @@ const messages = {
         forwarded: "Reenviado"
       },
       contactDrawer: {
+        group: {
+          header: "Info. del grupo",
+          kind: "Grupo",
+          members: "{{count}} miembro",
+          members_plural: "{{count}} miembros",
+          actionSearch: "Buscar",
+          actionMembers: "Miembros",
+          search: "Buscar miembros",
+          you: "Tú",
+          admin: "Admin. del grupo",
+          showAll: "Ver todos ({{count}})",
+          showMore: "Ver más",
+          readMore: "Leer más",
+          readLess: "Ver menos",
+          noResults: "No se encontraron miembros",
+          leave: "Salir del grupo",
+          leaveConfirmTitle: "¿Salir de este grupo?",
+          leaveConfirmText:
+            "La conexión sale del grupo en WhatsApp y deja de recibir sus mensajes. Para volver necesitarás un enlace de invitación.",
+          left: "Saliste del grupo",
+          notMember: "Esta conexión ya no participa en este grupo.",
+          join: "Unirse al grupo",
+          joinTitle: "Unirse con enlace de invitación",
+          joinLink: "Enlace de invitación",
+          joinHint:
+            "Pega el enlace de invitación de este grupo (chat.whatsapp.com/…).",
+          joined: "¡Listo! La conexión volvió al grupo."
+        },
         media: {
           title: "Multimedia, enlaces y docs",
           media: "Multimedia",
@@ -2313,6 +2341,11 @@ const messages = {
           "El backend se está iniciando y aún no está listo. Reintentando automáticamente."
       },
       backendErrors: {
+        ERR_NOT_A_GROUP: "Esta conversación no es de un grupo.",
+        ERR_GROUP_LEAVE:
+          "No se pudo salir del grupo ahora. Inténtalo de nuevo.",
+        ERR_INVALID_INVITE: "Enlace de invitación inválido o vencido.",
+        ERR_INVITE_OTHER_GROUP: "Ese enlace es de otro grupo.",
         ERR_INVALID_ADDRESS:
           "Dirección inválida. Revisa el código postal y el número.",
         ERR_TRANSCRIPTION_DISABLED:

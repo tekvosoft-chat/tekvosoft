@@ -197,6 +197,15 @@ const useStyles = makeStyles(theme => ({
   plusRotate: {
     transition: "transform .2s ease"
   },
+  // grupo só de admins (ou que a conexão saiu): no lugar da caixa de texto
+  adminsOnly: {
+    width: "100%",
+    padding: "16px",
+    textAlign: "center",
+    fontSize: "0.875rem",
+    color: theme.palette.text.secondary,
+    "& b": { color: theme.palette.tkv.brand.text }
+  },
   exprPopover: {
     width: 420,
     maxWidth: "calc(100vw - 32px)",
@@ -1093,6 +1102,24 @@ const MessageInputCustom = props => {
   // prévia do link digitado; fechada no X, a mensagem sai sem prévia
   const linkPreview = useLinkPreview(inputMessage);
   const [closedLink, setClosedLink] = useState(null);
+  // grupo em que a conexão não pode escrever: só admins, ou já saiu dele
+  const [groupLock, setGroupLock] = useState(null);
+  useEffect(() => {
+    setGroupLock(null);
+    if (!ticket?.isGroup || !ticket?.id) return undefined;
+    let alive = true;
+    api
+      .get(`/groups/${ticket.id}`)
+      .then(({ data }) => {
+        if (!alive || !data) return;
+        if (data.isMember === false) setGroupLock("notMember");
+        else if (data.announce && !data.isAdmin) setGroupLock("adminsOnly");
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [ticket?.id, ticket?.isGroup]);
   const showLinkPreview =
     !editingMessage && !!linkPreview.url && closedLink !== linkPreview.url;
   const { user } = useContext(AuthContext);
@@ -1571,6 +1598,29 @@ const MessageInputCustom = props => {
       </div>
     );
   };
+
+  if (groupLock)
+    return (
+      <Paper square elevation={0} className={classes.mainWrapper}>
+        <div className={classes.adminsOnly}>
+          {groupLock === "notMember" ? (
+            i18n.t(
+              "messagesInput.groupNotMember",
+              "Você não participa mais deste grupo"
+            )
+          ) : (
+            <>
+              {i18n.t("messagesInput.adminsOnlyBefore", "Somente")}{" "}
+              <b>{i18n.t("messagesInput.adminsOnlyWho", "admins")}</b>{" "}
+              {i18n.t(
+                "messagesInput.adminsOnlyAfter",
+                "podem enviar mensagens"
+              )}
+            </>
+          )}
+        </div>
+      </Paper>
+    );
 
   if (medias.length > 0)
     return (

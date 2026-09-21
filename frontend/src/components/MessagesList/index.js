@@ -66,6 +66,8 @@ import { Mutex } from "async-mutex";
 import BoxLoader from "../ui/BoxLoader";
 import AudioBubble from "./AudioBubble";
 import useSettings from "../../hooks/useSettings";
+import { participantColor } from "../../helpers/participantColor";
+import { formatWhatsappContactNumber } from "../../helpers/formatWhatsappDisplay";
 import LocationMessage, { readLocation } from "./LocationMessage";
 import ReactionBar from "./ReactionBar";
 import {
@@ -436,9 +438,20 @@ const useStyles = makeStyles(theme => ({
 
   messageContactName: {
     display: "flex",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+    gap: 12,
+    minWidth: 0,
     color: "#6bcbef",
     fontWeight: 500,
     cursor: "pointer"
+  },
+  // número ao lado do nome no grupo, como no WhatsApp ("~ DF   +55 47 …")
+  messageContactNumber: {
+    flex: "none",
+    fontSize: "0.75rem",
+    fontWeight: 400,
+    color: theme.palette.tkv.chat.meta
   },
 
   forwardedMessage: {
@@ -1553,6 +1566,22 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
   const longPressRef = useRef({ timer: null, fired: false });
 
   const closeReactions = useCallback(() => setReactTarget(null), []);
+
+  // cor de cada pessoa no grupo (nome e barra da citação), sempre a mesma
+  const senderColor = msg =>
+    participantColor(
+      msg?.contact?.number || msg?.contact?.id || msg?.participant,
+      theme.mode === "dark"
+    );
+  // número ao lado do nome só quando o nome não é o próprio número
+  const senderNumber = contact => {
+    if (!contact?.number || contact.isGroup) return "";
+    const digits = String(contact.number).replace(/\D/g, "");
+    const nameDigits = String(contact.name || "").replace(/\D/g, "");
+    // LID (id anônimo do WhatsApp) não é telefone: não mostra
+    if (!digits || digits.length > 13 || nameDigits === digits) return "";
+    return formatWhatsappContactNumber(contact);
+  };
 
   // transcrição de áudio sob demanda (botão "transcrever")
   const { getSetting } = useSettings();
@@ -2807,11 +2836,24 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
           className={clsx(classes.quotedSideColorLeft, {
             [classes.quotedSideColorRight]: message.quotedMsg?.fromMe
           })}
+          style={
+            message.quotedMsg?.fromMe
+              ? undefined
+              : { backgroundColor: senderColor(message.quotedMsg) }
+          }
         ></span>
         <div className={clsx(classes.quotedMsg, classes.quotedReply)}>
           {!message.quotedMsg?.fromMe && (
-            <span className={classes.messageContactName}>
-              {message.quotedMsg?.contact?.name}
+            <span
+              className={classes.messageContactName}
+              style={{ color: senderColor(message.quotedMsg) }}
+            >
+              <span>{message.quotedMsg?.contact?.name}</span>
+              {isGroup && senderNumber(message.quotedMsg?.contact) && (
+                <span className={classes.messageContactNumber}>
+                  {senderNumber(message.quotedMsg?.contact)}
+                </span>
+              )}
             </span>
           )}
           <div className={classes.quotedReplyText}>
@@ -3410,6 +3452,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
               {isGroup && (
                 <span
                   className={classes.messageContactName}
+                  style={{ color: senderColor(message) }}
                   onClick={() => {
                     window.mentionClick({
                       contactId: message.contact?.id,
@@ -3418,7 +3461,12 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                     });
                   }}
                 >
-                  {message.contact?.name}
+                  <span>{message.contact?.name}</span>
+                  {senderNumber(message.contact) && (
+                    <span className={classes.messageContactNumber}>
+                      {senderNumber(message.contact)}
+                    </span>
+                  )}
                 </span>
               )}
 

@@ -2262,6 +2262,33 @@ const messages = {
       },
 
       contactDrawer: {
+        group: {
+          header: "Dados do grupo",
+          kind: "Grupo",
+          members: "{{count}} membro",
+          members_plural: "{{count}} membros",
+          actionSearch: "Pesquisar",
+          actionMembers: "Membros",
+          search: "Pesquisar membros",
+          you: "Você",
+          admin: "Admin do grupo",
+          showAll: "Ver todos ({{count}})",
+          showMore: "Ver mais",
+          readMore: "Ler mais",
+          readLess: "Ver menos",
+          noResults: "Nenhum membro encontrado",
+          leave: "Sair do grupo",
+          leaveConfirmTitle: "Sair deste grupo?",
+          leaveConfirmText:
+            "A conexão sai do grupo no WhatsApp e deixa de receber as mensagens dele. Para voltar, será preciso um link de convite.",
+          left: "Você saiu do grupo",
+          notMember: "A conexão não participa mais deste grupo.",
+          join: "Entrar no grupo",
+          joinTitle: "Entrar pelo link de convite",
+          joinLink: "Link de convite",
+          joinHint: "Cole o link de convite deste grupo (chat.whatsapp.com/…).",
+          joined: "Pronto! A conexão voltou para o grupo."
+        },
         media: {
           title: "Mídia, links e docs",
           media: "Mídia",
@@ -2394,6 +2421,10 @@ const messages = {
           "O backend está iniciando e ainda não está pronto. Tentando novamente automaticamente."
       },
       backendErrors: {
+        ERR_NOT_A_GROUP: "Esta conversa não é de um grupo.",
+        ERR_GROUP_LEAVE: "Não foi possível sair do grupo agora. Tente de novo.",
+        ERR_INVALID_INVITE: "Link de convite inválido ou expirado.",
+        ERR_INVITE_OTHER_GROUP: "Esse link é de outro grupo.",
         ERR_INVALID_ADDRESS: "Endereço inválido. Confira o CEP e o número.",
         ERR_TRANSCRIPTION_DISABLED:
           "Transcrição de áudio desativada ou sem chave de IA configurada.",
