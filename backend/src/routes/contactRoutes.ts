@@ -36,6 +36,12 @@ contactRoutes.get(
 contactRoutes.get("/contacts", apiTokenAuth, isAuth, ContactController.index);
 
 contactRoutes.get(
+  "/contacts/:contactId/profile-picture",
+  isAuth,
+  ContactController.profilePicture
+);
+
+contactRoutes.get(
   "/contacts/:contactId/media",
   isAuth,
   ContactController.media

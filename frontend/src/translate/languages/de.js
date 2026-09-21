@@ -913,6 +913,21 @@ const messages = {
         noQueue: "Keine Warteschlange"
       },
       expressions: {
+        searchEmoji: "Emoji suchen",
+        recent: "Zuletzt",
+        frequent: "Häufig",
+        emojiResults: "Ergebnisse",
+        noEmoji: "Kein Emoji gefunden",
+        emojiCategories: {
+          people: "Smileys & Personen",
+          nature: "Tiere & Natur",
+          foods: "Essen & Trinken",
+          activity: "Aktivitäten",
+          places: "Reisen & Orte",
+          objects: "Objekte",
+          symbols: "Symbole",
+          flags: "Flaggen"
+        },
         title: "Emoji, Sticker und GIFs",
         emoji: "Emoji",
         stickers: "Sticker",

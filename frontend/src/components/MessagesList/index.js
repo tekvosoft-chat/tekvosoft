@@ -2165,13 +2165,21 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
     const onScroll = () => {
       nearBottom = el.scrollHeight - el.clientHeight - el.scrollTop < 120;
     };
-    const observer = new ResizeObserver(() => {
+    const stick = () => {
       if (nearBottom) el.scrollTop = el.scrollHeight;
-    });
+    };
+    const observer = new ResizeObserver(stick);
     el.addEventListener("scroll", onScroll, { passive: true });
     observer.observe(el);
+    // Foto, vídeo e figurinha não reservam altura: terminam de carregar
+    // depois da rolagem para o fim e empurravam as últimas mensagens para
+    // baixo da tela ao abrir a conversa. Quem estava no fim continua nele.
+    // (load/error não sobem pela árvore; só chegam aqui na captura.)
+    const media = ["load", "error", "loadedmetadata"];
+    media.forEach(type => el.addEventListener(type, stick, true));
     return () => {
       el.removeEventListener("scroll", onScroll);
+      media.forEach(type => el.removeEventListener(type, stick, true));
       observer.disconnect();
     };
   }, [ticketId]);

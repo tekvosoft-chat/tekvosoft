@@ -910,6 +910,21 @@ const messages = {
         noQueue: "Sans file"
       },
       expressions: {
+        searchEmoji: "Rechercher un emoji",
+        recent: "Récents",
+        frequent: "Les plus utilisés",
+        emojiResults: "Résultats",
+        noEmoji: "Aucun emoji trouvé",
+        emojiCategories: {
+          people: "Smileys et personnes",
+          nature: "Animaux et nature",
+          foods: "Nourriture et boissons",
+          activity: "Activités",
+          places: "Voyages et lieux",
+          objects: "Objets",
+          symbols: "Symboles",
+          flags: "Drapeaux"
+        },
         title: "Emoji, stickers et GIF",
         emoji: "Emoji",
         stickers: "Stickers",

@@ -1579,6 +1579,21 @@ const messages = {
         noQueue: "Sem fila"
       },
       expressions: {
+        searchEmoji: "Buscar emoji",
+        recent: "Recentes",
+        frequent: "Mais usados",
+        emojiResults: "Resultados",
+        noEmoji: "Nenhum emoji encontrado",
+        emojiCategories: {
+          people: "Carinhas e pessoas",
+          nature: "Animais e natureza",
+          foods: "Comidas e bebidas",
+          activity: "Atividades",
+          places: "Viagens e lugares",
+          objects: "Objetos",
+          symbols: "Símbolos",
+          flags: "Bandeiras"
+        },
         title: "Emoji, figurinhas e GIFs",
         emoji: "Emoji",
         stickers: "Figurinhas",

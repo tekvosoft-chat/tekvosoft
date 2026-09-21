@@ -189,7 +189,8 @@ const TicketsListCustom = props => {
     updateCount,
     style,
     setTabOpen,
-    showTabGroups
+    showTabGroups,
+    onSelectTicket
   } = props;
   const classes = useStyles();
   const [paginationCursor, setPaginationCursor] = useState({
@@ -514,6 +515,7 @@ const TicketsListCustom = props => {
                 <TicketListItem
                   ticket={ticket}
                   setTabOpen={setTabOpen}
+                  onSelect={onSelectTicket}
                   key={ticket.id}
                   groupActionButtons={!groups && !showTabGroups}
                 />

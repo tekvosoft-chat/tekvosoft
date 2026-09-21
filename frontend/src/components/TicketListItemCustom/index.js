@@ -289,7 +289,12 @@ const mediaPreview = text => {
   return `${emoji} ${i18n.t(`ticketsList.media.${key}`)}`;
 };
 
-const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
+const TicketListItemCustom = ({
+  ticket,
+  setTabOpen,
+  groupActionButtons,
+  onSelect
+}) => {
   const classes = useStyles();
   const history = useHistory();
   const { ticketId } = useParams();
@@ -318,6 +323,7 @@ const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
 
   const handleSelectTicket = () => {
     rememberTicket(ticket);
+    onSelect?.(ticket);
     const code = uuidv4();
     const { id, uuid } = ticket;
     setCurrentTicket({ id, uuid, code });

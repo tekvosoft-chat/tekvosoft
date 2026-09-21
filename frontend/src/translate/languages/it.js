@@ -904,6 +904,21 @@ const messages = {
         noQueue: "Nessuna coda"
       },
       expressions: {
+        searchEmoji: "Cerca emoji",
+        recent: "Recenti",
+        frequent: "Più usati",
+        emojiResults: "Risultati",
+        noEmoji: "Nessuna emoji trovata",
+        emojiCategories: {
+          people: "Faccine e persone",
+          nature: "Animali e natura",
+          foods: "Cibo e bevande",
+          activity: "Attività",
+          places: "Viaggi e luoghi",
+          objects: "Oggetti",
+          symbols: "Simboli",
+          flags: "Bandiere"
+        },
         title: "Emoji, sticker e GIF",
         emoji: "Emoji",
         stickers: "Sticker",

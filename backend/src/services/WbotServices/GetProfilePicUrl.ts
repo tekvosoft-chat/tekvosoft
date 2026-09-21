@@ -13,8 +13,11 @@ const GetProfilePicUrl = async (
     return profilePicUrl;
   }
 
+  // devolve a foto já na primeira busca (antes só gravava no cache e a
+  // foto só aparecia na mensagem seguinte)
   return wbot.profilePictureUrl(`${number}`, type, 1000).then(pic => {
-    cacheLayer.set(redisKey, pic, "EX", 60 * 60 * 24 * 5);
+    if (pic) cacheLayer.set(redisKey, pic, "EX", 60 * 60 * 24 * 5);
+    return pic;
   });
 };
 

@@ -11,7 +11,6 @@ import Tab from "@material-ui/core/Tab";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import ListItemIcon from "@material-ui/core/ListItemIcon";
-import Avatar from "@material-ui/core/Avatar";
 import Tooltip from "@material-ui/core/Tooltip";
 import Collapse from "@material-ui/core/Collapse";
 import SearchRoundedIcon from "@material-ui/icons/SearchRounded";
@@ -24,6 +23,11 @@ import { toast } from "react-toastify";
 
 import TicketsList from "../TicketsListCustom";
 import NewContactPanel from "./NewContactPanel";
+import ContactPicture from "./ContactPicture";
+import {
+  addRecentContact,
+  getRecentContacts
+} from "../../helpers/recentContacts";
 import ConfirmationModal from "../ConfirmationModal";
 import { i18n } from "../../translate/i18n";
 import { AuthContext } from "../../context/Auth/AuthContext";
@@ -290,6 +294,46 @@ const useStyles = makeStyles(theme => {
       whiteSpace: "nowrap"
     },
     contactNumber: { fontSize: 13, color: theme.palette.text.secondary },
+    // últimos contatos pesquisados, em bolinhas, ao abrir a busca
+    recentRow: {
+      display: "flex",
+      gap: 4,
+      padding: theme.spacing(0.5, 1.5, 1),
+      overflowX: "auto",
+      scrollbarWidth: "none",
+      "&::-webkit-scrollbar": { display: "none" }
+    },
+    recentItem: {
+      flex: "none",
+      width: 68,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: 6,
+      padding: "8px 2px 6px",
+      borderRadius: 14,
+      animation: "$rowIn .22s ease both",
+      transition: "background-color .12s ease",
+      "&:hover": { backgroundColor: t.surfaceHover },
+      "&:hover $recentAvatar": { transform: "scale(1.06)" }
+    },
+    recentAvatar: {
+      width: 50,
+      height: 50,
+      fontWeight: 700,
+      color: t.brand.text,
+      backgroundColor: t.brand.textSoft,
+      boxShadow: `0 0 0 2px ${t.surface}, 0 0 0 4px ${t.brand.main}33`,
+      transition: "transform .15s ease"
+    },
+    recentName: {
+      maxWidth: "100%",
+      fontSize: 12,
+      color: theme.palette.text.primary,
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap"
+    },
     hidden: { display: "none" }
   };
 });
@@ -355,6 +399,11 @@ const TicketsManagerTabs = () => {
   );
   const [focused, setFocused] = useState(false);
   const searchRef = useRef(null);
+  const [recentContacts, setRecentContacts] = useState(() =>
+    getRecentContacts(user)
+  );
+  const rememberContact = contact =>
+    setRecentContacts(addRecentContact(user, contact));
   const showAll = user?.profile === "admin";
 
   useEffect(() => {
@@ -410,6 +459,7 @@ const TicketsManagerTabs = () => {
     );
 
   const startConversation = async contact => {
+    rememberContact(contact);
     try {
       const { data: ticket } = await api.post("/tickets", {
         contactId: contact.id,
@@ -542,7 +592,11 @@ const TicketsManagerTabs = () => {
           <Collapse in={focused} timeout={260} unmountOnExit>
             <div className={classes.dropdown} role="listbox">
               <div className={classes.sectionRow}>
-                <span className={classes.sectionLabel}>Contatos</span>
+                <span className={classes.sectionLabel}>
+                  {query.trim().length < 2 && recentContacts.length
+                    ? "Recentes"
+                    : "Contatos"}
+                </span>
                 {user?.profile === "admin" && (
                   <ButtonBase
                     className={classes.deleteImported}
@@ -554,9 +608,37 @@ const TicketsManagerTabs = () => {
                 )}
               </div>
               {query.trim().length < 2 ? (
-                <div className={classes.dropdownHint}>
-                  Digite o nome ou o número para encontrar um contato
-                </div>
+                <>
+                  {recentContacts.length > 0 && (
+                    <div className={classes.recentRow}>
+                      {recentContacts.map((contact, index) => (
+                        <ButtonBase
+                          key={contact.id}
+                          className={classes.recentItem}
+                          style={{ animationDelay: `${index * 30}ms` }}
+                          title={contact.name}
+                          onMouseDown={e => e.preventDefault()}
+                          onClick={() => startConversation(contact)}
+                        >
+                          <ContactPicture
+                            contact={contact}
+                            className={classes.recentAvatar}
+                          />
+                          <span className={classes.recentName}>
+                            {
+                              (contact.name || contact.number || "")
+                                .trim()
+                                .split(/\s+/)[0]
+                            }
+                          </span>
+                        </ButtonBase>
+                      ))}
+                    </div>
+                  )}
+                  <div className={classes.dropdownHint}>
+                    Digite o nome ou o número para encontrar um contato
+                  </div>
+                </>
               ) : contacts.length === 0 ? (
                 <div className={classes.dropdownHint}>
                   {contactsLoaded ? "Nenhum contato encontrado" : "Buscando…"}
@@ -571,12 +653,10 @@ const TicketsManagerTabs = () => {
                       onMouseDown={e => e.preventDefault()}
                       onClick={() => startConversation(contact)}
                     >
-                      <Avatar
-                        src={contact.profilePicUrl || undefined}
+                      <ContactPicture
+                        contact={contact}
                         className={classes.contactAvatar}
-                      >
-                        {(contact.name || "?").trim().charAt(0).toUpperCase()}
-                      </Avatar>
+                      />
                       <span className={classes.contactText}>
                         <div className={classes.contactName}>
                           {contact.name}
@@ -691,6 +771,7 @@ const TicketsManagerTabs = () => {
           <div className={classes.sectionLabel}>Conversas</div>
           <TicketsList
             isSearch
+            onSelectTicket={ticket => rememberContact(ticket.contact)}
             searchParam={searchParam}
             showAll
             selectedQueueIds={selectedQueueIds}

@@ -32,6 +32,8 @@ import { verifyContact } from "../services/WbotServices/verifyContact";
 import { getWbot } from "../libs/wbot";
 import GetDefaultWhatsApp from "../helpers/GetDefaultWhatsApp";
 import { csvDetectDelimiter } from "../helpers/csvDetectDelimiter";
+import { cacheLayer } from "../libs/cache";
+import { getJidOf } from "../services/WbotServices/getJidOf";
 
 type IndexQuery = {
   searchParam: string;
@@ -406,6 +408,53 @@ export const exportCsv = async (
 };
 
 /** Mídias, documentos e links trocados com o contato (dados do contato). */
+/**
+ * Foto do contato na hora (busca de contatos). Quem nunca conversou ficava
+ * sem foto até abrir um atendimento. Pede ao WhatsApp pela conexão da
+ * empresa, grava no contato e guarda no cache (sem foto, por menos tempo).
+ */
+export const profilePicture = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { contactId } = req.params;
+  const { companyId } = req.user;
+
+  const contact = await ShowContactService(contactId, companyId);
+
+  const cacheKey = `picurl_contact:${contact.id}`;
+  const cached = await cacheLayer.get(cacheKey);
+  if (cached) {
+    return res.status(200).json({ url: cached === "none" ? null : cached });
+  }
+
+  let wbot = null;
+  let url: string | null = null;
+  try {
+    wbot = getWbot((await GetDefaultWhatsApp(companyId)).id);
+    url =
+      (await wbot.profilePictureUrl(getJidOf(contact), "preview", 5000)) ||
+      null;
+  } catch {
+    url = null;
+  }
+
+  // sem conexão não guarda "sem foto": ao conectar, tenta de novo
+  if (wbot) {
+    await cacheLayer.set(
+      cacheKey,
+      url || "none",
+      "EX",
+      url ? 60 * 60 * 6 : 60 * 60
+    );
+  }
+  if (url && url !== contact.profilePicUrl) {
+    await contact.update({ profilePicUrl: url });
+  }
+
+  return res.status(200).json({ url });
+};
+
 export const media = async (req: Request, res: Response): Promise<Response> => {
   const { contactId } = req.params;
   const { companyId } = req.user;

@@ -1578,6 +1578,21 @@ const messages = {
         noQueue: "No queue"
       },
       expressions: {
+        searchEmoji: "Search emoji",
+        recent: "Recent",
+        frequent: "Most used",
+        emojiResults: "Results",
+        noEmoji: "No emoji found",
+        emojiCategories: {
+          people: "Smileys & people",
+          nature: "Animals & nature",
+          foods: "Food & drink",
+          activity: "Activities",
+          places: "Travel & places",
+          objects: "Objects",
+          symbols: "Symbols",
+          flags: "Flags"
+        },
         title: "Emoji, stickers and GIFs",
         emoji: "Emoji",
         stickers: "Stickers",

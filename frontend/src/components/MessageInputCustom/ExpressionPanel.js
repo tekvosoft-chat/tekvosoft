@@ -3,8 +3,7 @@ import { makeStyles } from "@material-ui/core/styles";
 import ButtonBase from "@material-ui/core/ButtonBase";
 import InputBase from "@material-ui/core/InputBase";
 import SearchRoundedIcon from "@material-ui/icons/SearchRounded";
-import { Picker } from "emoji-mart";
-import { emojiMartI18n } from "../../helpers/emojiMartI18n";
+import EmojiTab from "./EmojiTab";
 
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
@@ -134,7 +133,18 @@ const ExpressionPanel = ({
   compact
 }) => {
   const classes = useStyles();
-  const [tab, setTab] = useState(showEmoji ? "emoji" : "stickers");
+  // volta na última aba usada (emoji, figurinhas ou GIFs)
+  const [tab, setTab] = useState(() => {
+    let last = null;
+    try {
+      last = localStorage.getItem("expressionTab");
+    } catch {
+      last = null;
+    }
+    if (last === "stickers" || last === "gifs") return last;
+    return showEmoji ? "emoji" : "stickers";
+  });
+  const [emojiQuery, setEmojiQuery] = useState("");
   const [stickers, setStickers] = useState(null);
   const [remote, setRemote] = useState({ stickers: null, gifs: null });
   const [configured, setConfigured] = useState({ stickers: true, gifs: true });
@@ -145,6 +155,15 @@ const ExpressionPanel = ({
     useContext(ReplyMessageContext);
   const timer = useRef(null);
   const t = key => i18n.t(`expressions.${key}`);
+
+  const chooseTab = key => {
+    setTab(key);
+    try {
+      localStorage.setItem("expressionTab", key);
+    } catch {
+      // modo privado: só não lembra a aba
+    }
+  };
 
   // figurinhas que já apareceram nas conversas da empresa
   useEffect(() => {
@@ -217,36 +236,36 @@ const ExpressionPanel = ({
             role="tab"
             aria-selected={tab === key}
             className={`${classes.tab}${tab === key ? ` ${classes.tabOn}` : ""}`}
-            onClick={() => setTab(key)}
+            onClick={() => chooseTab(key)}
           >
             {label}
           </ButtonBase>
         ))}
       </div>
 
-      {tab !== "emoji" && (
-        <label className={classes.search}>
-          <SearchRoundedIcon fontSize="small" />
+      <label className={classes.search}>
+        <SearchRoundedIcon fontSize="small" />
+        {tab === "emoji" ? (
+          <InputBase
+            fullWidth
+            autoFocus
+            value={emojiQuery}
+            onChange={e => setEmojiQuery(e.target.value)}
+            placeholder={t("searchEmoji")}
+          />
+        ) : (
           <InputBase
             fullWidth
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder={tab === "gifs" ? t("searchGifs") : t("searchStickers")}
           />
-        </label>
-      )}
-
-      <div className={classes.body}>
-        {tab === "emoji" && (
-          <Picker
-            i18n={emojiMartI18n()}
-            perLine={10}
-            showPreview={false}
-            showSkinTones={false}
-            onSelect={emoji => onEmoji(emoji)}
-          />
         )}
+      </label>
 
+      {tab === "emoji" && <EmojiTab query={emojiQuery} onPick={onEmoji} />}
+
+      <div className={classes.body} hidden={tab === "emoji"}>
         {tab !== "emoji" && (
           <>
             {loading ? (

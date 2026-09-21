@@ -1586,6 +1586,21 @@ const messages = {
         noQueue: "Sin cola"
       },
       expressions: {
+        searchEmoji: "Buscar emoji",
+        recent: "Recientes",
+        frequent: "Más usados",
+        emojiResults: "Resultados",
+        noEmoji: "No se encontraron emojis",
+        emojiCategories: {
+          people: "Caras y personas",
+          nature: "Animales y naturaleza",
+          foods: "Comida y bebida",
+          activity: "Actividades",
+          places: "Viajes y lugares",
+          objects: "Objetos",
+          symbols: "Símbolos",
+          flags: "Banderas"
+        },
         title: "Emoji, stickers y GIFs",
         emoji: "Emoji",
         stickers: "Stickers",

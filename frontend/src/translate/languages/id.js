@@ -920,6 +920,21 @@ const messages = {
         noQueue: "Tanpa antrean"
       },
       expressions: {
+        searchEmoji: "Cari emoji",
+        recent: "Terbaru",
+        frequent: "Paling sering",
+        emojiResults: "Hasil",
+        noEmoji: "Emoji tidak ditemukan",
+        emojiCategories: {
+          people: "Wajah & orang",
+          nature: "Hewan & alam",
+          foods: "Makanan & minuman",
+          activity: "Aktivitas",
+          places: "Perjalanan & tempat",
+          objects: "Objek",
+          symbols: "Simbol",
+          flags: "Bendera"
+        },
         title: "Emoji, stiker, dan GIF",
         emoji: "Emoji",
         stickers: "Stiker",

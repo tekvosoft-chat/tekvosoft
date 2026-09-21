@@ -189,12 +189,17 @@ const ReactionBar = ({
 
   useEffect(() => {
     if (!open) return undefined;
-    const onKey = e => e.key === "Escape" && onClose();
+    // capture + preventDefault: fecha só a barra, não a conversa junto
+    const onKey = e => {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      onClose();
+    };
     const onScroll = () => onClose();
-    window.addEventListener("keydown", onKey);
+    window.addEventListener("keydown", onKey, true);
     window.addEventListener("resize", onScroll);
     return () => {
-      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("keydown", onKey, true);
       window.removeEventListener("resize", onScroll);
     };
   }, [open, onClose]);

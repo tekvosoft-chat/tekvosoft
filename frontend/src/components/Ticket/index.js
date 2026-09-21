@@ -25,6 +25,7 @@ import MessagesList from "../MessagesList";
 import api from "../../services/api";
 import { ReplyMessageProvider } from "../../context/ReplyingMessage/ReplyingMessageContext";
 import { EditMessageProvider } from "../../context/EditingMessage/EditingMessageContext";
+import { overlayOpen } from "../../helpers/escapeKey";
 import toastError from "../../errors/toastError";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { TagsContainer } from "../TagsContainer";
@@ -305,6 +306,26 @@ const Ticket = () => {
     measure();
     return () => observer.disconnect();
   }, [isPhone, loading]);
+
+  // ESC fecha a conversa (ou antes o painel do contato, se estiver aberto).
+  // Digitando em outro campo da tela, como a busca, o ESC é daquele campo.
+  useEffect(() => {
+    const onKey = e => {
+      if (e.key !== "Escape" || e.defaultPrevented || overlayOpen()) return;
+      const target = e.target;
+      const typing =
+        target?.matches?.("input, textarea, select, [contenteditable=true]") &&
+        !wrapperRef.current?.contains(target);
+      if (typing) return;
+      if (drawerOpen) {
+        setDrawerOpen(false);
+      } else {
+        history.push("/tickets");
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [drawerOpen, history]);
 
   const renderTicketInfo = () => {
     if (ticket.user !== undefined) {

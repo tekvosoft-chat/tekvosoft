@@ -56,6 +56,7 @@ import MediaPreview from "../ui/MediaPreview";
 import { AttachPanel, RecordingPanel } from "./PhoneComposer";
 import QuickRepliesModal from "../QuickRepliesModal";
 import ExpressionPanel from "./ExpressionPanel";
+import { overlayOpen } from "../../helpers/escapeKey";
 import {
   announceFailed,
   announceConfirmed,
@@ -1150,6 +1151,23 @@ const MessageInputCustom = props => {
     };
   }, [socketManager]);
 
+  // ESC desiste de responder (ou de editar) sem fechar a conversa
+  useEffect(() => {
+    if (!replyingMessage && !editingMessage) return undefined;
+    const onKey = e => {
+      if (e.key !== "Escape" || e.defaultPrevented || overlayOpen()) return;
+      e.preventDefault();
+      setReplyingMessage(null);
+      if (editingMessage) {
+        setEditingMessage(null);
+        setInputMessage("");
+      }
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [replyingMessage, editingMessage]);
+
   useEffect(() => {
     if (editingMessage) {
       if (signMessage && editingMessage.body.startsWith(`*${user.name}:*\n`)) {
@@ -1196,9 +1214,22 @@ const MessageInputCustom = props => {
   // 	}
   // };
 
+  // emoji entra onde está o cursor (antes ia sempre para o fim do texto)
   const handleAddEmoji = e => {
-    let emoji = e.native;
-    setInputMessage(prevState => prevState + emoji);
+    const emoji = e.native;
+    const el = inputRef.current;
+    const start = el ? el.selectionStart : null;
+    const end = el ? el.selectionEnd : null;
+    setInputMessage(prev => {
+      if (start === null || start > prev.length) return prev + emoji;
+      return prev.slice(0, start) + emoji + prev.slice(end ?? start);
+    });
+    if (el && start !== null) {
+      requestAnimationFrame(() => {
+        const caret = start + emoji.length;
+        el.setSelectionRange(caret, caret);
+      });
+    }
   };
 
   // comprime a foto antes de subir (vídeo e outros vão como estão)
@@ -1675,8 +1706,14 @@ const MessageInputCustom = props => {
         transformOrigin={{ vertical: "bottom", horizontal: "left" }}
         PaperProps={{ className: classes.exprPopover }}
       >
-        {/* só figurinhas e GIFs (os emojis vêm do teclado do aparelho) */}
-        <ExpressionPanel ticketId={ticketId} disabled={disableOption} />
+        {/* no computador: emoji, figurinhas e GIFs (no celular o emoji vem
+            do teclado do aparelho) */}
+        <ExpressionPanel
+          ticketId={ticketId}
+          disabled={disableOption}
+          showEmoji
+          onEmoji={handleAddEmoji}
+        />
       </Popover>
     );
     return (
