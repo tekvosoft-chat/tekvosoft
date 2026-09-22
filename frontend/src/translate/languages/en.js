@@ -1223,6 +1223,7 @@ const messages = {
         placeholder: "Queues"
       },
       tickets: {
+        draft: "Draft",
         toasts: {
           deleted: "The ticket you were working on has been deleted."
         },

@@ -1229,6 +1229,7 @@ const messages = {
         placeholder: "Colas"
       },
       tickets: {
+        draft: "Borrador",
         toasts: {
           deleted: "La atención que estabas siguiendo fue eliminada."
         },

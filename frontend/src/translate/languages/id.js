@@ -468,6 +468,7 @@ const messages = {
         placeholder: "Antrian"
       },
       tickets: {
+        draft: "Draf",
         toasts: {
           deleted: "Tiket yang Anda kerjakan telah dihapus."
         },

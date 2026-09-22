@@ -79,6 +79,7 @@ import CheckRoundedIcon from "@material-ui/icons/CheckRounded";
 import RoomOutlinedIcon from "@material-ui/icons/RoomOutlined";
 import { SendLocationDialog } from "../MessagesList/LocationMessage";
 import { SocketContext } from "../../context/Socket/SocketContext";
+import { getDraft, saveDraft } from "../../helpers/drafts";
 import { haptic } from "../../helpers/haptics";
 
 const Mp3Recorder = new MicRecorder({ bitRate: 128 });
@@ -1242,20 +1243,28 @@ const MessageInputCustom = props => {
   const [currentPresence, setCurrentPresence] = useState(null);
   const [presenceTimeout, setPresenceTimeout] = useState(null);
 
-  useEffect(() => {
-    if (!inputMessage) {
-      sessionStorage.removeItem("messageDraft-" + ticketId);
-      return;
-    }
-    sessionStorage.setItem("messageDraft-" + ticketId, inputMessage);
-  }, [inputMessage]);
+  // Rascunho: o texto não enviado fica guardado por conversa (mesmo
+  // fechando o app) e volta ao reabrir. Enquanto o texto carregado ainda não
+  // apareceu no campo, nada é salvo — antes, o campo ainda vazio apagava o
+  // rascunho no instante em que a conversa abria.
+  const pendingDraft = useRef(null);
 
   useEffect(() => {
-    const draftMessage = sessionStorage.getItem("messageDraft-" + ticketId);
-    if (draftMessage) {
-      setInputMessage(draftMessage);
-    }
+    const draft = getDraft("ticket", ticketId);
+    pendingDraft.current = draft;
+    setInputMessage(draft);
   }, [ticketId]);
+
+  useEffect(() => {
+    if (pendingDraft.current !== null) {
+      if (inputMessage === pendingDraft.current) pendingDraft.current = null;
+      return;
+    }
+    // editando uma mensagem já enviada: isso não é rascunho
+    if (editingMessage) return;
+    saveDraft("ticket", ticketId, inputMessage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inputMessage]);
 
   useEffect(() => {
     const socket = socketManager.GetSocket();

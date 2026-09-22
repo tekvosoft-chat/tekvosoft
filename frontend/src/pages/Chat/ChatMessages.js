@@ -32,6 +32,7 @@ import RecordingTimer from "../../components/MessageInputCustom/RecordingTimer";
 import MediaGalleryLightbox, {
   buildMediaGalleryData
 } from "../../components/MediaGalleryLightbox";
+import { getDraft, saveDraft } from "../../helpers/drafts";
 import UserAvatar from "../../components/ui/UserAvatar";
 
 /**
@@ -427,6 +428,23 @@ export default function ChatMessages({
   const previewVideoRefs = useRef({});
 
   const [contentMessage, setContentMessage] = useState("");
+  // rascunho por sala/conversa, como na barra de envio dos atendimentos
+  const pendingDraft = useRef(null);
+
+  useEffect(() => {
+    const draft = getDraft("chat", chat?.id);
+    pendingDraft.current = draft;
+    setContentMessage(draft);
+  }, [chat?.id]);
+
+  useEffect(() => {
+    if (pendingDraft.current !== null) {
+      if (contentMessage === pendingDraft.current) pendingDraft.current = null;
+      return;
+    }
+    saveDraft("chat", chat?.id, contentMessage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contentMessage]);
   // só anima as mensagens que chegam depois de abrir a conversa
   const openedAt = useRef(Date.now());
   const [flying, setFlying] = useState(false);

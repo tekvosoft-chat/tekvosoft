@@ -461,6 +461,7 @@ const messages = {
         placeholder: "Files d'attente"
       },
       tickets: {
+        draft: "Brouillon",
         toasts: {
           deleted: "L'intervention que vous gérez a été supprimée."
         },

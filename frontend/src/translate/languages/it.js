@@ -458,6 +458,7 @@ const messages = {
         placeholder: "Code"
       },
       tickets: {
+        draft: "Bozza",
         toasts: {
           deleted: "Il ticket che stavi gestendo è stato eliminato."
         },

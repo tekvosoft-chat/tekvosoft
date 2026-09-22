@@ -1195,6 +1195,7 @@ const messages = {
         placeholder: "Filas"
       },
       tickets: {
+        draft: "Rascunho",
         toasts: {
           deleted: "O atendimento que estava a gerir foi eliminado."
         },

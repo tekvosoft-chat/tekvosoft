@@ -340,6 +340,66 @@ export default function createAppTheme({
               to: { transform: "translateY(0)" }
             },
 
+            // "translate" separado do "transform": o Grow do Material usa o
+            // transform, e a folha precisa anular o dele sem perder a subida
+            "@keyframes tkvSelectSheetUp": {
+              from: { translate: "0 100%" },
+              to: { translate: "0 0" }
+            },
+
+            /**
+             * Campos de seleção no celular: as opções abrem numa folha presa à
+             * base da tela, não numa lista colada no campo.
+             *
+             * A lista do Material é posicionada pelo campo no momento em que
+             * abre. Com o teclado aberto, tocar no campo fecha o teclado, a
+             * tela cresce e a lista ficava lá em cima, longe do campo. Presa à
+             * base ela não depende de onde o campo está. Só vale para listas
+             * de seleção (role="listbox"); menus de ação continuam como são.
+             * A chave da media query é única de propósito (ver abaixo).
+             */
+            "@media (hover: none) and (pointer: coarse) and (min-width: 0px)": {
+              ".MuiPopover-root:has(.MuiMenu-list[role='listbox']) > div[aria-hidden='true']":
+                {
+                  backgroundColor: "rgba(0, 0, 0, 0.45) !important"
+                },
+              ".MuiMenu-paper:has(> .MuiMenu-list[role='listbox'])": {
+                top: "auto !important",
+                bottom: "0 !important",
+                left: "0 !important",
+                right: "0 !important",
+                margin: "0 auto !important",
+                width: "100% !important",
+                minWidth: "0 !important",
+                maxWidth: "560px !important",
+                maxHeight: "min(70vh, 560px) !important",
+                transform: "none !important",
+                border: `1px solid ${n.border}`,
+                borderBottom: "none",
+                borderRadius: `${radius.xl}px ${radius.xl}px 0 0 !important`,
+                boxShadow: shadows[8],
+                paddingBottom: "env(safe-area-inset-bottom)",
+                animation: "tkvSelectSheetUp .26s cubic-bezier(.2, .8, .2, 1)",
+                // alça de arrastar, como nas outras folhas do sistema
+                "&::before": {
+                  content: '""',
+                  display: "block",
+                  width: 40,
+                  height: 4,
+                  borderRadius: 2,
+                  margin: "10px auto 4px",
+                  backgroundColor: n.borderStrong
+                },
+                "& .MuiMenu-list": { padding: "4px 8px 12px" },
+                "& .MuiMenuItem-root": {
+                  minHeight: 50,
+                  fontSize: "1rem",
+                  borderRadius: radius.md,
+                  whiteSpace: "normal"
+                }
+              }
+            },
+
             /**
              * Modais no celular: painel preso à base da tela, não caixa solta.
              *

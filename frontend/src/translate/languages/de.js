@@ -463,6 +463,7 @@ const messages = {
         placeholder: "Warteschlangen"
       },
       tickets: {
+        draft: "Entwurf",
         toasts: {
           deleted: "Das von Ihnen verwaltete Ticket wurde gelöscht."
         },

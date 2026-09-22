@@ -36,6 +36,7 @@ import {
   rememberTicket
 } from "../../helpers/conversationCache";
 import { haptic } from "../../helpers/haptics";
+import { useDraft } from "../../helpers/drafts";
 
 /**
  * Item da lista de atendimentos.
@@ -166,6 +167,11 @@ const useStyles = makeStyles(theme => {
       color: "#FFFFFF"
     },
     presence: {
+      fontWeight: 600,
+      color: t.semantic.success
+    },
+    // "Rascunho:" como no WhatsApp: mensagem começada e não enviada
+    draft: {
       fontWeight: 600,
       color: t.semantic.success
     },
@@ -301,6 +307,9 @@ const TicketListItemCustom = ({
   const classes = useStyles();
   const history = useHistory();
   const { ticketId } = useParams();
+  // a conversa aberta não mostra "Rascunho" (o texto já está na barra)
+  const savedDraft = useDraft("ticket", ticket.id);
+  const draft = String(ticket.id) === String(ticketId) ? "" : savedDraft;
   const isMounted = useRef(true);
   const { setCurrentTicket } = useContext(TicketsContext);
   const { user } = useContext(AuthContext);
@@ -472,6 +481,13 @@ const TicketListItemCustom = ({
                 <span className={classes.presence}>
                   {i18n.t(`presence.${ticket.presence}`)}
                 </span>
+              ) : draft ? (
+                <>
+                  <span className={classes.draft}>
+                    {i18n.t("tickets.draft")}:{" "}
+                  </span>
+                  {draft.split("\n")[0]}
+                </>
               ) : ticket.lastMessage?.includes("data:image/png;base64") ? (
                 "📍 Localização"
               ) : mediaPreview(ticket.lastMessage) ? (
