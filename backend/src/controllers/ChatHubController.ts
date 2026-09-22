@@ -21,6 +21,8 @@ const USER_ATTRS = [
   "email",
   "profile",
   "profileImage",
+  "bio",
+  "statusText",
   "createdAt"
 ];
 

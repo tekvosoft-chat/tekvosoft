@@ -172,9 +172,17 @@ const ChatDetails = ({
           </span>
           <div className={classes.name}>{other.name}</div>
           <div className={classes.handle}>
-            {onlineOf(other) ? "Online agora" : "Offline"}
+            {other.statusText || (onlineOf(other) ? "Online agora" : "Offline")}
           </div>
         </div>
+        {other.bio && (
+          <div className={classes.card}>
+            <div className={classes.label}>Sobre mim</div>
+            <div className={classes.value} style={{ whiteSpace: "pre-wrap" }}>
+              {other.bio}
+            </div>
+          </div>
+        )}
         <div className={classes.card}>
           <div className={classes.label}>E-mail</div>
           <div className={classes.value}>{other.email || "—"}</div>

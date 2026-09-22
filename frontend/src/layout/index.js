@@ -17,7 +17,6 @@ import {
   InputBase
 } from "@material-ui/core";
 import SearchRoundedIcon from "@material-ui/icons/SearchRounded";
-import UnfoldMoreRoundedIcon from "@material-ui/icons/UnfoldMoreRounded";
 
 import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
 
@@ -505,11 +504,17 @@ const useStyles = makeStyles(theme => ({
     alignItems: "center",
     gap: 10,
     width: "100%",
-    padding: theme.spacing(0.75, 1),
+    padding: theme.spacing(0.875, 1),
     borderRadius: 12,
     textAlign: "left",
     transition: "background-color .15s ease",
-    "&:hover": { backgroundColor: theme.palette.tkv.surfaceHover }
+    "&:hover": { backgroundColor: theme.palette.tkv.surfaceHover },
+    "&:active": { backgroundColor: theme.palette.tkv.brand.textSoft }
+  },
+  userCardActive: {
+    backgroundColor: theme.palette.tkv.brand.textSoft,
+    "&:hover": { backgroundColor: theme.palette.tkv.brand.textSoft },
+    "& $userName": { color: theme.palette.tkv.brand.text }
   },
   userCardCollapsed: {
     justifyContent: "center",
@@ -525,8 +530,9 @@ const useStyles = makeStyles(theme => ({
     height: 36,
     fontSize: "0.8125rem",
     fontWeight: 700,
-    backgroundColor: theme.palette.tkv.brand.soft,
-    color: theme.palette.tkv.brand.main
+    backgroundColor: theme.palette.tkv.surfaceSunken,
+    color: theme.palette.text.primary,
+    border: `1px solid ${theme.palette.tkv.border}`
   },
   onlineDot: {
     position: "absolute",
@@ -542,11 +548,12 @@ const useStyles = makeStyles(theme => ({
     flex: 1,
     minWidth: 0,
     display: "flex",
-    flexDirection: "column"
+    flexDirection: "column",
+    gap: 1
   },
   userName: {
     fontSize: "0.875rem",
-    fontWeight: 700,
+    fontWeight: 600,
     lineHeight: 1.3,
     color: theme.palette.text.primary,
     overflow: "hidden",
@@ -560,11 +567,6 @@ const useStyles = makeStyles(theme => ({
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap"
-  },
-  userChevron: {
-    flex: "none",
-    fontSize: 20,
-    color: theme.palette.text.secondary
   },
   NotificationsPopOver: {
     // color: theme.barraSuperior.secondary.main,
@@ -608,7 +610,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   // o mesmo menu de perfil abre da barra de cima (celular) ou do cartão do
   // usuário no rodapé do menu lateral (tablet e desktop)
-  const [profileMenuFrom, setProfileMenuFrom] = useState("appbar");
+  const [profileMenuFrom] = useState("appbar");
   const [menuQuery, setMenuQuery] = useState("");
   const searchRef = React.useRef(null);
   const [languageOpen, setLanguageOpen] = useState(false);
@@ -813,10 +815,11 @@ const LoggedInLayout = ({ children, themeToggle }) => {
     };
   }, [socketManager]);
 
-  const handleSidebarProfileMenu = event => {
-    setProfileMenuFrom("sidebar");
-    setAnchorEl(event.currentTarget);
-    setMenuOpen(true);
+  // tocar no próprio nome (lá embaixo do menu) abre direto a página de perfil;
+  // idioma, sobre e sair ficam dentro dela
+  const handleSidebarProfileMenu = () => {
+    setMenuOpen(false);
+    history.push("/profile");
   };
 
   // Ctrl+K (ou Cmd+K no Mac) abre o menu, se estiver recolhido, e foca a busca
@@ -844,8 +847,8 @@ const LoggedInLayout = ({ children, themeToggle }) => {
   };
 
   const handleOpenUserModal = () => {
-    setUserModalOpen(true);
     handleCloseProfileMenu();
+    history.push("/profile");
   };
 
   const handleOpenAboutModal = () => {
@@ -1029,38 +1032,32 @@ const LoggedInLayout = ({ children, themeToggle }) => {
                   <ButtonBase
                     className={clsx(
                       classes.userCard,
+                      location.pathname === "/profile" &&
+                        classes.userCardActive,
                       !drawerOpen && classes.userCardCollapsed
                     )}
                     onClick={handleSidebarProfileMenu}
-                    aria-haspopup="true"
-                    aria-controls="menu-appbar"
                   >
                     <span className={classes.userAvatarWrap}>
                       <UserAvatar
                         user={user}
-                        size={34}
+                        size={36}
                         className={classes.userAvatar}
                       />
                       <span className={classes.onlineDot} aria-hidden="true" />
                     </span>
                     {drawerOpen && (
-                      <>
-                        <span className={classes.userText}>
-                          <span className={classes.userName}>
-                            {user?.name || "-"}
-                          </span>
-                          <span className={classes.userMeta}>
-                            {user?.profile === "admin"
-                              ? i18n.t("userModal.listItems.adminProfile")
-                              : i18n.t("userModal.listItems.userProfile")}
-                            {" · "}
-                            {i18n.t("mainDrawer.listItems.online")}
-                          </span>
+                      <span className={classes.userText}>
+                        <span className={classes.userName}>
+                          {user?.name || "-"}
                         </span>
-                        <UnfoldMoreRoundedIcon
-                          className={classes.userChevron}
-                        />
-                      </>
+                        <span className={classes.userMeta}>
+                          {user?.statusText ||
+                            (user?.profile === "admin"
+                              ? i18n.t("userModal.listItems.adminProfile")
+                              : i18n.t("userModal.listItems.userProfile"))}
+                        </span>
+                      </span>
                     )}
                   </ButtonBase>
                 </Tooltip>

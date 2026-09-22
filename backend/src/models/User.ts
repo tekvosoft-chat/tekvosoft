@@ -74,6 +74,13 @@ class User extends Model<User> {
   @Column(DataType.TEXT)
   appTheme: string;
 
+  // perfil: bio e frase de status (tela Perfil e chat interno)
+  @Column(DataType.TEXT)
+  bio: string;
+
+  @Column
+  statusText: string;
+
   @CreatedAt
   createdAt: Date;
 

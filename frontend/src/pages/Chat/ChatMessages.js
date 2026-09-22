@@ -433,6 +433,21 @@ export default function ChatMessages({
   const [medias, setMedias] = useState([]);
   const [loading, setLoading] = useState(false);
   const [recording, setRecording] = useState(false);
+  // saiu da tela no meio da gravação: solta o microfone na hora
+  const recordingRef = useRef(false);
+  recordingRef.current = recording;
+  useEffect(
+    () => () => {
+      if (recordingRef.current) {
+        try {
+          Mp3Recorder.stop();
+        } catch (err) {
+          // já estava parado
+        }
+      }
+    },
+    []
+  );
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [previewVideoPlayingById, setPreviewVideoPlayingById] = useState({});
@@ -659,7 +674,9 @@ export default function ChatMessages({
   const handleStartRecording = async () => {
     setLoading(true);
     try {
-      await navigator.mediaDevices.getUserMedia({ audio: true });
+      // o próprio gravador pede o microfone (e o solta ao parar). Antes o
+      // microfone era aberto uma segunda vez aqui e nunca fechado: o
+      // navegador continuava "gravando" depois de enviar o áudio
       await Mp3Recorder.start();
       setRecording(true);
       setLoading(false);

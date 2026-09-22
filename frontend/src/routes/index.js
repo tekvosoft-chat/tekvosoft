@@ -24,6 +24,7 @@ const Contacts = lazy(() => import("../pages/Contacts/"));
 const Queues = lazy(() => import("../pages/Queues/"));
 const MessagesAPI = lazy(() => import("../pages/MessagesAPI/"));
 const Helps = lazy(() => import("../pages/Helps/"));
+const Profile = lazy(() => import("../pages/Profile/"));
 const Schedules = lazy(() => import("../pages/Schedules"));
 const Chat = lazy(() => import("../pages/Chat"));
 const Kanban = lazy(() => import("../pages/Kanban/"));
@@ -100,6 +101,7 @@ const Routes = () => {
                     isPrivate
                   />
                   <Route exact path="/helps" component={Helps} isPrivate />
+                  <Route exact path="/profile" component={Profile} isPrivate />
                   <Route exact path="/users" component={Users} isPrivate />
                   <Route
                     exact
