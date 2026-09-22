@@ -12,6 +12,7 @@ import { logger } from "./utils/logger";
 import { getPublicPath } from "./helpers/GetPublicPath";
 import { asaasChargeSavedCards } from "./services/PaymentGatewayServices/AsaasServices";
 import { sendDueReminderEmails } from "./services/AutomationServices/EmailEvents";
+import SendCalendarReminders from "./services/CalendarServices/SendCalendarReminders";
 import Schedule from "./models/Schedule";
 import Contact from "./models/Contact";
 import GetDefaultWhatsApp from "./helpers/GetDefaultWhatsApp";
@@ -663,6 +664,16 @@ const dailyDueReminderJob = new CronJob("10 9 * * *", async () => {
   }
 });
 dailyDueReminderJob.start();
+
+// lembretes da agenda (eventos, ligações do chat interno), a cada minuto
+const calendarReminderJob = new CronJob("30 * * * * *", async () => {
+  try {
+    await SendCalendarReminders();
+  } catch (error) {
+    logger.error(error, "SendCalendarReminders");
+  }
+});
+calendarReminderJob.start();
 
 export async function startQueueProcess() {
   logger.info("Starting queue processing");

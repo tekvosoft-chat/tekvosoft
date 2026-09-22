@@ -636,6 +636,17 @@ function Chat() {
 
   const joinCall = video => current && call.join(current.id, { video });
 
+  // veio do lembrete da agenda (?call=1): entra direto na ligação da sala
+  const autoCallDone = useRef(null);
+  useEffect(() => {
+    if (!current || autoCallDone.current === current.id) return;
+    if (new URLSearchParams(window.location.search).get("call") !== "1") return;
+    autoCallDone.current = current.id;
+    if (call.chatId !== current.id) call.join(current.id, { video: false });
+    history.replace(`/chats/${current.uuid}`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current]);
+
   // ── trilho ──
   const railEl = (
     <nav className={classes.rail} aria-label="Salas">

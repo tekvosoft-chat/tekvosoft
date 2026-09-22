@@ -32,6 +32,7 @@ import versionRoutes from "./versionRoutes";
 import i18nRoutes from "./i18nRoutes";
 import wavoipRoutes from "./wavoipRoutes";
 import dockerRoutes from "./dockerRoutes";
+import calendarRoutes from "./calendarRoutes";
 import superRoutes from "./superRoutes";
 
 const routes = Router();
@@ -72,5 +73,6 @@ routes.use(dockerRoutes);
 routes.use(pushRoutes);
 routes.use(groupRoutes);
 routes.use(supportRoutes);
+routes.use(calendarRoutes);
 
 export default routes;

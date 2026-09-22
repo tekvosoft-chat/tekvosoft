@@ -56,6 +56,7 @@ import OnlyForSuperUser from "../components/OnlyForSuperUser";
 import NewTicketModal from "../components/NewTicketModal/index.js";
 import PullToRefresh from "../components/PullToRefresh";
 import HapticsBridge from "../components/Haptics/HapticsBridge";
+import CalendarReminders from "../components/CalendarReminders";
 
 const drawerWidth = 264;
 const drawerWidthCollapsed = 88;
@@ -1192,6 +1193,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
         </React.Suspense>
       </main>
       <HapticsBridge />
+      <CalendarReminders />
       {isPhone && <PullToRefresh onRefresh={pullRefresh} />}
       {isPhone && !inConversation && (
         <MobileNav onOpenProfile={handleOpenUserModal} />

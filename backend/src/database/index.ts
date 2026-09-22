@@ -20,6 +20,7 @@ import QuickMessage from "../models/QuickMessage";
 import Help from "../models/Help";
 import SupportTicket from "../models/SupportTicket";
 import UserDevice from "../models/UserDevice";
+import CalendarEvent from "../models/CalendarEvent";
 import SupportMessage from "../models/SupportMessage";
 import TicketTraking from "../models/TicketTraking";
 import Counter from "../models/Counter";
@@ -102,7 +103,8 @@ const models = [
   PushSubscription,
   SupportTicket,
   SupportMessage,
-  UserDevice
+  UserDevice,
+  CalendarEvent
 ];
 
 sequelize.addModels(models);
