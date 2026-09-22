@@ -433,7 +433,8 @@ export default function ChatMessages({
 
   useEffect(() => {
     const draft = getDraft("chat", chat?.id);
-    pendingDraft.current = draft;
+    // já é o que está no campo: nada vai mudar, então não há o que esperar
+    pendingDraft.current = draft === contentMessage ? null : draft;
     setContentMessage(draft);
   }, [chat?.id]);
 

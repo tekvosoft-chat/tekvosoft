@@ -1247,6 +1247,10 @@ const messages = {
         }
       },
       transferTicketModal: {
+        hintQueue:
+          'Without an agent, the ticket goes back to "Waiting" in the chosen queue.',
+        hintUser: "Goes straight to {{name}}, already in progress.",
+        userLabel: "Agent (optional)",
         title: "Transfer Ticket",
         fieldLabel: "Type to search for users",
         fieldQueueLabel: "Transfer to queue",

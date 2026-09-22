@@ -1219,9 +1219,13 @@ const messages = {
         }
       },
       transferTicketModal: {
-        title: "Transferir Ticket",
+        hintQueue:
+          'Sem atendente, o atendimento volta para "A aguardar" da fila escolhida.',
+        hintUser: "Vai diretamente para {{name}}, já em atendimento.",
+        userLabel: "Atendente (opcional)",
+        title: "Transferir atendimento",
         fieldLabel: "Digite para buscar utilizadores",
-        fieldQueueLabel: "Transferir para fila",
+        fieldQueueLabel: "Fila de destino",
         fieldQueuePlaceholder: "Selecione uma fila",
         noOptions: "Nenhum utilizador encontrado com esse nome",
         buttons: {

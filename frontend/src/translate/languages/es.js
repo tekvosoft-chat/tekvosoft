@@ -1253,6 +1253,10 @@ const messages = {
         }
       },
       transferTicketModal: {
+        hintQueue:
+          'Sin agente, la atención vuelve a "En espera" de la cola elegida.',
+        hintUser: "Va directo a {{name}}, ya en atención.",
+        userLabel: "Agente (opcional)",
         title: "Transferir Ticket",
         fieldLabel: "Escribe para buscar usuarios",
         fieldQueueLabel: "Transferir a cola",

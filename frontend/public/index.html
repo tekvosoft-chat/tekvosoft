@@ -26,6 +26,17 @@
     />
     <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <script>
+      // ícone do app na cor do tema da empresa (ver helpers/appIcon.js): o
+      // navegador lê o manifesto agora, antes de o app carregar
+      try {
+        var tkvIcon = JSON.parse(localStorage.getItem("tkvAppIcon") || "null");
+        if (tkvIcon) {
+          document.querySelector('link[rel="manifest"]').href = tkvIcon.manifest;
+          document.querySelector('link[rel="apple-touch-icon"]').href = tkvIcon.apple;
+        }
+      } catch (e) {}
+    </script>
     <meta name="theme-color" content="#111111" />
     <!--
       Sem zoom: o sistema é usado como aplicativo (PWA). No iPhone, tocar num
@@ -563,6 +574,5 @@
         setTimeout(redirect, countdownSeconds * 1000);
       })();
     </script>
-    <script src="/notificame-gateway.js"></script>
   </body>
 </html>

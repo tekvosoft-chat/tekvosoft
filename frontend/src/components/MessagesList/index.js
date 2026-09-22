@@ -578,6 +578,9 @@ const useStyles = makeStyles(theme => ({
     overflow: "hidden",
     "& $messageMedia": { borderRadius: 0 },
     "& $textContentItem": { padding: "6px 70px 6px 10px" },
+    // o balão de mídia corta o que passa da borda: a reação fica por dentro,
+    // no canto de baixo da foto/vídeo/GIF
+    "& $reactions": { bottom: 8, left: 8 },
     [theme.breakpoints.down("xs")]: { width: "78%", minWidth: 200 }
   },
   // foto/vídeo sem legenda: só a imagem, arredondada, sem balão em volta;
@@ -750,6 +753,8 @@ const useStyles = makeStyles(theme => ({
     boxShadow: "none",
     minWidth: 0,
     padding: 0,
+    // encostada na figurinha, sem sobrar para fora
+    "& $reactions": { bottom: -4 },
     "& $messageMedia": {
       width: 160,
       height: "auto",
@@ -761,7 +766,17 @@ const useStyles = makeStyles(theme => ({
   },
   // figurinha enviada respondendo uma mensagem: o balão fica largo por causa
   // da citação e a figurinha ia para a esquerda; encosta no lado de quem enviou
-  stickerRight: { "& $messageMedia": { marginLeft: "auto" } },
+  stickerRight: {
+    "& $messageMedia": { marginLeft: "auto" },
+    // reação presa na figurinha (que encosta à direita), não no canto
+    // esquerdo do balão — com citação, o balão é mais largo que ela e a
+    // reação ficava solta lá longe
+    "& $reactions": {
+      left: "auto",
+      right: "calc(min(160px, 48vw) - 8px)",
+      translate: "100% 0"
+    }
+  },
 
   timestamp: {
     fontSize: 11,
@@ -1544,11 +1559,28 @@ const hasTranscription = message => {
   return !!body && !["🔊", "Áudio"].includes(body) && !isFileName(body);
 };
 
+// embrulhos em que a figurinha pode vir (conversa temporária, visualização
+// única, enviada de outro aparelho, figurinha animada)
+const STICKER_WRAPPERS = [
+  "ephemeralMessage",
+  "viewOnceMessage",
+  "viewOnceMessageV2",
+  "viewOnceMessageV2Extension",
+  "deviceSentMessage",
+  "documentWithCaptionMessage",
+  "lottieStickerMessage"
+];
+
 const detectSticker = (message, data) => {
+  // só o conteúdo da própria mensagem: antes a busca descia até a citação,
+  // e um texto respondendo a uma figurinha virava "figurinha" — o texto
+  // sumia e ficava só o quadro da citação
   const find = (node, depth = 0) => {
     if (!node || typeof node !== "object" || depth > 5) return false;
     if ("stickerMessage" in node) return true;
-    return Object.values(node).some(value => find(value, depth + 1));
+    return STICKER_WRAPPERS.some(
+      key => node[key]?.message && find(node[key].message, depth + 1)
+    );
   };
   if (find(data?.message)) return true;
   return (
@@ -1746,6 +1778,75 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
     longPressRef.current.timer = null;
   };
 
+  // arrasto para o lado (o mesmo no balão e na linha vazia ao lado dele)
+  const moveSwipe = touch => {
+    const swipe = swipeRef.current;
+    if (!swipe || !touch) return;
+    const dx = touch.clientX - swipe.x;
+    const dy = touch.clientY - swipe.y;
+    if (Math.abs(dx) > 8 || Math.abs(dy) > 8) cancelLongPress();
+    if (!swipe.axis) {
+      if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+      swipe.axis = dx > 0 && Math.abs(dx) > Math.abs(dy) * 1.4 ? "x" : "y";
+      if (swipe.axis === "x") swipe.el.style.transition = "none";
+    }
+    if (swipe.axis !== "x") return;
+    swipe.dx = Math.max(0, dx);
+    const pull = swipe.dx < 64 ? swipe.dx : 64 + (swipe.dx - 64) * 0.3;
+    swipe.el.style.transform = `translateX(${Math.min(pull, 90)}px)`;
+    swipe.el.style.setProperty("--swipe", String(Math.min(1, swipe.dx / 56)));
+    if (swipe.dx >= 56 && !swipe.buzzed) {
+      swipe.buzzed = true;
+      haptic("swipe");
+    } else if (swipe.dx < 56) {
+      swipe.buzzed = false;
+    }
+  };
+
+  /**
+   * Arrastar na linha, não só no balão: o toque que começa no espaço vazio
+   * ao lado de uma mensagem arrasta essa mensagem (a da mesma altura), como
+   * no WhatsApp. Toques em cima do balão seguem com o gesto do próprio balão.
+   */
+  const rowSwipeHandlers = !canReply
+    ? {}
+    : {
+        onTouchStart: e => {
+          if (e.touches.length !== 1 || e.target.closest?.("[data-bubble]"))
+            return;
+          const touch = e.touches[0];
+          const bubbles = scrollRef.current?.querySelectorAll("[data-bubble]");
+          const el = [...(bubbles || [])].find(node => {
+            const r = node.getBoundingClientRect();
+            return touch.clientY >= r.top && touch.clientY <= r.bottom;
+          });
+          const message =
+            el &&
+            messagesListRef.current.find(m => String(m.id) === String(el.id));
+          if (!message) return;
+          swipeRef.current = {
+            x: touch.clientX,
+            y: touch.clientY,
+            dx: 0,
+            axis: null,
+            buzzed: false,
+            el,
+            message
+          };
+        },
+        onTouchMove: e => {
+          if (!swipeRef.current?.message) return;
+          moveSwipe(e.touches[0]);
+        },
+        onTouchEnd: () => {
+          const target = swipeRef.current?.message;
+          if (target) finishSwipe(target);
+        },
+        onTouchCancel: () => {
+          if (swipeRef.current?.message) finishSwipe(null);
+        }
+      };
+
   const replyGestures = (message, data) => {
     if (!canReply || message.isDeleted || message.pending) return {};
     return {
@@ -1777,33 +1878,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
           el: e.currentTarget
         };
       },
-      onTouchMove: e => {
-        const swipe = swipeRef.current;
-        if (!swipe) return;
-        const touch = e.touches[0];
-        const dx = touch.clientX - swipe.x;
-        const dy = touch.clientY - swipe.y;
-        if (Math.abs(dx) > 8 || Math.abs(dy) > 8) cancelLongPress();
-        if (!swipe.axis) {
-          if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
-          swipe.axis = dx > 0 && Math.abs(dx) > Math.abs(dy) * 1.4 ? "x" : "y";
-          if (swipe.axis === "x") swipe.el.style.transition = "none";
-        }
-        if (swipe.axis !== "x") return;
-        swipe.dx = Math.max(0, dx);
-        const pull = swipe.dx < 64 ? swipe.dx : 64 + (swipe.dx - 64) * 0.3;
-        swipe.el.style.transform = `translateX(${Math.min(pull, 90)}px)`;
-        swipe.el.style.setProperty(
-          "--swipe",
-          String(Math.min(1, swipe.dx / 56))
-        );
-        if (swipe.dx >= 56 && !swipe.buzzed) {
-          swipe.buzzed = true;
-          haptic("swipe");
-        } else if (swipe.dx < 56) {
-          swipe.buzzed = false;
-        }
-      },
+      onTouchMove: e => moveSwipe(e.touches[0]),
       onTouchEnd: e => {
         cancelLongPress();
         if (longPressRef.current.fired) {
@@ -3355,8 +3430,11 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                     !isSticker &&
                     !!message.mediaUrl &&
                     ["image", "video"].includes(message.mediaType),
+                  // com citação continua balão: a mensagem respondida
+                  // fica em cima da foto/GIF (antes sumia)
                   [classes.mediaOnly]:
                     !isSticker &&
+                    !message.quotedMsg &&
                     !!message.mediaUrl &&
                     ["image", "video"].includes(message.mediaType) &&
                     (!String(message.body || "").trim() ||
@@ -3569,8 +3647,11 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                     !isSticker &&
                     !!message.mediaUrl &&
                     ["image", "video"].includes(message.mediaType),
+                  // com citação continua balão: a mensagem respondida
+                  // fica em cima da foto/GIF (antes sumia)
                   [classes.mediaOnly]:
                     !isSticker &&
+                    !message.quotedMsg &&
                     !!message.mediaUrl &&
                     ["image", "video"].includes(message.mediaType) &&
                     (!String(message.body || "").trim() ||
@@ -3819,6 +3900,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
         className={classes.messagesList}
         onScroll={handleScroll}
         onDoubleClick={handleRowDoubleClick}
+        {...rowSwipeHandlers}
         ref={scrollRef}
       >
         {!hasMore &&

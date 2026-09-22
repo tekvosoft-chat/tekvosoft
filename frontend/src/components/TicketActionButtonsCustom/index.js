@@ -6,7 +6,7 @@ import { Button, IconButton, useMediaQuery } from "@material-ui/core";
 import { toast } from "react-toastify";
 import CheckRoundedIcon from "@material-ui/icons/CheckRounded";
 import SwapHorizRoundedIcon from "@material-ui/icons/SwapHorizRounded";
-import TransferTicketModalCustom from "../TransferTicketModalCustom";
+import TransferTicketPanel from "../TransferTicketPanel";
 import { MoreVert, Replay } from "@material-ui/icons";
 
 import { i18n } from "../../translate/i18n";
@@ -110,6 +110,7 @@ const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [loading, setLoading] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
+  const [transferAnchor, setTransferAnchor] = useState(null);
   const ticketOptionsMenuOpen = Boolean(anchorEl);
   const a = key => i18n.t(`ticketHeaderActions.${key}`);
   // grupos na aba de grupos não têm resolver/devolver/transferir no topo
@@ -229,7 +230,10 @@ const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
                 variant="outlined"
                 className={`${classes.pill} ${classes.outline} ${classes.compact}`}
                 startIcon={<SwapHorizRoundedIcon />}
-                onClick={() => setTransferOpen(true)}
+                onClick={e => {
+                  setTransferAnchor(e.currentTarget);
+                  setTransferOpen(open => !open);
+                }}
               >
                 <span className={classes.label}>{a("transfer")}</span>
               </Button>
@@ -287,14 +291,13 @@ const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
                 : undefined
             }
           />
-          {transferOpen && (
-            <TransferTicketModalCustom
-              modalOpen={transferOpen}
-              onClose={() => setTransferOpen(false)}
-              ticketid={ticket.id}
-              hideUserSelection={showTabGroups && ticket.isGroup}
-            />
-          )}
+          <TransferTicketPanel
+            anchorEl={transferAnchor}
+            open={transferOpen}
+            onClose={() => setTransferOpen(false)}
+            ticketid={ticket.id}
+            hideUserSelection={showTabGroups && ticket.isGroup}
+          />
         </>
       )}
       {ticket.status === "pending" && (!showTabGroups || !ticket.isGroup) && (

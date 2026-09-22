@@ -78,6 +78,9 @@ const useStyles = makeStyles(theme => ({
     // entalhe / barra de status: no PWA do iPhone o conteúdo não pode
     // começar embaixo da hora e da bateria
     paddingTop: "var(--safe-top, 0px)",
+    // celular deitado: o recorte da câmera fica na lateral
+    paddingLeft: "env(safe-area-inset-left, 0px)",
+    paddingRight: "env(safe-area-inset-right, 0px)",
     backgroundColor: theme.palette.fancyBackground,
     // Antes havia aqui dois estilos globais herdados (borda verde-azulada
     // cravada em todo botão contornado e uma cor de aba inválida). Eles

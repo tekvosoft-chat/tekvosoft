@@ -22,20 +22,41 @@ const SyncTicketTags = async ({
   ticketId,
   companyId
 }: Request): Promise<Ticket | null> => {
-  const ticket = await ShowTicketService(ticketId);
+  const ticket = await ShowTicketService(ticketId, companyId);
   const tagsMode = await GetCompanySetting(companyId, "tagsMode", "ticket");
 
+  // só tags da própria empresa (antes gravava qualquer id enviado)
+  const ids = (tags || []).map(t => Number(t?.id)).filter(Boolean);
+  const valid = ids.length
+    ? await Tag.findAll({ where: { id: ids, companyId: ticket.companyId } })
+    : [];
+  const byId = new Map(valid.map(tag => [tag.id, tag]));
+  const chosen = ids.filter(id => byId.has(id));
+
   if (["ticket", "both"].includes(tagsMode)) {
-    const tagList = tags.map(t => ({ tagId: t.id, ticketId }));
+    const before = await TicketTag.findAll({
+      where: { ticketId },
+      attributes: ["tagId"]
+    });
+    const had = new Set(before.map(tt => tt.tagId));
     await TicketTag.destroy({ where: { ticketId } });
-    await TicketTag.bulkCreate(tagList);
+    await TicketTag.bulkCreate(chosen.map(tagId => ({ tagId, ticketId })));
+
+    // acrescentou uma coluna do Kanban que tem fila: o atendimento passa para
+    // ela, como quando o card é arrastado no Kanban
+    const added = chosen
+      .filter(id => !had.has(id))
+      .map(id => byId.get(id))
+      .filter(tag => tag.kanban && tag.queueId);
+    const target = added[added.length - 1];
+    if (target && ticket.queueId !== target.queueId) {
+      await ticket.update({ queueId: target.queueId });
+    }
   } else if (tagsMode === "contact") {
-    const tagList = tags.map(t => ({
-      tagId: t.id,
-      contactId: ticket.contactId
-    }));
     await ContactTag.destroy({ where: { contactId: ticket.contactId } });
-    await ContactTag.bulkCreate(tagList);
+    await ContactTag.bulkCreate(
+      chosen.map(tagId => ({ tagId, contactId: ticket.contactId }))
+    );
   }
 
   await ticket.reload();

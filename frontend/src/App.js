@@ -13,16 +13,16 @@ import { PhoneCallProvider } from "./context/PhoneCall/PhoneCallContext";
 import { SocketContext, socketManager } from "./context/Socket/SocketContext";
 import useSettings from "./hooks/useSettings";
 import Favicon from "react-favicon";
+import { applyAppIcon } from "./helpers/appIcon";
 import { getBackendURL } from "./services/config";
 
 import Routes from "./routes";
 import NetworkStatus from "./components/NetworkStatus";
-import PortraitLock from "./components/ui/PortraitLock";
 
 const queryClient = new QueryClient();
 const defaultLogoLight = "/vector/logo.png";
 const defaultLogoDark = "/vector/logo-dark.png";
-const defaultLogoFavicon = "/vector/favicon.png";
+const defaultLogoFavicon = "/vector/favicon-tab.png";
 
 /**
  * Mantém o app do tamanho e na posição da área realmente visível.
@@ -183,6 +183,8 @@ const App = () => {
    *   { light, dark, preset }   -> cores do tema escolhido
    */
   const [accountTheme, setAccountTheme] = useState(null);
+  // ícone (aba, app instalado) na cor do tema da empresa logada
+  const [themedFavicon, setThemedFavicon] = useState(null);
 
   const colorMode = useMemo(
     () => ({
@@ -302,6 +304,18 @@ const App = () => {
   }, [theme, mode]);
 
   useEffect(() => {
+    // ícone personalizado (whitelabel) tem prioridade; sem tema da empresa
+    // (ou deslogado), o preto padrão. A cor do claro é a que garante o balão
+    // branco legível por cima.
+    if (appLogoFavicon) {
+      applyAppIcon(null);
+      setThemedFavicon(null);
+      return;
+    }
+    setThemedFavicon(applyAppIcon(accountTheme?.light || null));
+  }, [accountTheme, appLogoFavicon]);
+
+  useEffect(() => {
     getPublicSetting("primaryColorLight")
       .then(color => {
         setPrimaryColorLight(color || BRAND_INK);
@@ -360,7 +374,11 @@ const App = () => {
   return (
     <>
       <Favicon
-        url={appLogoFavicon ? theme.appLogoFavicon : defaultLogoFavicon}
+        url={
+          appLogoFavicon
+            ? theme.appLogoFavicon
+            : themedFavicon || defaultLogoFavicon
+        }
       />
       <ColorModeContext.Provider value={{ colorMode, accountTheme, mode }}>
         <PhoneCallProvider>
@@ -369,7 +387,6 @@ const App = () => {
             <QueryClientProvider client={queryClient}>
               <SocketContext.Provider value={socketManager}>
                 <Routes />
-                <PortraitLock />
                 {/* aviso de internet lenta ou fora do ar (vale também na
                     tela de entrar, antes de qualquer login) */}
                 <NetworkStatus />

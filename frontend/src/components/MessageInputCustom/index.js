@@ -440,9 +440,23 @@ const useStyles = makeStyles(theme => ({
       WebkitBoxOrient: "vertical",
       overflow: "hidden",
       overflowWrap: "anywhere",
-      whiteSpace: "pre-wrap",
-      maxHeight: "2.6em"
+      // sem pre-wrap: a quebra de linha que o texto traz no fim virava uma
+      // segunda linha vazia e o corte punha reticências em texto curto
+      whiteSpace: "normal",
+      maxHeight: "2.6em",
+      "& p": { margin: 0, whiteSpace: "normal" }
     }
+  },
+
+  // miniatura da foto/figurinha respondida
+  replyThumb: {
+    flex: "none",
+    width: 40,
+    height: 40,
+    margin: 4,
+    borderRadius: 8,
+    objectFit: "cover",
+    alignSelf: "center"
   },
 
   replyginContactMsgSideColor: {
@@ -1251,7 +1265,8 @@ const MessageInputCustom = props => {
 
   useEffect(() => {
     const draft = getDraft("ticket", ticketId);
-    pendingDraft.current = draft;
+    // já é o que está no campo: nada vai mudar, então não há o que esperar
+    pendingDraft.current = draft === inputMessage ? null : draft;
     setInputMessage(draft);
   }, [ticketId]);
 
@@ -1647,6 +1662,31 @@ const MessageInputCustom = props => {
   const disableOption =
     (!isGroup && loading) || recording || ticketStatus === "closed";
 
+  // mídia sem legenda: diz o que é (antes a prévia ficava em branco)
+  const replyPreviewText = message => {
+    const body = String(message.body || "");
+    if (body.startsWith('{"ticketzvCard":')) return "🪪";
+    const onlyFileName = /^[^\s]+\.[a-z0-9]{2,5}$/i.test(body.trim());
+    const oneLine = body.replace(/\s*\n+\s*/g, " ").trim();
+    if (!message.mediaUrl || (body.trim() && !onlyFileName)) return oneLine;
+    if (/\/gif-[^/]*\.mp4/i.test(message.mediaUrl)) return "👾 GIF";
+    if (/\.webp($|\?)/i.test(message.mediaUrl)) return "💟 Figurinha";
+    return (
+      {
+        image: "📷 Foto",
+        video: "🎥 Vídeo",
+        audio: "🎤 Áudio",
+        document: "📄 Documento"
+      }[message.mediaType] || "📎 Arquivo"
+    );
+  };
+
+  const replyThumbOf = message =>
+    message.mediaUrl &&
+    (message.mediaType === "image" || /\.webp($|\?)/i.test(message.mediaUrl))
+      ? message.mediaUrl
+      : null;
+
   const renderReplyingMessage = message => {
     return (
       <div className={classes.replyginMsgWrapper}>
@@ -1661,12 +1701,15 @@ const MessageInputCustom = props => {
               <span className={classes.messageContactName}>
                 {i18n.t("messagesInput.replying")} {message.contact?.name}
               </span>
-              <WhatsMarked>
-                {message.body.startsWith('{"ticketzvCard":')
-                  ? "🪪"
-                  : message.body}
-              </WhatsMarked>
+              <WhatsMarked>{replyPreviewText(message)}</WhatsMarked>
             </div>
+          )}
+          {replyingMessage && replyThumbOf(message) && (
+            <img
+              className={classes.replyThumb}
+              src={replyThumbOf(message)}
+              alt=""
+            />
           )}
           {editingMessage && (
             <div className={classes.replyginMsgBody}>
