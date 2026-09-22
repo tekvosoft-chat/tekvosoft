@@ -94,7 +94,7 @@ const AboutModal = ({ open, onClose }) => {
       scroll="paper"
     >
       <DialogTitle>
-        {i18n.t("about.aboutthe")} {theme.appName || "Tekvosoft"}
+        {i18n.t("about.aboutthe")} {theme.appName || "vuup.me"}
       </DialogTitle>
       <DialogContent dividers className={classes.content}>
         <img className={classes.logo} alt="" />

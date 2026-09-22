@@ -1,4 +1,4 @@
-# Tekvosoft
+# vuup.me
 
 Atendimento via WhatsApp com CRM e helpdesk. Múltiplas empresas, múltiplos
 atendentes, filas, chatbot, campanhas e agendamentos — tudo em um sistema só.
@@ -352,7 +352,7 @@ pequena.
 
 O nome, o logo e as cores do sistema **não ficam no código** — são
 configuração, em *Configurações → Whitelabel*, dentro do próprio sistema. O
-nome exibido vem do ajuste `appName`; `Tekvosoft` é apenas o padrão quando
+nome exibido vem do ajuste `appName`; `vuup.me` é apenas o padrão quando
 nada foi configurado.
 
 ---

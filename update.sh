@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-#  Tekvosoft — atualização de produção.
+#  vuup.me — atualização de produção.
 #
 #      curl -sSL https://raw.githubusercontent.com/tekvosoft-chat/tekvosoft/main/update.sh | sudo bash
 #
@@ -34,7 +34,7 @@ for dir in /opt/tekvosoft "${PWD}" "${SUDO_USER:+/home/${SUDO_USER}/tekvosoft}" 
   fi
 done
 
-[ -n "${INSTALL_DIR}" ] || die "Não encontrei uma instalação do Tekvosoft.
+[ -n "${INSTALL_DIR}" ] || die "Não encontrei uma instalação do vuup.me.
     Procurei em /opt/tekvosoft, na pasta atual e no seu diretório home.
     Se ainda não instalou, use o install.sh."
 

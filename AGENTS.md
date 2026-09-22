@@ -1,4 +1,4 @@
-# AGENTS.md — Tekvosoft
+# AGENTS.md — vuup.me
 
 Guia compacto para agentes trabalhando neste repositório.
 
@@ -55,7 +55,7 @@ segredo ali, e nunca troque a lista por um despejo do ambiente.
 ## E-mails automáticos (n8n)
 
 O backend não envia e-mail: `notifyAutomation()` (`src/libs/automation.ts`)
-avisa o fluxo "Tekvosoft · E-mails automáticos" no n8n, que monta o HTML e
+avisa o fluxo "vuup.me · E-mails automáticos" no n8n, que monta o HTML e
 envia pelo Gmail. Configure `N8N_WEBHOOK_URL` e `N8N_WEBHOOK_SECRET` no `.env`.
 Sem a URL nada é enviado e o código de navegador novo fica desligado. Os GIFs
 ficam em `frontend/public/email/`.
@@ -65,6 +65,14 @@ ficam em `frontend/public/email/`.
 - Mensagens enviadas ao WhatsApp são traduzidas **no backend** com `_t()`. Nunca
   mande chave de tradução crua para o usuário final.
 - Códigos de erro da API permanecem como códigos; quem traduz é o frontend.
+
+## Marca
+
+O produto se chama **vuup.me** (antes Tekvosoft). Textos, logos (`frontend/public/vector/`,
+favicons, `brand/`) e e-mails usam vuup.me. `tekvosoft` continua de propósito nos
+identificadores técnicos: imagens `ghcr.io/.../tekvosoft-*`, CLI `./tekvosoft`, banco e
+usuário do Postgres, serviços do compose, chaves do localStorage (`tekvosoft*`, `tkv:*`),
+preset de tema `tekvosoft`, cabeçalho `x-tekvosoft-secret` e o caminho do webhook do n8n.
 
 ## Nomes que NÃO devem ser renomeados
 

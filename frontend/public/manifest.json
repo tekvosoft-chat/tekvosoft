@@ -1,6 +1,6 @@
 {
-  "short_name": "Tekvosoft",
-  "name": "Tekvosoft - Atendimento via WhatsApp",
+  "short_name": "vuup.me",
+  "name": "vuup.me - Atendimento via WhatsApp",
   "icons": [
     { "src": "favicon-16x16.png", "sizes": "16x16", "type": "image/png" },
     { "src": "favicon-32x32.png", "sizes": "32x32", "type": "image/png" },
@@ -11,6 +11,6 @@
   "start_url": ".",
   "display": "standalone",
   "orientation": "portrait",
-  "theme_color": "#7830F8",
-  "background_color": "#100225"
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
 }

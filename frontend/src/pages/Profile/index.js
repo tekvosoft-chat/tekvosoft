@@ -468,8 +468,7 @@ const Profile = () => {
                 onClick={() => setAboutOpen(true)}
               >
                 <span className={classes.rowText}>
-                  Sobre o{" "}
-                  {user?.super ? "Tekvosoft" : theme.appName || "sistema"}
+                  Sobre o {user?.super ? "vuup.me" : theme.appName || "sistema"}
                 </span>
                 <ChevronRightRoundedIcon className={classes.chevron} />
               </ButtonBase>

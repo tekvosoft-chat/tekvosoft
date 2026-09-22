@@ -80,7 +80,7 @@ export const logger = pino({
       socketSendLog(level, inputArgs).catch(() => {
         // Ignore errors when sending logs over socket
       });
-      addSubsystem(inputArgs, "tekvosoft");
+      addSubsystem(inputArgs, "vuupme");
       method.apply(this, inputArgs);
     }
   }

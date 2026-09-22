@@ -541,7 +541,7 @@ const messages = {
       },
       orientation: {
         title: "Gire o celular",
-        text: "O Tekvosoft foi feito para usar com o celular em pé. Vire o aparelho para continuar."
+        text: "O vuup.me foi feito para usar com o celular em pé. Vire o aparelho para continuar."
       },
       ticketHeaderActions: {
         resolve: "Resolver",
@@ -1690,29 +1690,29 @@ const messages = {
       about: {
         headline: "Feita para atender melhor, todos os dias",
         product:
-          "A Tekvosoft é uma plataforma de atendimento pelo WhatsApp que reúne a equipa num só lugar: conversas, filas, chatbot, Kanban e chat interno.",
+          "O vuup.me é uma plataforma de atendimento pelo WhatsApp que reúne a equipa num só lugar: conversas, filas, chatbot, Kanban e chat interno.",
         founder:
           "Eu sou o David Fernandes, tenho 22 anos e empreendo na área da tecnologia.",
         improving:
-          "Estou sempre a melhorar a Tekvosoft: cada atualização traz ajustes e novidades para tornar o dia a dia de quem atende mais simples.",
-        founderRole: "Fundador da Tekvosoft",
+          "Estou sempre a melhorar o vuup.me: cada atualização traz ajustes e novidades para tornar o dia a dia de quem atende mais simples.",
+        founderRole: "Fundador do vuup.me",
         license: "Software livre sob a licença AGPL-3.0.",
         sourceCode: "Código-fonte",
         aboutthe: "Sobre a",
-        copyright: "© 2024 - Funcionando com Tekvosoft",
+        copyright: "© 2024 - Funcionando com vuup.me",
         buttonclose: "Fechar",
-        title: "Sobre o Tekvosoft",
+        title: "Sobre o vuup.me",
         abouttitle: "Origem e melhorias",
         aboutdetail:
-          "O Tekvosoft é derivado indireto do projeto Whaticket com melhorias compartilhadas pelos desenvolvedores do sistema EquipeChat através do canal VemFazer no YouTube, posteriormente melhoradas por Claudemir Todo Bom",
+          "O vuup.me é derivado indireto do projeto Whaticket com melhorias compartilhadas pelos desenvolvedores do sistema EquipeChat através do canal VemFazer no YouTube, posteriormente melhoradas por Claudemir Todo Bom",
         aboutauthorsite: "Site do autor",
         aboutwhaticketsite: "Site do Whaticket Community no Github",
         aboutvemfazersite: "Site do canal Vem Fazer no Github",
         licenseheading: "Licença em Código Aberto",
         licensedetail:
-          "O Tekvosoft está licenciado sob a GNU Affero General Public License versão 3, isso significa que qualquer utilizador que tiver acesso a esta aplicação tem o direito de obter acesso ao código fonte. Mais informações nos links abaixo:",
+          "O vuup.me está licenciado sob a GNU Affero General Public License versão 3, isso significa que qualquer utilizador que tiver acesso a esta aplicação tem o direito de obter acesso ao código fonte. Mais informações nos links abaixo:",
         licensefulltext: "Texto completo da licença",
-        licensesourcecode: "Código fonte do Tekvosoft"
+        licensesourcecode: "Código fonte do vuup.me"
       },
       schedules: {
         calendar: {
@@ -1916,9 +1916,12 @@ const messages = {
           current: "Em uso",
           presets: {
             tekvosoft: {
-              name: "Roxo Tekvosoft",
-              description:
-                "A identidade predefinida: violeta vibrante e moderno"
+              name: "Preto e branco",
+              description: "A identidade padrão do vuup.me: limpa e neutra"
+            },
+            brandPurple: {
+              name: "Roxo",
+              description: "Violeta vibrante e moderno"
             },
             classicBlue: {
               name: "Azul Clássico",

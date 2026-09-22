@@ -20,5 +20,5 @@ Coloque aqui qualquer informação adicional que achar útil
 ## Licença
 
 Ao submeter esta contribuição você concorda que ela passa a integrar o
-Tekvosoft sob a mesma licença do projeto (GNU AFFERO GENERAL PUBLIC
+vuup.me sob a mesma licença do projeto (GNU AFFERO GENERAL PUBLIC
 LICENSE), conforme o arquivo LICENSE.md na raiz do repositório.

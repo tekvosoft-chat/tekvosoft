@@ -7,11 +7,7 @@ import { ptBR } from "@material-ui/core/locale";
 import { ThemeProvider } from "@material-ui/core/styles";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import createAppTheme from "./theme/createAppTheme";
-import {
-  BRAND_PURPLE,
-  BRAND_PURPLE_DARK_MODE,
-  THEME_PRESETS
-} from "./theme/tokens";
+import { BRAND_INK, BRAND_INK_DARK_MODE, THEME_PRESETS } from "./theme/tokens";
 import ColorModeContext from "./layout/themeContext";
 import { PhoneCallProvider } from "./context/PhoneCall/PhoneCallContext";
 import { SocketContext, socketManager } from "./context/Socket/SocketContext";
@@ -169,10 +165,8 @@ const App = () => {
   const [mode, setMode] = useState(
     preferredTheme ? preferredTheme : prefersDarkMode ? "dark" : "light"
   );
-  const [primaryColorLight, setPrimaryColorLight] = useState(BRAND_PURPLE);
-  const [primaryColorDark, setPrimaryColorDark] = useState(
-    BRAND_PURPLE_DARK_MODE
-  );
+  const [primaryColorLight, setPrimaryColorLight] = useState(BRAND_INK);
+  const [primaryColorDark, setPrimaryColorDark] = useState(BRAND_INK_DARK_MODE);
   const [appLogoLight, setAppLogoLight] = useState("");
   const [appLogoDark, setAppLogoDark] = useState("");
   const [appLogoFavicon, setAppLogoFavicon] = useState("");
@@ -310,14 +304,14 @@ const App = () => {
   useEffect(() => {
     getPublicSetting("primaryColorLight")
       .then(color => {
-        setPrimaryColorLight(color || BRAND_PURPLE);
+        setPrimaryColorLight(color || BRAND_INK);
       })
       .catch(error => {
         console.log("Error reading setting", error);
       });
     getPublicSetting("primaryColorDark")
       .then(color => {
-        setPrimaryColorDark(color || BRAND_PURPLE_DARK_MODE);
+        setPrimaryColorDark(color || BRAND_INK_DARK_MODE);
       })
       .catch(error => {
         console.log("Error reading setting", error);
@@ -352,7 +346,7 @@ const App = () => {
       });
     getPublicSetting("appName")
       .then(name => {
-        setAppName(name || "Tekvosoft");
+        setAppName(name || "vuup.me");
       })
       .catch(error => {
         console.log("Error reading setting", error);

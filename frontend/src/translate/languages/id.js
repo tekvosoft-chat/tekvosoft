@@ -951,29 +951,29 @@ const messages = {
       about: {
         headline: "Dibuat untuk melayani lebih baik, setiap hari",
         product:
-          "Tekvosoft adalah platform layanan pelanggan WhatsApp yang menyatukan tim Anda di satu tempat: percakapan, antrean, chatbot, Kanban, dan obrolan internal.",
+          "vuup.me adalah platform layanan pelanggan WhatsApp yang menyatukan tim Anda di satu tempat: percakapan, antrean, chatbot, Kanban, dan obrolan internal.",
         founder:
           "Saya David Fernandes, berusia 22 tahun dan seorang wirausahawan di bidang teknologi.",
         improving:
-          "Saya terus menyempurnakan Tekvosoft: setiap pembaruan membawa perbaikan dan fitur baru agar pekerjaan sehari-hari tim layanan lebih mudah.",
-        founderRole: "Pendiri Tekvosoft",
+          "Saya terus menyempurnakan vuup.me: setiap pembaruan membawa perbaikan dan fitur baru agar pekerjaan sehari-hari tim layanan lebih mudah.",
+        founderRole: "Pendiri vuup.me",
         license: "Perangkat lunak bebas dengan lisensi AGPL-3.0.",
         sourceCode: "Kode sumber",
         aboutthe: "Tentang",
-        copyright: "� 2024 - Didukung oleh Tekvosoft",
+        copyright: "� 2024 - Didukung oleh vuup.me",
         buttonclose: "Tutup",
-        title: "Tentang Tekvosoft",
+        title: "Tentang vuup.me",
         abouttitle: "Asal dan peningkatan",
         aboutdetail:
-          "Tekvosoft berasal secara tidak langsung dari proyek Whaticket dengan peningkatan yang dibagikan oleh para pengembang sistem EquipeChat melalui saluran VemFazer di YouTube, kemudian ditingkatkan oleh Claudemir Todo Bom",
+          "vuup.me berasal secara tidak langsung dari proyek Whaticket dengan peningkatan yang dibagikan oleh para pengembang sistem EquipeChat melalui saluran VemFazer di YouTube, kemudian ditingkatkan oleh Claudemir Todo Bom",
         aboutauthorsite: "Situs penulis",
         aboutwhaticketsite: "Situs Komunitas Whaticket di Github",
         aboutvemfazersite: "Situs saluran Vem Fazer di Github",
         licenseheading: "Lisensi Sumber Terbuka",
         licensedetail:
-          "Tekvosoft dilisensikan di bawah GNU Affero General Public License versi 3, yang berarti bahwa setiap pengguna yang memiliki akses ke aplikasi ini berhak untuk mendapatkan akses ke kode sumbernya. Informasi lebih lanjut di tautan berikut:",
+          "vuup.me dilisensikan di bawah GNU Affero General Public License versi 3, yang berarti bahwa setiap pengguna yang memiliki akses ke aplikasi ini berhak untuk mendapatkan akses ke kode sumbernya. Informasi lebih lanjut di tautan berikut:",
         licensefulltext: "Teks lengkap lisensi",
-        licensesourcecode: "Kode sumber Tekvosoft"
+        licensesourcecode: "Kode sumber vuup.me"
       },
       schedules: {
         calendar: {
@@ -1086,8 +1086,12 @@ const messages = {
           current: "Dipakai",
           presets: {
             tekvosoft: {
-              name: "Ungu Tekvosoft",
-              description: "Identitas bawaan: ungu cerah dan modern"
+              name: "Hitam putih",
+              description: "Identitas bawaan vuup.me: bersih dan netral"
+            },
+            brandPurple: {
+              name: "Ungu",
+              description: "Ungu cerah dan modern"
             },
             classicBlue: {
               name: "Biru Klasik",

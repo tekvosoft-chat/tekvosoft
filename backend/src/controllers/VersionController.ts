@@ -9,7 +9,7 @@ export const version = async (
   const appName = await GetPublicSettingService({ key: "appName" });
 
   const data = {
-    name: appName || "Tekvosoft - Atendimento via WhatsApp",
+    name: appName || "vuup.me - Atendimento via WhatsApp",
     ...GitInfo
   };
 

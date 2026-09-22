@@ -22,8 +22,8 @@ export const manifest = async (
   }
 
   const data = {
-    short_name: appName || "Tekvosoft",
-    name: appName || "Tekvosoft - Atendimento via WhatsApp",
+    short_name: appName || "vuup.me",
+    name: appName || "vuup.me - Atendimento via WhatsApp",
     icons: [
       {
         src: logoFavicon

@@ -1,5 +1,5 @@
 /**
- * Tekvosoft — construção do tema do Material-UI.
+ * vuup.me — construção do tema do Material-UI.
  *
  * Este arquivo é o coração do redesign. Em vez de estilizar tela por tela,
  * definimos aqui como CADA componente do Material-UI se parece. São 223

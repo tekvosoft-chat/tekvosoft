@@ -1,4 +1,4 @@
-# Frontend do Tekvosoft.
+# Frontend do vuup.me.
 #   target dev   -> usado por ./tekvosoft dev  (dev server do React, hot reload)
 #   padrão       -> build estático servido por nginx
 

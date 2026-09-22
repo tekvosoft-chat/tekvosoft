@@ -944,29 +944,29 @@ const messages = {
       about: {
         headline: "Gemacht, um jeden Tag besser zu betreuen",
         product:
-          "Tekvosoft ist eine Kundenservice-Plattform für WhatsApp, die dein Team an einem Ort vereint: Gespräche, Warteschlangen, Chatbot, Kanban und interner Chat.",
+          "vuup.me ist eine Kundenservice-Plattform für WhatsApp, die dein Team an einem Ort vereint: Gespräche, Warteschlangen, Chatbot, Kanban und interner Chat.",
         founder:
           "Ich bin David Fernandes, 22 Jahre alt und Unternehmer im Technologiebereich.",
         improving:
-          "Ich verbessere Tekvosoft ständig: Jedes Update bringt Korrekturen und Neuerungen, die den Alltag im Kundenservice einfacher machen.",
-        founderRole: "Gründer von Tekvosoft",
+          "Ich verbessere vuup.me ständig: Jedes Update bringt Korrekturen und Neuerungen, die den Alltag im Kundenservice einfacher machen.",
+        founderRole: "Gründer von vuup.me",
         license: "Freie Software unter der AGPL-3.0-Lizenz.",
         sourceCode: "Quellcode",
         aboutthe: "Über",
-        copyright: "© 2024 - Betrieben mit Tekvosoft",
+        copyright: "© 2024 - Betrieben mit vuup.me",
         buttonclose: "Schließen",
-        title: "Über Tekvosoft",
+        title: "Über vuup.me",
         abouttitle: "Ursprung und Verbesserungen",
         aboutdetail:
-          "Tekvosoft ist indirekt vom Whaticket-Projekt abgeleitet, mit Verbesserungen, die von den Entwicklern des EquipeChat-Systems über den YouTube-Kanal VemFazer geteilt wurden, und später von Claudemir Todo Bom verbessert wurden",
+          "vuup.me ist indirekt vom Whaticket-Projekt abgeleitet, mit Verbesserungen, die von den Entwicklern des EquipeChat-Systems über den YouTube-Kanal VemFazer geteilt wurden, und später von Claudemir Todo Bom verbessert wurden",
         aboutauthorsite: "Website des Autors",
         aboutwhaticketsite: "Website der Whaticket-Community auf Github",
         aboutvemfazersite: "Website des Vem Fazer-Kanals auf Github",
         licenseheading: "Open-Source-Lizenz",
         licensedetail:
-          "Tekvosoft ist unter der GNU Affero General Public License Version 3 lizenziert, was bedeutet, dass jeder Benutzer, der Zugriff auf diese Anwendung hat, das Recht hat, auf den Quellcode zuzugreifen. Weitere Informationen finden Sie in den folgenden Links:",
+          "vuup.me ist unter der GNU Affero General Public License Version 3 lizenziert, was bedeutet, dass jeder Benutzer, der Zugriff auf diese Anwendung hat, das Recht hat, auf den Quellcode zuzugreifen. Weitere Informationen finden Sie in den folgenden Links:",
         licensefulltext: "Vollständiger Lizenztext",
-        licensesourcecode: "Quellcode von Tekvosoft"
+        licensesourcecode: "Quellcode von vuup.me"
       },
       schedules: {
         calendar: {
@@ -1081,8 +1081,13 @@ const messages = {
           current: "Aktiv",
           presets: {
             tekvosoft: {
-              name: "Tekvosoft Lila",
-              description: "Die Standardidentität: lebendiges, modernes Violett"
+              name: "Schwarz-Weiß",
+              description:
+                "Die Standard-Identität von vuup.me: klar und neutral"
+            },
+            brandPurple: {
+              name: "Lila",
+              description: "Lebendiges, modernes Violett"
             },
             classicBlue: {
               name: "Klassisch Blau",

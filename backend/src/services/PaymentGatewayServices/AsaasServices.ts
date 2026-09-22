@@ -59,7 +59,7 @@ const asaasRequest = async (
     headers: {
       access_token: apiKey,
       "Content-Type": "application/json",
-      "User-Agent": "Tekvosoft"
+      "User-Agent": "vuup.me"
     },
     body: options.body ? JSON.stringify(options.body) : undefined
   });

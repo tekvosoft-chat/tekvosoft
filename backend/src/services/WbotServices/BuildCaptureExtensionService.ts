@@ -109,7 +109,7 @@ function downloadFile(url: string, dest: string): Promise<void> {
     const client = url.startsWith("https:") ? https : http;
 
     client
-      .get(url, { headers: { "User-Agent": "tekvosoft" } }, response => {
+      .get(url, { headers: { "User-Agent": "vuupme" } }, response => {
         if (
           response.statusCode === 301 ||
           response.statusCode === 302 ||
@@ -146,7 +146,7 @@ function downloadJson(url: string): Promise<Record<string, unknown>> {
     const client = url.startsWith("https:") ? https : http;
 
     client
-      .get(url, { headers: { "User-Agent": "tekvosoft" } }, response => {
+      .get(url, { headers: { "User-Agent": "vuupme" } }, response => {
         if (
           response.statusCode === 301 ||
           response.statusCode === 302 ||
@@ -237,7 +237,7 @@ async function getBuildVersion(upstreamVersion: string): Promise<string> {
 
 async function build(companyId: number, frontendUrl?: string): Promise<void> {
   const appName =
-    (await GetPublicSettingService({ key: "appName" })) || "Tekvosoft";
+    (await GetPublicSettingService({ key: "appName" })) || "vuup.me";
   const favicon = await GetPublicSettingService({ key: "appLogoFavicon" });
   const title = `${appName} WA Session Capture`;
 

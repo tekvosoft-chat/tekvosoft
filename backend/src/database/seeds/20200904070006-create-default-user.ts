@@ -11,7 +11,7 @@ module.exports = {
           [
             {
               name: "Admin",
-              email: process.env.EMAIL_ADDRESS || "admin@tekvosoft.local",
+              email: process.env.EMAIL_ADDRESS || "admin@vuup.local",
               profile: "admin",
               passwordHash,
               companyId: 1,

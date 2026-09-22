@@ -1,8 +1,8 @@
 # ─────────────────────────────────────────────────────────────
-#  Tekvosoft — stack para Docker Swarm atrás do Traefik
+#  vuup.me — stack para Docker Swarm atrás do Traefik
 #
 #  Use este arquivo quando a VM JÁ tem um Traefik cuidando das portas
-#  80 e 443. Aqui o Tekvosoft não sobe proxy nem emite certificado:
+#  80 e 443. Aqui o vuup.me não sobe proxy nem emite certificado:
 #  ele se anuncia ao Traefik por labels, igual às suas outras stacks.
 #
 #  Antes de subir, defina estas variáveis (no Portainer elas aparecem

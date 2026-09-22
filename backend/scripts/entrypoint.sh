@@ -53,5 +53,5 @@ else
     --seeders-path dist/database/seeds
 fi
 
-echo "→ Subindo o Tekvosoft."
+echo "→ Subindo o vuup.me."
 exec "$@"

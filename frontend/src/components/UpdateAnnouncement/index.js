@@ -40,7 +40,7 @@ export const applyUpdate = async () => {
 const TITLES = [
   "Tem novidade fresquinha no ar! 🎉",
   "Atualizamos o sistema pra você ✨",
-  "O Tekvosoft acabou de ficar melhor 🚀",
+  "O vuup.me acabou de ficar melhor 🚀",
   "Saiu do forno uma atualização 🍞",
   "Trabalhamos enquanto você descansava 😎"
 ];

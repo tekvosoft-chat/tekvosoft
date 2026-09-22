@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-#  Tekvosoft — instalador de produção.
+#  vuup.me — instalador de produção.
 #
 #  Do servidor vazio ao sistema no ar, com HTTPS, em um comando:
 #
@@ -50,7 +50,7 @@ linha() { echo "  ${DIM}──────────────────�
 usage() {
   cat <<EOF
 
-  ${B}Instalador do Tekvosoft${N}
+  ${B}Instalador do vuup.me${N}
 
   ${B}Como usar${N}
 
@@ -132,7 +132,7 @@ fi
 clear 2>/dev/null || true
 cat <<EOF
 
-  ${B}Tekvosoft${N} ${DIM}— atendimento via WhatsApp com CRM e helpdesk${N}
+  ${B}vuup.me${N} ${DIM}— atendimento via WhatsApp com CRM e helpdesk${N}
 
 EOF
 linha
@@ -159,7 +159,7 @@ case "${ARQ}" in
   aarch64|arm64) info "Arquitetura: ${ARQ} ${DIM}(compatível)${N}" ;;
   *) die "Arquitetura '${ARQ}' não é suportada.
 
-O Tekvosoft roda em servidores x86_64 (o mais comum) e arm64.
+O vuup.me roda em servidores x86_64 (o mais comum) e arm64.
 Contate o suporte se precisar de outra." ;;
 esac
 
@@ -212,7 +212,7 @@ for PORTA in 80 443; do
   TIPO="${DONO%%|*}"; NOME="${DONO##*|}"
 
   if [ "${NOME}" = "tekvosoft-proxy" ]; then
-    ok "Porta ${PORTA}: já é o próprio Tekvosoft (instalação anterior)."
+    ok "Porta ${PORTA}: já é o próprio vuup.me (instalação anterior)."
   elif [ "${TIPO}" = "container" ]; then
     warn "Porta ${PORTA} ocupada pelo container '${NOME}'."
     CONFLITO="${CONFLITO}
@@ -369,7 +369,7 @@ configurar_ip_real
 ok "Docker pronto."
 
 # ── 5. código ────────────────────────────────────────────────
-passo "Baixando o Tekvosoft"
+passo "Baixando o vuup.me"
 
 if [ -d "${INSTALL_DIR}/.git" ]; then
   info "Já existe uma instalação em ${INSTALL_DIR} — vou atualizá-la."
@@ -387,7 +387,7 @@ Verifique a conexão do servidor com a internet."
 else
   mkdir -p "$(dirname "${INSTALL_DIR}")"
   git clone --quiet --branch "${BRANCH}" "${REPO_URL}" "${INSTALL_DIR}" \
-    || die "Não consegui baixar o Tekvosoft do GitHub.
+    || die "Não consegui baixar o vuup.me do GitHub.
 
 Verifique a conexão do servidor com a internet e tente de novo."
 fi
@@ -461,7 +461,7 @@ echo
 linha
 cat <<EOF
 
-  ${G}${B}Pronto! O Tekvosoft está no ar.${N}
+  ${G}${B}Pronto! O vuup.me está no ar.${N}
 
   ${B}Acesse${N}    https://${DOMINIO}
 

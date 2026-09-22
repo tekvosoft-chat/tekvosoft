@@ -1,4 +1,4 @@
-/* Service worker do Tekvosoft: notificações push.
+/* Service worker do vuup.me: notificações push.
  *
  * O servidor manda { title, body, icon, tag, url, silent } quando chega
  * mensagem nova. Aqui a notificação é mostrada com o nome e a foto de quem

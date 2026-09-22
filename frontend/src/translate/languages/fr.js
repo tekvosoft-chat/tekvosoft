@@ -941,29 +941,29 @@ const messages = {
       about: {
         headline: "Conçue pour mieux servir, chaque jour",
         product:
-          "Tekvosoft est une plateforme de service client sur WhatsApp qui réunit votre équipe au même endroit : conversations, files d'attente, chatbot, Kanban et chat interne.",
+          "vuup.me est une plateforme de service client sur WhatsApp qui réunit votre équipe au même endroit : conversations, files d'attente, chatbot, Kanban et chat interne.",
         founder:
           "Je suis David Fernandes, j'ai 22 ans et je suis entrepreneur dans le domaine de la technologie.",
         improving:
-          "J'améliore Tekvosoft en permanence : chaque mise à jour apporte des corrections et des nouveautés pour simplifier le quotidien de ceux qui répondent aux clients.",
-        founderRole: "Fondateur de Tekvosoft",
+          "J'améliore vuup.me en permanence : chaque mise à jour apporte des corrections et des nouveautés pour simplifier le quotidien de ceux qui répondent aux clients.",
+        founderRole: "Fondateur de vuup.me",
         license: "Logiciel libre sous licence AGPL-3.0.",
         sourceCode: "Code source",
         aboutthe: "À propos de",
-        copyright: "© 2024 - Fonctionne avec Tekvosoft",
+        copyright: "© 2024 - Fonctionne avec vuup.me",
         buttonclose: "Fermer",
-        title: "À propos de Tekvosoft",
+        title: "À propos de vuup.me",
         abouttitle: "Origine et améliorations",
         aboutdetail:
-          "Le Tekvosoft est dérivé indirectement du projet Whaticket avec des améliorations partagées par les développeurs du système EquipeChat via la chaîne VemFazer sur YouTube, puis améliorées par Claudemir Todo Bom",
+          "vuup.me est dérivé indirectement du projet Whaticket avec des améliorations partagées par les développeurs du système EquipeChat via la chaîne VemFazer sur YouTube, puis améliorées par Claudemir Todo Bom",
         aboutauthorsite: "Site de l'auteur",
         aboutwhaticketsite: "Site de la communauté Whaticket sur Github",
         aboutvemfazersite: "Site de la chaîne Vem Fazer sur Github",
         licenseheading: "Licence Open Source",
         licensedetail:
-          "Le Tekvosoft est sous licence GNU Affero General Public License version 3, ce qui signifie que tout utilisateur ayant accès à cette application a le droit d'accéder au code source. Plus d'informations dans les liens ci-dessous :",
+          "vuup.me est sous licence GNU Affero General Public License version 3, ce qui signifie que tout utilisateur ayant accès à cette application a le droit d'accéder au code source. Plus d'informations dans les liens ci-dessous :",
         licensefulltext: "Texte complet de la licence",
-        licensesourcecode: "Code source de Tekvosoft"
+        licensesourcecode: "Code source de vuup.me"
       },
       schedules: {
         calendar: {
@@ -1078,8 +1078,12 @@ const messages = {
           current: "Actif",
           presets: {
             tekvosoft: {
-              name: "Violet Tekvosoft",
-              description: "L'identité par défaut : violet vif et moderne"
+              name: "Noir et blanc",
+              description: "L'identité par défaut de vuup.me : épurée et neutre"
+            },
+            brandPurple: {
+              name: "Violet",
+              description: "Violet vif et moderne"
             },
             classicBlue: {
               name: "Bleu Classique",

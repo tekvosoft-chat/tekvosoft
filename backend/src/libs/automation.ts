@@ -6,7 +6,7 @@ import GetPublicSettingService from "../services/SettingServices/GetPublicSettin
  * Avisos para o n8n, que monta e envia os e-mails automáticos.
  *
  * O backend só conta o que aconteceu (com os dados prontos para o texto);
- * o visual e o envio ficam no fluxo "Tekvosoft · E-mails" do n8n. Sem
+ * o visual e o envio ficam no fluxo "vuup.me · E-mails automáticos" do n8n. Sem
  * N8N_WEBHOOK_URL no .env nada é enviado — e a verificação de navegador
  * novo fica desligada, para ninguém ficar sem conseguir entrar.
  */
@@ -38,7 +38,7 @@ export const notifyAutomation = async (
   const send = async () => {
     const appName =
       (await GetPublicSettingService({ key: "appName" }).catch(() => null)) ||
-      "Tekvosoft";
+      "vuup.me";
     await axios.post(
       url,
       {

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Backup e restauração do Tekvosoft.
+# Backup e restauração do vuup.me.
 # Roda dentro do container "tools" (postgres:16-alpine), chamado por:
 #     ./tekvosoft backup
 #     ./tekvosoft restore

@@ -1,12 +1,12 @@
 /**
- * Tekvosoft — tokens do design system.
+ * vuup.me — tokens do design system.
  *
  * Aqui ficam as decisões visuais cruas: cor, espaço, raio, sombra, tipografia.
  * Nenhum componente importa daqui direto — quem monta o tema do Material-UI é
  * o createAppTheme.js. Assim existe um lugar só para mudar a aparência do
  * produto inteiro.
  *
- * Sobre a cor principal: ela NÃO é fixa. O Tekvosoft é whitelabel e cada
+ * Sobre a cor principal: ela NÃO é fixa. O vuup.me é whitelabel e cada
  * instalação escolhe a sua em Configurações > Whitelabel. Por isso o que
  * existe aqui é o roxo da nossa marca como PADRÃO e um conjunto de funções
  * que derivam hover, borda e fundo suave a partir de qualquer cor que venha
@@ -18,7 +18,12 @@
 // Marca
 // ─────────────────────────────────────────────────────────────
 
-// Extraído da logo (hue 262°, violeta saturado).
+// A marca (vuup.me) é preto e branco: é a cor padrão até a empresa
+// escolher um tema em Configurações > Aparência.
+export const BRAND_INK = "#111111";
+export const BRAND_INK_DARK_MODE = "#EDEDED";
+
+// Roxo da marca antiga: continua como um dos temas para escolher.
 export const BRAND_PURPLE = "#6C24F0";
 
 // No escuro o roxo da logo fica pesado sobre fundo escuro e come o contraste
@@ -217,7 +222,10 @@ export const neutralDark = {
  * que acontece na prévia dos cartões de tema.
  */
 export function tintNeutrals(base, brandHex) {
-  const hue = rgbToHsl(hexToRgb(brandHex)).h;
+  const brand = rgbToHsl(hexToRgb(brandHex));
+  // preto/branco não tem matiz: cinzas puros (senão puxavam para o rosado)
+  if (brand.s < 0.05) return neutralize(base);
+  const hue = brand.h;
   const out = {};
   Object.entries(base).forEach(([key, value]) => {
     const hsl = rgbToHsl(hexToRgb(value));
@@ -250,7 +258,11 @@ export function neutralize(base) {
  * controlada para continuarem combinando entre si.
  */
 export function accentScale(brandHex, isDark) {
-  const { h, s } = rgbToHsl(hexToRgb(brandHex));
+  const hsl = rgbToHsl(hexToRgb(brandHex));
+  // marca sem cor (preto/branco): parte de um azul para os gráficos e
+  // cartões não ficarem todos cinza — nem puxados para o vermelho (matiz 0)
+  const h = hsl.s < 0.05 ? 220 : hsl.h;
+  const s = hsl.s < 0.05 ? 0.55 : hsl.s;
   const sat = Math.min(0.72, Math.max(0.42, s));
   const light = isDark ? 0.62 : 0.46;
   return [0, 42, 96, 152, 200, 290].map(shift =>
@@ -267,8 +279,15 @@ export function accentScale(brandHex, isDark) {
 // "accent" é só a segunda bolinha da prévia.
 
 export const THEME_PRESETS = [
+  // o id continua "tekvosoft" (já gravado nas empresas); é o preto e branco
   {
     id: "tekvosoft",
+    light: BRAND_INK,
+    dark: BRAND_INK_DARK_MODE,
+    accent: "#8B8B8B"
+  },
+  {
+    id: "brandPurple",
     light: BRAND_PURPLE,
     dark: BRAND_PURPLE_DARK_MODE,
     accent: "#EC4899"

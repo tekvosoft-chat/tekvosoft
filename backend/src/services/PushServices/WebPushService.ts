@@ -48,7 +48,7 @@ const ensureVapid = (): Promise<string> => {
       }
 
       const contact =
-        process.env.VAPID_SUBJECT || "mailto:suporte@tekvosoft.com";
+        process.env.VAPID_SUBJECT || "mailto:suporte@vuup.me";
       webpush.setVapidDetails(contact, publicKey, privateKey);
       return publicKey;
     })().catch(error => {

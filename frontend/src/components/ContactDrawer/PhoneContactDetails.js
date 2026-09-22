@@ -835,7 +835,7 @@ const PhoneContactDetails = ({
           }
         }}
       >
-        Ela some do Tekvosoft (atendimento e mensagens salvas aqui), como se
+        Ela some do vuup.me (atendimento e mensagens salvas aqui), como se
         nunca tivesse existido. Nada é apagado no WhatsApp do cliente nem no seu
         celular.
       </ConfirmationModal>

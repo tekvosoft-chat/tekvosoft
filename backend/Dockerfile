@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7-labs
 #
-# Backend do Tekvosoft.
+# Backend do vuup.me.
 #   target dev   -> usado por ./tekvosoft dev  (código montado do host, hot reload)
 #   padrão       -> imagem de produção, sem código-fonte dentro
 

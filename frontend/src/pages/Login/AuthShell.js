@@ -1,6 +1,9 @@
-import React, { useState } from "react";
-import { makeStyles } from "@material-ui/core/styles";
+import React, { useMemo, useState } from "react";
+import { makeStyles, ThemeProvider, useTheme } from "@material-ui/core/styles";
 import CssBaseline from "@material-ui/core/CssBaseline";
+
+import createAppTheme from "../../theme/createAppTheme";
+import { BRAND_INK } from "../../theme/tokens";
 
 // Fundos animados da tela de entrada (só no computador): alternam a cada
 // visita (lua ↔ cidade). No celular a tela é branca e limpa.
@@ -163,7 +166,7 @@ export const useAuthButtonStyles = makeStyles(theme => ({
   }
 }));
 
-const AuthShell = ({ title, subtitle, actions, children, footer }) => {
+const AuthContent = ({ title, subtitle, actions, children, footer }) => {
   const classes = useStyles();
   const [background] = useState(pickBackground);
 
@@ -186,6 +189,35 @@ const AuthShell = ({ title, subtitle, actions, children, footer }) => {
         {footer && <div className={classes.footer}>{footer}</div>}
       </div>
     </div>
+  );
+};
+
+/**
+ * Entrada e cadastro são sempre preto e branco (a marca), no modo claro:
+ * a cor escolhida pela empresa só vale dentro do sistema.
+ */
+const AuthShell = props => {
+  const outer = useTheme();
+  const authTheme = useMemo(
+    () =>
+      createAppTheme({
+        mode: "light",
+        primaryColor: BRAND_INK,
+        accentColor: "#8B8B8B",
+        appLogoLight: outer.appLogoLight,
+        appLogoDark: outer.appLogoDark,
+        appLogoFavicon: outer.appLogoFavicon,
+        appName: outer.appName,
+        calculatedLogoLight: outer.calculatedLogoLight,
+        calculatedLogoDark: outer.calculatedLogoDark
+      }),
+    [outer]
+  );
+
+  return (
+    <ThemeProvider theme={authTheme}>
+      <AuthContent {...props} />
+    </ThemeProvider>
   );
 };
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-#  Tekvosoft — ambiente de desenvolvimento em um comando.
+#  vuup.me — ambiente de desenvolvimento em um comando.
 #
 #      curl -sSL https://raw.githubusercontent.com/tekvosoft-chat/tekvosoft/main/dev.sh | bash
 #
@@ -31,7 +31,7 @@ if [ "${EUID}" -eq 0 ]; then
 fi
 
 echo
-echo "  ${B}Tekvosoft${N} ${DIM}— ambiente de desenvolvimento${N}"
+echo "  ${B}vuup.me${N} ${DIM}— ambiente de desenvolvimento${N}"
 echo
 
 # ── pré-requisitos ───────────────────────────────────────────
@@ -66,7 +66,7 @@ elif [ -d "${DIR_NAME}" ]; then
   git -C "${DIR_NAME}" pull --quiet 2>/dev/null || warn "Não consegui atualizar; sigo com o código local."
 else
   TARGET="${DIR_NAME}"
-  say "Baixando o Tekvosoft..."
+  say "Baixando o vuup.me..."
   git clone --quiet "${REPO_URL}" "${DIR_NAME}" || die "Falha ao clonar o repositório."
 fi
 

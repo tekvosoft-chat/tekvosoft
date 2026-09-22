@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-#  Tekvosoft — um comando para tudo.
+#  vuup.me — um comando para tudo.
 #
 #      ./tekvosoft dev       desenvolver na sua máquina (hot reload)
 #      ./tekvosoft deploy    subir em produção com HTTPS
@@ -673,7 +673,7 @@ EOF
 cmd_help() {
   cat <<EOF
 
-  ${B}Tekvosoft${N} ${DIM}— atendimento via WhatsApp com CRM e helpdesk${N}
+  ${B}vuup.me${N} ${DIM}— atendimento via WhatsApp com CRM e helpdesk${N}
 
   ${B}O dia a dia${N}
     ${C}dev${N}                 desenvolver aqui na sua máquina, com hot reload
