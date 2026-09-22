@@ -34,6 +34,11 @@ const messages = {
         continue: "Continue"
       },
       network: {
+        reconnected: "Connected again",
+        server: "Server not responding, retrying…",
+        reconnecting: "Reconnecting…",
+        sending: "Sending file…",
+        loading: "Loading…",
         slow: "Slow connection",
         backOnline: "Back online 🎉",
         offlineTitle: "Your internet stepped out for coffee",

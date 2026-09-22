@@ -2,6 +2,8 @@ import React, { useCallback, useContext, useEffect, useState } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import Button from "@material-ui/core/Button";
 
+import axios from "axios";
+
 import api from "../../services/api";
 import { SocketContext } from "../../context/Socket/SocketContext";
 import { i18n } from "../../translate/i18n";
@@ -9,14 +11,13 @@ import { i18n } from "../../translate/i18n";
 /**
  * Aviso de internet.
  *
- * Lenta  → uma pílula fininha no topo, com as barrinhas de sinal piscando.
- *          Some sozinha quando a conexão melhora.
+ * Pílula fininha no topo, uma para cada situação (carregando, enviando,
+ * conexão lenta, reconectando, servidor sem resposta, conectado de novo).
+ * Some sozinha quando passa.
  * Sem    → a tela toda, com o cabo desligado se mexendo e um texto leve.
  *          É desenho feito em SVG de propósito: sem internet, um GIF da web
  *          não carregaria.
  */
-const SLOW_AFTER_MS = 3500;
-const RECOVER_AFTER_MS = 1500;
 
 const useStyles = makeStyles(theme => {
   const t = theme.palette.tkv;
@@ -59,6 +60,24 @@ const useStyles = makeStyles(theme => {
       animation: "$barBlink 1.1s ease-in-out infinite"
     },
 
+    // carregando, enviando, reconectando: um giro discreto
+    spinner: {
+      width: 12,
+      height: 12,
+      borderRadius: "50%",
+      border: `2px solid ${t.border}`,
+      borderTopColor: theme.palette.text.secondary,
+      animation: "$spin .8s linear infinite"
+    },
+    "@keyframes spin": { to: { transform: "rotate(360deg)" } },
+    // servidor sem resposta
+    warnDot: {
+      width: 8,
+      height: 8,
+      borderRadius: "50%",
+      backgroundColor: t.semantic.danger,
+      animation: "$barBlink 1.1s ease-in-out infinite"
+    },
     "@keyframes barBlink": {
       "0%, 100%": { opacity: 0.25 },
       "50%": { opacity: 1 }
@@ -159,6 +178,21 @@ const useStyles = makeStyles(theme => {
 
 const BAR_HEIGHTS = [5, 8, 11];
 
+// pedidos que naturalmente demoram (transcrição, IA, QR Code, exportação):
+// não contam como internet lenta
+const LONG_BY_NATURE = /transcri|\/ai\/|\/export|\/whatsappsession|\/backup/i;
+
+/**
+ * Situação da conexão, da mais grave para a mais leve:
+ *   reconnecting → o tempo real caiu e está voltando
+ *   server       → o servidor não respondeu (a internet está ok)
+ *   slow         → um pedido demorando demais, ou rede 2G
+ *   sending      → enviando arquivo
+ *   loading      → carregando algo que já passou do normal
+ *   back         → tudo certo de novo (aparece por 2 segundos)
+ * Pedido cancelado (busca trocada, tela fechada) não conta: antes cada um
+ * deles acendia "conexão lenta", e o aviso não saía da tela.
+ */
 const NetworkStatus = () => {
   const classes = useStyles();
   const socketManager = useContext(SocketContext);
@@ -167,8 +201,15 @@ const NetworkStatus = () => {
   const [offline, setOffline] = useState(
     typeof navigator !== "undefined" && navigator.onLine === false
   );
-  const [slow, setSlow] = useState(false);
+  const [status, setStatus] = useState(null);
   const [justBack, setJustBack] = useState(false);
+  const live = React.useRef({
+    pending: new Map(),
+    serverTroubleAt: 0,
+    wsIssueSince: 0,
+    backUntil: 0,
+    lastBad: false
+  });
 
   // sem internet: o navegador avisa, e a volta mostra um "voltamos" rapidinho.
   // Sem rede, as partes do app que carregam sob demanda falham e a tela
@@ -201,7 +242,6 @@ const NetworkStatus = () => {
         }
         return false;
       });
-      setSlow(false);
     };
     window.addEventListener("offline", goOffline);
     window.addEventListener("online", goOnline);
@@ -213,77 +253,99 @@ const NetworkStatus = () => {
     };
   }, []);
 
-  // lenta: alguma chamada ao servidor demorando demais, ou o próprio
-  // navegador dizendo que a rede é fraca (2G), ou o tempo real caído
+  // pedidos ao servidor: quanto tempo cada um está levando e como terminou
   useEffect(() => {
-    const pending = new Map();
-    let clearTimer = null;
-
-    const markSlow = value => {
-      if (value) {
-        clearTimeout(clearTimer);
-        setSlow(true);
-      } else {
-        clearTimeout(clearTimer);
-        clearTimer = setTimeout(() => setSlow(false), RECOVER_AFTER_MS);
-      }
-    };
-
+    const state = live.current;
     const req = api.interceptors.request.use(config => {
-      pending.set(config, Date.now());
+      const upload =
+        (typeof FormData !== "undefined" && config.data instanceof FormData) ||
+        !!config.onUploadProgress;
+      if (!LONG_BY_NATURE.test(config.url || "")) {
+        state.pending.set(config, { at: Date.now(), upload });
+      }
       return config;
     });
-    const done = config => {
-      if (config) pending.delete(config);
-      if (!pending.size) markSlow(false);
-    };
     const res = api.interceptors.response.use(
       response => {
-        done(response.config);
+        state.pending.delete(response.config);
+        state.serverTroubleAt = 0;
         return response;
       },
       error => {
-        done(error?.config);
-        // sem resposta nenhuma: ou caiu a internet, ou o servidor sumiu
-        if (error?.request && !error?.response) {
-          if (navigator.onLine === false) setOffline(true);
-          else markSlow(true);
+        if (error?.config) state.pending.delete(error.config);
+        const canceled =
+          axios.isCancel(error) ||
+          error?.code === "ERR_CANCELED" ||
+          error?.name === "CanceledError";
+        if (!canceled) {
+          if (error?.request && !error?.response) {
+            if (navigator.onLine === false) setOffline(true);
+            else state.serverTroubleAt = Date.now();
+          } else if ([502, 503, 504].includes(error?.response?.status)) {
+            state.serverTroubleAt = Date.now();
+          }
         }
         return Promise.reject(error);
       }
     );
-
-    const tick = setInterval(() => {
-      const now = Date.now();
-      const stuck = [...pending.values()].some(
-        started => now - started > SLOW_AFTER_MS
-      );
-      const conn = navigator.connection;
-      const weak = conn && ["slow-2g", "2g"].includes(conn.effectiveType || "");
-      if (stuck || weak) markSlow(true);
-    }, 1000);
-
     return () => {
       api.interceptors.request.eject(req);
       api.interceptors.response.eject(res);
-      clearInterval(tick);
-      clearTimeout(clearTimer);
     };
   }, []);
 
-  // tempo real com problema também conta como conexão ruim
+  // tempo real: caiu (e está tentando voltar) ou voltou
   useEffect(() => {
     if (!socketManager?.subscribeWsConnectionIssue) return undefined;
-    let timer = null;
     const unsubscribe = socketManager.subscribeWsConnectionIssue(active => {
-      clearTimeout(timer);
-      if (active) timer = setTimeout(() => setSlow(true), 6000);
+      const state = live.current;
+      if (active) {
+        if (!state.wsIssueSince) state.wsIssueSince = Date.now();
+      } else {
+        state.wsIssueSince = 0;
+      }
     });
     return () => {
-      clearTimeout(timer);
       if (typeof unsubscribe === "function") unsubscribe();
     };
   }, [socketManager]);
+
+  // decide o aviso a cada meio segundo (a tela só muda quando ele muda)
+  useEffect(() => {
+    const tick = setInterval(() => {
+      const state = live.current;
+      const now = Date.now();
+      let requests = [...state.pending.values()];
+      // pedido esquecido há mais de um minuto não prende o aviso na tela
+      state.pending.forEach((info, config) => {
+        if (now - info.at > 60000) state.pending.delete(config);
+      });
+      requests = requests.filter(info => now - info.at <= 60000);
+      const conn = navigator.connection;
+      const weak = conn && ["slow-2g", "2g"].includes(conn.effectiveType || "");
+
+      let next = null;
+      if (state.wsIssueSince && now - state.wsIssueSince > 4000) {
+        next = "reconnecting";
+      } else if (state.serverTroubleAt && now - state.serverTroubleAt < 10000) {
+        next = "server";
+      } else if (weak || requests.some(i => !i.upload && now - i.at > 8000)) {
+        next = "slow";
+      } else if (requests.some(i => i.upload && now - i.at > 800)) {
+        next = "sending";
+      } else if (requests.some(i => !i.upload && now - i.at > 2500)) {
+        next = "loading";
+      }
+
+      const bad = ["reconnecting", "server", "slow"].includes(next);
+      if (!next && state.lastBad) state.backUntil = now + 2000;
+      state.lastBad = bad;
+      if (!next && now < state.backUntil) next = "back";
+
+      setStatus(prev => (prev === next ? prev : next));
+    }, 500);
+    return () => clearInterval(tick);
+  }, []);
 
   const retry = useCallback(() => {
     if (navigator.onLine === false) return;
@@ -344,20 +406,34 @@ const NetworkStatus = () => {
     );
   }
 
-  if (!slow) return null;
+  if (!status) return null;
+
+  if (status === "back") {
+    return (
+      <div className={classes.back} role="status">
+        {n("reconnected")}
+      </div>
+    );
+  }
 
   return (
     <div className={classes.pill} role="status">
-      <span className={classes.bars}>
-        {BAR_HEIGHTS.map((height, index) => (
-          <span
-            key={height}
-            className={classes.bar}
-            style={{ height, animationDelay: `${index * 160}ms` }}
-          />
-        ))}
-      </span>
-      {n("slow")}
+      {status === "slow" ? (
+        <span className={classes.bars}>
+          {BAR_HEIGHTS.map((height, index) => (
+            <span
+              key={height}
+              className={classes.bar}
+              style={{ height, animationDelay: `${index * 160}ms` }}
+            />
+          ))}
+        </span>
+      ) : status === "server" ? (
+        <span className={classes.warnDot} />
+      ) : (
+        <span className={classes.spinner} />
+      )}
+      {n(status)}
     </div>
   );
 };

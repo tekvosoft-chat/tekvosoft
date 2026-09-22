@@ -35,7 +35,12 @@ const messages = {
         continue: "Continuar"
       },
       network: {
-        slow: "Internet lenta",
+        reconnected: "Ligado novamente",
+        server: "Servidor sem resposta, a tentar novamente…",
+        reconnecting: "A religar…",
+        sending: "A enviar ficheiro…",
+        loading: "A carregar…",
+        slow: "Ligação lenta",
         backOnline: "Internet de volta 🎉",
         offlineTitle: "A internet foi tomar um café",
         offlineText:
