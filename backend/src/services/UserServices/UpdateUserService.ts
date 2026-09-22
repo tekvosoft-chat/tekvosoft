@@ -3,6 +3,7 @@ import * as Yup from "yup";
 import AppError from "../../errors/AppError";
 import ShowUserService from "./ShowUserService";
 import Company from "../../models/Company";
+import { sendPasswordChangedEmail } from "../AutomationServices/EmailEvents";
 import User from "../../models/User";
 
 interface UserData {
@@ -77,6 +78,9 @@ const UpdateUserService = async ({
   }
 
   await user.reload();
+
+  // trocou a senha: aviso de segurança no e-mail da pessoa
+  if (password) sendPasswordChangedEmail(user);
 
   const company = await Company.findByPk(user.companyId);
 

@@ -86,6 +86,12 @@ services:
       FACEBOOK_APP_SECRET: ${FACEBOOK_APP_SECRET:-}
       VERIFY_TOKEN: ${VERIFY_TOKEN:-tekvosoft}
       SOCKET_ADMIN: ${SOCKET_ADMIN:-false}
+      # --- e-mails automáticos e código de acesso (via n8n) ---
+      N8N_WEBHOOK_URL: ${N8N_WEBHOOK_URL:-}
+      N8N_WEBHOOK_SECRET: ${N8N_WEBHOOK_SECRET:-}
+      EMAIL_ASSETS_URL: ${EMAIL_ASSETS_URL:-}
+      LOGIN_EMAIL_CODE: ${LOGIN_EMAIL_CODE:-true}
+      DUE_REMINDER_DAYS: ${DUE_REMINDER_DAYS:-3,2}
     depends_on:
       postgres:
         condition: service_healthy

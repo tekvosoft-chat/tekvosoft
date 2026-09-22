@@ -11,6 +11,7 @@ import Whatsapp from "./models/Whatsapp";
 import { logger } from "./utils/logger";
 import { getPublicPath } from "./helpers/GetPublicPath";
 import { asaasChargeSavedCards } from "./services/PaymentGatewayServices/AsaasServices";
+import { sendDueReminderEmails } from "./services/AutomationServices/EmailEvents";
 import Schedule from "./models/Schedule";
 import Contact from "./models/Contact";
 import GetDefaultWhatsApp from "./helpers/GetDefaultWhatsApp";
@@ -652,6 +653,16 @@ const dailyCardChargeJob = new CronJob("0 9 * * *", async () => {
   }
 });
 dailyCardChargeJob.start();
+
+// e-mail de "sua assinatura vence em X dias" (via n8n), todo dia às 9h10
+const dailyDueReminderJob = new CronJob("10 9 * * *", async () => {
+  try {
+    await sendDueReminderEmails();
+  } catch (error) {
+    logger.error(error, "sendDueReminderEmails");
+  }
+});
+dailyDueReminderJob.start();
 
 export async function startQueueProcess() {
   logger.info("Starting queue processing");

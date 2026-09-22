@@ -18,6 +18,43 @@ authRoutes.post(
   }),
   SessionController.store
 );
+// código do navegador novo: até 20 erros por IP a cada 15 minutos
+authRoutes.post(
+  "/login/verify",
+  rateLimit({
+    name: "login-code",
+    max: 20,
+    windowSeconds: 900,
+    onlyFailures: true
+  }),
+  SessionController.verifyDevice
+);
+authRoutes.post(
+  "/login/resend",
+  rateLimit({ name: "login-resend", max: 10, windowSeconds: 900 }),
+  SessionController.resendDevice
+);
+// esqueci minha senha: 3 pedidos por e-mail (15 por IP) a cada hora
+authRoutes.post(
+  "/forgot-password",
+  rateLimit({
+    name: "forgot",
+    max: 3,
+    windowSeconds: 3600,
+    bodyField: "email"
+  }),
+  SessionController.forgotPassword
+);
+authRoutes.post(
+  "/reset-password",
+  rateLimit({
+    name: "reset",
+    max: 10,
+    windowSeconds: 900,
+    onlyFailures: true
+  }),
+  SessionController.resetPasswordWithToken
+);
 authRoutes.get(
   "/impersonate/:companyId",
   isAuth,

@@ -3,6 +3,7 @@ import AppError from "../../errors/AppError";
 import Company from "../../models/Company";
 import User from "../../models/User";
 import Setting from "../../models/Setting";
+import { sendWelcomeEmail } from "../AutomationServices/EmailEvents";
 
 interface CompanyData {
   name: string;
@@ -164,6 +165,9 @@ const CreateCompanyService = async (
       await setting.update({ value: `${campaignsEnabled}` });
     }
   }
+
+  // e-mail de boas-vindas (plano, validade e o que está incluso)
+  sendWelcomeEmail(company.id);
 
   return company;
 };

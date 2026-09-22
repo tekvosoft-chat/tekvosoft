@@ -1,4 +1,4 @@
-import DeleteTicketsByWhatsappService from "../services/TicketServices/DeleteTicketsByWhatsappService";
+import PurgeWhatsappDataService from "../services/WhatsappService/PurgeWhatsappDataService";
 import { Request, Response } from "express";
 import {
   getWbot,
@@ -72,14 +72,18 @@ const remove = async (req: Request, res: Response): Promise<Response> => {
     wbot.ws.close();
   }
 
-  // desconectou: as conversas dessa conexão somem do sistema
-  await DeleteTicketsByWhatsappService(whatsapp.id, companyId);
+  // marcou "apagar tudo": as conversas e contatos dessa conexão somem do
+  // sistema; sem marcar, ficam guardados para quando reconectar
+  const purge = ["true", "1"].includes(String(req.query.purge));
+  const purged = purge
+    ? await PurgeWhatsappDataService(whatsapp.id, companyId)
+    : null;
 
   if (whatsapp.channel === "facebook" || whatsapp.channel === "instagram") {
     whatsapp.destroy();
   }
 
-  return res.status(200).json({ message: "Session disconnected." });
+  return res.status(200).json({ message: "Session disconnected.", purged });
 };
 
 const refresh = async (req: Request, res: Response): Promise<Response> => {

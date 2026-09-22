@@ -13,6 +13,8 @@ import LanguageIcon from "@material-ui/icons/Translate";
 import Visibility from "@material-ui/icons/VisibilityOutlined";
 import VisibilityOff from "@material-ui/icons/VisibilityOffOutlined";
 
+import { toast } from "react-toastify";
+
 import { i18n } from "../../translate/i18n";
 import { messages } from "../../translate/languages";
 
@@ -46,6 +48,37 @@ const useStyles = makeStyles(theme => ({
     fontSize: 14,
     color: "#737373"
   },
+  forgot: {
+    display: "flex",
+    justifyContent: "flex-end",
+    marginTop: 2,
+    fontSize: 13,
+    "& a": { color: "#525252" }
+  },
+  codeField: {
+    "& input": {
+      textAlign: "center",
+      fontSize: 26,
+      fontWeight: 600,
+      letterSpacing: "0.45em",
+      paddingLeft: "0.45em"
+    }
+  },
+  codeHint: {
+    textAlign: "center",
+    fontSize: 13,
+    color: "#737373",
+    margin: 0
+  },
+  codeActions: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 4,
+    fontSize: 14,
+    "& button": { fontSize: 14 }
+  },
+  waiting: { color: "#a3a3a3" },
   links: {
     display: "flex",
     flexWrap: "wrap",
@@ -102,12 +135,50 @@ const Login = () => {
   const classes = useStyles();
   const buttonClasses = useAuthButtonStyles();
   const { getPublicSetting } = useSettings();
-  const { handleLogin } = useContext(AuthContext);
+  const {
+    handleLogin,
+    loginChallenge,
+    handleVerifyDevice,
+    resendLoginCode,
+    cancelLoginChallenge
+  } = useContext(AuthContext);
 
   const [user, setUser] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [allowSignup, setAllowSignup] = useState(false);
   const [loginLinks, setLoginLinks] = useState([]);
+  const [code, setCode] = useState("");
+  const [now, setNow] = useState(Date.now());
+
+  // contagem para liberar o "reenviar código"
+  useEffect(() => {
+    if (!loginChallenge) return undefined;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [loginChallenge]);
+
+  const resendWait = loginChallenge
+    ? Math.max(0, 30 - Math.floor((now - loginChallenge.sentAt) / 1000))
+    : 0;
+
+  // os 6 dígitos completos já confirmam (inclusive colando do e-mail)
+  const handleChangeCode = event => {
+    const digits = event.target.value.replace(/\D/g, "").slice(0, 6);
+    setCode(digits);
+    if (digits.length === 6) handleVerifyDevice(digits);
+  };
+
+  const handleSubmitCode = event => {
+    event.preventDefault();
+    if (code.length === 6) handleVerifyDevice(code);
+  };
+
+  const handleResend = async () => {
+    setCode("");
+    if (await resendLoginCode()) {
+      toast.success(i18n.t("login.code.resent"));
+    }
+  };
 
   const handleChangeInput = event => {
     setUser(prevUser => ({
@@ -135,6 +206,66 @@ const Login = () => {
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  if (loginChallenge) {
+    return (
+      <AuthShell
+        title={i18n.t("login.code.heading")}
+        subtitle={i18n.t("login.code.subheading", {
+          email: loginChallenge.email
+        })}
+        actions={<LanguageMenu />}
+      >
+        <form noValidate onSubmit={handleSubmitCode}>
+          <TextField
+            variant="outlined"
+            margin="normal"
+            required
+            fullWidth
+            autoFocus
+            className={classes.codeField}
+            label={i18n.t("login.code.label")}
+            value={code}
+            onChange={handleChangeCode}
+            autoComplete="one-time-code"
+            inputProps={{ inputMode: "numeric", maxLength: 6 }}
+          />
+          <p className={classes.codeHint}>{i18n.t("login.code.hint")}</p>
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            disabled={code.length !== 6}
+            className={buttonClasses.submit}
+          >
+            {i18n.t("login.code.submit")}
+          </Button>
+          <div className={classes.codeActions}>
+            <Link
+              component="button"
+              type="button"
+              color="inherit"
+              onClick={() => {
+                setCode("");
+                cancelLoginChallenge();
+              }}
+            >
+              {i18n.t("login.code.back")}
+            </Link>
+            {resendWait > 0 ? (
+              <span className={classes.waiting}>
+                {i18n.t("login.code.resendIn", { seconds: resendWait })}
+              </span>
+            ) : (
+              <Link component="button" type="button" onClick={handleResend}>
+                {i18n.t("login.code.resend")}
+              </Link>
+            )}
+          </div>
+        </form>
+      </AuthShell>
+    );
+  }
 
   return (
     <AuthShell
@@ -202,6 +333,11 @@ const Login = () => {
             )
           }}
         />
+        <div className={classes.forgot}>
+          <Link component={RouterLink} to="/forgot-password">
+            {i18n.t("login.forgot")}
+          </Link>
+        </div>
         <Button
           type="submit"
           fullWidth

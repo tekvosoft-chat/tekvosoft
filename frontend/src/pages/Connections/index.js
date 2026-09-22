@@ -198,7 +198,10 @@ const Connections = () => {
   const handleSubmitConfirmationModal = async checked => {
     if (confirmModalInfo.action === "disconnect") {
       try {
-        await api.delete(`/whatsappsession/${confirmModalInfo.whatsAppId}`);
+        // marcado: apaga do sistema tudo o que veio por essa conexão
+        await api.delete(`/whatsappsession/${confirmModalInfo.whatsAppId}`, {
+          params: checked ? { purge: true } : undefined
+        });
       } catch (err) {
         toastError(err);
       }
@@ -256,7 +259,9 @@ const Connections = () => {
         checkbox={
           confirmModalInfo.action === "delete"
             ? i18n.t("connections.confirmationModal.closeTickets")
-            : undefined
+            : confirmModalInfo.action === "disconnect"
+              ? i18n.t("connections.confirmationModal.purge")
+              : undefined
         }
       >
         {confirmModalInfo.message}

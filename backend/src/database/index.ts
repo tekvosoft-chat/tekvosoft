@@ -19,6 +19,7 @@ import TicketNote from "../models/TicketNote";
 import QuickMessage from "../models/QuickMessage";
 import Help from "../models/Help";
 import SupportTicket from "../models/SupportTicket";
+import UserDevice from "../models/UserDevice";
 import SupportMessage from "../models/SupportMessage";
 import TicketTraking from "../models/TicketTraking";
 import Counter from "../models/Counter";
@@ -100,7 +101,8 @@ const models = [
   Wavoip,
   PushSubscription,
   SupportTicket,
-  SupportMessage
+  SupportMessage,
+  UserDevice
 ];
 
 sequelize.addModels(models);

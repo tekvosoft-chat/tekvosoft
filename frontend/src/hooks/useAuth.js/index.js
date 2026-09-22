@@ -12,6 +12,7 @@ import { clearAllCachedSettings } from "../../helpers/settingsCache";
 import moment from "moment";
 import { decodeToken } from "react-jwt";
 import { forgetPushForUser } from "../../services/push";
+import { getDeviceId } from "../../helpers/deviceId";
 import { clearConversationCache } from "../../helpers/conversationCache";
 
 let apiInterceptorsRegistered = false;
@@ -168,18 +169,77 @@ const useAuth = () => {
     }
   };
 
+  // navegador novo: o servidor pede o código enviado por e-mail. O desafio
+  // fica aqui (e não na tela), porque a tela de login é trocada pela
+  // animação de carregamento enquanto espera a resposta
+  const [loginChallenge, setLoginChallenge] = useState(null);
+
   const handleLogin = async userData => {
     setLoading(true);
 
     try {
-      const { data } = await api.post("/auth/login", userData);
-      posLogin(data);
+      const { data } = await api.post("/auth/login", {
+        ...userData,
+        deviceId: getDeviceId()
+      });
+      if (data.requiresCode) {
+        setLoginChallenge({
+          challengeId: data.challengeId,
+          email: data.email,
+          sentAt: Date.now()
+        });
+      } else {
+        setLoginChallenge(null);
+        posLogin(data);
+      }
       setLoading(false);
     } catch (err) {
       toastError(err);
       setLoading(false);
     }
   };
+
+  const handleVerifyDevice = async code => {
+    if (!loginChallenge) return;
+    setLoading(true);
+
+    try {
+      const { data } = await api.post("/auth/login/verify", {
+        challengeId: loginChallenge.challengeId,
+        code,
+        deviceId: getDeviceId()
+      });
+      setLoginChallenge(null);
+      posLogin(data);
+      setLoading(false);
+    } catch (err) {
+      toastError(err);
+      // código expirado ou tentativas esgotadas: volta para a senha
+      if (err?.response?.data?.error === "ERR_CODE_EXPIRED") {
+        setLoginChallenge(null);
+      }
+      setLoading(false);
+    }
+  };
+
+  const resendLoginCode = async () => {
+    if (!loginChallenge) return false;
+    try {
+      await api.post("/auth/login/resend", {
+        challengeId: loginChallenge.challengeId
+      });
+      setLoginChallenge(prev => prev && { ...prev, sentAt: Date.now() });
+      return true;
+    } catch (err) {
+      toastError(err);
+      if (err?.response?.data?.error === "ERR_CODE_EXPIRED") {
+        setLoginChallenge(null);
+      }
+      return false;
+    }
+  };
+
+  const cancelLoginChallenge = () => setLoginChallenge(null);
 
   const handleImpersonate = async companyId => {
     setLoading(true);
@@ -264,6 +324,10 @@ const useAuth = () => {
     user,
     loading,
     handleLogin,
+    loginChallenge,
+    handleVerifyDevice,
+    resendLoginCode,
+    cancelLoginChallenge,
     handleImpersonate,
     handleLogout,
     getCurrentUserInfo

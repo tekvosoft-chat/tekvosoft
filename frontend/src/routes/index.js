@@ -29,6 +29,8 @@ const Schedules = lazy(() => import("../pages/Schedules"));
 const Chat = lazy(() => import("../pages/Chat"));
 const Kanban = lazy(() => import("../pages/Kanban/"));
 const Subscription = lazy(() => import("../pages/Subscription/"));
+const ForgotPassword = lazy(() => import("../pages/ForgotPassword/"));
+const ResetPassword = lazy(() => import("../pages/ResetPassword/"));
 
 // telas que dependem do plano contratado
 const KanbanPage = withPlanFeature(Kanban, "useKanban");
@@ -45,6 +47,8 @@ const Routes = () => {
             <Switch>
               <Route exact path="/login" component={Login} />
               <Route exact path="/signup" component={Signup} />
+              <Route exact path="/forgot-password" component={ForgotPassword} />
+              <Route exact path="/reset-password" component={ResetPassword} />
               <WhatsAppsProvider>
                 <LoggedInLayout>
                   <Route exact path="/" component={Dashboard} isPrivate />

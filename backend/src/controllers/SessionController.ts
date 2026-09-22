@@ -2,7 +2,19 @@ import { Request, Response } from "express";
 import AppError from "../errors/AppError";
 import { getIO } from "../libs/socket";
 
-import AuthUserService from "../services/UserServices/AuthUserService";
+import AuthUserService, {
+  CreateSessionForUser
+} from "../services/UserServices/AuthUserService";
+import {
+  deviceCheckEnabled,
+  isTrustedDevice,
+  requestPasswordReset,
+  resendDeviceCode,
+  resetPassword,
+  startDeviceChallenge,
+  verifyDeviceCode
+} from "../services/AuthServices/AccessService";
+import { accessContext } from "../helpers/accessContext";
 import { SendRefreshToken } from "../helpers/SendRefreshToken";
 import { RefreshTokenService } from "../services/AuthServices/RefreshTokenService";
 import FindUserFromToken from "../services/AuthServices/FindUserFromToken";
@@ -14,26 +26,11 @@ import Setting from "../models/Setting";
 import Translation from "../models/Translation";
 import { decodeRefreshToken } from "../helpers/DecodeRefreshToken";
 
-export const store = async (req: Request, res: Response): Promise<Response> => {
-  const { email, password } = req.body;
+type LoginResult = Awaited<ReturnType<typeof AuthUserService>>;
 
-  const langs = await Translation.findAll({
-    attributes: ["language"],
-    group: ["language"]
-  });
-
-  const availableLanguages = langs.map(l => l.language.replace(/_/g, "-"));
-
-  const language = (req.acceptsLanguages(availableLanguages) || null)?.replace(
-    /-/g,
-    "_"
-  );
-
-  const { token, serializedUser, refreshToken } = await AuthUserService({
-    email,
-    password,
-    language
-  });
+// entrega a sessão: cookie de renovação, aviso às outras abas e o token
+const finishLogin = (res: Response, result: LoginResult): Response => {
+  const { token, serializedUser, refreshToken } = result;
 
   SendRefreshToken(res, refreshToken);
 
@@ -54,6 +51,86 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     token,
     user: serializedUser
   });
+};
+
+export const store = async (req: Request, res: Response): Promise<Response> => {
+  const { email, password, deviceId } = req.body;
+
+  const langs = await Translation.findAll({
+    attributes: ["language"],
+    group: ["language"]
+  });
+
+  const availableLanguages = langs.map(l => l.language.replace(/_/g, "-"));
+
+  const language = (req.acceptsLanguages(availableLanguages) || null)?.replace(
+    /-/g,
+    "_"
+  );
+
+  const result = await AuthUserService({
+    email,
+    password,
+    language
+  });
+
+  // senha certa num navegador que a pessoa ainda não liberou: código no
+  // e-mail antes de entregar a sessão
+  const userId = result.serializedUser.id;
+  if (deviceCheckEnabled() && !(await isTrustedDevice(userId, deviceId))) {
+    const user = await User.findByPk(userId);
+    const challenge = await startDeviceChallenge(
+      user,
+      deviceId,
+      accessContext(req)
+    );
+    return res.status(200).json({ requiresCode: true, ...challenge });
+  }
+
+  return finishLogin(res, result);
+};
+
+/** Código do e-mail certo: libera o navegador e entrega a sessão. */
+export const verifyDevice = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { challengeId, code, deviceId } = req.body || {};
+  const userId = await verifyDeviceCode(
+    challengeId,
+    code,
+    deviceId,
+    accessContext(req)
+  );
+  return finishLogin(res, await CreateSessionForUser(userId));
+};
+
+export const resendDevice = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  await resendDeviceCode(
+    String(req.body?.challengeId || ""),
+    accessContext(req)
+  );
+  return res.json({ ok: true });
+};
+
+/** Esqueci minha senha: responde igual exista ou não o e-mail. */
+export const forgotPassword = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  await requestPasswordReset(req.body?.email, accessContext(req));
+  return res.json({ ok: true });
+};
+
+export const resetPasswordWithToken = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  await resetPassword(req.body?.token, req.body?.password, accessContext(req));
+  return res.json({ ok: true });
 };
 
 export const update = async (

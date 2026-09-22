@@ -722,7 +722,41 @@ const messages = {
           login: "Já tem uma conta? Entre!"
         }
       },
+      forgotPassword: {
+        heading: "Esqueceu a senha?",
+        subheading:
+          "Informe seu e-mail e enviaremos um link para criar uma senha nova.",
+        email: "E-mail",
+        submit: "Enviar link",
+        sentHeading: "Confira seu e-mail",
+        sent: "Se houver uma conta com {{email}}, você vai receber um link para criar uma senha nova. Ele vale por 30 minutos.",
+        back: "Voltar para o login"
+      },
+      resetPassword: {
+        heading: "Crie uma senha nova",
+        subheading: "Use pelo menos 6 caracteres.",
+        password: "Nova senha",
+        confirm: "Repita a nova senha",
+        submit: "Salvar senha",
+        mismatch: "As senhas não são iguais.",
+        success: "Senha alterada. Entre com a senha nova.",
+        invalid: "Este link não é válido. Peça um novo.",
+        requestNew: "Pedir um link novo"
+      },
       login: {
+        forgot: "Esqueci minha senha",
+        code: {
+          heading: "Confirme que é você",
+          subheading:
+            "Enviamos um código de 6 dígitos para {{email}}. Ele vale por 10 minutos.",
+          label: "Código",
+          submit: "Confirmar",
+          resend: "Reenviar código",
+          resendIn: "Reenviar em {{seconds}}s",
+          resent: "Enviamos um código novo.",
+          back: "Voltar",
+          hint: "Depois disso, este navegador fica liberado."
+        },
         subheading: "Entre para continuar seus atendimentos.",
         heading: "Bem-vindo de volta",
         title: "Login",
@@ -843,7 +877,9 @@ const messages = {
           deleteMessage: "Você tem certeza? Essa ação não pode ser revertida.",
           disconnectTitle: "Desconectar",
           disconnectMessage:
-            "Tem certeza? Todas as conversas e atendimentos desta conexão serão apagados do sistema (nada é apagado no WhatsApp) e você precisará ler o QR Code novamente.",
+            "Tem certeza? Você precisará ler o QR Code novamente para reconectar. Nada é apagado no WhatsApp.",
+          purge:
+            "Apagar tudo desta conexão do sistema: atendimentos, mensagens, mídias e os contatos que só conversaram por ela. Não dá para desfazer.",
           closeTickets: "Fechar todos os atendimentos desta conexão"
         },
         buttons: {
@@ -2421,6 +2457,16 @@ const messages = {
           "O backend está iniciando e ainda não está pronto. Tentando novamente automaticamente."
       },
       backendErrors: {
+        ERR_CODE_NOT_SENT:
+          "Não foi possível enviar o código para o seu e-mail. Tente de novo em instantes.",
+        ERR_CODE_EXPIRED: "O código expirou. Entre de novo para receber outro.",
+        ERR_CODE_INVALID: "Código incorreto. Confira o e-mail e tente de novo.",
+        ERR_WAIT_TO_RESEND: "Aguarde alguns segundos para pedir outro código.",
+        ERR_EMAIL_DISABLED:
+          "O envio de e-mails não está configurado. Fale com o administrador.",
+        ERR_RESET_LINK_EXPIRED:
+          "Este link expirou ou já foi usado. Peça um novo.",
+        ERR_PASSWORD_TOO_SHORT: "A senha precisa ter pelo menos 6 caracteres.",
         ERR_NOT_A_GROUP: "Esta conversa não é de um grupo.",
         ERR_GROUP_LEAVE: "Não foi possível sair do grupo agora. Tente de novo.",
         ERR_INVALID_INVITE: "Link de convite inválido ou expirado.",

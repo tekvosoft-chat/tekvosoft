@@ -63,6 +63,7 @@ import {
 } from "./AsaasServices";
 import Invoices from "../../models/Invoices";
 import { getIO } from "../../libs/socket";
+import { sendPaymentConfirmedEmail } from "../AutomationServices/EmailEvents";
 import Company from "../../models/Company";
 
 export const payGatewayInitialize = async () => {
@@ -151,6 +152,9 @@ export const payGatewayReceiveWebhook = async (
 };
 
 export const processInvoicePaid = async (invoice: Invoices) => {
+  // a mesma fatura pode ser conferida mais de uma vez (aviso + consulta):
+  // o e-mail de confirmação sai só na primeira
+  const alreadyPaid = invoice.status === "paid";
   const company =
     invoice.company || (await Company.findByPk(invoice.companyId));
 
@@ -195,6 +199,8 @@ export const processInvoicePaid = async (invoice: Invoices) => {
         company,
         invoiceId: invoice.id
       });
+
+    if (!alreadyPaid) sendPaymentConfirmedEmail(invoice);
   }
 };
 

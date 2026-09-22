@@ -717,7 +717,41 @@ const messages = {
           login: "Já tem uma conta? Entre!"
         }
       },
+      forgotPassword: {
+        heading: "Esqueceu-se da palavra-passe?",
+        subheading:
+          "Indique o seu e-mail e enviaremos uma ligação para criar uma palavra-passe nova.",
+        email: "E-mail",
+        submit: "Enviar ligação",
+        sentHeading: "Verifique o seu e-mail",
+        sent: "Se existir uma conta com {{email}}, vai receber uma ligação para criar uma palavra-passe nova. É válida durante 30 minutos.",
+        back: "Voltar ao início de sessão"
+      },
+      resetPassword: {
+        heading: "Crie uma palavra-passe nova",
+        subheading: "Use pelo menos 6 caracteres.",
+        password: "Nova palavra-passe",
+        confirm: "Repita a nova palavra-passe",
+        submit: "Guardar palavra-passe",
+        mismatch: "As palavras-passe não coincidem.",
+        success: "Palavra-passe alterada. Entre com a nova.",
+        invalid: "Esta ligação não é válida. Peça uma nova.",
+        requestNew: "Pedir uma ligação nova"
+      },
       login: {
+        forgot: "Esqueci-me da palavra-passe",
+        code: {
+          heading: "Confirme que é você",
+          subheading:
+            "Enviámos um código de 6 dígitos para {{email}}. É válido durante 10 minutos.",
+          label: "Código",
+          submit: "Confirmar",
+          resend: "Reenviar código",
+          resendIn: "Reenviar em {{seconds}}s",
+          resent: "Enviámos um código novo.",
+          back: "Voltar",
+          hint: "Depois disso, este navegador fica autorizado."
+        },
         subheading: "Entre para continuar seus atendimentos.",
         heading: "Bem-vindo de volta",
         title: "Entrar",
@@ -818,7 +852,9 @@ const messages = {
           deleteMessage: "Tem a certeza? Esta ação não pode ser revertida.",
           disconnectTitle: "Desconectar",
           disconnectMessage:
-            "Tem a certeza? Todas as conversas e atendimentos desta ligação serão apagados do sistema (nada é apagado no WhatsApp) e terá de ler o QR Code novamente.",
+            "Tem a certeza? Terá de ler o QR Code novamente para voltar a ligar. Nada é apagado no WhatsApp.",
+          purge:
+            "Apagar tudo desta ligação do sistema: atendimentos, mensagens, ficheiros e os contactos que só falaram por ela. Não é possível desfazer.",
           closetTickets: "Fechar todos os atendimentos abertos desta conexão"
         },
         buttons: {
@@ -2360,6 +2396,19 @@ const messages = {
           "O backend está a iniciar e ainda não está pronto. A tentar novamente automaticamente."
       },
       backendErrors: {
+        ERR_CODE_NOT_SENT:
+          "Não foi possível enviar o código para o seu e-mail. Tente novamente dentro de instantes.",
+        ERR_CODE_EXPIRED:
+          "O código expirou. Entre novamente para receber outro.",
+        ERR_CODE_INVALID:
+          "Código incorreto. Verifique o e-mail e tente novamente.",
+        ERR_WAIT_TO_RESEND: "Aguarde alguns segundos para pedir outro código.",
+        ERR_EMAIL_DISABLED:
+          "O envio de e-mails não está configurado. Fale com o administrador.",
+        ERR_RESET_LINK_EXPIRED:
+          "Esta ligação expirou ou já foi usada. Peça uma nova.",
+        ERR_PASSWORD_TOO_SHORT:
+          "A palavra-passe precisa de ter pelo menos 6 caracteres.",
         ERR_NOT_A_GROUP: "Esta conversa não é de um grupo.",
         ERR_GROUP_LEAVE:
           "Não foi possível sair do grupo agora. Tente novamente.",

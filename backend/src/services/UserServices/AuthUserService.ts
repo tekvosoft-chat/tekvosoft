@@ -35,6 +35,38 @@ interface Response {
   refreshToken: string;
 }
 
+const sessionInclude = () => [
+  "queues",
+  {
+    model: Company,
+    include: [
+      { model: Setting },
+      { model: Plan, attributes: ["id", "name", ...PLAN_FEATURES] }
+    ]
+  }
+];
+
+/**
+ * Sessão de quem já provou quem é por outro caminho (código enviado por
+ * e-mail ao entrar num navegador novo): mesmos dados do login com senha.
+ */
+export const CreateSessionForUser = async (
+  userId: number
+): Promise<Response> => {
+  const user = await User.findByPk(userId, { include: sessionInclude() });
+  if (!user) {
+    throw new AppError("ERR_INVALID_CREDENTIALS", 401);
+  }
+  if (user.active === false) {
+    throw new AppError("ERR_USER_INACTIVE", 401);
+  }
+  return {
+    serializedUser: await SerializeUser(user),
+    token: createAccessToken(user),
+    refreshToken: createRefreshToken(user)
+  };
+};
+
 const AuthUserService = async ({
   email,
   password,
@@ -45,16 +77,7 @@ const AuthUserService = async ({
       Sequelize.fn("LOWER", Sequelize.col("email")),
       email.toLowerCase()
     ),
-    include: [
-      "queues",
-      {
-        model: Company,
-        include: [
-          { model: Setting },
-          { model: Plan, attributes: ["id", "name", ...PLAN_FEATURES] }
-        ]
-      }
-    ]
+    include: sessionInclude()
   });
 
   if (!user) {

@@ -10,6 +10,10 @@ const AuthProvider = ({ children }) => {
     user,
     isAuth,
     handleLogin,
+    loginChallenge,
+    handleVerifyDevice,
+    resendLoginCode,
+    cancelLoginChallenge,
     handleImpersonate,
     handleLogout
   } = useAuth();
@@ -21,6 +25,10 @@ const AuthProvider = ({ children }) => {
         user,
         isAuth,
         handleLogin,
+        loginChallenge,
+        handleVerifyDevice,
+        resendLoginCode,
+        cancelLoginChallenge,
         handleImpersonate,
         handleLogout
       }}

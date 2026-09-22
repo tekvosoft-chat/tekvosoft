@@ -52,6 +52,14 @@ resolver o idioma a partir de um `Ticket`, `Contact`, `Whatsapp` ou `Company`.
 visitante. Ele usa uma **lista explícita** de variáveis. Nunca acrescente
 segredo ali, e nunca troque a lista por um despejo do ambiente.
 
+## E-mails automáticos (n8n)
+
+O backend não envia e-mail: `notifyAutomation()` (`src/libs/automation.ts`)
+avisa o fluxo "Tekvosoft · E-mails automáticos" no n8n, que monta o HTML e
+envia pelo Gmail. Configure `N8N_WEBHOOK_URL` e `N8N_WEBHOOK_SECRET` no `.env`.
+Sem a URL nada é enviado e o código de navegador novo fica desligado. Os GIFs
+ficam em `frontend/public/email/`.
+
 ## Convenções entre as pontas
 
 - Mensagens enviadas ao WhatsApp são traduzidas **no backend** com `_t()`. Nunca

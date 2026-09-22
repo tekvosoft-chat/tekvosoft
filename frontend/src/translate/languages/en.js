@@ -721,7 +721,41 @@ const messages = {
           login: "Already have an account? Log in!"
         }
       },
+      forgotPassword: {
+        heading: "Forgot your password?",
+        subheading:
+          "Enter your email and we'll send you a link to create a new password.",
+        email: "Email",
+        submit: "Send link",
+        sentHeading: "Check your email",
+        sent: "If there is an account for {{email}}, you will receive a link to create a new password. It is valid for 30 minutes.",
+        back: "Back to login"
+      },
+      resetPassword: {
+        heading: "Create a new password",
+        subheading: "Use at least 6 characters.",
+        password: "New password",
+        confirm: "Repeat the new password",
+        submit: "Save password",
+        mismatch: "The passwords don't match.",
+        success: "Password changed. Log in with your new password.",
+        invalid: "This link is not valid. Request a new one.",
+        requestNew: "Request a new link"
+      },
       login: {
+        forgot: "Forgot my password",
+        code: {
+          heading: "Confirm it's you",
+          subheading:
+            "We sent a 6-digit code to {{email}}. It is valid for 10 minutes.",
+          label: "Code",
+          submit: "Confirm",
+          resend: "Resend code",
+          resendIn: "Resend in {{seconds}}s",
+          resent: "We sent a new code.",
+          back: "Back",
+          hint: "After that, this browser will be trusted."
+        },
         subheading: "Sign in to continue your conversations.",
         heading: "Welcome back",
         title: "Login",
@@ -843,7 +877,9 @@ const messages = {
           deleteMessage: "Are you sure? This action cannot be undone.",
           disconnectTitle: "Disconnect",
           disconnectMessage:
-            "Are you sure? All conversations and tickets from this connection will be deleted from the system (nothing is deleted on WhatsApp) and you will need to scan the QR Code again.",
+            "Are you sure? You will need to scan the QR Code again to reconnect. Nothing is deleted on WhatsApp.",
+          purge:
+            "Delete everything from this connection: tickets, messages, media and the contacts that only talked through it. This can't be undone.",
           closeTickets: "Close all open tickets from this connection"
         },
         buttons: {
@@ -2410,6 +2446,18 @@ const messages = {
           "Backend is starting up and not ready yet. Retrying automatically."
       },
       backendErrors: {
+        ERR_CODE_NOT_SENT:
+          "We couldn't send the code to your email. Please try again in a moment.",
+        ERR_CODE_EXPIRED:
+          "The code has expired. Log in again to get a new one.",
+        ERR_CODE_INVALID: "Wrong code. Check your email and try again.",
+        ERR_WAIT_TO_RESEND:
+          "Wait a few seconds before requesting another code.",
+        ERR_EMAIL_DISABLED:
+          "Email sending is not configured. Contact the administrator.",
+        ERR_RESET_LINK_EXPIRED:
+          "This link has expired or was already used. Request a new one.",
+        ERR_PASSWORD_TOO_SHORT: "The password must have at least 6 characters.",
         ERR_NOT_A_GROUP: "This conversation is not a group.",
         ERR_GROUP_LEAVE: "Couldn't leave the group right now. Try again.",
         ERR_INVALID_INVITE: "Invalid or expired invite link.",

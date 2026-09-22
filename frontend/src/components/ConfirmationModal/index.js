@@ -41,6 +41,11 @@ const ConfirmationModal = ({
 }) => {
   const [checked, setChecked] = React.useState(false);
 
+  // cada abertura começa desmarcada (a opção pode ser destrutiva)
+  React.useEffect(() => {
+    if (open) setChecked(false);
+  }, [open]);
+
   return (
     <Dialog
       open={open}
@@ -63,7 +68,7 @@ const ConfirmationModal = ({
               />
             }
             label={checkbox}
-            style={{ marginTop: 16 }}
+            style={{ marginTop: 16, alignItems: "flex-start" }}
           />
         )}
       </DialogContent>

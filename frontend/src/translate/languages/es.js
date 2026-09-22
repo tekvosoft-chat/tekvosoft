@@ -724,7 +724,41 @@ const messages = {
           login: "¿Ya tienes una cuenta? ¡Inicia sesión!"
         }
       },
+      forgotPassword: {
+        heading: "¿Olvidaste tu contraseña?",
+        subheading:
+          "Ingresa tu correo y te enviaremos un enlace para crear una contraseña nueva.",
+        email: "Correo",
+        submit: "Enviar enlace",
+        sentHeading: "Revisa tu correo",
+        sent: "Si existe una cuenta con {{email}}, recibirás un enlace para crear una contraseña nueva. Es válido por 30 minutos.",
+        back: "Volver al inicio de sesión"
+      },
+      resetPassword: {
+        heading: "Crea una contraseña nueva",
+        subheading: "Usa al menos 6 caracteres.",
+        password: "Nueva contraseña",
+        confirm: "Repite la nueva contraseña",
+        submit: "Guardar contraseña",
+        mismatch: "Las contraseñas no coinciden.",
+        success: "Contraseña cambiada. Inicia sesión con la nueva.",
+        invalid: "Este enlace no es válido. Solicita uno nuevo.",
+        requestNew: "Solicitar un enlace nuevo"
+      },
       login: {
+        forgot: "Olvidé mi contraseña",
+        code: {
+          heading: "Confirma que eres tú",
+          subheading:
+            "Enviamos un código de 6 dígitos a {{email}}. Es válido por 10 minutos.",
+          label: "Código",
+          submit: "Confirmar",
+          resend: "Reenviar código",
+          resendIn: "Reenviar en {{seconds}}s",
+          resent: "Enviamos un código nuevo.",
+          back: "Volver",
+          hint: "Después de esto, este navegador quedará autorizado."
+        },
         subheading: "Inicia sesión para continuar tus atenciones.",
         heading: "Bienvenido de nuevo",
         title: "Iniciar sesión",
@@ -844,7 +878,9 @@ const messages = {
           deleteMessage: "¿Estás seguro? Esta acción no se puede deshacer.",
           disconnectTitle: "Desconectar",
           disconnectMessage:
-            "¿Estás seguro? Todas las conversaciones y atenciones de esta conexión se eliminarán del sistema (nada se borra en WhatsApp) y tendrás que escanear el código QR nuevamente.",
+            "¿Estás seguro? Tendrás que escanear el código QR de nuevo para reconectar. Nada se borra en WhatsApp.",
+          purge:
+            "Borrar todo lo de esta conexión del sistema: atenciones, mensajes, archivos y los contactos que solo hablaron por ella. No se puede deshacer.",
           closeTickets: "Cerrar todas las atenciones de esta conexión"
         },
         buttons: {
@@ -2341,6 +2377,19 @@ const messages = {
           "El backend se está iniciando y aún no está listo. Reintentando automáticamente."
       },
       backendErrors: {
+        ERR_CODE_NOT_SENT:
+          "No pudimos enviar el código a tu correo. Inténtalo de nuevo en un momento.",
+        ERR_CODE_EXPIRED:
+          "El código expiró. Inicia sesión de nuevo para recibir otro.",
+        ERR_CODE_INVALID:
+          "Código incorrecto. Revisa tu correo e inténtalo de nuevo.",
+        ERR_WAIT_TO_RESEND: "Espera unos segundos para pedir otro código.",
+        ERR_EMAIL_DISABLED:
+          "El envío de correos no está configurado. Habla con el administrador.",
+        ERR_RESET_LINK_EXPIRED:
+          "Este enlace expiró o ya fue usado. Solicita uno nuevo.",
+        ERR_PASSWORD_TOO_SHORT:
+          "La contraseña debe tener al menos 6 caracteres.",
         ERR_NOT_A_GROUP: "Esta conversación no es de un grupo.",
         ERR_GROUP_LEAVE:
           "No se pudo salir del grupo ahora. Inténtalo de nuevo.",
