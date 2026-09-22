@@ -16,6 +16,8 @@ import { FormControlLabel, Switch } from "@material-ui/core";
  * @param {function} onConfirm - Function to be called when the OK button is clicked
  * @param {boolean} rawChildren - If the children is a raw HTML or React Components
  * @param {boolean} okEnabled - If the OK button is enabled
+ * @param {string} checkbox - Label of an optional switch (value goes as 1st arg of onConfirm)
+ * @param {Array} checkboxes - More switches: [{ name, label, hint }] (values go as 2nd arg of onConfirm, by name)
  * @returns {React.Component}
  * @constructor
  * @example
@@ -37,14 +39,32 @@ const ConfirmationModal = ({
   onClose,
   onConfirm,
   okEnabled = true,
-  checkbox
+  checkbox,
+  checkboxes = []
 }) => {
   const [checked, setChecked] = React.useState(false);
+  const [extra, setExtra] = React.useState({});
 
   // cada abertura começa desmarcada (a opção pode ser destrutiva)
   React.useEffect(() => {
-    if (open) setChecked(false);
+    if (open) {
+      setChecked(false);
+      setExtra({});
+    }
   }, [open]);
+
+  const switchLabel = (label, hint) => (
+    <span style={{ display: "block", paddingTop: 9 }}>
+      {label}
+      {hint && (
+        <span
+          style={{ display: "block", marginTop: 2, fontSize: 12, opacity: 0.7 }}
+        >
+          {hint}
+        </span>
+      )}
+    </span>
+  );
 
   return (
     <Dialog
@@ -67,10 +87,27 @@ const ConfirmationModal = ({
                 color="primary"
               />
             }
-            label={checkbox}
-            style={{ marginTop: 16, alignItems: "flex-start" }}
+            label={switchLabel(checkbox)}
+            style={{ display: "flex", marginTop: 16, alignItems: "flex-start" }}
           />
         )}
+        {checkboxes.map(item => (
+          <FormControlLabel
+            key={item.name}
+            control={
+              <Switch
+                checked={!!extra[item.name]}
+                onChange={e =>
+                  setExtra(prev => ({ ...prev, [item.name]: e.target.checked }))
+                }
+                name={item.name}
+                color="primary"
+              />
+            }
+            label={switchLabel(item.label, item.hint)}
+            style={{ display: "flex", marginTop: 8, alignItems: "flex-start" }}
+          />
+        ))}
       </DialogContent>
       <DialogActions>
         <Button
@@ -85,7 +122,7 @@ const ConfirmationModal = ({
           variant="contained"
           onClick={() => {
             onClose(false);
-            onConfirm(checked);
+            onConfirm(checked, extra);
           }}
           color="secondary"
         >

@@ -855,6 +855,9 @@ const messages = {
             "Tem a certeza? Terá de ler o QR Code novamente para voltar a ligar. Nada é apagado no WhatsApp.",
           purge:
             "Apagar tudo desta ligação do sistema: atendimentos, mensagens, ficheiros e os contactos que só falaram por ela. Não é possível desfazer.",
+          purgeOnDelete: "Eliminar todas as conversas da ligação",
+          purgeOnDeleteHint:
+            "Atendimentos, mensagens, ficheiros e os contactos que só falaram por ela. Não é possível desfazer.",
           closetTickets: "Fechar todos os atendimentos abertos desta conexão"
         },
         buttons: {

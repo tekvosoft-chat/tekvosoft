@@ -881,6 +881,9 @@ const messages = {
             "¿Estás seguro? Tendrás que escanear el código QR de nuevo para reconectar. Nada se borra en WhatsApp.",
           purge:
             "Borrar todo lo de esta conexión del sistema: atenciones, mensajes, archivos y los contactos que solo hablaron por ella. No se puede deshacer.",
+          purgeOnDelete: "Eliminar todas las conversaciones de la conexión",
+          purgeOnDeleteHint:
+            "Atenciones, mensajes, archivos y los contactos que solo hablaron por ella. No se puede deshacer.",
           closeTickets: "Cerrar todas las atenciones de esta conexión"
         },
         buttons: {

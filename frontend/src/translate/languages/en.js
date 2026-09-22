@@ -880,6 +880,9 @@ const messages = {
             "Are you sure? You will need to scan the QR Code again to reconnect. Nothing is deleted on WhatsApp.",
           purge:
             "Delete everything from this connection: tickets, messages, media and the contacts that only talked through it. This can't be undone.",
+          purgeOnDelete: "Delete all conversations from this connection",
+          purgeOnDeleteHint:
+            "Tickets, messages, media and the contacts that only talked through it. This can't be undone.",
           closeTickets: "Close all open tickets from this connection"
         },
         buttons: {

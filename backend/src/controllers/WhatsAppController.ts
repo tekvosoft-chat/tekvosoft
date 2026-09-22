@@ -14,6 +14,7 @@ import ShowWhatsAppService from "../services/WhatsappService/ShowWhatsAppService
 import UpdateWhatsAppService from "../services/WhatsappService/UpdateWhatsAppService";
 import AppError from "../errors/AppError";
 import Ticket from "../models/Ticket";
+import PurgeWhatsappDataService from "../services/WhatsappService/PurgeWhatsappDataService";
 import { sendWhatsappUpdate } from "../services/WhatsappService/SocketSendWhatsappUpdate";
 
 interface WhatsappData {
@@ -131,6 +132,8 @@ export const remove = async (
   const { whatsappId } = req.params;
   const { companyId } = req.user;
   const { closeTickets } = req.query;
+  // "excluir todas as conversas": apaga do sistema tudo o que veio por ela
+  const purge = String(req.query.purge) === "true";
 
   const io = getIO();
 
@@ -144,7 +147,9 @@ export const remove = async (
     throw new AppError("ERR_NO_WAPP_FOUND", 404);
   }
 
-  if (closeTickets === "true") {
+  if (purge) {
+    await PurgeWhatsappDataService(whatsapp.id, companyId);
+  } else if (closeTickets === "true") {
     const closedTickets = (
       await Ticket.update(
         { status: "closed" },

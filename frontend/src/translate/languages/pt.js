@@ -880,6 +880,9 @@ const messages = {
             "Tem certeza? Você precisará ler o QR Code novamente para reconectar. Nada é apagado no WhatsApp.",
           purge:
             "Apagar tudo desta conexão do sistema: atendimentos, mensagens, mídias e os contatos que só conversaram por ela. Não dá para desfazer.",
+          purgeOnDelete: "Excluir todas as conversas da conexão",
+          purgeOnDeleteHint:
+            "Atendimentos, mensagens, mídias e os contatos que só conversaram por ela. Não dá para desfazer.",
           closeTickets: "Fechar todos os atendimentos desta conexão"
         },
         buttons: {
