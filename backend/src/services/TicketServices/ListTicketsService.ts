@@ -146,13 +146,14 @@ const ListTicketsService = async ({
 
   if (showAll === "true" && user.profile === "admin") {
     andedOrs.length = 0;
+    // "ver tudo" sem fila escolhida mostra todas as filas. Antes filtrava por
+    // uma lista vazia, então quem administra sem estar vinculado a nenhuma
+    // fila não via atendimento nenhum (o Kanban ficava sempre zerado).
     whereCondition = {
       [Op.and]: andedOrs,
-      queueId: { [Op.or]: [queueIds, null] }
+      ...(queueIds.length ? { queueId: { [Op.or]: [queueIds, null] } } : {}),
+      ...(groupsTab ? { isGroup: groups === "true" } : {})
     };
-    if (groupsTab) {
-      whereCondition.isGroup = groups === "true";
-    }
   }
 
   if (status) {

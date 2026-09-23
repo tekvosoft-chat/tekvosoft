@@ -20,7 +20,6 @@ import {
 import ContactDrawerSkeleton from "../ContactDrawerSkeleton";
 import WhatsMarked from "react-whatsmarked";
 import { CardHeader } from "@material-ui/core";
-import ContactModal from "../ContactModal";
 import { TicketNotes } from "../TicketNotes";
 import { generateColor } from "../../helpers/colorGenerator";
 import { getInitials } from "../../helpers/getInitials";
@@ -118,16 +117,12 @@ const ContactDrawer = ({
   const { getSetting } = useSettings();
   const formattedContactName = formatWhatsappContactName(contact, ticket);
 
-  const [modalOpen, setModalOpen] = useState(false);
-  const [openForm, setOpenForm] = useState(false);
   const [showTags, setShowTags] = useState(false);
 
   useEffect(() => {
     getSetting("tagsMode").then(res => {
       setShowTags(["contact", "both"].includes(res));
     });
-
-    setOpenForm(false);
   }, [open, contact]);
 
   // no celular os dados do contato são uma tela inteira, como no WhatsApp

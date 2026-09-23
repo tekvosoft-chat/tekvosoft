@@ -38,10 +38,10 @@ import { generateColor } from "../../helpers/colorGenerator";
 import { getInitials } from "../../helpers/getInitials";
 import { TicketNotes } from "../TicketNotes";
 import { TagsContainer } from "../TagsContainer";
-import ContactModal from "../ContactModal";
 import ScheduleModal from "../ScheduleModal";
 import ContactMedia from "./ContactMedia";
 import ContactSchedules from "./ContactSchedules";
+import ContactJourney from "../ContactJourney";
 import CloseRoundedIcon from "@material-ui/icons/CloseRounded";
 import EditOutlinedIcon from "@material-ui/icons/EditOutlined";
 import SearchRoundedIcon from "@material-ui/icons/SearchRounded";
@@ -50,12 +50,9 @@ import PersonAddOutlinedIcon from "@material-ui/icons/PersonAddOutlined";
 import BusinessOutlinedIcon from "@material-ui/icons/BusinessOutlined";
 import InstagramIcon from "@material-ui/icons/Instagram";
 import FacebookIcon from "@material-ui/icons/Facebook";
-import Dialog from "@material-ui/core/Dialog";
-import DialogTitle from "@material-ui/core/DialogTitle";
-import DialogContent from "@material-ui/core/DialogContent";
-import DialogActions from "@material-ui/core/DialogActions";
-import Button from "@material-ui/core/Button";
 import TextField from "@material-ui/core/TextField";
+import Switch from "@material-ui/core/Switch";
+import OfflineBoltRoundedIcon from "@material-ui/icons/OfflineBoltRounded";
 import {
   GroupDescription,
   GroupMembers,
@@ -155,6 +152,16 @@ const useStyles = makeStyles(theme => {
       marginTop: 4,
       fontSize: "1.0625rem",
       color: theme.palette.text.secondary
+    },
+    // o lápis edita o nome aqui mesmo, no lugar dele
+    nameField: {
+      maxWidth: 320,
+      "& input": {
+        fontSize: "1.375rem",
+        fontWeight: 700,
+        textAlign: "center",
+        color: theme.palette.text.primary
+      }
     },
     groupCount: { color: t.brand.text, fontWeight: 600 },
     // dados de um membro do grupo, por cima do painel do grupo
@@ -317,8 +324,47 @@ const useStyles = makeStyles(theme => {
   };
 });
 
-const Row = ({ icon, label, value, onClick, chevron, open, brand }) => {
+/**
+ * Linha da ficha. Com "editing" ela vira um campo ali mesmo (no computador
+ * abria uma janela só para mudar uma palavra) — Enter salva, Esc desiste.
+ */
+const Row = ({
+  icon,
+  label,
+  value,
+  onClick,
+  chevron,
+  open,
+  brand,
+  editing,
+  onChangeEdit,
+  onSave,
+  onCancel
+}) => {
   const classes = useStyles();
+  if (editing) {
+    return (
+      <div className={classes.row}>
+        <span className={classes.rowIcon}>{icon}</span>
+        <span className={classes.rowBody}>
+          <span className={classes.rowLabel}>{label}</span>
+          <TextField
+            autoFocus
+            fullWidth
+            size="small"
+            value={value}
+            onChange={e => onChangeEdit(e.target.value)}
+            onBlur={onSave}
+            onKeyDown={e => {
+              if (e.key === "Enter") onSave();
+              if (e.key === "Escape") onCancel();
+            }}
+            InputProps={{ disableUnderline: false }}
+          />
+        </span>
+      </div>
+    );
+  }
   return (
     <ButtonBase
       component={onClick ? "button" : "div"}
@@ -352,7 +398,6 @@ const PhoneContactDetails = ({
   const classes = useStyles();
   const desktop = variant === "desktop";
   const [panelEl, setPanelEl] = useState(null);
-  const [editOpen, setEditOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [schedulesVersion, setSchedulesVersion] = useState(0);
   const { user } = useContext(AuthContext);
@@ -401,18 +446,42 @@ const PhoneContactDetails = ({
   const detailNames = DETAILS.map(([key]) => key);
   const extraOf = key =>
     current?.extraInfo?.find(info => info.name === key)?.value || "";
+  // o que a IA já entendeu do contato abre no mapa da conversa
+  const [journeyOpen, setJourneyOpen] = useState(false);
+
+  const setSyncToPhone = async value => {
+    try {
+      const { data } = await api.put(`/contacts/${current.id}`, {
+        name: current.name,
+        number: current.number,
+        email: current.email || "",
+        syncToPhone: value
+      });
+      setSaved(data);
+      toast.success(
+        value
+          ? "Contato sincronizado com a agenda do celular"
+          : "Sincronização desligada"
+      );
+    } catch (err) {
+      toastError(err);
+    }
+  };
+
   const saveDetail = async () => {
     const { key, value } = editing;
+    const isExtra = !["name", "email"].includes(key);
     const extra = (current?.extraInfo || []).filter(
-      info => key === "email" || info.name !== key
+      info => !isExtra || info.name !== key
     );
     const old = current?.extraInfo?.find(info => info.name === key);
-    if (key !== "email" && value.trim()) {
+    if (isExtra && value.trim()) {
       extra.push({ ...(old?.id ? { id: old.id } : {}), name: key, value });
     }
     try {
       const { data } = await api.put(`/contacts/${current.id}`, {
-        name: current.name,
+        // nome vazio não apaga o que já estava
+        name: key === "name" ? value.trim() || current.name : current.name,
         number: current.number,
         email: key === "email" ? value.trim() : current.email || "",
         extraInfo: extra
@@ -423,6 +492,11 @@ const PhoneContactDetails = ({
       toastError(err);
     }
   };
+  const startNameEdit = () => {
+    if (!current?.id || isGroup) return;
+    setEditing({ key: "name", value: current?.name || "" });
+  };
+
   const { info: groupInfo, reload: reloadGroup } = useGroupInfo(
     ticket?.id,
     open && isGroup
@@ -478,13 +552,17 @@ const PhoneContactDetails = ({
               <Typography className={classes.topTitle} component="h2">
                 {header}
               </Typography>
-              <IconButton
-                className={classes.iconBtn}
-                onClick={() => setEditOpen(true)}
-                aria-label={t("edit")}
-              >
-                <EditOutlinedIcon />
-              </IconButton>
+              {isGroup ? (
+                <span />
+              ) : (
+                <IconButton
+                  className={classes.iconBtn}
+                  onClick={startNameEdit}
+                  aria-label={t("edit")}
+                >
+                  <EditOutlinedIcon />
+                </IconButton>
+              )}
             </div>
           ) : (
             <div className={classes.topBar}>
@@ -498,12 +576,13 @@ const PhoneContactDetails = ({
               <Typography className={classes.topTitle} component="h2">
                 {header}
               </Typography>
-              <ButtonBase
-                className={classes.edit}
-                onClick={() => setEditOpen(true)}
-              >
-                {t("edit")}
-              </ButtonBase>
+              {isGroup ? (
+                <span />
+              ) : (
+                <ButtonBase className={classes.edit} onClick={startNameEdit}>
+                  {t("edit")}
+                </ButtonBase>
+              )}
             </div>
           )}
 
@@ -518,9 +597,34 @@ const PhoneContactDetails = ({
               >
                 {getInitials(name)}
               </Avatar>
-              <Typography className={classes.name} component="h1">
-                {name}
-              </Typography>
+              {editing?.key === "name" ? (
+                <TextField
+                  autoFocus
+                  fullWidth
+                  size="small"
+                  className={classes.nameField}
+                  value={editing.value}
+                  onChange={e =>
+                    setEditing(prev => ({ ...prev, value: e.target.value }))
+                  }
+                  onBlur={saveDetail}
+                  onKeyDown={e => {
+                    if (e.key === "Enter") saveDetail();
+                    if (e.key === "Escape") setEditing(null);
+                  }}
+                  inputProps={{
+                    "aria-label": i18n.t("contactModal.form.name")
+                  }}
+                />
+              ) : (
+                <Typography
+                  className={classes.name}
+                  component="h1"
+                  onDoubleClick={startNameEdit}
+                >
+                  {name}
+                </Typography>
+              )}
               {isGroup ? (
                 <Typography className={classes.number}>
                   {i18n.t("contactDrawer.group.kind")}
@@ -694,10 +798,49 @@ const PhoneContactDetails = ({
                       key={key}
                       icon={icon}
                       label={i18n.t(`contactDrawer.details.${key}`, key)}
-                      value={extraOf(key) || "—"}
+                      value={
+                        editing?.key === key
+                          ? editing.value
+                          : extraOf(key) || "—"
+                      }
+                      editing={editing?.key === key}
+                      onChangeEdit={value =>
+                        setEditing(prev => ({ ...prev, value }))
+                      }
+                      onSave={saveDetail}
+                      onCancel={() => setEditing(null)}
                       onClick={() => setEditing({ key, value: extraOf(key) })}
                     />
                   ))}
+                  <Row
+                    brand
+                    chevron
+                    icon={<OfflineBoltRoundedIcon />}
+                    label="Assistente"
+                    value="Mapa da conversa"
+                    onClick={() => setJourneyOpen(true)}
+                  />
+                  <div className={classes.row}>
+                    <span className={classes.rowIcon}>
+                      <SyncAltRoundedIcon />
+                    </span>
+                    <span className={classes.rowBody}>
+                      <span className={classes.rowLabel}>
+                        Agenda do celular
+                      </span>
+                      <span className={classes.rowValue}>
+                        {current?.syncToPhone
+                          ? "O nome daqui vai para o celular"
+                          : "Não sincroniza"}
+                      </span>
+                    </span>
+                    <Switch
+                      size="small"
+                      color="primary"
+                      checked={!!current?.syncToPhone}
+                      onChange={e => setSyncToPhone(e.target.checked)}
+                    />
+                  </div>
                 </>
               )}
               {ticket && (
@@ -778,48 +921,6 @@ const PhoneContactDetails = ({
         </div>
       </Slide>
 
-      <Dialog
-        open={!!editing}
-        onClose={() => setEditing(null)}
-        maxWidth="xs"
-        fullWidth
-      >
-        <DialogTitle>
-          {editing?.key === "email"
-            ? t("email")
-            : i18n.t(
-                `contactDrawer.details.${editing?.key}`,
-                editing?.key || ""
-              )}
-        </DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            fullWidth
-            variant="outlined"
-            size="small"
-            value={editing?.value || ""}
-            onChange={e =>
-              setEditing(prev => ({ ...prev, value: e.target.value }))
-            }
-            onKeyDown={e => e.key === "Enter" && saveDetail()}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEditing(null)}>
-            {i18n.t("common.cancel")}
-          </Button>
-          <Button
-            color="primary"
-            variant="contained"
-            disableElevation
-            onClick={saveDetail}
-          >
-            {i18n.t("common.save", "Salvar")}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
       <ConfirmationModal
         title="Excluir esta conversa?"
         open={confirmDelete}
@@ -835,16 +936,16 @@ const PhoneContactDetails = ({
           }
         }}
       >
-        Ela some do vuup.me (atendimento e mensagens salvas aqui), como se
-        nunca tivesse existido. Nada é apagado no WhatsApp do cliente nem no seu
+        Ela some do vuup.me (atendimento e mensagens salvas aqui), como se nunca
+        tivesse existido. Nada é apagado no WhatsApp do cliente nem no seu
         celular.
       </ConfirmationModal>
 
-      {editOpen && (
-        <ContactModal
-          open={editOpen}
-          onClose={() => setEditOpen(false)}
-          contactId={contact?.id}
+      {journeyOpen && (
+        <ContactJourney
+          open={journeyOpen}
+          onClose={() => setJourneyOpen(false)}
+          contact={current}
         />
       )}
       {scheduleOpen && (

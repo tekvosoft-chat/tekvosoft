@@ -27,6 +27,8 @@ import { i18n } from "../../translate/i18n";
 import toastError from "../../errors/toastError";
 import api from "../../services/api";
 import { SocketContext } from "../../context/Socket/SocketContext";
+import QueueAiSuggestions from "../../components/QueueAiSuggestions";
+import OfflineBoltRoundedIcon from "@material-ui/icons/OfflineBoltRounded";
 import { alpha, readableOn } from "../../theme/tokens";
 
 /**
@@ -268,11 +270,21 @@ const Queues = () => {
   const [queues, dispatch] = useReducer(reducer, []);
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
+  const [aiOpen, setAiOpen] = useState(false);
   const [queueModalOpen, setQueueModalOpen] = useState(false);
   const [selectedQueue, setSelectedQueue] = useState(null);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const socketManager = useContext(SocketContext);
   const q = (key, opts) => i18n.t(`queuesPage.${key}`, opts);
+
+  const loadQueues = async () => {
+    try {
+      const { data } = await api.get("/queue");
+      dispatch({ type: "LOAD_QUEUES", payload: data });
+    } catch (err) {
+      toastError(err);
+    }
+  };
 
   const loadStats = () =>
     api
@@ -281,16 +293,9 @@ const Queues = () => {
       .catch(() => {});
 
   useEffect(() => {
-    (async () => {
-      try {
-        const { data } = await api.get("/queue");
-        dispatch({ type: "LOAD_QUEUES", payload: data });
-      } catch (err) {
-        toastError(err);
-      }
-      setLoading(false);
-    })();
+    loadQueues().then(() => setLoading(false));
     loadStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -355,6 +360,12 @@ const Queues = () => {
         queueId={selectedQueue?.id}
       />
 
+      <QueueAiSuggestions
+        open={aiOpen}
+        onClose={() => setAiOpen(false)}
+        onCreated={loadQueues}
+      />
+
       <div className={classes.head}>
         <div className={classes.titleBox}>
           <Typography component="h1" className={classes.title}>
@@ -362,6 +373,14 @@ const Queues = () => {
           </Typography>
           <Typography className={classes.subtitle}>{q("subtitle")}</Typography>
         </div>
+        <Button
+          className={classes.add}
+          startIcon={<OfflineBoltRoundedIcon />}
+          onClick={() => setAiOpen(true)}
+          style={{ marginRight: 8 }}
+        >
+          Sugerir com IA
+        </Button>
         <Button
           variant="contained"
           color="primary"

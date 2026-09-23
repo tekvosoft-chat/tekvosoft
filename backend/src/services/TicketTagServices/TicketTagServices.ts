@@ -3,12 +3,14 @@ import Tag from "../../models/Tag";
 import Ticket from "../../models/Ticket";
 import TicketTag from "../../models/TicketTag";
 import ShowTicketService from "../TicketServices/ShowTicketService";
+import { logTicketJourney } from "../../helpers/TicketJourneyLog";
 import { websocketUpdateTicket } from "../TicketServices/UpdateTicketService";
 
 export async function ticketTagAdd(
   ticketId: number,
   tagId: number,
-  companyId?: number
+  companyId?: number,
+  byAi = false
 ) {
   const ticket = await ShowTicketService(ticketId, companyId);
   if (!Ticket) {
@@ -42,6 +44,14 @@ export async function ticketTagAdd(
   if (tag.kanban && tag.queueId && ticket.queueId !== tag.queueId) {
     await ticket.update({ queueId: tag.queueId });
   }
+
+  await logTicketJourney({
+    ticketId: ticket.id,
+    companyId: ticket.companyId,
+    kind: "tag",
+    to: tag.name,
+    byAi
+  });
 
   await ticket.reload();
   websocketUpdateTicket(ticket);

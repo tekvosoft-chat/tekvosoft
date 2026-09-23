@@ -2488,6 +2488,8 @@ const messages = {
           description:
             "Configure los horarios regulares de atención para cada día de la semana.",
           rule: "Regla",
+          empty: "Sin horario definido: la cola atiende a cualquier hora y nadie recibe aviso de fuera de horario.",
+          useDefault: "Usar de lunes a viernes, de 9 a 18",
           days: "Días de la Semana",
           hours: "Horarios",
           closedMessage: "Cerrado (sin horarios definidos)",

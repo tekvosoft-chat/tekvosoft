@@ -147,14 +147,13 @@ const NewContactPanel = ({ onBack, onSaved }) => {
         .filter(Boolean)
         .join(" ");
       const number = `${ddi.replace(/\D/g, "")}${digits}`;
-      const { data } = await api.post("/contacts", { name, number, email: "" });
-      if (sync && data?.id) {
-        try {
-          await api.post(`/contacts/${data.id}/sync-phone`);
-        } catch (err) {
-          toastError(err);
-        }
-      }
+      const { data } = await api.post("/contacts", {
+        name,
+        number,
+        email: "",
+        // marcado: o contato também vai para a agenda do celular
+        syncToPhone: sync
+      });
       toast.success("Contato salvo");
       onSaved?.(data);
     } catch (err) {

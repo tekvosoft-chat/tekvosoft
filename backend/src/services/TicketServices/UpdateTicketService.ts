@@ -16,6 +16,7 @@ import { logger } from "../../utils/logger";
 import { incrementCounter } from "../CounterServices/IncrementCounter";
 import { getJidOf } from "../WbotServices/getJidOf";
 import Queue from "../../models/Queue";
+import { logTicketJourney } from "../../helpers/TicketJourneyLog";
 import { _t } from "../TranslationServices/i18nService";
 
 export interface UpdateTicketData {
@@ -33,6 +34,8 @@ interface Request {
   reqUserId?: number;
   companyId?: number | undefined;
   dontRunChatbot?: boolean;
+  // a mudança veio do assistente de IA (fica marcado no mapa da conversa)
+  journeyByAi?: boolean;
 }
 
 interface Response {
@@ -82,7 +85,8 @@ const UpdateTicketService = async ({
   ticketId,
   reqUserId,
   companyId,
-  dontRunChatbot
+  dontRunChatbot,
+  journeyByAi
 }: Request): Promise<Response> => {
   try {
     if (!companyId && !reqUserId) {
@@ -289,6 +293,51 @@ const UpdateTicketService = async ({
       chatbot,
       queueOptionId
     });
+
+    // anota por onde o atendimento passou (mapa da conversa na ficha)
+    if (oldQueueId !== ticket.queueId) {
+      const [before, after] = await Promise.all([
+        oldQueueId
+          ? Queue.findByPk(oldQueueId, { attributes: ["name"] })
+          : null,
+        ticket.queueId
+          ? Queue.findByPk(ticket.queueId, { attributes: ["name"] })
+          : null
+      ]);
+      await logTicketJourney({
+        ticketId: ticket.id,
+        companyId: ticket.companyId,
+        kind: "queue",
+        from: before?.name || "Sem fila",
+        to: after?.name || "Sem fila",
+        byAi: !!journeyByAi,
+        userId: reqUserId
+      });
+    }
+    if (oldStatus !== ticket.status) {
+      await logTicketJourney({
+        ticketId: ticket.id,
+        companyId: ticket.companyId,
+        kind: "status",
+        from: oldStatus,
+        to: ticket.status,
+        byAi: !!journeyByAi,
+        userId: reqUserId
+      });
+    }
+    if (oldUserId !== ticket.userId) {
+      const owner = ticket.userId
+        ? await User.findByPk(ticket.userId, { attributes: ["name"] })
+        : null;
+      await logTicketJourney({
+        ticketId: ticket.id,
+        companyId: ticket.companyId,
+        kind: "user",
+        to: owner?.name || "Sem responsável",
+        byAi: !!journeyByAi,
+        userId: reqUserId
+      });
+    }
 
     if (oldStatus !== status) {
       if (oldStatus === "closed" && status === "open") {

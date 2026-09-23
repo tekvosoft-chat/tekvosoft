@@ -25,8 +25,14 @@ const VerifyCurrentSchedule = async (
     }
   }
 
-  if (schedule.timezone) {
+  if (schedule?.timezone) {
     return { inActivity: checkOpenHours(schedule) };
+  }
+
+  // formato antigo é uma lista de dias; sem lista (ou com lista vazia) não há
+  // expediente configurado, e quem não configurou atende a qualquer hora
+  if (!Array.isArray(schedule) || schedule.length === 0) {
+    return { inActivity: true };
   }
 
   if (queueId === null || queueId === undefined) {

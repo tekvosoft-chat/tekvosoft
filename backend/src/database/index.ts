@@ -21,6 +21,7 @@ import Help from "../models/Help";
 import SupportTicket from "../models/SupportTicket";
 import UserDevice from "../models/UserDevice";
 import CalendarEvent from "../models/CalendarEvent";
+import TicketJourney from "../models/TicketJourney";
 import SupportMessage from "../models/SupportMessage";
 import TicketTraking from "../models/TicketTraking";
 import Counter from "../models/Counter";
@@ -104,7 +105,8 @@ const models = [
   SupportTicket,
   SupportMessage,
   UserDevice,
-  CalendarEvent
+  CalendarEvent,
+  TicketJourney
 ];
 
 sequelize.addModels(models);

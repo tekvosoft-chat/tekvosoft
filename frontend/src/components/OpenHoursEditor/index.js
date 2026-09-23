@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   makeStyles,
   Paper,
@@ -113,14 +113,8 @@ const OpenHoursEditor = ({ value = {}, onChange }) => {
   const classes = useStyles();
   const [activeTab, setActiveTab] = useState(0);
 
-  const [weeklyRules, setWeeklyRules] = useState(
-    value.weeklyRules || [
-      {
-        days: ["mon", "tue", "wed", "thu", "fri"],
-        hours: [{ from: "09:00", to: "18:00" }]
-      }
-    ]
-  );
+  // sem regra nenhuma = horário não definido, e não "fechado o tempo todo"
+  const [weeklyRules, setWeeklyRules] = useState(value.weeklyRules || []);
 
   const [overrides, setOverrides] = useState(value.overrides || []);
   const [timezone, setTimezone] = useState(
@@ -130,7 +124,15 @@ const OpenHoursEditor = ({ value = {}, onChange }) => {
   // Gera os nomes dos dias da semana usando date-fns com locale do navegador
   const DAYS_MAP = useMemo(() => getDayNames(), []);
 
+  // Só avisa quem chamou depois de uma mudança de verdade. Avisar na montagem
+  // gravava um expediente que ninguém pediu: bastava abrir a aba de horários
+  // para a fila passar a responder "estamos fora do horário" à noite.
+  const mounted = useRef(false);
   useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
     if (onChange) {
       onChange({
         weeklyRules,
@@ -406,6 +408,29 @@ const OpenHoursEditor = ({ value = {}, onChange }) => {
                 </Grid>
               </Paper>
             ))}
+
+            {weeklyRules.length === 0 && (
+              <Paper className={classes.ruleCard} elevation={0}>
+                <Typography variant="body2" color="textSecondary" gutterBottom>
+                  {i18n.t("openHours.weekly.empty")}
+                </Typography>
+                <Button
+                  size="small"
+                  color="primary"
+                  startIcon={<AddIcon />}
+                  onClick={() =>
+                    setWeeklyRules([
+                      {
+                        days: ["mon", "tue", "wed", "thu", "fri"],
+                        hours: [{ from: "09:00", to: "18:00" }]
+                      }
+                    ])
+                  }
+                >
+                  {i18n.t("openHours.weekly.useDefault")}
+                </Button>
+              </Paper>
+            )}
 
             <Button
               variant="outlined"

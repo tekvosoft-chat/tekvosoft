@@ -2565,6 +2565,8 @@ const messages = {
           description:
             "Configure os horários regulares de funcionamento para cada dia da semana.",
           rule: "Regra",
+          empty: "Sem horário definido: a fila atende a qualquer hora e ninguém recebe aviso de fora do expediente.",
+          useDefault: "Usar segunda a sexta, das 9h às 18h",
           days: "Dias da Semana",
           hours: "Horários",
           closedMessage: "Fechado (sem horários definidos)",

@@ -33,6 +33,9 @@ import { getWbot } from "../libs/wbot";
 import GetDefaultWhatsApp from "../helpers/GetDefaultWhatsApp";
 import { csvDetectDelimiter } from "../helpers/csvDetectDelimiter";
 import { cacheLayer } from "../libs/cache";
+import SyncContactToPhone, {
+  trySyncContactToPhone
+} from "../services/ContactServices/SyncContactToPhone";
 import { getJidOf } from "../services/WbotServices/getJidOf";
 
 type IndexQuery = {
@@ -119,6 +122,12 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   }
 
   const io = getIO();
+  // marcou "sincronizar com a agenda do celular" no cadastro
+  if (req.body?.syncToPhone && !contact.isGroup) {
+    await contact.update({ syncToPhone: true });
+    await trySyncContactToPhone(contact);
+  }
+
   io.to(`company-${companyId}-mainchannel`).emit(
     `company-${companyId}-contact`,
     {
@@ -487,31 +496,10 @@ export const syncToPhone = async (
   const { companyId } = req.user;
 
   const contact = await ShowContactService(contactId, companyId);
-  if (contact.isGroup) {
-    throw new AppError("ERR_CONTACT_IS_GROUP", 400);
-  }
-  const number = String(contact.number || "").replace(/\D/g, "");
-  if (number.length < 8) {
-    throw new AppError("ERR_INVALID_NUMBER", 400);
-  }
+  const jid = await SyncContactToPhone(contact);
+  if (!contact.syncToPhone) await contact.update({ syncToPhone: true });
 
-  const whatsapp = await GetDefaultWhatsApp(companyId);
-  const wbot = getWbot(whatsapp.id);
-
-  const [onWhatsApp] = (await wbot.onWhatsApp(number)) || [];
-  if (!onWhatsApp?.exists) {
-    throw new AppError("ERR_WAPP_INVALID_CONTACT", 400);
-  }
-
-  const fullName = (contact.name || number).trim();
-  await wbot.addOrEditContact(onWhatsApp.jid, {
-    fullName,
-    firstName: fullName.split(" ")[0],
-    saveOnPrimaryAddressbook: true
-  });
-
-  logger.info({ contactId, companyId }, "Contact saved to phone addressbook");
-  return res.status(200).json({ synced: true, jid: onWhatsApp.jid });
+  return res.status(200).json({ synced: true, jid });
 };
 
 /**

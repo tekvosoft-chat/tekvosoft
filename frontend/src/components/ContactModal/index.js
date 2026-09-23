@@ -100,6 +100,7 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
       try {
         const { data } = await api.get(`/contacts/${contactId}`);
         setContact(data);
+        setSyncPhone(!!data.syncToPhone);
       } catch (err) {
         toastError(err);
       }
@@ -113,34 +114,20 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
     setContact(initialState);
   };
 
-  // salvar também na agenda do celular conectado
-  const [syncPhone, setSyncPhone] = useState(true);
-  const [syncing, setSyncing] = useState(false);
-
-  const syncToPhone = async id => {
-    setSyncing(true);
-    try {
-      await api.post(`/contacts/${id}/sync-phone`);
-      toast.success(
-        i18n.t("contactModal.syncPhone.done", "Contato salvo no celular 📱")
-      );
-    } catch (err) {
-      toastError(err);
-    }
-    setSyncing(false);
-  };
+  // salvar também na agenda do celular conectado (vai junto no salvar)
+  const [syncPhone, setSyncPhone] = useState(false);
 
   const handleSaveContact = async values => {
     try {
+      const payload = { ...values, syncToPhone: syncPhone };
       if (contactId) {
-        await api.put(`/contacts/${contactId}`, values);
+        await api.put(`/contacts/${contactId}`, payload);
         handleClose();
       } else {
-        const { data } = await api.post("/contacts", values);
+        const { data } = await api.post("/contacts", payload);
         if (onSave) {
           onSave(data);
         }
-        if (syncPhone && data?.id && !data.isGroup) syncToPhone(data.id);
         handleClose();
       }
       toast.success(i18n.t("contactModal.success"));
@@ -299,36 +286,18 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
                 )}
               </DialogContent>
               <DialogActions>
-                {contactId ? (
-                  <Button
-                    color="primary"
-                    disabled={syncing || isSubmitting}
-                    onClick={() => syncToPhone(contactId)}
-                    style={{ marginRight: "auto", textTransform: "none" }}
-                  >
-                    📱{" "}
-                    {i18n.t(
-                      "contactModal.syncPhone.button",
-                      "Vincular com o celular"
-                    )}
-                  </Button>
-                ) : (
-                  <FormControlLabel
-                    style={{ marginRight: "auto", marginLeft: 4 }}
-                    control={
-                      <Switch
-                        color="primary"
-                        size="small"
-                        checked={syncPhone}
-                        onChange={e => setSyncPhone(e.target.checked)}
-                      />
-                    }
-                    label={i18n.t(
-                      "contactModal.syncPhone.toggle",
-                      "Salvar também no celular"
-                    )}
-                  />
-                )}
+                <FormControlLabel
+                  style={{ marginRight: "auto", marginLeft: 4 }}
+                  control={
+                    <Switch
+                      color="primary"
+                      size="small"
+                      checked={syncPhone}
+                      onChange={e => setSyncPhone(e.target.checked)}
+                    />
+                  }
+                  label="Sincronizar com a agenda do celular"
+                />
                 <Button
                   onClick={handleClose}
                   color="secondary"

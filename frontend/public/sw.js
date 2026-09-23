@@ -44,7 +44,7 @@ self.addEventListener("push", event => {
       silent: !!data.silent,
       // Android: o celular vibra com o mesmo padrão de "mensagem nova" do app
       vibrate: data.silent ? undefined : [18, 110, 18],
-      timestamp: Date.now(),
+      // sem "timestamp": o aviso não mostra a hora, só quem mandou e o texto
       data: { url }
     });
   };

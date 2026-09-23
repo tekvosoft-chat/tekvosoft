@@ -35,14 +35,24 @@ function isNowInRange(now: DateTime, hr: HourRange): boolean {
   return now >= from && now < to;
 }
 
+/** Tem expediente configurado? Sem regra nenhuma, não há o que cobrar. */
+export function hasOpenHours(data: OpenHoursData): boolean {
+  return !!(data?.weeklyRules?.length || data?.overrides?.length);
+}
+
 export function checkOpenHours(data: OpenHoursData): boolean {
+  // horário não definido é "atende sempre", nunca "fechado o tempo todo":
+  // do contrário uma fila recém-criada responderia "estamos fora do horário"
+  // para todo mundo que mandasse mensagem
+  if (!hasOpenHours(data)) return true;
+
   const now = DateTime.now().setZone(data.timezone);
   const todayStr = now.toISODate(); // e.g., "2026-02-16"
   const todayMonthDay = now.toFormat("MM-dd"); // e.g., "12-25"
   const weekday = now.toFormat("ccc").toLowerCase().slice(0, 3); // "mon", "tue", etc.
 
   // 1. Check for override
-  const override: Override = data.overrides.find(o => {
+  const override: Override = (data.overrides || []).find(o => {
     if (o.repeat === "yearly") {
       return o.date.slice(5) === todayMonthDay;
     }
@@ -59,6 +69,9 @@ export function checkOpenHours(data: OpenHoursData): boolean {
   }
 
   // 2. Check weekly rules
+  // só exceções cadastradas (feriados, por exemplo): fora delas, atende
+  if (!data.weeklyRules?.length) return true;
+
   // eslint-disable-next-line no-restricted-syntax
   for (const rule of data.weeklyRules) {
     if (rule.days.includes(weekday)) {

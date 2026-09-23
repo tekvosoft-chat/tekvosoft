@@ -1,6 +1,7 @@
 import AppError from "../../errors/AppError";
 import { getIO } from "../../libs/socket";
 import Contact from "../../models/Contact";
+import { trySyncContactToPhone } from "./SyncContactToPhone";
 import ContactCustomField from "../../models/ContactCustomField";
 
 interface ExtraInfo {
@@ -15,6 +16,7 @@ interface ContactData {
   extraInfo?: ExtraInfo[];
   disableBot?: boolean;
   language?: string;
+  syncToPhone?: boolean;
 }
 
 interface Request {
@@ -47,7 +49,8 @@ const UpdateContactService = async ({
   contactId,
   companyId
 }: Request): Promise<Contact> => {
-  const { email, name, number, extraInfo, disableBot, language } = contactData;
+  const { email, name, number, extraInfo, disableBot, language, syncToPhone } =
+    contactData;
 
   const contact = await Contact.findOne({
     where: { id: contactId },
@@ -58,7 +61,9 @@ const UpdateContactService = async ({
       "email",
       "companyId",
       "profilePicUrl",
-      "language"
+      "language",
+      "syncToPhone",
+      "isGroup"
     ],
     include: ["tags", "extraInfo"]
   });
@@ -89,13 +94,16 @@ const UpdateContactService = async ({
     );
   }
 
+  const nameChanged = !!name && name !== contact.name;
+
   try {
     await contact.update({
       name,
       number,
       email,
       disableBot,
-      language
+      language,
+      ...(syncToPhone === undefined ? {} : { syncToPhone })
     });
   } catch (e) {
     if (e.original?.constraint === "number_companyid_unique") {
@@ -105,9 +113,24 @@ const UpdateContactService = async ({
   }
 
   await contact.reload({
-    attributes: ["id", "name", "number", "email", "profilePicUrl", "language"],
+    attributes: [
+      "id",
+      "name",
+      "number",
+      "email",
+      "profilePicUrl",
+      "language",
+      "syncToPhone",
+      "isGroup",
+      "companyId"
+    ],
     include: ["tags", "extraInfo"]
   });
+
+  // nome mudou (ou acabou de ligar a opção): leva para a agenda do celular
+  if (contact.syncToPhone && (nameChanged || syncToPhone === true)) {
+    await trySyncContactToPhone(contact);
+  }
 
   return contact;
 };

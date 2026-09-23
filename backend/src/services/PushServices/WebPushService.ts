@@ -126,7 +126,8 @@ const previewOf = (message: Message): string => {
     const caption = body && !/\.[a-z0-9]{2,5}$/i.test(body) ? body : "";
     return caption ? `${label} · ${caption}` : label;
   }
-  return body.length > 180 ? `${body.slice(0, 177)}…` : body;
+  // aviso curto: o WhatsApp também corta (o texto inteiro está no app)
+  return body.length > 90 ? `${body.slice(0, 87)}…` : body;
 };
 
 /**

@@ -2557,6 +2557,8 @@ const messages = {
           description:
             "Configure regular business hours for each day of the week.",
           rule: "Rule",
+          empty: "No hours set: the queue answers at any time and nobody gets an out-of-hours reply.",
+          useDefault: "Use Monday to Friday, 9am to 6pm",
           days: "Days of the Week",
           hours: "Hours",
           closedMessage: "Closed (no hours defined)",

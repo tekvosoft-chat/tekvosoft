@@ -17,6 +17,7 @@ import { alpha } from "@material-ui/core/styles";
 import LocalOfferOutlinedIcon from "@material-ui/icons/LocalOfferOutlined";
 
 import ContactDrawer from "../ContactDrawer";
+import AiCopilot from "../AiCopilot";
 import MessageInput from "../MessageInputCustom/";
 import TicketHeader from "../TicketHeader";
 import TicketInfo from "../TicketInfo";
@@ -163,6 +164,7 @@ const Ticket = () => {
   const { user } = useContext(AuthContext);
 
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [copilotOpen, setCopilotOpen] = useState(false);
   const wrapperRef = useRef(null);
   const topRef = useRef(null);
   const bottomRef = useRef(null);
@@ -349,6 +351,11 @@ const Ticket = () => {
           markAsRead={true}
         ></MessagesList>
         <div ref={bottomRef} className={classes.phoneBottom}>
+          <AiCopilot
+            open={copilotOpen}
+            onClose={() => setCopilotOpen(false)}
+            ticket={ticket}
+          />
           <MessageInput ticket={ticket} showTabGroups />
         </div>
       </>
@@ -398,6 +405,8 @@ const Ticket = () => {
             <TicketActionButtons
               ticket={ticket}
               showTabGroups={showTabGroups}
+              onCopilot={() => setCopilotOpen(open => !open)}
+              copilotOpen={copilotOpen}
             />
           </TicketHeader>
           {(!isPhone || tagsOpen) && (

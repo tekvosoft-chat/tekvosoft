@@ -59,6 +59,11 @@ class Contact extends Model {
   @Column
   isGroup: boolean;
 
+  // salvar também na agenda do celular conectado (e acompanhar o nome)
+  @Default(false)
+  @Column
+  syncToPhone: boolean;
+
   @Default(false)
   @Column
   disableBot: boolean;

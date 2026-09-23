@@ -6,6 +6,7 @@ import { Button, IconButton, useMediaQuery } from "@material-ui/core";
 import { toast } from "react-toastify";
 import CheckRoundedIcon from "@material-ui/icons/CheckRounded";
 import SwapHorizRoundedIcon from "@material-ui/icons/SwapHorizRounded";
+import OfflineBoltRoundedIcon from "@material-ui/icons/OfflineBoltRounded";
 import TransferTicketPanel from "../TransferTicketPanel";
 import { MoreVert, Replay } from "@material-ui/icons";
 
@@ -102,7 +103,12 @@ const useStyles = makeStyles(theme => {
   };
 });
 
-const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
+const TicketActionButtonsCustom = ({
+  ticket,
+  showTabGroups,
+  onCopilot,
+  copilotOpen
+}) => {
   const classes = useStyles();
   const theme = useTheme();
   const isPhone = useMediaQuery(theme.breakpoints.down("xs"));
@@ -223,6 +229,18 @@ const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
                 </IconButton>
               </Tooltip>
             )}
+
+          {onCopilot && (
+            <Tooltip title="Assistente de IA">
+              <IconButton
+                onClick={onCopilot}
+                aria-label="Assistente de IA"
+                color={copilotOpen ? "primary" : "default"}
+              >
+                <OfflineBoltRoundedIcon />
+              </IconButton>
+            </Tooltip>
+          )}
 
           {canHandle && !isPhone && (
             <Tooltip title={a("transferHint")}>
