@@ -31,6 +31,8 @@ import toastError from "../../errors/toastError";
  * chegar mensagem nova (o botão de recarregar força um novo).
  */
 export const SUGGESTION_EVENT = "tkv:ai-suggestion";
+/** o que a pessoa pediu no menu da carinha: "summary" ou "reply" */
+export const AI_ACTION_EVENT = "tkv:ai-action";
 
 const MOOD = {
   good: { label: "indo bem", color: "#12864B", emoji: "🙂" },
@@ -208,7 +210,7 @@ const useStyles = makeStyles(theme => {
   };
 });
 
-const AiCopilot = ({ open, onClose, ticket }) => {
+const AiCopilot = ({ open, onClose, ticket, focus }) => {
   const classes = useStyles();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -329,21 +331,21 @@ const AiCopilot = ({ open, onClose, ticket }) => {
                 )}
               </div>
 
-              {data.subject && (
+              {data.subject && focus !== "reply" && (
                 <div className={classes.subject}>{data.subject}</div>
               )}
-              {data.summary && (
+              {data.summary && focus !== "reply" && (
                 <div className={classes.text}>{data.summary}</div>
               )}
 
-              {data.nextStep && (
+              {data.nextStep && focus !== "reply" && (
                 <div className={classes.next}>
                   <ArrowForwardRoundedIcon />
                   {data.nextStep}
                 </div>
               )}
 
-              {!!data.replies?.length && (
+              {!!data.replies?.length && focus !== "summary" && (
                 <>
                   <div className={classes.label}>
                     Posso responder assim — toque para pôr na barra

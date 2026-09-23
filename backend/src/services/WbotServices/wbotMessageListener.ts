@@ -45,6 +45,10 @@ import TicketTraking from "../../models/TicketTraking";
 import UserRating from "../../models/UserRating";
 import SendWhatsAppMessage from "./SendWhatsAppMessage";
 import { handleQueueAi } from "../AiServices/QueueAiAgent";
+import {
+  decideQueue,
+  smartReceptionEnabled
+} from "../AiServices/SmartReception";
 import Queue from "../../models/Queue";
 import QueueOption from "../../models/QueueOption";
 import VerifyCurrentSchedule, {
@@ -1315,6 +1319,27 @@ const verifyQueue = async (
   if (queues.length === 1) {
     await startQueue(wbot, ticket, head(queues), false);
     return;
+  }
+
+  // recepção inteligente: em vez do menu numerado, a IA lê o que a pessoa
+  // escreveu e manda direto para a fila que resolve aquilo
+  if (await smartReceptionEnabled(ticket.companyId)) {
+    const incoming = msg ? await getBodyMessage(msg?.message) : "";
+    const decision = await decideQueue(ticket, queues, incoming || "");
+    if (decision) {
+      if (decision.message) {
+        const sent = await wbot.sendMessage(getJidOf(ticket), {
+          text: formatBody(decision.message, ticket)
+        });
+        await verifyMessage(sent, ticket, ticket.contact);
+      }
+      if (decision.queueId) {
+        const chosen = queues.find(queue => queue.id === decision.queueId);
+        await startQueue(wbot, ticket, chosen, false);
+      }
+      return;
+    }
+    // sem chave de IA ou falha na decisão: cai no menu de sempre
   }
 
   const showNumericIcons =

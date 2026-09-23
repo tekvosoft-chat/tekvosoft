@@ -57,6 +57,7 @@ import MediaGalleryLightbox, {
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
 import { SocketContext } from "../../context/Socket/SocketContext";
+import LockRoundedIcon from "@material-ui/icons/LockRounded";
 import { i18n } from "../../translate/i18n";
 import vCard from "vcard-parser";
 import { generateColor } from "../../helpers/colorGenerator";
@@ -304,6 +305,32 @@ const useStyles = makeStyles(theme => ({
     objectFit: "cover"
   },
 
+  // recado da equipe: fica na conversa, mas ninguém de fora vê
+  privateBubble: {
+    // post-it: creme nos dois temas, igual à barra de envio
+    // !important: o balão da direita também define cor, e vence por ordem
+    backgroundColor: "#FBE4AE !important",
+    color: "#3B2D08",
+    border: "1px solid #EFD292",
+    // tudo dentro do post-it é escrito em tinta escura: no tema escuro o
+    // texto, a hora e o cadeado sairiam claros e sumiriam no amarelo
+    "& $textContentItem, & $textContentItemEdited, & $mediaCaption, & a": {
+      color: "#3B2D08"
+    },
+    // a mensagem citada dentro do post-it: clara por baixo, tinta escura
+    "& $quotedContainerRight": {
+      backgroundColor: "rgba(255, 255, 255, 0.55)"
+    },
+    "& $quotedMsg, & $quotedMsg *": { color: "#3B2D08" },
+    "& $timestamp, & $privateMark": { color: "rgba(59, 45, 8, 0.7)" }
+  },
+  privateMark: {
+    display: "inline-flex",
+    alignItems: "center",
+    marginRight: 4,
+    color: theme.palette.text.secondary,
+    "& svg": { fontSize: 13 }
+  },
   messageRight: {
     flexShrink: 0,
     marginLeft: 20,
@@ -2612,7 +2639,11 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
       );
     }
 
-    if (!document || message.mediaType === "video") {
+    // sem o pacote cru do WhatsApp (anexo privado, por exemplo) quem manda é
+    // o mediaType: "application" é documento, e não um vídeo sem imagem
+    const looksLikeDocument = !document && message.mediaType === "application";
+
+    if (!looksLikeDocument && (!document || message.mediaType === "video")) {
       return (
         <>
           <div
@@ -2722,7 +2753,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
               </Button>
             </div>
           )}
-          {message.body !== document?.fileName && (
+          {message.body !== fileName && (
             <>
               <div
                 className={[
@@ -3665,7 +3696,8 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                     replyContext?.replyingMessage?.id === message.id,
                   [classes.justArrived]:
                     !message.clientKey &&
-                    Date.now() - new Date(message.createdAt).getTime() < 6000
+                    Date.now() - new Date(message.createdAt).getTime() < 6000,
+                  [classes.privateBubble]: !!message.isPrivate
                 })
               ]}
               title={message.queueId && message.queue?.name}
@@ -3765,8 +3797,20 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                   {message.isEdited && (
                     <span> {i18n.t("message.edited")} </span>
                   )}
+                  {message.isPrivate && (
+                    <Tooltip
+                      title={i18n.t(
+                        "message.private",
+                        "Só a equipe vê esta mensagem"
+                      )}
+                    >
+                      <span className={classes.privateMark}>
+                        <LockRoundedIcon />
+                      </span>
+                    </Tooltip>
+                  )}
                   {format(parseISO(message.createdAt), "HH:mm")}
-                  {renderMessageAck(message)}
+                  {!message.isPrivate && renderMessageAck(message)}
                 </span>
               </div>
               {message.mediaUrl && checkMessageMedia(message, data, isSticker)}

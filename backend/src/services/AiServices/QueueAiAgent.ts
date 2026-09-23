@@ -5,11 +5,11 @@ import Queue from "../../models/Queue";
 import Message from "../../models/Message";
 import Company from "../../models/Company";
 import { GetCompanySetting } from "../../helpers/CheckSettings";
-import { cacheLayer } from "../../libs/cache";
 import { logger } from "../../utils/logger";
 import Tag from "../../models/Tag";
 import TicketTag from "../../models/TicketTag";
 import SendWhatsAppMessage from "../WbotServices/SendWhatsAppMessage";
+import { isQueueAiPaused, pauseQueueAi } from "../../helpers/QueueAiPause";
 
 /**
  * Assistente de IA das filas.
@@ -79,12 +79,6 @@ export const parseAiConfig = (raw?: string | null): QueueAiConfig => {
     return {};
   }
 };
-
-const pausedKey = (ticketId: number) => `ai:paused:${ticketId}`;
-
-/** A equipe assumiu ou a IA passou a vez: não responde mais neste ticket. */
-export const pauseQueueAi = (ticketId: number) =>
-  cacheLayer.set(pausedKey(ticketId), "1", "EX", 7 * 24 * 3600);
 
 /**
  * A única ferramenta da IA: marcar na agenda. Sem ela a IA "combinava" um
@@ -280,7 +274,7 @@ export const handleQueueAi = async (
 
   const queue = await Queue.findByPk(ticket.queueId);
   if (!queue?.aiEnabled) return;
-  if (await cacheLayer.get(pausedKey(ticket.id))) return;
+  if (await isQueueAiPaused(ticket.id)) return;
 
   const apiKey = await GetCompanySetting(ticket.companyId, "aiAgentApiKey", "");
   if (!apiKey) return;

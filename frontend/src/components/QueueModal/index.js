@@ -92,6 +92,7 @@ const QueueModal = ({ open, onClose, queueId }) => {
   const initialState = {
     name: "",
     color: "",
+    description: "",
     greetingMessage: "",
     outOfHoursMessage: ""
   };
@@ -332,6 +333,18 @@ const QueueModal = ({ open, onClose, queueId }) => {
                       }}
                     />
                     <div style={{ marginTop: 5 }}>
+                      <Field
+                        as={TextField}
+                        label="O que esta fila resolve"
+                        placeholder="Ex.: preços, planos e propostas para quem ainda não é cliente"
+                        fullWidth
+                        name="description"
+                        spellCheck={true}
+                        helperText="Usado pela recepção inteligente para mandar cada pessoa para a fila certa"
+                        variant="outlined"
+                        margin="dense"
+                        inputProps={{ maxLength: 300 }}
+                      />
                       <Field
                         as={TextField}
                         label={i18n.t("queueModal.form.greetingMessage")}

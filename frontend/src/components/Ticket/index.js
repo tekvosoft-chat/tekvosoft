@@ -17,7 +17,7 @@ import { alpha } from "@material-ui/core/styles";
 import LocalOfferOutlinedIcon from "@material-ui/icons/LocalOfferOutlined";
 
 import ContactDrawer from "../ContactDrawer";
-import AiCopilot from "../AiCopilot";
+import AiCopilot, { AI_ACTION_EVENT } from "../AiCopilot";
 import MessageInput from "../MessageInputCustom/";
 import TicketHeader from "../TicketHeader";
 import TicketInfo from "../TicketInfo";
@@ -165,6 +165,17 @@ const Ticket = () => {
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [copilotOpen, setCopilotOpen] = useState(false);
+  // o que a carinha da barra pediu: só o resumo, só as respostas, ou tudo
+  const [copilotFocus, setCopilotFocus] = useState(null);
+
+  useEffect(() => {
+    const onAction = event => {
+      setCopilotFocus(event.detail || null);
+      setCopilotOpen(true);
+    };
+    window.addEventListener(AI_ACTION_EVENT, onAction);
+    return () => window.removeEventListener(AI_ACTION_EVENT, onAction);
+  }, []);
   const wrapperRef = useRef(null);
   const topRef = useRef(null);
   const bottomRef = useRef(null);
@@ -355,6 +366,7 @@ const Ticket = () => {
             open={copilotOpen}
             onClose={() => setCopilotOpen(false)}
             ticket={ticket}
+            focus={copilotFocus}
           />
           <MessageInput ticket={ticket} showTabGroups />
         </div>
@@ -405,8 +417,6 @@ const Ticket = () => {
             <TicketActionButtons
               ticket={ticket}
               showTabGroups={showTabGroups}
-              onCopilot={() => setCopilotOpen(open => !open)}
-              copilotOpen={copilotOpen}
             />
           </TicketHeader>
           {(!isPhone || tagsOpen) && (

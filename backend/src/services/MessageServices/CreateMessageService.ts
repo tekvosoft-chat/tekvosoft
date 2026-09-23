@@ -22,6 +22,8 @@ interface MessageData {
   ack?: number;
   queueId?: number;
   channel?: string;
+  isPrivate?: boolean;
+  quotedMsgId?: string;
 }
 interface Request {
   messageData: MessageData;

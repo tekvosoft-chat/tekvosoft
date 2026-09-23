@@ -24,6 +24,10 @@ import QueueModal from "../../components/QueueModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import { i18nToast } from "../../helpers/i18nToast";
 import { i18n } from "../../translate/i18n";
+import Switch from "@material-ui/core/Switch";
+import Paper from "@material-ui/core/Paper";
+import { toast } from "react-toastify";
+import useSettings from "../../hooks/useSettings";
 import toastError from "../../errors/toastError";
 import api from "../../services/api";
 import { SocketContext } from "../../context/Socket/SocketContext";
@@ -70,6 +74,37 @@ const useStyles = makeStyles(theme => {
       overflowY: "auto",
       ...theme.scrollbarStyles,
       "& > div > *": { flexShrink: 0 }
+    },
+    reception: {
+      display: "flex",
+      alignItems: "center",
+      gap: 14,
+      padding: "14px 18px",
+      marginBottom: 18,
+      borderRadius: 16,
+      border: `1px solid ${theme.palette.tkv.border}`,
+      backgroundColor: theme.palette.tkv.surface
+    },
+    receptionIcon: {
+      flex: "none",
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: theme.palette.tkv.brand.textSoft,
+      color: theme.palette.tkv.brand.text
+    },
+    receptionText: { flex: 1, minWidth: 0 },
+    receptionTitle: {
+      fontSize: "0.9375rem",
+      fontWeight: 700,
+      color: theme.palette.text.primary
+    },
+    receptionHint: {
+      fontSize: "0.8125rem",
+      color: theme.palette.text.secondary
     },
     head: {
       display: "flex",
@@ -271,11 +306,36 @@ const Queues = () => {
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
   const [aiOpen, setAiOpen] = useState(false);
+  const [reception, setReception] = useState(false);
   const [queueModalOpen, setQueueModalOpen] = useState(false);
   const [selectedQueue, setSelectedQueue] = useState(null);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const socketManager = useContext(SocketContext);
   const q = (key, opts) => i18n.t(`queuesPage.${key}`, opts);
+  const { getSetting, update: updateSetting } = useSettings();
+
+  useEffect(() => {
+    getSetting("smartReception", "disabled").then(value =>
+      setReception(value === "enabled")
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const saveReception = async value => {
+    setReception(value);
+    try {
+      await updateSetting({
+        key: "smartReception",
+        value: value ? "enabled" : "disabled"
+      });
+      toast.success(
+        value ? "Recepção inteligente ligada" : "Recepção inteligente desligada"
+      );
+    } catch (err) {
+      setReception(!value);
+      toastError(err);
+    }
+  };
 
   const loadQueues = async () => {
     try {
@@ -391,6 +451,27 @@ const Queues = () => {
           {i18n.t("queues.buttons.add")}
         </Button>
       </div>
+
+      {/* recepção inteligente: quem chega é recebido pela IA e já vai para a
+          fila que resolve o assunto, no lugar do menu numerado */}
+      <Paper elevation={0} className={classes.reception}>
+        <span className={classes.receptionIcon}>
+          <OfflineBoltRoundedIcon />
+        </span>
+        <div className={classes.receptionText}>
+          <div className={classes.receptionTitle}>Recepção inteligente</div>
+          <div className={classes.receptionHint}>
+            Quem chamar é recebido pela IA, que lê a descrição das filas e
+            encaminha direto para a certa. Precisa da chave em Configurações
+            &gt; Assistente de IA das filas e de uma descrição em cada fila.
+          </div>
+        </div>
+        <Switch
+          color="primary"
+          checked={reception}
+          onChange={e => saveReception(e.target.checked)}
+        />
+      </Paper>
 
       {loading ? (
         <PageLoader />

@@ -71,7 +71,8 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     outOfHoursMessage,
     schedules,
     aiEnabled,
-    aiConfig
+    aiConfig,
+    description
   } = req.body;
   const { companyId } = req.user;
 
@@ -83,7 +84,8 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     outOfHoursMessage,
     schedules,
     aiEnabled,
-    aiConfig
+    aiConfig,
+    description
   });
 
   const io = getIO();

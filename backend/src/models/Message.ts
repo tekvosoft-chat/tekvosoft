@@ -51,6 +51,11 @@ class Message extends Model {
   @Column
   fromMe: boolean;
 
+  /** visível só para a equipe: nunca vai para o WhatsApp */
+  @Default(false)
+  @Column
+  isPrivate: boolean;
+
   @Column({ defaultValue: "whatsapp" })
   channel: string;
 

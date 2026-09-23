@@ -441,6 +441,7 @@ const run = async () => {
           name: item.name,
           color: item.color,
           companyId: COMPANY_ID,
+          description: item.about,
           greetingMessage: item.greetingMessage,
           // sem expediente: a fila atende a qualquer hora
           schedules: [],

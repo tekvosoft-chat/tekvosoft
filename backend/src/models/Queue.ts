@@ -46,6 +46,10 @@ class Queue extends Model {
   @Column
   greetingMessage: string;
 
+  /** o que esta fila resolve, em uma frase: a recepção inteligente usa isso */
+  @Column(DataType.STRING(300))
+  description: string;
+
   @Default("")
   @Column
   outOfHoursMessage: string;

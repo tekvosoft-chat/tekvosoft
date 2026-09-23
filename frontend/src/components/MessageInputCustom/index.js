@@ -13,7 +13,7 @@ import {
   FormatQuote
 } from "@material-ui/icons";
 
-import { makeStyles, useTheme } from "@material-ui/core/styles";
+import { alpha, makeStyles, useTheme } from "@material-ui/core/styles";
 import Paper from "@material-ui/core/Paper";
 import InputBase from "@material-ui/core/InputBase";
 import CircularProgress from "@material-ui/core/CircularProgress";
@@ -37,6 +37,7 @@ import Autocomplete from "@material-ui/lab/Autocomplete";
 import { isString, isEmpty, isObject, has } from "lodash";
 
 import { i18n } from "../../translate/i18n";
+import { AI_ACTION_EVENT, SUGGESTION_EVENT } from "../AiCopilot";
 import api from "../../services/api";
 import RecordingTimer from "./RecordingTimer";
 import { ReplyMessageContext } from "../../context/ReplyingMessage/ReplyingMessageContext";
@@ -76,6 +77,11 @@ import InsertEmoticonRoundedIcon from "@material-ui/icons/InsertEmoticonRounded"
 import InsertDriveFileOutlinedIcon from "@material-ui/icons/InsertDriveFileOutlined";
 import PhotoLibraryOutlinedIcon from "@material-ui/icons/PhotoLibraryOutlined";
 import CheckRoundedIcon from "@material-ui/icons/CheckRounded";
+import ButtonBase from "@material-ui/core/ButtonBase";
+import OfflineBoltRoundedIcon from "@material-ui/icons/OfflineBoltRounded";
+import FullscreenRoundedIcon from "@material-ui/icons/FullscreenRounded";
+import SubjectRoundedIcon from "@material-ui/icons/SubjectRounded";
+import QuestionAnswerRoundedIcon from "@material-ui/icons/QuestionAnswerRounded";
 import RoomOutlinedIcon from "@material-ui/icons/RoomOutlined";
 import { SendLocationDialog } from "../MessagesList/LocationMessage";
 import { SocketContext } from "../../context/Socket/SocketContext";
@@ -83,6 +89,10 @@ import { getDraft, saveDraft } from "../../helpers/drafts";
 import { haptic } from "../../helpers/haptics";
 
 const Mp3Recorder = new MicRecorder({ bitRate: 128 });
+
+// tinta do modo privado: escura o bastante para ler sobre o creme
+const PRIVATE_INK = "#3B2D08";
+const PRIVATE_BG = "#F8D98A";
 
 const useStyles = makeStyles(theme => ({
   /**
@@ -209,6 +219,90 @@ const useStyles = makeStyles(theme => ({
     alignItems: "flex-end",
     gap: 4,
     padding: "8px 12px 10px"
+  },
+  // cabeçalho da barra: de que jeito esta mensagem vai sair, e a IA à direita
+  composerHead: {
+    width: "100%",
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    padding: "8px 12px 0"
+  },
+  modePill: {
+    height: 24,
+    padding: "0 10px",
+    borderRadius: 999,
+    fontSize: "0.75rem",
+    fontWeight: 500,
+    letterSpacing: "0.01em",
+    color: theme.palette.text.secondary,
+    transition: "background-color .15s ease, color .15s ease",
+    "&:hover": { color: theme.palette.text.primary }
+  },
+  modePillOn: {
+    backgroundColor: theme.palette.tkv.surface,
+    color: theme.palette.text.primary,
+    fontWeight: 600
+  },
+  headSpacer: { flex: 1 },
+  headIcon: {
+    width: 32,
+    height: 32,
+    padding: 0,
+    color: theme.palette.text.secondary,
+    "& svg": { fontSize: 19 }
+  },
+  headIconAi: {
+    color: theme.palette.tkv.brand.text,
+    "& svg": { fontSize: 25 }
+  },
+  aiMenuPaper: {
+    minWidth: 230,
+    borderRadius: 14,
+    marginTop: -8,
+    boxShadow: "0 14px 40px -18px rgba(0,0,0,.45)"
+  },
+  // modo privado: a conversa inteira fica amarela, como um recado colado
+  // modo privado: a barra vira um post-it, igual nos dois temas — é o aviso
+  // visual de que aquilo ali não sai para o cliente
+  privateWrap: {
+    // !important porque a conversa pinta o fundo da barra por fora
+    // (Ticket > phoneBottom > .MuiPaper-root)
+    backgroundColor: `${PRIVATE_BG} !important`,
+    color: PRIVATE_INK,
+    "& $modePill": { color: alpha(PRIVATE_INK, 0.7) },
+    "& $modePillOn": { backgroundColor: "#FFFFFF", color: PRIVATE_INK },
+    "& $headIcon": { color: alpha(PRIVATE_INK, 0.72) },
+    "& $headIconAi": { color: "#5B37CC" },
+    // o campo some dentro do amarelo: o recado é uma folha só
+    "& $messageInputWrapper, & $phoneInputWrapper": {
+      backgroundColor: alpha("#FFFFFF", 0.55),
+      boxShadow: "none"
+    },
+    "& $messageInput, & input, & textarea": { color: PRIVATE_INK },
+    "& ::placeholder": { color: alpha(PRIVATE_INK, 0.62), opacity: 1 },
+    "& $webIcon, & $phoneIconButton, & $plusRotate": {
+      color: alpha(PRIVATE_INK, 0.78)
+    },
+    // a prévia da mensagem respondida também é lida em tinta escura
+    "& $replyginMsgContainer": { backgroundColor: alpha("#FFFFFF", 0.45) },
+    "& $replyginMsgBody, & $messageContactName": { color: PRIVATE_INK },
+    "& fieldset, & .MuiOutlinedInput-notchedOutline": {
+      borderColor: "transparent"
+    },
+    // o realce de toque do Material é claro no tema escuro: em cima do
+    // amarelo virava um quadrado preto embaixo do ícone
+    "& .MuiIconButton-root:hover, & .MuiIconButton-root:focus": {
+      backgroundColor: alpha(PRIVATE_INK, 0.08)
+    },
+    "& .MuiTouchRipple-root": { color: alpha(PRIVATE_INK, 0.3) },
+    // botão de enviar: círculo escuro com a seta clara, que é o que se lê
+    // melhor sobre o amarelo
+    "& $roundBrand, & $roundAction": {
+      backgroundColor: PRIVATE_INK,
+      color: "#FFF7E8",
+      "&:hover": { backgroundColor: "#2A2006" }
+    }
   },
   webIcon: {
     flex: "none",
@@ -574,7 +668,8 @@ const ActionButtons = props => {
     handleStartRecording,
     disableOption,
     phone,
-    web
+    web,
+    privateMode
   } = props;
   const classes = useStyles();
   const roundClass = phone
@@ -625,6 +720,9 @@ const ActionButtons = props => {
         </IconButton>
       </div>
     );
+  } else if (privateMode) {
+    // recado privado é só texto: áudio sairia no WhatsApp do cliente
+    return null;
   } else {
     return (
       <IconButton
@@ -671,6 +769,7 @@ const CustomInput = props => {
     onFocusInput,
     quickVersion,
     quickIcon,
+    privatePlaceholder,
     rows
   } = props;
   const classes = useStyles();
@@ -749,6 +848,7 @@ const CustomInput = props => {
   };
 
   const renderPlaceholder = () => {
+    if (privatePlaceholder) return privatePlaceholder;
     if (ticketStatus === "open") {
       return i18n.t("messagesInput.placeholderOpen");
     }
@@ -1224,6 +1324,23 @@ const MessageInputCustom = props => {
 
   // assinatura desligada por padrão: só vai com o nome quando a pessoa ligar
   // (chave nova para todos começarem desligados)
+  // mensagem privada: fica na conversa, mas só a equipe do sistema vê
+  const [privateMode, setPrivateMode] = useState(false);
+  // menu do assistente, que sobe colado na barra e some ao escolher
+  const [aiAnchor, setAiAnchor] = useState(null);
+
+  // tocar numa resposta sugerida põe o texto aqui na barra, sem enviar
+  useEffect(() => {
+    const onSuggestion = event => {
+      const text = String(event.detail || "");
+      if (!text) return;
+      setInputMessage(text);
+      setTimeout(() => inputRef.current?.focus(), 60);
+    };
+    window.addEventListener(SUGGESTION_EVENT, onSuggestion);
+    return () => window.removeEventListener(SUGGESTION_EVENT, onSuggestion);
+  }, []);
+
   const [signMessage, setSignMessage] = useLocalStorage(
     "tkv:signMessage",
     false
@@ -1415,6 +1532,7 @@ const MessageInputCustom = props => {
           formData.append("medias", media, media.name || file.name);
           formData.append("body", media.name || file.name);
           formData.append("captions", caption);
+          if (privateMode) formData.append("isPrivate", "true");
           return api.post(`/messages/${ticketId}`, formData, {
             onUploadProgress: event => {
               if (!event.total || !pendingId) return;
@@ -1539,6 +1657,29 @@ const MessageInputCustom = props => {
     if (inputMessage.trim() === "") return;
     //if (disableOption) return
     setLoading(true);
+
+    // privada: não passa pelo WhatsApp, entra só como recado da equipe
+    if (privateMode) {
+      const body = inputMessage.trim();
+      const quoted = replyingMessage;
+      setInputMessage("");
+      setShowEmoji(false);
+      setReplyingMessage(null);
+      haptic("send");
+      try {
+        await api.post(`/messages/${ticketId}`, {
+          body,
+          isPrivate: true,
+          quotedMsg: quoted
+        });
+      } catch (err) {
+        toastError(err);
+        setInputMessage(body);
+        setReplyingMessage(quoted);
+      }
+      setLoading(false);
+      return;
+    }
 
     const message = {
       read: 1,
@@ -1742,7 +1883,8 @@ const MessageInputCustom = props => {
     !!ticket?.contact?.id &&
     !editingMessage &&
     planAllows(user, "useSchedules");
-  const scheduleButton = canScheduleHere && (
+  // agendar envia para o cliente depois: não cabe num recado interno
+  const scheduleButton = canScheduleHere && !privateMode && (
     <Tooltip title={i18n.t("scheduleSheet.title", "Agendar envio")}>
       <IconButton
         aria-label={i18n.t("scheduleSheet.title", "Agendar envio")}
@@ -1770,6 +1912,95 @@ const MessageInputCustom = props => {
         setReplyingMessage(null);
       }}
     />
+  );
+
+  /**
+   * Cabeçalho da barra: escolher entre responder ao cliente ou deixar um
+   * recado só para a equipe, com o assistente e o "aumentar" à direita.
+   */
+  const composerHeader = recording ? null : (
+    <div className={classes.composerHead}>
+      <ButtonBase
+        className={`${classes.modePill}${
+          privateMode ? "" : ` ${classes.modePillOn}`
+        }`}
+        onClick={() => setPrivateMode(false)}
+      >
+        {i18n.t("messagesInput.modes.reply", "Responder")}
+      </ButtonBase>
+      <ButtonBase
+        className={`${classes.modePill}${
+          privateMode ? ` ${classes.modePillOn}` : ""
+        }`}
+        onClick={() => setPrivateMode(true)}
+      >
+        {i18n.t("messagesInput.modes.private", "Mensagem Privada")}
+      </ButtonBase>
+      <span className={classes.headSpacer} />
+      <Tooltip title={i18n.t("messagesInput.modes.ai", "Assistente")}>
+        <span>
+          <IconButton
+            className={`${classes.headIcon} ${classes.headIconAi}`}
+            onClick={e => setAiAnchor(e.currentTarget)}
+            aria-label={i18n.t("messagesInput.modes.ai", "Assistente")}
+          >
+            <OfflineBoltRoundedIcon />
+          </IconButton>
+        </span>
+      </Tooltip>
+      <Tooltip title={i18n.t("messagesInput.modes.expand", "Aumentar a caixa")}>
+        <IconButton
+          className={classes.headIcon}
+          onClick={() => saveRows(composerRows > 1 ? 1 : 6)}
+          aria-label={i18n.t("messagesInput.modes.expand", "Aumentar a caixa")}
+        >
+          <FullscreenRoundedIcon />
+        </IconButton>
+      </Tooltip>
+    </div>
+  );
+
+  /**
+   * Menu do assistente: sobe colado na barra, com as duas coisas que a pessoa
+   * mais pede no meio da conversa, e some assim que escolhe.
+   */
+  const aiMenu = (
+    <Menu
+      anchorEl={aiAnchor}
+      open={!!aiAnchor}
+      onClose={() => setAiAnchor(null)}
+      getContentAnchorEl={null}
+      anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      transformOrigin={{ vertical: "bottom", horizontal: "right" }}
+      classes={{ paper: classes.aiMenuPaper }}
+    >
+      <MenuItem
+        onClick={() => {
+          setAiAnchor(null);
+          window.dispatchEvent(
+            new CustomEvent(AI_ACTION_EVENT, { detail: "summary" })
+          );
+        }}
+      >
+        <ListItemIcon>
+          <SubjectRoundedIcon fontSize="small" />
+        </ListItemIcon>
+        {i18n.t("messagesInput.ai.summary", "Resumir a conversa")}
+      </MenuItem>
+      <MenuItem
+        onClick={() => {
+          setAiAnchor(null);
+          window.dispatchEvent(
+            new CustomEvent(AI_ACTION_EVENT, { detail: "reply" })
+          );
+        }}
+      >
+        <ListItemIcon>
+          <QuestionAnswerRoundedIcon fontSize="small" />
+        </ListItemIcon>
+        {i18n.t("messagesInput.ai.reply", "Sugestão de resposta")}
+      </MenuItem>
+    </Menu>
   );
 
   if (groupLock)
@@ -1829,8 +2060,15 @@ const MessageInputCustom = props => {
     );
   else if (isPhone) {
     return (
-      <Paper square elevation={0} className={classes.mainWrapper}>
+      <Paper
+        square
+        elevation={0}
+        className={`${classes.mainWrapper}${
+          privateMode ? ` ${classes.privateWrap}` : ""
+        }`}
+      >
         {locationDialog}
+        {composerHeader}
         {(replyingMessage && renderReplyingMessage(replyingMessage)) ||
           (editingMessage && renderReplyingMessage(editingMessage))}
         {showLinkPreview && (
@@ -1881,6 +2119,14 @@ const MessageInputCustom = props => {
                 setExprOpen(false);
               }}
               quickVersion={quickVersion}
+              privatePlaceholder={
+                privateMode
+                  ? i18n.t(
+                      "messagesInput.modes.privateHint",
+                      "A mensagem será visível apenas para agentes"
+                    )
+                  : null
+              }
             />
 
             {!inputMessage && (
@@ -1898,6 +2144,7 @@ const MessageInputCustom = props => {
             {scheduleButton}
             <ActionButtons
               phone
+              privateMode={privateMode}
               inputMessage={inputMessage}
               loading={loading}
               recording={recording}
@@ -1935,6 +2182,7 @@ const MessageInputCustom = props => {
         />
         {quickRepliesModal}
         {scheduleSheet}
+        {aiMenu}
       </Paper>
     );
   } else {
@@ -1958,8 +2206,15 @@ const MessageInputCustom = props => {
       </Popover>
     );
     return (
-      <Paper square elevation={0} className={classes.mainWrapper}>
+      <Paper
+        square
+        elevation={0}
+        className={`${classes.mainWrapper}${
+          privateMode ? ` ${classes.privateWrap}` : ""
+        }`}
+      >
         {locationDialog}
+        {composerHeader}
         <div
           className={classes.resizeHandle}
           onPointerDown={startResize}
@@ -2115,12 +2370,21 @@ const MessageInputCustom = props => {
               disableOption={disableOption}
               quickVersion={quickVersion}
               onFocusInput={() => setExprOpen(false)}
+              privatePlaceholder={
+                privateMode
+                  ? i18n.t(
+                      "messagesInput.modes.privateHint",
+                      "A mensagem será visível apenas para agentes"
+                    )
+                  : null
+              }
               rows={composerRows}
             />
 
             {scheduleButton}
             <ActionButtons
               web
+              privateMode={privateMode}
               inputMessage={inputMessage}
               loading={loading}
               recording={recording}
@@ -2136,6 +2400,7 @@ const MessageInputCustom = props => {
         {expressionPopover}
         {quickRepliesModal}
         {scheduleSheet}
+        {aiMenu}
       </Paper>
     );
   }

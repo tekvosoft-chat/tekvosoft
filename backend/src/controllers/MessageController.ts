@@ -1,7 +1,10 @@
 import { Request, Response } from "express";
 import SendWhatsAppLocation from "../services/WbotServices/SendWhatsAppLocation";
 import fs from "fs";
+import { v4 as uuidv4 } from "uuid";
 import AppError from "../errors/AppError";
+import CreateMessageService from "../services/MessageServices/CreateMessageService";
+import saveMediaToFile from "../helpers/saveMediaFile";
 
 import SetTicketMessagesAsRead from "../helpers/SetTicketMessagesAsRead";
 import { getIO } from "../libs/socket";
@@ -168,9 +171,17 @@ export const historyByMessageId = async (
   return res.json({ oldMessages });
 };
 
+/** image | video | audio | application, como o restante das mensagens usa. */
+const mediaTypeOf = (mimetype: string): string => {
+  const kind = String(mimetype || "").split("/")[0];
+  return ["image", "video", "audio"].includes(kind) ? kind : "application";
+};
+
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const { ticketId } = req.params;
   const { body, quotedMsg }: MessageData = req.body;
+  // mensagem privada: fica na conversa, mas só a equipe vê
+  const isPrivate = ["true", "1", true].includes(req.body?.isPrivate);
   const linkPreview = req.body?.linkPreview === false ? false : undefined;
   const medias = req.files as Express.Multer.File[];
   // legenda de cada foto/vídeo, na mesma ordem dos arquivos
@@ -181,6 +192,77 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   const userId = Number(req.user.id) || null;
 
   const ticket = await ShowTicketService(ticketId, companyId);
+
+  if (isPrivate) {
+    const author = await User.findByPk(userId, { attributes: ["name"] });
+    const quoted = quotedMsg?.id ? String(quotedMsg.id) : null;
+
+    // anexo num recado interno: o arquivo é guardado aqui e nunca enviado
+    if (medias?.length) {
+      const saved = await Promise.all(
+        medias.map(async (media: Express.Multer.File, index: number) => {
+          const stream = fs.createReadStream(media.path);
+          const mediaUrl = await saveMediaToFile(
+            {
+              data: stream,
+              mimetype: media.mimetype,
+              filename: media.originalname
+            },
+            { destination: ticket }
+          );
+          stream.destroy();
+          fs.unlinkSync(media.path);
+          return CreateMessageService({
+            messageData: {
+              id: `private-${uuidv4()}`,
+              ticketId: ticket.id,
+              contactId: ticket.contactId,
+              body: captions[index] || media.originalname,
+              fromMe: true,
+              read: true,
+              ack: 0,
+              mediaType: mediaTypeOf(media.mimetype),
+              mediaUrl,
+              queueId: ticket.queueId,
+              isPrivate: true,
+              ...(index === 0 && quoted ? { quotedMsgId: quoted } : {})
+            },
+            companyId
+          });
+        })
+      );
+      logger.info(
+        { ticketId: ticket.id, userId, author: author?.name },
+        "Anexo privado guardado na conversa"
+      );
+      return res.json(saved);
+    }
+
+    if (!String(body || "").trim())
+      throw new AppError("ERR_EMPTY_MESSAGE", 400);
+    const message = await CreateMessageService({
+      messageData: {
+        id: `private-${uuidv4()}`,
+        ticketId: ticket.id,
+        contactId: ticket.contactId,
+        body: String(body).slice(0, 10000),
+        fromMe: true,
+        read: true,
+        ack: 0,
+        mediaType: "chat",
+        queueId: ticket.queueId,
+        isPrivate: true,
+        ...(quoted ? { quotedMsgId: quoted } : {})
+      },
+      companyId
+    });
+    logger.info(
+      { ticketId: ticket.id, userId, author: author?.name },
+      "Mensagem privada registrada na conversa"
+    );
+    return res.json(message);
+  }
+
   const { channel } = ticket;
   if (channel === "whatsapp") {
     await SetTicketMessagesAsRead(ticket);

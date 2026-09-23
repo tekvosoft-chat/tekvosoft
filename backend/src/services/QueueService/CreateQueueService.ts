@@ -10,6 +10,7 @@ interface QueueData {
   companyId: number;
   greetingMessage?: string;
   outOfHoursMessage?: string;
+  description?: string;
   schedules?: unknown[];
   aiEnabled?: boolean;
   aiConfig?: string;

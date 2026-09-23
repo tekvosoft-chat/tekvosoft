@@ -17,6 +17,7 @@ import { incrementCounter } from "../CounterServices/IncrementCounter";
 import { getJidOf } from "../WbotServices/getJidOf";
 import Queue from "../../models/Queue";
 import { logTicketJourney } from "../../helpers/TicketJourneyLog";
+import { resumeQueueAi } from "../../helpers/QueueAiPause";
 import { _t } from "../TranslationServices/i18nService";
 
 export interface UpdateTicketData {
@@ -296,6 +297,9 @@ const UpdateTicketService = async ({
 
     // anota por onde o atendimento passou (mapa da conversa na ficha)
     if (oldQueueId !== ticket.queueId) {
+      // fila nova, assistente novo: se a IA tinha se calado nesta conversa
+      // (o cliente pediu uma pessoa), quem assume agora é a fila de destino
+      await resumeQueueAi(ticket.id);
       const [before, after] = await Promise.all([
         oldQueueId
           ? Queue.findByPk(oldQueueId, { attributes: ["name"] })

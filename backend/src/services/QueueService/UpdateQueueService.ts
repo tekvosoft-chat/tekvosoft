@@ -9,6 +9,7 @@ interface QueueData {
   color?: string;
   greetingMessage?: string;
   outOfHoursMessage?: string;
+  description?: string;
   schedules?: any[];
   aiEnabled?: boolean;
   aiConfig?: string;

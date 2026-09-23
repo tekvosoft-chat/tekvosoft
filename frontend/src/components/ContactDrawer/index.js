@@ -2,28 +2,9 @@ import React, { useEffect, useState } from "react";
 
 import { makeStyles, useTheme } from "@material-ui/core/styles";
 import useMediaQuery from "@material-ui/core/useMediaQuery";
-import Typography from "@material-ui/core/Typography";
-import IconButton from "@material-ui/core/IconButton";
-import CloseIcon from "@material-ui/icons/Close";
 import Drawer from "@material-ui/core/Drawer";
-import Link from "@material-ui/core/Link";
-import Avatar from "@material-ui/core/Avatar";
-import Button from "@material-ui/core/Button";
-import Paper from "@material-ui/core/Paper";
-
-import { i18n } from "../../translate/i18n";
-import {
-  formatWhatsappContactName,
-  formatWhatsappContactNumber
-} from "../../helpers/formatWhatsappDisplay";
 
 import ContactDrawerSkeleton from "../ContactDrawerSkeleton";
-import WhatsMarked from "react-whatsmarked";
-import { CardHeader } from "@material-ui/core";
-import { TicketNotes } from "../TicketNotes";
-import { generateColor } from "../../helpers/colorGenerator";
-import { getInitials } from "../../helpers/getInitials";
-import { TagsContainer } from "../TagsContainer";
 import useSettings from "../../hooks/useSettings";
 import PhoneContactDetails from "./PhoneContactDetails";
 
@@ -115,7 +96,6 @@ const ContactDrawer = ({
   const theme = useTheme();
   const isPhone = useMediaQuery(theme.breakpoints.down("xs"));
   const { getSetting } = useSettings();
-  const formattedContactName = formatWhatsappContactName(contact, ticket);
 
   const [showTags, setShowTags] = useState(false);
 
