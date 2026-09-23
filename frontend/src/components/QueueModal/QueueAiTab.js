@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import TextField from "@material-ui/core/TextField";
 import MenuItem from "@material-ui/core/MenuItem";
 import Switch from "@material-ui/core/Switch";
 import Button from "@material-ui/core/Button";
 import AutoAwesomeIcon from "@material-ui/icons/EmojiObjectsOutlined";
+
+import api from "../../services/api";
 
 /**
  * Aba "Assistente de IA" da fila.
@@ -95,6 +97,21 @@ COMO RESPONDER
 const QueueAiTab = ({ enabled, config, onChange, onToggle }) => {
   const classes = useStyles();
   const set = (key, value) => onChange({ ...config, [key]: value });
+
+  // para quem passar o atendimento e em que coluna deixar o card
+  const [users, setUsers] = useState([]);
+  const [columns, setColumns] = useState([]);
+  useEffect(() => {
+    api
+      .get("/users/list")
+      .then(({ data }) => setUsers(data || []))
+      .catch(() => setUsers([]));
+    api
+      .get("/tags/list")
+      // a lista traz etiquetas e colunas juntas; aqui só interessa a coluna
+      .then(({ data }) => setColumns((data || []).filter(tag => tag.kanban)))
+      .catch(() => setColumns([]));
+  }, []);
 
   return (
     <div className={classes.root}>
@@ -197,6 +214,42 @@ const QueueAiTab = ({ enabled, config, onChange, onToggle }) => {
             value={config.handoffMessage || ""}
             onChange={e => set("handoffMessage", e.target.value)}
           />
+          <TextField
+            select
+            label="Atribuir para"
+            variant="outlined"
+            size="small"
+            value={config.handoffUserId || ""}
+            onChange={e => set("handoffUserId", e.target.value)}
+            helperText="Ao transferir, o atendimento sai de Aguardando e entra em Atendendo. Sem ninguém escolhido, fica aberto para a equipe pegar."
+          >
+            <MenuItem value="">Ninguém (aberto para a equipe)</MenuItem>
+            {users.map(user => (
+              <MenuItem key={user.id} value={user.id}>
+                {user.name}
+              </MenuItem>
+            ))}
+          </TextField>
+        </div>
+
+        <div className={classes.section} style={{ marginTop: 16 }}>
+          <div className={classes.sectionTitle}>Enquanto a IA conversa</div>
+          <TextField
+            select
+            label="Coluna do Kanban"
+            variant="outlined"
+            size="small"
+            value={config.kanbanTagId || ""}
+            onChange={e => set("kanbanTagId", e.target.value)}
+            helperText='O card vai para esta coluna assim que a IA responde. Vazio usa a coluna "Em atendimento", se existir.'
+          >
+            <MenuItem value="">Em atendimento (padrão)</MenuItem>
+            {columns.map(column => (
+              <MenuItem key={column.id} value={column.id}>
+                {column.name}
+              </MenuItem>
+            ))}
+          </TextField>
         </div>
 
         <div className={classes.section} style={{ marginTop: 16 }}>
