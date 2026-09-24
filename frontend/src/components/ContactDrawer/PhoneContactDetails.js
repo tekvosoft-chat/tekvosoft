@@ -51,7 +51,6 @@ import BusinessOutlinedIcon from "@material-ui/icons/BusinessOutlined";
 import InstagramIcon from "@material-ui/icons/Instagram";
 import FacebookIcon from "@material-ui/icons/Facebook";
 import TextField from "@material-ui/core/TextField";
-import Switch from "@material-ui/core/Switch";
 import OfflineBoltRoundedIcon from "@material-ui/icons/OfflineBoltRounded";
 import {
   GroupDescription,
@@ -449,25 +448,6 @@ const PhoneContactDetails = ({
   // o que a IA já entendeu do contato abre no mapa da conversa
   const [journeyOpen, setJourneyOpen] = useState(false);
 
-  const setSyncToPhone = async value => {
-    try {
-      const { data } = await api.put(`/contacts/${current.id}`, {
-        name: current.name,
-        number: current.number,
-        email: current.email || "",
-        syncToPhone: value
-      });
-      setSaved(data);
-      toast.success(
-        value
-          ? "Contato sincronizado com a agenda do celular"
-          : "Sincronização desligada"
-      );
-    } catch (err) {
-      toastError(err);
-    }
-  };
-
   const saveDetail = async () => {
     const { key, value } = editing;
     const isExtra = !["name", "email"].includes(key);
@@ -820,27 +800,6 @@ const PhoneContactDetails = ({
                     value="Mapa da conversa"
                     onClick={() => setJourneyOpen(true)}
                   />
-                  <div className={classes.row}>
-                    <span className={classes.rowIcon}>
-                      <SyncAltRoundedIcon />
-                    </span>
-                    <span className={classes.rowBody}>
-                      <span className={classes.rowLabel}>
-                        Agenda do celular
-                      </span>
-                      <span className={classes.rowValue}>
-                        {current?.syncToPhone
-                          ? "O nome daqui vai para o celular"
-                          : "Não sincroniza"}
-                      </span>
-                    </span>
-                    <Switch
-                      size="small"
-                      color="primary"
-                      checked={!!current?.syncToPhone}
-                      onChange={e => setSyncToPhone(e.target.checked)}
-                    />
-                  </div>
                 </>
               )}
               {ticket && (

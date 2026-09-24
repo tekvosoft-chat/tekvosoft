@@ -176,16 +176,20 @@ const useStyles = makeStyles(theme => {
       color: t.semantic.success
     },
     // tudo numa linha só: o que não cabe encurta com reticências
+    // etiqueta comprida não pode empurrar a linha: cada peça encolhe até um
+    // limite e corta com reticências, e a linha nunca passa da largura
     chips: {
       display: "flex",
       flexWrap: "nowrap",
       alignItems: "center",
       gap: 4,
       marginTop: 5,
+      width: "100%",
+      maxWidth: "100%",
       minWidth: 0,
       overflow: "hidden",
-      "& > *": { flexShrink: 1, minWidth: 0 },
-      "& > span:first-child": { flexShrink: 0, maxWidth: "45%" }
+      "& > *": { flexShrink: 1, minWidth: 0, maxWidth: 120 },
+      "& > span:first-child": { flexShrink: 0, maxWidth: "40%" }
     },
     tagChip: {
       display: "inline-flex",

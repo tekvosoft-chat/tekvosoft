@@ -279,7 +279,7 @@ const useStyles = makeStyles(theme => {
       fontFamily: "monospace",
       fontSize: "0.75rem",
       lineHeight: 1.6,
-      wordBreak: "break-all",
+      whiteSpace: "pre-wrap",
       color: theme.palette.text.primary
     },
     foot: {
@@ -342,7 +342,18 @@ const WebchatSettings = ({ open, onClose, inbox, onSaved }) => {
   };
 
   const script = inbox
-    ? `<script src="${window.location.origin}/webchat.js" data-token="${inbox.token}" data-api="${getBackendURL()}" defer></script>`
+    ? `<script>
+  window.vuupSettings = {"position":"${config.bubblePosition || "right"}","type":"${config.bubbleType || "standard"}","launcherTitle":"${config.launcherTitle || ""}"};
+  (function(d,t){
+    var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+    g.src="${window.location.origin}/webchat.js";
+    g.charset="utf-8";
+    g.async=true;
+    g.setAttribute("data-token","${inbox.token}");
+    g.setAttribute("data-api","${getBackendURL()}");
+    s.parentNode.insertBefore(g,s);
+  })(document,"script");
+</script>`
     : "";
 
   const copiar = async () => {

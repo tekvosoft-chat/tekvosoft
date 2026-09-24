@@ -69,7 +69,7 @@ const useStyles = makeStyles(theme => {
       fontFamily: "monospace",
       fontSize: "0.75rem",
       lineHeight: 1.6,
-      wordBreak: "break-all",
+      whiteSpace: "pre-wrap",
       color: theme.palette.text.primary
     },
     foot: {
@@ -130,7 +130,18 @@ const WebchatForm = ({ open, onClose, onCreated }) => {
   };
 
   const script = criada
-    ? `<script src="${window.location.origin}/webchat.js" data-token="${criada.token}" data-api="${getBackendURL()}" defer></script>`
+    ? `<script>
+  window.vuupSettings = {"position":"right","type":"standard","launcherTitle":""};
+  (function(d,t){
+    var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+    g.src="${window.location.origin}/webchat.js";
+    g.charset="utf-8";
+    g.async=true;
+    g.setAttribute("data-token","${criada.token}");
+    g.setAttribute("data-api","${getBackendURL()}");
+    s.parentNode.insertBefore(g,s);
+  })(document,"script");
+</script>`
     : "";
 
   const copiar = async () => {

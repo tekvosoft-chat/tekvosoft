@@ -58,6 +58,7 @@ import api from "../../services/api";
 import toastError from "../../errors/toastError";
 import { SocketContext } from "../../context/Socket/SocketContext";
 import LockRoundedIcon from "@material-ui/icons/LockRounded";
+import KeyboardArrowDownRoundedIcon from "@material-ui/icons/KeyboardArrowDownRounded";
 import { i18n } from "../../translate/i18n";
 import vCard from "vcard-parser";
 import { generateColor } from "../../helpers/colorGenerator";
@@ -306,6 +307,24 @@ const useStyles = makeStyles(theme => ({
   },
 
   // recado da equipe: fica na conversa, mas ninguém de fora vê
+  // setinha para voltar ao fim da conversa, discreta no canto
+  descer: {
+    position: "absolute",
+    right: 16,
+    bottom: 16,
+    zIndex: 5,
+    width: 34,
+    height: 34,
+    borderRadius: "50%",
+    backgroundColor: theme.palette.tkv.surface,
+    border: `1px solid ${theme.palette.tkv.border}`,
+    color: theme.palette.text.secondary,
+    boxShadow: "0 6px 18px -8px rgba(0,0,0,.5)",
+    transition: "transform .15s ease",
+    "&:hover": { transform: "translateY(-2px)" },
+    "& svg": { fontSize: 20 },
+    [theme.breakpoints.down("xs")]: { bottom: 12, right: 12 }
+  },
   privateBubble: {
     // post-it: creme nos dois temas, igual à barra de envio
     // !important: o balão da direita também define cor, e vence por ordem
@@ -2385,6 +2404,8 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
     };
   }, [ticketId]);
 
+  const [longeDoFim, setLongeDoFim] = useState(false);
+
   const scrollToBottom = () => {
     if (scrollRef.current) {
       dispatch({ type: "RESET_STICKY" });
@@ -2402,6 +2423,12 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
     // a barra de reações fica presa à posição da mensagem: rolou, fecha
     if (reactTarget) closeReactions();
     const messagesList = e.currentTarget;
+    // subiu bastante: mostra a setinha de voltar para a última mensagem
+    const distancia =
+      messagesList.scrollHeight -
+      messagesList.scrollTop -
+      messagesList.clientHeight;
+    setLongeDoFim(distancia > 400);
     const sticky = document.querySelector(`.${classes.stickedMessages}`);
     if (sticky && sticky.style.display !== "none") {
       const { scrollTop, clientHeight, scrollHeight } = messagesList;
@@ -3943,6 +3970,15 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
         menuOpen={messageOptionsMenuOpen}
         handleClose={handleCloseMessageOptionsMenu}
       />
+      {longeDoFim && (
+        <ButtonBase
+          className={classes.descer}
+          onClick={scrollToBottom}
+          aria-label="Ir para a última mensagem"
+        >
+          <KeyboardArrowDownRoundedIcon />
+        </ButtonBase>
+      )}
       <div
         id="messagesList"
         data-no-pull

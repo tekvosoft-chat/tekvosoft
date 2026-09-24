@@ -100,7 +100,6 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
       try {
         const { data } = await api.get(`/contacts/${contactId}`);
         setContact(data);
-        setSyncPhone(!!data.syncToPhone);
       } catch (err) {
         toastError(err);
       }
@@ -115,11 +114,10 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
   };
 
   // salvar também na agenda do celular conectado (vai junto no salvar)
-  const [syncPhone, setSyncPhone] = useState(false);
 
   const handleSaveContact = async values => {
     try {
-      const payload = { ...values, syncToPhone: syncPhone };
+      const payload = { ...values };
       if (contactId) {
         await api.put(`/contacts/${contactId}`, payload);
         handleClose();
@@ -205,26 +203,7 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
                     variant="outlined"
                   ></Field>
                 </div>
-                <>
-                  <FormControlLabel
-                    label={i18n.t("contactModal.form.disableBot")}
-                    labelPlacement="start"
-                    control={
-                      <Switch
-                        size="small"
-                        checked={values.disableBot}
-                        onChange={() =>
-                          setContact({
-                            ...values,
-                            disableBot: !values.disableBot
-                          })
-                        }
-                        name="disableBot"
-                        color="primary"
-                      />
-                    }
-                  />
-                </>
+                <></>
                 {contactId && showTags && <TagsContainer contact={contact} />}
                 {contactId && (
                   <>
@@ -286,18 +265,6 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
                 )}
               </DialogContent>
               <DialogActions>
-                <FormControlLabel
-                  style={{ marginRight: "auto", marginLeft: 4 }}
-                  control={
-                    <Switch
-                      color="primary"
-                      size="small"
-                      checked={syncPhone}
-                      onChange={e => setSyncPhone(e.target.checked)}
-                    />
-                  }
-                  label="Sincronizar com a agenda do celular"
-                />
                 <Button
                   onClick={handleClose}
                   color="secondary"

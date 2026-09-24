@@ -1,6 +1,7 @@
 import {
   Op,
   fn,
+  literal,
   where,
   col,
   Filterable,
@@ -44,6 +45,30 @@ interface Request {
   users: number[];
   companyId: number;
 }
+
+const COM_ACENTO = "áàâãäéèêëíìîïóòôõöúùûüçñÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇÑ";
+const SEM_ACENTO = "aaaaaeeeeiiiiooooouuuucnaaaaaeeeeiiiiooooouuuucn";
+
+/** Texto procurado, em minúsculas e sem acento. */
+const semAcento = (texto: string): string =>
+  String(texto || "")
+    .toLocaleLowerCase()
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+/**
+ * A mesma limpeza do lado do banco: procurar "jose" acha "José", e
+ * procurar "José" acha "jose". Feito com translate para não depender da
+ * extensão unaccent, que nem toda instalação tem.
+ */
+const semAcentoSql = (coluna: unknown) =>
+  fn(
+    "TRANSLATE",
+    fn("LOWER", coluna),
+    literal(`'${COM_ACENTO}'`),
+    literal(`'${SEM_ACENTO}'`)
+  );
 
 interface Response {
   tickets: Ticket[];
@@ -166,7 +191,7 @@ const ListTicketsService = async ({
   }
 
   if (searchParam) {
-    const sanitizedSearchParam = searchParam.toLocaleLowerCase().trim();
+    const sanitizedSearchParam = semAcento(searchParam);
 
     includeCondition = [
       ...includeCondition,
@@ -176,7 +201,7 @@ const ListTicketsService = async ({
         attributes: ["id", "body"],
         where: {
           body: where(
-            fn("LOWER", col("body")),
+            semAcentoSql(col("body")),
             "LIKE",
             `%${sanitizedSearchParam}%`
           )
@@ -190,7 +215,7 @@ const ListTicketsService = async ({
       [Op.or]: [
         {
           "$contact.name$": where(
-            fn("LOWER", col("contact.name")),
+            semAcentoSql(col("contact.name")),
             "LIKE",
             `%${sanitizedSearchParam}%`
           )
@@ -198,7 +223,7 @@ const ListTicketsService = async ({
         { "$contact.number$": { [Op.like]: `%${sanitizedSearchParam}%` } },
         {
           "$message.body$": where(
-            fn("LOWER", col("body")),
+            semAcentoSql(col("body")),
             "LIKE",
             `%${sanitizedSearchParam}%`
           )

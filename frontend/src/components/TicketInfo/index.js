@@ -7,7 +7,6 @@ import {
   useMediaQuery,
   useTheme
 } from "@material-ui/core";
-import { Lightbox } from "react-modal-image";
 
 import { i18n } from "../../translate/i18n";
 import { formatWhatsappContactName } from "../../helpers/formatWhatsappDisplay";
@@ -82,7 +81,6 @@ const TicketInfo = ({ contact, ticket, onClick }) => {
   const isPhone = useMediaQuery(theme.breakpoints.down("xs"));
   const { user } = ticket;
   const [userName, setUserName] = useState("");
-  const [avatarOpen, setAvatarOpen] = useState(false);
 
   const contactName = contact ? formatWhatsappContactName(contact, ticket) : "";
 
@@ -98,13 +96,6 @@ const TicketInfo = ({ contact, ticket, onClick }) => {
 
   return (
     <>
-      {avatarOpen && (
-        <Lightbox
-          medium={contact.profileHiresPictureUrl || contact.profilePicUrl}
-          large={contact.profileHiresPictureUrl || contact.profilePicUrl}
-          onClose={() => setAvatarOpen(false)}
-        />
-      )}
       <CardHeader
         onClick={onClick}
         classes={{
@@ -118,11 +109,7 @@ const TicketInfo = ({ contact, ticket, onClick }) => {
             className={`${classes.avatarImg}${isPhone ? ` ${classes.phoneAvatar}` : ""}`}
             style={{ backgroundColor: generateColor(contact?.number) }}
             src={contact.profilePicUrl}
-            alt="contact_image"
-            onClick={e => {
-              e.stopPropagation();
-              setAvatarOpen(true);
-            }}
+            alt=""
           >
             {getInitials(contactName)}
           </Avatar>
@@ -132,18 +119,13 @@ const TicketInfo = ({ contact, ticket, onClick }) => {
             className={`${classes.title}${isPhone ? ` ${classes.phoneName}` : ""}`}
           >
             <span className={classes.name}>{contactName}</span>
-            {!isPhone && <span className={classes.ticketId}>#{ticket.id}</span>}
           </div>
         }
         subheader={
-          ticket.user ? (
-            <div className={classes.subheader}>{userName}</div>
-          ) : (
-            isPhone && (
-              <div className={classes.subheader}>
-                {i18n.t("messagesList.header.tapForInfo")}
-              </div>
-            )
+          isPhone && (
+            <div className={classes.subheader}>
+              {i18n.t("messagesList.header.tapForInfo")}
+            </div>
           )
         }
       />

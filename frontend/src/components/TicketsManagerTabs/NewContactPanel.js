@@ -6,7 +6,6 @@ import InputBase from "@material-ui/core/InputBase";
 import ArrowBackRoundedIcon from "@material-ui/icons/ArrowBackRounded";
 import PersonOutlineRoundedIcon from "@material-ui/icons/PersonOutlineRounded";
 import PhoneOutlinedIcon from "@material-ui/icons/PhoneOutlined";
-import SyncRoundedIcon from "@material-ui/icons/SyncRounded";
 import CheckRoundedIcon from "@material-ui/icons/CheckRounded";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import { toast } from "react-toastify";
@@ -133,7 +132,6 @@ const NewContactPanel = ({ onBack, onSaved }) => {
   const [lastName, setLastName] = useState("");
   const [ddi, setDdi] = useState("+55");
   const [phone, setPhone] = useState("");
-  const [sync, setSync] = useState(true);
   const [saving, setSaving] = useState(false);
 
   const digits = phone.replace(/\D/g, "");
@@ -150,9 +148,7 @@ const NewContactPanel = ({ onBack, onSaved }) => {
       const { data } = await api.post("/contacts", {
         name,
         number,
-        email: "",
-        // marcado: o contato também vai para a agenda do celular
-        syncToPhone: sync
+        email: ""
       });
       toast.success("Contato salvo");
       onSaved?.(data);
@@ -216,22 +212,6 @@ const NewContactPanel = ({ onBack, onSaved }) => {
               onKeyDown={e => e.key === "Enter" && save()}
             />
           </label>
-        </div>
-        <div className={classes.sync}>
-          <SyncRoundedIcon />
-          <div className={classes.syncText}>
-            <div className={classes.syncTitle}>
-              Sincronizar contato com celular
-            </div>
-            <div className={classes.syncSub}>
-              O contato será adicionado à lista de contatos do seu celular.
-            </div>
-          </div>
-          <Switch
-            color="primary"
-            checked={sync}
-            onChange={e => setSync(e.target.checked)}
-          />
         </div>
         <div className={classes.save}>
           <IconButton

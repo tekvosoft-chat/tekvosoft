@@ -147,7 +147,19 @@ export const sendWhatsappFile = async (
 
     return sentMessage;
   } catch (error) {
-    logger.error({ message: error.message }, "Error sending WhatsApp message");
+    logger.error(
+      { message: error.message, ticketId: ticket?.id },
+      "Error sending WhatsApp message"
+    );
+    // quando o problema é a conexão fora do ar, dizer isso: "verifique a
+    // página de conexões" não conta o que houve para quem está atendendo
+    if (
+      /not initialized|Connection Closed|connection closed|Timed Out|socket/i.test(
+        error.message || ""
+      )
+    ) {
+      throw new AppError("ERR_WAPP_NOT_INITIALIZED");
+    }
     throw new AppError("ERR_SENDING_WAPP_MSG");
   }
 };

@@ -36,7 +36,7 @@
   var config = {
     name: "Atendimento",
     color: "#5C59E8",
-    welcomeTitle: "Olá! 👋",
+    welcomeTitle: "Ol\u00e1! \ud83d\udc4b",
     welcomeMessage: "",
     bubblePosition: "right",
     bubbleType: "standard",
@@ -61,11 +61,18 @@
     sessionId = null;
   }
 
-  var EMOJIS = (
-    "😀 😃 😄 😁 😆 😊 🙂 😉 😍 🥰 😘 🤗 🤔 🤨 😐 😴 😮 🤯 😢 😭 " +
-    "😤 😡 🥳 😎 🤩 🙏 👍 👎 👏 🙌 💪 👋 🤝 ❤️ 🧡 💛 💚 💙 💜 🔥 ✨ 🎉 ✅ ❌ " +
-    "⏰ 📎 📷 📱 💬 🛒 💳 🚚 📦 💰 📍 ⭐"
-  ).split(" ");
+  // escritos por código: assim o arquivo é ASCII puro e não embaralha em
+  // página que não declara UTF-8
+  var EMOJIS = [
+    0x1f600, 0x1f603, 0x1f604, 0x1f601, 0x1f606, 0x1f60a, 0x1f642, 0x1f609,
+    0x1f60d, 0x1f970, 0x1f618, 0x1f917, 0x1f914, 0x1f928, 0x1f610, 0x1f634,
+    0x1f62e, 0x1f92f, 0x1f622, 0x1f62d, 0x1f624, 0x1f621, 0x1f973, 0x1f60e,
+    0x1f929, 0x1f64f, 0x1f44d, 0x1f44e, 0x1f44f, 0x1f64c, 0x1f4aa, 0x1f44b,
+    0x1f91d, 0x1f525, 0x2728, 0x1f389, 0x23f0, 0x1f4ce, 0x1f4f7, 0x1f4f1,
+    0x1f4ac, 0x1f6d2, 0x1f4b3, 0x1f69a, 0x1f4e6, 0x1f4b0, 0x1f4cd, 0x2b50
+  ].map(function (codigo) {
+    return String.fromCodePoint(codigo);
+  });
 
   var TEMPOS = {
     minutes: "Normalmente responde em alguns minutos",
@@ -163,6 +170,17 @@
     ".enviarForm{border:none;color:#fff;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer}",
     ".pular{background:none;border:none;color:#70707B;font-size:12.5px;cursor:pointer;text-decoration:underline}",
 
+    ".inicio{display:none;flex-direction:column;gap:10px;padding:22px 20px;background:#F5F5F8;flex:1;overflow-y:auto}",
+    ".inicio.on{display:flex;animation:vuupMsg .22s ease both}",
+    ".inicioTitulo{font-size:21px;font-weight:700;color:#17171C;line-height:1.3}",
+    ".inicioTexto{font-size:14px;color:#54545F;line-height:1.5}",
+    ".cartao{margin-top:auto;background:#fff;border-radius:14px;padding:16px;box-shadow:0 6px 20px -10px rgba(0,0,0,.3)}",
+    ".cartaoTitulo{font-size:14px;font-weight:700;color:#17171C}",
+    ".cartaoSub{font-size:12.5px;color:#70707B;margin:3px 0 10px}",
+    ".comecar{border:none;background:none;padding:0;font-size:14px;font-weight:700;cursor:pointer}",
+    ".voltar{border:none;background:rgba(255,255,255,.18);color:#fff;width:28px;height:28px;border-radius:50%;",
+    "cursor:pointer;font-size:14px;line-height:1;flex:none;display:none}",
+    ".voltar.on{display:block}",
     ".rodape{padding:7px;text-align:center;font-size:11px;color:#8A8A95;background:#fff}"
   ].join("");
   raiz.appendChild(estilo);
@@ -183,10 +201,19 @@
   janela.className = "janela";
   janela.innerHTML =
     '<div class="topo">' +
+    '<button class="voltar" aria-label="Voltar">&#10094;</button>' +
     '<div class="avatar"></div>' +
     '<div class="topoTexto"><h3><span class="nome"></span><span class="vivo"></span></h3><p></p></div>' +
     '<button class="fechar" aria-label="Fechar">&#10005;</button>' +
     "</div>" +
+    '<div class="inicio">' +
+    '<div class="inicioTitulo"></div>' +
+    '<div class="inicioTexto"></div>' +
+    '<div class="cartao">' +
+    '<div class="cartaoTitulo">Estamos conectados</div>' +
+    '<div class="cartaoSub"></div>' +
+    '<button type="button" class="comecar">Iniciar conversa &#8250;</button>' +
+    "</div></div>" +
     '<form class="formulario"></form>' +
     '<div class="lista"><div class="digitando"><span></span><span></span><span></span></div></div>' +
     '<div class="acoes"></div>' +
@@ -225,6 +252,12 @@
   var botaoEmoji = janela.querySelector(".emoji");
   var botaoGif = janela.querySelector(".gif");
   var arquivo = janela.querySelector('.barra input[type="file"]');
+  var inicio = janela.querySelector(".inicio");
+  var inicioTitulo = janela.querySelector(".inicioTitulo");
+  var inicioTexto = janela.querySelector(".inicioTexto");
+  var cartaoSub = janela.querySelector(".cartaoSub");
+  var comecar = janela.querySelector(".comecar");
+  var voltar = janela.querySelector(".voltar");
 
   function escurecer(cor) {
     var m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(cor || "");
@@ -285,7 +318,7 @@
         body: JSON.stringify({ sessionId: sessionId })
       })
         .then(function () {
-          bolhaDeMensagem({ body: "Conversa encerrada. Obrigado! 🙏" }, false);
+          bolhaDeMensagem({ body: "Conversa encerrada. Obrigado!" }, false);
         })
         .catch(function () {});
     });
@@ -332,7 +365,7 @@
       link.href = url;
       link.target = "_blank";
       link.rel = "noopener";
-      link.textContent = "📎 " + (m.body || "arquivo");
+      link.textContent = "\ud83d\udcce " + (m.body || "arquivo");
       link.style.color = minha ? "#fff" : config.color;
       div.appendChild(link);
     } else {
@@ -350,9 +383,26 @@
 
   function pedir(caminho, opcoes) {
     return fetch(base + caminho, opcoes).then(function (r) {
-      if (!r.ok) throw new Error("falha");
+      if (!r.ok) {
+        var erro = new Error("falha");
+        erro.status = r.status;
+        throw erro;
+      }
       return r.json();
     });
+  }
+
+  /** Erro que diz o que houve: "tente de novo" não ajuda ninguém. */
+  function avisar(erro) {
+    var texto = "N\u00e3o consegui enviar. Tente de novo.";
+    if (erro && erro.status === 404) {
+      texto =
+        "Esta caixa de entrada n\u00e3o existe mais. Confira o token do script.";
+    } else if (!erro || !erro.status) {
+      texto =
+        "N\u00e3o consegui falar com o servidor. Confira o endere\u00e7o em data-api.";
+    }
+    bolhaDeMensagem({ body: texto }, false);
   }
 
   // ── conversa ───────────────────────────────────────────────────────────
@@ -499,8 +549,7 @@
       /* sem armazenamento: as perguntas voltam na próxima visita */
     }
     formulario.classList.remove("on");
-    lista.style.display = "flex";
-    barra.style.display = "flex";
+    mostrar("conversa");
     abrirSessao(respostas).then(function () {
       campo.focus();
     });
@@ -522,6 +571,39 @@
   });
 
   // ── interação ──────────────────────────────────────────────────────────
+  /**
+   * Três telas, como no Chatwoot: a de entrada (boas-vindas e o convite), a
+   * das perguntas e a conversa. A seta do topo volta para a entrada.
+   */
+  function mostrar(tela) {
+    inicio.classList.toggle("on", tela === "inicio");
+    formulario.classList.toggle("on", tela === "form");
+    var conversa = tela === "conversa";
+    lista.style.display = conversa ? "flex" : "none";
+    barra.style.display = conversa ? "flex" : "none";
+    acoes.style.display =
+      conversa && config.allowEndConversation !== false ? "flex" : "none";
+    voltar.classList.toggle("on", tela !== "inicio");
+
+    if (tela === "inicio") {
+      inicioTitulo.textContent = config.welcomeTitle || config.name;
+      inicioTexto.textContent = config.welcomeMessage || "";
+      cartaoSub.textContent = TEMPOS[config.replyTime] || TEMPOS.minutes;
+      comecar.style.color = config.color;
+    }
+    if (tela === "form") montarFormulario();
+    if (tela === "conversa") {
+      campo.focus();
+      if (!sessionId || !lista.querySelector(".msg")) abrirSessao();
+      else ligarTempoReal();
+    }
+  }
+
+  function entrar() {
+    if (config.collectEmail && !apresentado) mostrar("form");
+    else mostrar("conversa");
+  }
+
   function alternar(estado) {
     aberto = estado === undefined ? !aberto : estado;
     janela.classList.toggle("on", aberto);
@@ -531,19 +613,15 @@
         ? "block"
         : "none";
     if (!aberto) return;
-
-    if (config.collectEmail && !apresentado) {
-      montarFormulario();
-      formulario.classList.add("on");
-      lista.style.display = "none";
-      barra.style.display = "none";
-      acoes.style.display = "none";
-      return;
-    }
-    campo.focus();
-    if (!sessionId || !lista.querySelector(".msg")) abrirSessao();
-    else ligarTempoReal();
+    // já conversou antes: abre direto na conversa
+    if (sessionId && apresentado) mostrar("conversa");
+    else mostrar("inicio");
   }
+
+  comecar.addEventListener("click", entrar);
+  voltar.addEventListener("click", function () {
+    mostrar("inicio");
+  });
 
   bolha.addEventListener("click", function () {
     alternar();
@@ -565,7 +643,7 @@
     var dados = new FormData();
     dados.append("sessionId", sessionId);
     dados.append("medias", file, file.name);
-    bolhaDeMensagem({ body: "📎 " + file.name }, true);
+    bolhaDeMensagem({ body: "\ud83d\udcce " + file.name }, true);
     fetch(base + "/webchat/" + token + "/upload", {
       method: "POST",
       body: dados
@@ -577,7 +655,7 @@
         if (resposta && resposta.id) vistos[resposta.id] = true;
       })
       .catch(function () {
-        bolhaDeMensagem({ body: "Não consegui enviar o arquivo." }, false);
+        bolhaDeMensagem({ body: "N\u00e3o consegui enviar o arquivo." }, false);
       });
     arquivo.value = "";
   });
@@ -650,6 +728,19 @@
   function enviarTexto(texto) {
     if (!texto) return;
     bolhaDeMensagem({ body: texto }, true);
+    // sem sessão não há para onde mandar: abre uma e só então envia
+    if (!sessionId) {
+      abrirSessao()
+        .then(function () {
+          mandar(texto);
+        })
+        .catch(avisar);
+      return;
+    }
+    mandar(texto);
+  }
+
+  function mandar(texto) {
     pedir("/webchat/" + token + "/messages", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -659,9 +750,7 @@
         // já está na tela: marca como vista para a checagem não repetir
         if (dados && dados.id) vistos[dados.id] = true;
       })
-      .catch(function () {
-        bolhaDeMensagem({ body: "Não consegui enviar. Tente de novo." }, false);
-      });
+      .catch(avisar);
   }
 
   barra.addEventListener("submit", function (evento) {

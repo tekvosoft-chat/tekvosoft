@@ -13,7 +13,6 @@ import { PhoneCallProvider } from "./context/PhoneCall/PhoneCallContext";
 import { SocketContext, socketManager } from "./context/Socket/SocketContext";
 import useSettings from "./hooks/useSettings";
 import Favicon from "react-favicon";
-import { applyAppIcon } from "./helpers/appIcon";
 import { getBackendURL } from "./services/config";
 
 import Routes from "./routes";
@@ -308,11 +307,9 @@ const App = () => {
     // (ou deslogado), o preto padrão. A cor do claro é a que garante o balão
     // branco legível por cima.
     if (appLogoFavicon) {
-      applyAppIcon(null);
       setThemedFavicon(null);
       return;
     }
-    setThemedFavicon(applyAppIcon(accountTheme?.light || null));
   }, [accountTheme, appLogoFavicon]);
 
   useEffect(() => {

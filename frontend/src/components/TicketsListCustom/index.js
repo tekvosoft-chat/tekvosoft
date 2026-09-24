@@ -221,7 +221,10 @@ const TicketsListCustom = props => {
     contactId,
     tags,
     users,
-    selectedQueueIds
+    selectedQueueIds,
+    // trocou o canal no filtro: a lista recomeça, senão as conversas antigas
+    // continuam na tela junto com as novas
+    channelFilter
   ]);
 
   const {
@@ -297,7 +300,11 @@ const TicketsListCustom = props => {
           )) &&
         (!users?.length || users.some(u => u === ticket.userId)) &&
         (!ticket.userId || ticket.userId === user?.id || showAll) &&
-        (!ticket.queueId || selectedQueueIds.indexOf(ticket.queueId) > -1)
+        (!ticket.queueId || selectedQueueIds.indexOf(ticket.queueId) > -1) &&
+        // canal escolhido no filtro: um atendimento do site não entra na
+        // lista quando só WhatsApp está marcado, e vice-versa
+        (!channelFilter?.length ||
+          channelFilter.indexOf(ticket.channel || "whatsapp") > -1)
       );
     };
 
@@ -451,6 +458,7 @@ const TicketsListCustom = props => {
     showTabGroups,
     user,
     selectedQueueIds,
+    channelFilter,
     contactId,
     tags,
     users,
