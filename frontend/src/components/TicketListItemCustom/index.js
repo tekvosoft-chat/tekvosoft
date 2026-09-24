@@ -188,7 +188,17 @@ const useStyles = makeStyles(theme => {
       maxWidth: "100%",
       minWidth: 0,
       overflow: "hidden",
-      "& > *": { flexShrink: 1, minWidth: 0, maxWidth: 120 },
+      // cada peça corta com reticências: nome de fila comprido quebrava a
+      // linha e empurrava as etiquetas para fora do cartão
+      "& > *": {
+        flexShrink: 1,
+        minWidth: 0,
+        maxWidth: 120,
+        overflow: "hidden",
+        whiteSpace: "nowrap",
+        textOverflow: "ellipsis"
+      },
+      "& > * > span": { overflow: "hidden", textOverflow: "ellipsis" },
       "& > span:first-child": { flexShrink: 0, maxWidth: "40%" }
     },
     tagChip: {

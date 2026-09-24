@@ -95,7 +95,7 @@
     "@keyframes vuupPonto{0%,80%,100%{transform:scale(.6);opacity:.5}40%{transform:scale(1);opacity:1}}",
 
     ".bolha{position:fixed;bottom:20px;width:60px;height:60px;border-radius:50%;border:none;cursor:pointer;",
-    "box-shadow:0 12px 30px -8px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;",
+    "box-shadow:0 8px 22px -8px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;",
     "transition:transform .18s cubic-bezier(.2,.9,.3,1);animation:vuupPulso 3.2s ease-out 1s 3}",
     ".bolha:hover{transform:scale(1.08)}",
     ".bolha:active{transform:scale(.94)}",
@@ -108,7 +108,7 @@
 
     ".janela{position:fixed;bottom:94px;width:370px;max-width:calc(100vw - 28px);height:560px;",
     "max-height:calc(100vh - 130px);background:#fff;border-radius:20px;overflow:hidden;display:none;flex-direction:column;",
-    "box-shadow:0 28px 70px -20px rgba(0,0,0,.5)}",
+    "box-shadow:0 20px 50px -18px rgba(0,0,0,.35);border:1px solid rgba(0,0,0,.06)}",
     ".janela.on{display:flex;animation:vuupSobe .26s cubic-bezier(.2,.9,.3,1) both}",
 
     ".topo{padding:18px 18px 16px;color:#fff;display:flex;align-items:center;gap:12px}",
@@ -126,7 +126,7 @@
     "word-break:break-word;animation:vuupMsg .22s ease both;",
     // dá para marcar e copiar o que a equipe escreveu
     "user-select:text;-webkit-user-select:text;cursor:text}",
-    ".deles{align-self:flex-start;background:#fff;color:#17171C;border-bottom-left-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,.08)}",
+    ".deles{align-self:flex-start;background:#fff;color:#17171C;border-bottom-left-radius:6px;border:1px solid rgba(0,0,0,.05)}",
     ".minha{align-self:flex-end;color:#fff;border-bottom-right-radius:6px}",
     ".msg img{max-width:100%;border-radius:12px;display:block}",
     ".hora{display:block;margin-top:4px;font-size:10.5px;opacity:.6;text-align:right}",
@@ -142,7 +142,7 @@
     "cursor:pointer;transition:background .15s ease}",
     ".acoes button:hover{background:#E6E6EC}",
 
-    ".painel{display:none;padding:10px 12px;background:#fff;border-top:1px solid #EFEFF3;max-height:190px;overflow-y:auto}",
+    ".painel{display:none;padding:10px 12px;background:#fff;border-top:1px solid #F1F1F5;max-height:180px;overflow-y:auto;overflow-x:hidden}",
     ".painel.on{display:block;animation:vuupMsg .18s ease both}",
     ".emojis{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}",
     ".emojis button{border:none;background:transparent;font-size:19px;cursor:pointer;border-radius:8px;padding:4px}",
@@ -176,7 +176,7 @@
     ".inicio.on{display:flex;animation:vuupMsg .22s ease both}",
     ".inicioTitulo{font-size:21px;font-weight:700;color:#17171C;line-height:1.3}",
     ".inicioTexto{font-size:14px;color:#54545F;line-height:1.5}",
-    ".cartao{margin-top:auto;background:#fff;border-radius:14px;padding:16px;box-shadow:0 6px 20px -10px rgba(0,0,0,.3)}",
+    ".cartao{margin-top:auto;background:#fff;border-radius:14px;padding:16px;border:1px solid rgba(0,0,0,.06)}",
     ".cartaoTitulo{font-size:14px;font-weight:700;color:#17171C}",
     ".cartaoSub{font-size:12.5px;color:#70707B;margin:3px 0 10px}",
     ".comecar{border:none;background:none;padding:0;font-size:14px;font-weight:700;cursor:pointer}",
@@ -762,6 +762,30 @@
       })
       .catch(avisar);
   }
+
+  // clicar fora fecha os painéis: dentro do shadow root o clique não chega
+  // ao documento, então escuto na própria janela do widget e no documento
+  function fecharPaineis(evento) {
+    var alvo = evento.target;
+    if (
+      painelEmoji.contains(alvo) ||
+      painelGif.contains(alvo) ||
+      botaoEmoji.contains(alvo) ||
+      botaoGif.contains(alvo)
+    ) {
+      return;
+    }
+    painelEmoji.classList.remove("on");
+    painelGif.classList.remove("on");
+  }
+  janela.addEventListener("click", fecharPaineis);
+  // clique na página de fora: dentro do shadow o alvo vira o host, então
+  // ignoro o próprio host aqui para não fechar o painel que acabou de abrir
+  document.addEventListener("click", function (evento) {
+    if (evento.target === host || host.contains(evento.target)) return;
+    painelEmoji.classList.remove("on");
+    painelGif.classList.remove("on");
+  });
 
   barra.addEventListener("submit", function (evento) {
     evento.preventDefault();
