@@ -123,7 +123,9 @@
 
     ".lista{flex:1;overflow-y:auto;padding:16px;background:#F5F5F8;display:flex;flex-direction:column;gap:8px}",
     ".msg{max-width:78%;padding:10px 13px;border-radius:16px;font-size:14px;line-height:1.45;white-space:pre-wrap;",
-    "word-break:break-word;animation:vuupMsg .22s ease both}",
+    "word-break:break-word;animation:vuupMsg .22s ease both;",
+    // dá para marcar e copiar o que a equipe escreveu
+    "user-select:text;-webkit-user-select:text;cursor:text}",
     ".deles{align-self:flex-start;background:#fff;color:#17171C;border-bottom-left-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,.08)}",
     ".minha{align-self:flex-end;color:#fff;border-bottom-right-radius:6px}",
     ".msg img{max-width:100%;border-radius:12px;display:block}",
@@ -565,7 +567,15 @@
         if (!valor) return;
         if (entrada.name === "name") respostas.name = valor;
         else if (entrada.name === "email") respostas.email = valor;
-        else respostas.extra[entrada.name] = valor;
+        else {
+          // guarda pelo rótulo da pergunta: é assim que aparece na ficha
+          var campoConfig = (config.preChatFields || []).filter(function (c) {
+            return c.key === entrada.name;
+          })[0];
+          respostas.extra[
+            (campoConfig && campoConfig.label) || entrada.name
+          ] = valor;
+        }
       });
     concluirFormulario(respostas);
   });
