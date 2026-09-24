@@ -1,4 +1,5 @@
 import fs from "fs";
+import { buffer as juntarStream } from "stream/consumers";
 import path from "path";
 import { Op } from "sequelize";
 
@@ -8,6 +9,7 @@ import Ticket from "../../models/Ticket";
 import { GetCompanySetting } from "../../helpers/CheckSettings";
 import { getPublicPath } from "../../helpers/GetPublicPath";
 import saveMediaToFile from "../../helpers/saveMediaFile";
+import { convertMedia } from "../../helpers/mediaConversion";
 import { sendWhatsappFile } from "../WbotServices/SendWhatsAppMedia";
 import { logger } from "../../utils/logger";
 import { cacheLayer } from "../../libs/cache";
@@ -408,6 +410,21 @@ export const funGifs = async (
 };
 
 /** Envia um GIF ou figurinha do KLIPY para a conversa. */
+/**
+ * GIF (ou webm) virando mp4 de verdade, com o ffmpeg que ja vem no projeto.
+ * Largura e altura viram numeros pares porque o H.264 exige isso, e `-an`
+ * evita o ffmpeg reclamar de um audio que o GIF nao tem.
+ */
+const paraMp4 = async (entrada: Buffer): Promise<Buffer> => {
+  const convertido = await convertMedia(
+    entrada,
+    "mp4",
+    "-movflags +faststart -pix_fmt yuv420p -vf scale=trunc(iw/2)*2:trunc(ih/2)*2 -c:v libx264 -an",
+    "video/mp4"
+  );
+  return juntarStream(convertido.data);
+};
+
 export const sendKlipy = async (
   ticket: Ticket,
   id: string,
@@ -437,15 +454,21 @@ export const sendKlipy = async (
     return;
   }
 
+  // O KLIPY nem sempre tem mp4 no mesmo tamanho do item: no `md` costuma vir
+  // só .gif ou .webm. O arquivo saía daqui com nome e mimetype de mp4 mesmo
+  // assim, e o WhatsApp recusava o envio inteiro — ele só toca mp4/H.264 com
+  // gifPlayback. Converte antes de mandar.
+  const enviar = /\.mp4(\?|$)/i.test(url) ? buffer : await paraMp4(buffer);
+
   const filename = `gif-${id.split(":").pop()}.mp4`;
   const mediaUrl = await saveMediaToFile(
-    { data: buffer, mimetype: "video/mp4", filename },
+    { data: enviar, mimetype: "video/mp4", filename },
     { destination: ticket }
   );
   await sendWhatsappFile(
     ticket,
     { mediaUrl, mimetype: "video/mp4", filename },
-    { video: buffer, gifPlayback: true, mimetype: "video/mp4" },
+    { video: enviar, gifPlayback: true, mimetype: "video/mp4" },
     quotedMsg
   );
 };

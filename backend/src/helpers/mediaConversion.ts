@@ -66,7 +66,7 @@ export function streamAndDeleteFile(filePath: string): ReadStream {
  * codec, and filename.
  * @throws {Error} - If there is an error during the conversion process.
  */
-function convertMedia(
+export function convertMedia(
   media: MediaSource,
   extension: string,
   ffmpegOptions: string,

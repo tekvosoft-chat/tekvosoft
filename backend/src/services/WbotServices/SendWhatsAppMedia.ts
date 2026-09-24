@@ -147,9 +147,17 @@ export const sendWhatsappFile = async (
 
     return sentMessage;
   } catch (error) {
+    // o motivo real vai inteiro para o log: "verifique a página de conexões"
+    // não conta nada a quem precisa descobrir por que o envio falhou
     logger.error(
-      { message: error.message, ticketId: ticket?.id },
-      "Error sending WhatsApp message"
+      {
+        message: error.message,
+        stack: error.stack,
+        ticketId: ticket?.id,
+        mimetype: mediaInfo?.mimetype,
+        filename: mediaInfo?.filename
+      },
+      "Error sending WhatsApp file"
     );
     // quando o problema é a conexão fora do ar, dizer isso: "verifique a
     // página de conexões" não conta o que houve para quem está atendendo
