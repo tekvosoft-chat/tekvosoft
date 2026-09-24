@@ -12,6 +12,15 @@ import saveMediaToFile from "../../helpers/saveMediaFile";
 import { convertMedia } from "../../helpers/mediaConversion";
 import { sendWhatsappFile } from "../WbotServices/SendWhatsAppMedia";
 import { logger } from "../../utils/logger";
+
+/**
+ * NOTA SOBRE O ENVIO: figurinha e GIF vão para o WhatsApp como caminho de
+ * arquivo (`{ url: ... }`), nunca como Buffer. O Baileys roda numa thread
+ * separada e o Buffer chega do outro lado como Uint8Array comum — lá dentro
+ * `Buffer.isBuffer()` dá falso, ele tenta ler `item.url` e o envio morre com
+ * "Cannot read properties of undefined (reading 'toString')". O arquivo já
+ * está salvo em disco antes disso, então basta passar o caminho.
+ */
 import { cacheLayer } from "../../libs/cache";
 
 /**
@@ -100,7 +109,7 @@ export const sendSticker = async (
     ticket,
     { mediaUrl: raw, mimetype: "image/webp", filename: "sticker.webp" },
     {
-      sticker: isRemote ? { url: raw } : fs.readFileSync(localPath)
+      sticker: isRemote ? { url: raw } : { url: localPath }
     },
     quotedMsg
   );
@@ -207,7 +216,11 @@ export const sendGif = async (
   await sendWhatsappFile(
     ticket,
     { mediaUrl, mimetype: "video/mp4", filename },
-    { video: buffer, gifPlayback: true, mimetype: "video/mp4" },
+    {
+      video: { url: path.join(getPublicPath(), mediaUrl) },
+      gifPlayback: true,
+      mimetype: "video/mp4"
+    },
     quotedMsg
   );
 };
@@ -448,7 +461,7 @@ export const sendKlipy = async (
     await sendWhatsappFile(
       ticket,
       { mediaUrl, mimetype: "image/webp", filename },
-      { sticker: buffer },
+      { sticker: { url: path.join(getPublicPath(), mediaUrl) } },
       quotedMsg
     );
     return;
@@ -468,7 +481,11 @@ export const sendKlipy = async (
   await sendWhatsappFile(
     ticket,
     { mediaUrl, mimetype: "video/mp4", filename },
-    { video: enviar, gifPlayback: true, mimetype: "video/mp4" },
+    {
+      video: { url: path.join(getPublicPath(), mediaUrl) },
+      gifPlayback: true,
+      mimetype: "video/mp4"
+    },
     quotedMsg
   );
 };
