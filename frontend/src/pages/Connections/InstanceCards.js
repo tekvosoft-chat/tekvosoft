@@ -563,6 +563,10 @@ export const InstanceDetails = ({
     fn(whatsApp);
   };
 
+  // caixa que não é WhatsApp não tem QR code, privacidade nem desconectar:
+  // ela está sempre no ar enquanto existir
+  const doWhatsapp = whatsApp.channel === "whatsapp";
+
   const tiles = [
     {
       key: "edit",
@@ -574,7 +578,7 @@ export const InstanceDetails = ({
       key: "privacy",
       icon: <LockOutlinedIcon />,
       onClick: actions.privacy,
-      show: status === "CONNECTED"
+      show: status === "CONNECTED" && doWhatsapp
     },
     {
       key: "refresh",
@@ -586,19 +590,19 @@ export const InstanceDetails = ({
       key: "newQr",
       icon: <AutorenewRoundedIcon />,
       onClick: actions.newQr,
-      show: status === "DISCONNECTED"
+      show: status === "DISCONNECTED" && doWhatsapp
     },
     {
       key: "resetPasskey",
       icon: <SettingsBackupRestoreRoundedIcon />,
       onClick: actions.resetPasskey,
-      show: status === "passkey_required"
+      show: status === "passkey_required" && doWhatsapp
     },
     {
       key: "disconnect",
       icon: <LinkOffRoundedIcon />,
       onClick: actions.disconnect,
-      show: ["CONNECTED", "PAIRING", "TIMEOUT"].includes(status)
+      show: ["CONNECTED", "PAIRING", "TIMEOUT"].includes(status) && doWhatsapp
     },
     {
       key: "delete",

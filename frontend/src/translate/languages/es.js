@@ -221,7 +221,7 @@ const messages = {
           name: "Nombre del plan",
           value: "Valor mensual",
           users: "Usuarios",
-          connections: "Conexiones",
+          connections: "Bandeja de entrada",
           queues: "Colas",
           currency: "Moneda",
           public: "Aparece en el registro",
@@ -249,7 +249,7 @@ const messages = {
         hours: "Horario definido",
         noGreeting: "Sin mensaje de saludo",
         users: "Agentes",
-        connections: "Conexiones",
+        connections: "Bandeja de entrada",
         tickets: "Abiertos + cola",
         edit: "Editar",
         delete: "Eliminar",
@@ -314,7 +314,7 @@ const messages = {
         ofTotal: "de {{total}} registradas",
         users: "Usuarios",
         onlineNow: "{{count}} en línea ahora",
-        connections: "Conexiones",
+        connections: "Bandeja de entrada",
         connected: "conectadas",
         tickets: "Atenciones abiertas",
         pending: "{{count}} en espera",
@@ -640,7 +640,7 @@ const messages = {
         user: "Usuario",
         users: "Usuarios",
         connection: "Conexión",
-        connections: "Conexiones",
+        connections: "Bandeja de entrada",
         queue: "Cola",
         queues: "Colas",
         contact: "Contacto",
@@ -874,7 +874,7 @@ const messages = {
         }
       },
       connections: {
-        title: "Conexiones",
+        title: "Bandejas de entrada",
         toasts: {
           deleted: "Conexión con WhatsApp eliminada con éxito"
         },
@@ -892,7 +892,7 @@ const messages = {
           closeTickets: "Cerrar todas las atenciones de esta conexión"
         },
         buttons: {
-          add: "Agregar WhatsApp",
+          add: "Añadir bandeja de entrada",
           disconnect: "Desconectar",
           tryAgain: "Intentar nuevamente",
           qrcode: "CÓDIGO QR",
@@ -1308,7 +1308,7 @@ const messages = {
         },
         listItems: {
           dashboard: "Tablero",
-          connections: "Conexiones",
+          connections: "Bandeja de entrada",
           tickets: "Atenciones",
           quickMessages: "Respuestas Rápidas",
           contacts: "Contactos",

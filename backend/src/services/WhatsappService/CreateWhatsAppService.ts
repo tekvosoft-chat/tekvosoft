@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from "uuid";
 import * as Yup from "yup";
 
 import AppError from "../../errors/AppError";
@@ -23,6 +24,7 @@ interface Request {
   facebookUserToken?: string;
   tokenMeta?: string;
   channel?: string;
+  config?: Record<string, unknown>;
   facebookPageUserId?: string;
   language?: string;
 }
@@ -50,6 +52,7 @@ const CreateWhatsAppService = async ({
   facebookPageUserId,
   tokenMeta,
   channel = "whatsapp",
+  config = {},
   language
 }: Request): Promise<Response> => {
   const company = await Company.findOne({
@@ -142,6 +145,13 @@ const CreateWhatsAppService = async ({
     }
   }
 
+  // caixa do site: não tem QR code, já nasce no ar, e o token dela é o que
+  // vai dentro do script que o cliente cola na página
+  if (channel === "webchat") {
+    status = "CONNECTED";
+    if (!token) token = uuidv4().replace(/-/g, "");
+  }
+
   const whatsapp = await Whatsapp.create(
     {
       name,
@@ -156,6 +166,7 @@ const CreateWhatsAppService = async ({
       token,
       provider,
       channel,
+      config,
       facebookUserId,
       facebookUserToken,
       facebookPageUserId,

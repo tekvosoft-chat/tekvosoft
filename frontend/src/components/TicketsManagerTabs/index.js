@@ -44,6 +44,18 @@ import toastError from "../../errors/toastError";
  *  - "Resolvidos" (e "Grupos", quando ligado) ficam na mesma fileira;
  *  - o "+" cria contato ali mesmo (e importa contatos), sem abrir modal.
  */
+/**
+ * De onde a mensagem chega. O WhatsApp já existe; os outros aparecem no
+ * filtro assim que houver uma caixa de entrada daquele tipo conectada.
+ */
+const CANAIS = {
+  whatsapp: { label: "WhatsApp", color: "#25D366" },
+  instagram: { label: "Instagram", color: "#E1306C" },
+  facebook: { label: "Facebook", color: "#1877F2" },
+  tiktok: { label: "TikTok", color: "#69C9D0" },
+  webchat: { label: "Site", color: "#6C4BD8" }
+};
+
 const useStyles = makeStyles(theme => {
   const t = theme.palette.tkv;
   return {
@@ -354,6 +366,9 @@ const TicketsManagerTabs = () => {
   const [filter, setFilter] = useState("open"); // open | closed | groups
   const [tabOpen, setTabOpen] = useState("open");
   const [queueFilter, setQueueFilter] = useState([]);
+  // canais marcados no filtro (vazio = todos)
+  const [channelFilter, setChannelFilter] = useState([]);
+  const [canais, setCanais] = useState([]);
   const [openCount, setOpenCount] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
   const [showTabGroups, setShowTabGroups] = useState(false);
@@ -405,6 +420,19 @@ const TicketsManagerTabs = () => {
   const rememberContact = contact =>
     setRecentContacts(addRecentContact(user, contact));
   const showAll = user?.profile === "admin";
+
+  // canais conectados: o filtro só aparece quando há mais de um
+  useEffect(() => {
+    api
+      .get("/whatsapp", { params: { session: 0 } })
+      .then(({ data }) => {
+        const tipos = [
+          ...new Set((data || []).map(item => item.channel || "whatsapp"))
+        ].filter(tipo => CANAIS[tipo]);
+        setCanais(tipos);
+      })
+      .catch(() => setCanais([]));
+  }, []);
 
   useEffect(() => {
     Promise.all([getSetting("CheckMsgIsGroup"), getSetting("groupsTab")]).then(
@@ -750,6 +778,31 @@ const TicketsManagerTabs = () => {
             </MenuItem>
           </Menu>
         </div>
+        {/* de onde chega: só faz sentido quando existe mais de um canal */}
+        {canais.length > 1 && (
+          <div className={classes.queueChips}>
+            {chip(
+              "canal-todos",
+              "Todos os canais",
+              channelFilter.length === 0,
+              () => setChannelFilter([])
+            )}
+            {canais.map(tipo =>
+              chip(
+                `canal-${tipo}`,
+                CANAIS[tipo].label,
+                channelFilter.includes(tipo),
+                () =>
+                  setChannelFilter(prev =>
+                    prev.includes(tipo)
+                      ? prev.filter(item => item !== tipo)
+                      : [...prev, tipo]
+                  ),
+                CANAIS[tipo].color
+              )
+            )}
+          </div>
+        )}
         {/* filas em balõezinhos, embaixo: vão quebrando linha conforme a quantidade */}
         {userQueues.length > 0 && (
           <div className={classes.queueChips}>
@@ -775,6 +828,7 @@ const TicketsManagerTabs = () => {
             searchParam={searchParam}
             showAll
             selectedQueueIds={selectedQueueIds}
+            channelFilter={channelFilter}
             showTabGroups={showTabGroups}
           />
         </div>
@@ -784,6 +838,7 @@ const TicketsManagerTabs = () => {
             status="closed"
             showAll
             selectedQueueIds={selectedQueueIds}
+            channelFilter={channelFilter}
             showTabGroups={showTabGroups}
           />
         </div>
@@ -793,6 +848,7 @@ const TicketsManagerTabs = () => {
             groups
             showAll
             selectedQueueIds={selectedQueueIds}
+            channelFilter={channelFilter}
             showTabGroups={showTabGroups}
           />
         </div>
@@ -836,6 +892,7 @@ const TicketsManagerTabs = () => {
             status="open"
             showAll={showAll}
             selectedQueueIds={selectedQueueIds}
+            channelFilter={channelFilter}
             updateCount={setOpenCount}
             style={tabOpen === "open" ? undefined : { width: 0, height: 0 }}
             setTabOpen={setTabOpen}
@@ -844,6 +901,7 @@ const TicketsManagerTabs = () => {
           <TicketsList
             status="pending"
             selectedQueueIds={selectedQueueIds}
+            channelFilter={channelFilter}
             updateCount={setPendingCount}
             style={tabOpen === "pending" ? undefined : { width: 0, height: 0 }}
             setTabOpen={setTabOpen}

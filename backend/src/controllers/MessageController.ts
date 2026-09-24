@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import AppError from "../errors/AppError";
 import CreateMessageService from "../services/MessageServices/CreateMessageService";
 import saveMediaToFile from "../helpers/saveMediaFile";
+import { sendToVisitor } from "../services/WebchatServices/WebchatService";
 
 import SetTicketMessagesAsRead from "../helpers/SetTicketMessagesAsRead";
 import { getIO } from "../libs/socket";
@@ -300,6 +301,26 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
       quotedMsg,
       linkPreview
     });
+  } else if (channel === "webchat") {
+    // canal do site: a resposta não sai por WhatsApp nenhum — ela é gravada
+    // e entregue ao navegador de quem está na página
+    const sent = await CreateMessageService({
+      messageData: {
+        id: `webchat-${uuidv4()}`,
+        ticketId: ticket.id,
+        contactId: ticket.contactId,
+        body: String(body || "").slice(0, 10000),
+        fromMe: true,
+        read: true,
+        ack: 3,
+        mediaType: "chat",
+        channel: "webchat",
+        queueId: ticket.queueId
+      },
+      companyId
+    });
+    await ticket.update({ lastMessage: String(body || "").slice(0, 255) });
+    sendToVisitor(ticket, sent);
   }
 
   return res.send();

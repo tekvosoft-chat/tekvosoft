@@ -122,6 +122,16 @@ export const initIO = (httpServer: Server): SocketIO => {
   io.on("connection", async socket => {
     logger.info("Client Connected");
     const { token } = socket.handshake.query;
+
+    // visitante do site: não tem login, entra só na sala da própria conversa
+    // para receber as respostas da equipe em tempo real
+    const webchatSession = String(socket.handshake.query?.webchat || "").trim();
+    if (webchatSession) {
+      socket.join(`webchat-${webchatSession}`);
+      logger.debug(`webchat visitor joined webchat-${webchatSession}`);
+      return io;
+    }
+
     let tokenData = null;
     try {
       tokenData = verify(token as string, authConfig.secret);

@@ -186,6 +186,7 @@ const TicketsListCustom = props => {
     users,
     showAll,
     selectedQueueIds,
+    channelFilter,
     updateCount,
     style,
     setTabOpen,
@@ -242,7 +243,8 @@ const TicketsListCustom = props => {
     contactId,
     tags: JSON.stringify(tags),
     users: JSON.stringify(users),
-    queueIds: JSON.stringify(selectedQueueIds)
+    queueIds: JSON.stringify(selectedQueueIds),
+    channels: channelFilter?.length ? JSON.stringify(channelFilter) : undefined
   });
 
   // voltou ao app: a lista é recarregada para não ficar com conversas velhas

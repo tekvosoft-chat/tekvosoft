@@ -29,6 +29,8 @@ interface WhatsappData {
   status?: string;
   isDefault?: boolean;
   token?: string;
+  channel?: string;
+  config?: Record<string, unknown>;
 }
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
@@ -54,7 +56,9 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     ratingMessage,
     transferMessage,
     queueIds,
-    token
+    token,
+    channel,
+    config
   }: WhatsappData = req.body;
   const { companyId } = req.user;
 
@@ -69,7 +73,9 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     transferMessage,
     queueIds,
     companyId,
-    token
+    token,
+    channel,
+    config
   });
 
   sendWhatsappUpdate(whatsapp);
@@ -78,7 +84,10 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     sendWhatsappUpdate(oldDefaultWhatsapp);
   }
 
-  StartWhatsAppSession(whatsapp, companyId);
+  // só o WhatsApp abre sessão no celular; os outros canais não têm QR code
+  if (whatsapp.channel === "whatsapp") {
+    StartWhatsAppSession(whatsapp, companyId);
+  }
 
   return res.status(200).json(whatsapp);
 };

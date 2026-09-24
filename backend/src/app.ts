@@ -29,16 +29,26 @@ app.set("queues", {
 });
 
 app.use(
-  cors({
-    credentials: true,
-    origin: corsOrigin,
-    exposedHeaders: [
-      "Content-Range",
-      "X-Content-Range",
-      "Date",
-      "Accept-Ranges",
-      "Content-Length"
-    ]
+  cors((req, callback) => {
+    // o widget do site roda no domínio de cada cliente, então estas rotas
+    // aceitam qualquer origem — elas são públicas por natureza e o token da
+    // caixa de entrada é o que diz para onde a conversa vai
+    if (req.path.startsWith("/webchat/")) {
+      callback(null, { origin: true, credentials: false });
+      return;
+    }
+
+    callback(null, {
+      credentials: true,
+      origin: corsOrigin,
+      exposedHeaders: [
+        "Content-Range",
+        "X-Content-Range",
+        "Date",
+        "Accept-Ranges",
+        "Content-Length"
+      ]
+    });
   })
 );
 app.use(cookieParser());

@@ -102,6 +102,7 @@ const useStyles = makeStyles(theme => ({
    * a pessoa do outro lado usa, então ninguém precisa procurar onde clicar.
    */
   mainWrapper: {
+    position: "relative",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
@@ -256,11 +257,43 @@ const useStyles = makeStyles(theme => ({
     color: theme.palette.tkv.brand.text,
     "& svg": { fontSize: 25 }
   },
-  aiMenuPaper: {
-    minWidth: 230,
-    borderRadius: 14,
-    marginTop: -8,
-    boxShadow: "0 14px 40px -18px rgba(0,0,0,.45)"
+  // painel do assistente: sai de dentro da própria barra, sem modal
+  aiScrim: {
+    position: "fixed",
+    inset: 0,
+    zIndex: 5
+  },
+  aiPanel: {
+    position: "absolute",
+    right: 12,
+    bottom: "100%",
+    marginBottom: 8,
+    zIndex: 6,
+    minWidth: 236,
+    padding: 6,
+    borderRadius: 16,
+    backgroundColor:
+      theme.palette.tkv.surfaceRaised || theme.palette.tkv.surface,
+    border: `1px solid ${theme.palette.tkv.border}`,
+    boxShadow: "0 18px 44px -20px rgba(0,0,0,.55)",
+    animation: "$aiUp .16s ease-out both"
+  },
+  "@keyframes aiUp": {
+    from: { opacity: 0, transform: "translateY(6px)" },
+    to: { opacity: 1, transform: "none" }
+  },
+  aiOption: {
+    width: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    gap: 12,
+    padding: "10px 12px",
+    borderRadius: 11,
+    fontSize: "0.9375rem",
+    color: theme.palette.text.primary,
+    "& svg": { fontSize: 20, color: theme.palette.text.secondary },
+    "&:hover": { backgroundColor: theme.palette.tkv.surfaceHover }
   },
   // modo privado: a conversa inteira fica amarela, como um recado colado
   // modo privado: a barra vira um post-it, igual nos dois temas — é o aviso
@@ -1324,8 +1357,8 @@ const MessageInputCustom = props => {
   // (chave nova para todos começarem desligados)
   // mensagem privada: fica na conversa, mas só a equipe do sistema vê
   const [privateMode, setPrivateMode] = useState(false);
-  // menu do assistente, que sobe colado na barra e some ao escolher
-  const [aiAnchor, setAiAnchor] = useState(null);
+  // painel do assistente, que sobe colado na barra e some ao escolher
+  const [aiOpen, setAiOpen] = useState(false);
 
   // tocar numa resposta sugerida põe o texto aqui na barra, sem enviar
   useEffect(() => {
@@ -1945,10 +1978,7 @@ const MessageInputCustom = props => {
             // o toque não tira o foco do campo e o cursor volta para ele no
             // mesmo gesto: é isso que mantém o teclado do celular aberto
             onMouseDown={event => event.preventDefault()}
-            onClick={e => {
-              setAiAnchor(e.currentTarget);
-              inputRef.current?.focus();
-            }}
+            onClick={() => setAiOpen(open => !open)}
             aria-label={i18n.t("messagesInput.modes.ai", "Assistente")}
           >
             <OfflineBoltRoundedIcon />
@@ -1971,52 +2001,50 @@ const MessageInputCustom = props => {
    * Menu do assistente: sobe colado na barra, com as duas coisas que a pessoa
    * mais pede no meio da conversa, e some assim que escolhe.
    */
-  const aiMenu = (
-    <Menu
-      anchorEl={aiAnchor}
-      open={!!aiAnchor}
-      onClose={() => setAiAnchor(null)}
-      getContentAnchorEl={null}
-      anchorOrigin={{ vertical: "top", horizontal: "right" }}
-      transformOrigin={{ vertical: "bottom", horizontal: "right" }}
-      classes={{ paper: classes.aiMenuPaper }}
-      // sem roubar o foco: no celular o teclado descia, a barra subia de
-      // lugar e o menu ficava solto no meio da tela
-      autoFocus={false}
-      disableAutoFocus
-      disableAutoFocusItem
-      disableEnforceFocus
-      disableRestoreFocus
-      MenuListProps={{ autoFocus: false, autoFocusItem: false }}
-    >
-      <MenuItem
-        onClick={() => {
-          setAiAnchor(null);
-          window.dispatchEvent(
-            new CustomEvent(AI_ACTION_EVENT, { detail: "summary" })
-          );
-        }}
-      >
-        <ListItemIcon>
-          <SubjectRoundedIcon fontSize="small" />
-        </ListItemIcon>
-        {i18n.t("messagesInput.ai.summary", "Resumir a conversa")}
-      </MenuItem>
-      <MenuItem
-        onClick={() => {
-          setAiAnchor(null);
-          window.dispatchEvent(
-            new CustomEvent(AI_ACTION_EVENT, { detail: "reply" })
-          );
-        }}
-      >
-        <ListItemIcon>
-          <QuestionAnswerRoundedIcon fontSize="small" />
-        </ListItemIcon>
-        {i18n.t("messagesInput.ai.reply", "Sugestão de resposta")}
-      </MenuItem>
-    </Menu>
-  );
+  /**
+   * Opções do assistente, num painel colado na barra.
+   *
+   * Aqui não entra o Menu do Material: ele é um modal, e no celular abrir e
+   * fechar o modal fazia o teclado descer e subir — a pessoa via a tela
+   * pulando e as opções nunca apareciam.
+   */
+  const aiMenu = aiOpen ? (
+    <>
+      <div
+        className={classes.aiScrim}
+        onMouseDown={event => event.preventDefault()}
+        onClick={() => setAiOpen(false)}
+      />
+      <div className={classes.aiPanel}>
+        <ButtonBase
+          className={classes.aiOption}
+          onMouseDown={event => event.preventDefault()}
+          onClick={() => {
+            setAiOpen(false);
+            window.dispatchEvent(
+              new CustomEvent(AI_ACTION_EVENT, { detail: "summary" })
+            );
+          }}
+        >
+          <SubjectRoundedIcon />
+          {i18n.t("messagesInput.ai.summary", "Resumir a conversa")}
+        </ButtonBase>
+        <ButtonBase
+          className={classes.aiOption}
+          onMouseDown={event => event.preventDefault()}
+          onClick={() => {
+            setAiOpen(false);
+            window.dispatchEvent(
+              new CustomEvent(AI_ACTION_EVENT, { detail: "reply" })
+            );
+          }}
+        >
+          <QuestionAnswerRoundedIcon />
+          {i18n.t("messagesInput.ai.reply", "Sugestão de resposta")}
+        </ButtonBase>
+      </div>
+    </>
+  ) : null;
 
   if (groupLock)
     return (

@@ -20,6 +20,8 @@ export interface WhatsappData {
   companyId?: number;
   token?: string;
   language?: string;
+  /** ajustes do canal (cor do widget, textos, o que a janela mostra...) */
+  config?: Record<string, unknown>;
 }
 
 interface Request {
@@ -56,7 +58,8 @@ const UpdateWhatsAppService = async ({
     transferMessage,
     queueIds,
     token,
-    language
+    language,
+    config
   } = whatsappData;
 
   try {
@@ -102,7 +105,9 @@ const UpdateWhatsAppService = async ({
     companyId,
     token,
     transferMessage,
-    language
+    language,
+    // mexer só no que veio: salvar a aba de aparência não apaga o resto
+    ...(config ? { config: { ...(whatsapp.config || {}), ...config } } : {})
   });
 
   if (queueIds) {

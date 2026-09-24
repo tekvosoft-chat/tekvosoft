@@ -16,6 +16,9 @@ import {
 
 import api from "../../services/api";
 import WhatsAppModal from "../../components/WhatsAppModal";
+import InboxWizard from "../../components/InboxWizard";
+import WebchatForm from "../../components/InboxWizard/WebchatForm";
+import WebchatSettings from "../../components/InboxWizard/WebchatSettings";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import QrcodeModal from "../../components/QrcodeModal";
 import PasskeyModal from "../../components/PasskeyModal";
@@ -65,6 +68,11 @@ const Connections = () => {
 
   const { whatsApps, loading } = useContext(WhatsAppsContext);
   const [whatsAppModalOpen, setWhatsAppModalOpen] = useState(false);
+  // escolha do canal antes do formulário: cada canal se conecta de um jeito
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [webchatOpen, setWebchatOpen] = useState(false);
+  // ajustes da caixa do site (a bolinha), incluindo o script para copiar
+  const [webchatInbox, setWebchatInbox] = useState(null);
   const [privacyModalOpen, setPrivacyModalOpen] = useState(false);
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [selectedWhatsApp, setSelectedWhatsApp] = useState(null);
@@ -102,6 +110,19 @@ const Connections = () => {
       await api.put(`/whatsappsession/${whatsAppId}`);
     } catch (err) {
       toastError(err);
+    }
+  };
+
+  // "adicionar caixa de entrada" abre a escolha do canal; o formulário vem
+  // depois, de acordo com o que a pessoa escolher
+  const handleChooseChannel = channel => {
+    setWizardOpen(false);
+    if (channel.id === "whatsapp") {
+      setSelectedWhatsApp(null);
+      setWhatsAppModalOpen(true);
+    }
+    if (channel.id === "webchat") {
+      setWebchatOpen(true);
     }
   };
 
@@ -160,6 +181,12 @@ const Connections = () => {
   }, [setQrModalOpen, setPasskeyInitialToken, setPasskeyModalOpen]);
 
   const handleEditWhatsApp = whatsApp => {
+    // a caixa do site tem a sua própria tela: cor, textos, o que a janela
+    // mostra e o script para colar
+    if (whatsApp.channel === "webchat") {
+      setWebchatInbox(whatsApp);
+      return;
+    }
     setSelectedWhatsApp(whatsApp);
     setWhatsAppModalOpen(true);
   };
@@ -299,6 +326,17 @@ const Connections = () => {
           !whatsAppModalOpen && !privacyModalOpen && selectedWhatsApp?.id
         }
       />
+      <InboxWizard
+        open={wizardOpen}
+        onClose={() => setWizardOpen(false)}
+        onChoose={handleChooseChannel}
+      />
+      <WebchatForm open={webchatOpen} onClose={() => setWebchatOpen(false)} />
+      <WebchatSettings
+        open={!!webchatInbox}
+        inbox={webchatInbox}
+        onClose={() => setWebchatInbox(null)}
+      />
       <WhatsAppModal
         open={whatsAppModalOpen}
         onClose={handleCloseWhatsAppModal}
@@ -332,7 +370,7 @@ const Connections = () => {
           color="primary"
           className={classes.add}
           startIcon={<AddRoundedIcon />}
-          onClick={handleOpenWhatsAppModal}
+          onClick={() => setWizardOpen(true)}
         >
           {i18n.t("connections.buttons.add")}
         </Button>
@@ -351,7 +389,7 @@ const Connections = () => {
               onOpen={(item, profile) => setDetails({ id: item.id, profile })}
             />
           ))}
-          <NewInstanceCard onClick={handleOpenWhatsAppModal} />
+          <NewInstanceCard onClick={() => setWizardOpen(true)} />
         </InstanceGrid>
       )}
 

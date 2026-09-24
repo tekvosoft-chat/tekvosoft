@@ -29,6 +29,7 @@ type IndexQuery = {
   notClosed: string;
   all: string;
   queueIds: string;
+  channels: string;
   contactId: string;
   tags: string;
   users: string;
@@ -56,6 +57,7 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
     searchParam,
     showAll,
     queueIds: queueIdsStringified,
+    channels: channelsStringified,
     contactId,
     tags: tagIdsStringified,
     users: userIdsStringified,
@@ -83,6 +85,16 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
     usersIds = JSON.parse(userIdsStringified);
   }
 
+  // canais escolhidos no filtro da lista (whatsapp, instagram, facebook...)
+  let channels: string[] = [];
+  if (channelsStringified) {
+    try {
+      channels = JSON.parse(channelsStringified);
+    } catch {
+      channels = [];
+    }
+  }
+
   const { tickets, count } = await ListTicketsService({
     isSearch: isSearch === "true",
     searchParam,
@@ -98,6 +110,7 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
     showAll,
     userId,
     queueIds,
+    channels,
     withUnreadMessages,
     notClosed: !!notClosed,
     all: !!all,

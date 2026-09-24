@@ -127,8 +127,15 @@ class Whatsapp extends Model<Whatsapp> {
   @HasOne(() => Wavoip)
   wavoip: Wavoip;
 
+  /** whatsapp | webchat | instagram | facebook | telegram ... */
+  @Default("whatsapp")
   @Column(DataType.TEXT)
   channel: string;
+
+  /** ajustes próprios do canal (cor do widget, domínio, tokens...) */
+  @Default({})
+  @Column(DataType.JSONB)
+  config: Record<string, unknown>;
 }
 
 export default Whatsapp;

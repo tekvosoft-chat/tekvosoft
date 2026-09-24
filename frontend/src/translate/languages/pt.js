@@ -223,7 +223,7 @@ const messages = {
           name: "Nome do plano",
           value: "Valor mensal",
           users: "Usuários",
-          connections: "Conexões",
+          connections: "Caixa de entrada",
           queues: "Filas",
           currency: "Moeda",
           public: "Aparece no cadastro",
@@ -250,7 +250,7 @@ const messages = {
         hours: "Horário definido",
         noGreeting: "Sem mensagem de saudação",
         users: "Atendentes",
-        connections: "Conexões",
+        connections: "Caixa de entrada",
         tickets: "Abertos + fila",
         edit: "Editar",
         delete: "Excluir",
@@ -313,7 +313,7 @@ const messages = {
         ofTotal: "de {{total}} cadastradas",
         users: "Usuários",
         onlineNow: "{{count}} online agora",
-        connections: "Conexões",
+        connections: "Caixa de entrada",
         connected: "conectadas",
         tickets: "Atendimentos abertos",
         pending: "{{count}} aguardando",
@@ -638,7 +638,7 @@ const messages = {
         user: "Usuário",
         users: "Usuários",
         connection: "Conexão",
-        connections: "Conexões",
+        connections: "Caixa de entrada",
         queue: "Fila",
         queues: "Filas",
         contact: "Contato",
@@ -873,7 +873,7 @@ const messages = {
         }
       },
       connections: {
-        title: "Conexões",
+        title: "Caixas de entrada",
         toasts: {
           deleted: "Conexão com o WhatsApp excluída com sucesso!"
         },
@@ -891,7 +891,7 @@ const messages = {
           closeTickets: "Fechar todos os atendimentos desta conexão"
         },
         buttons: {
-          add: "Adicionar WhatsApp",
+          add: "Adicionar caixa de entrada",
           disconnect: "desconectar",
           tryAgain: "Tentar novamente",
           qrcode: "QR CODE",
@@ -982,7 +982,7 @@ const messages = {
       },
       whatsappModal: {
         title: {
-          add: "Adicionar WhatsApp",
+          add: "Adicionar caixa de entrada",
           edit: "Editar WhatsApp"
         },
         form: {
@@ -1303,7 +1303,7 @@ const messages = {
         },
         listItems: {
           dashboard: "Dashboard",
-          connections: "Conexões",
+          connections: "Caixa de entrada",
           tickets: "Atendimentos",
           quickMessages: "Respostas Rápidas",
           contacts: "Contatos",

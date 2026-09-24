@@ -17,6 +17,7 @@ const useTickets = ({
   updatedAt,
   showAll,
   queueIds,
+  channels,
   withUnreadMessages,
   notClosed,
   all
@@ -45,6 +46,7 @@ const useTickets = ({
               updatedAt,
               showAll,
               queueIds,
+              channels,
               withUnreadMessages,
               notClosed,
               all
@@ -73,6 +75,7 @@ const useTickets = ({
     updatedAt,
     showAll,
     queueIds,
+    channels,
     withUnreadMessages,
     isSearch,
     notClosed,

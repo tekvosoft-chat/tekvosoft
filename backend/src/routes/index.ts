@@ -34,6 +34,7 @@ import wavoipRoutes from "./wavoipRoutes";
 import dockerRoutes from "./dockerRoutes";
 import calendarRoutes from "./calendarRoutes";
 import aiRoutes from "./aiRoutes";
+import webchatRoutes from "./webchatRoutes";
 import superRoutes from "./superRoutes";
 
 const routes = Router();
@@ -76,5 +77,6 @@ routes.use(groupRoutes);
 routes.use(supportRoutes);
 routes.use(calendarRoutes);
 routes.use(aiRoutes);
+routes.use(webchatRoutes);
 
 export default routes;

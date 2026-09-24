@@ -33,6 +33,7 @@ interface Request {
   updatedAt?: string;
   minUpdatedAt?: string;
   showAll?: string;
+  channels?: string[];
   userId: string;
   withUnreadMessages?: string;
   notClosed?: boolean;
@@ -63,6 +64,7 @@ const ListTicketsService = async ({
   updatedAt,
   minUpdatedAt,
   showAll,
+  channels,
   userId,
   withUnreadMessages,
   notClosed,
@@ -267,6 +269,14 @@ const ListTicketsService = async ({
         }
       ]
     });
+  }
+
+  // de onde a mensagem chega: WhatsApp, Instagram, Facebook, site...
+  if (Array.isArray(channels) && channels.length > 0) {
+    whereCondition = {
+      ...whereCondition,
+      channel: { [Op.in]: channels }
+    };
   }
 
   if (contactId) {

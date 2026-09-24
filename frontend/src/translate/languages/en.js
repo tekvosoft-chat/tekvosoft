@@ -221,7 +221,7 @@ const messages = {
           name: "Plan name",
           value: "Monthly price",
           users: "Users",
-          connections: "Connections",
+          connections: "Inbox",
           queues: "Queues",
           currency: "Currency",
           public: "Shown on sign-up",
@@ -249,7 +249,7 @@ const messages = {
         hours: "Business hours set",
         noGreeting: "No greeting message",
         users: "Agents",
-        connections: "Connections",
+        connections: "Inbox",
         tickets: "Open + waiting",
         edit: "Edit",
         delete: "Delete",
@@ -313,7 +313,7 @@ const messages = {
         ofTotal: "of {{total}} registered",
         users: "Users",
         onlineNow: "{{count}} online now",
-        connections: "Connections",
+        connections: "Inbox",
         connected: "connected",
         tickets: "Open tickets",
         pending: "{{count}} waiting",
@@ -637,7 +637,7 @@ const messages = {
         user: "User",
         users: "Users",
         connection: "Connection",
-        connections: "Connections",
+        connections: "Inbox",
         queue: "Queue",
         queues: "Queues",
         contact: "Contact",
@@ -873,7 +873,7 @@ const messages = {
         }
       },
       connections: {
-        title: "Connections",
+        title: "Inboxes",
         toasts: {
           deleted: "WhatsApp connection successfully deleted!"
         },
@@ -891,7 +891,7 @@ const messages = {
           closeTickets: "Close all open tickets from this connection"
         },
         buttons: {
-          add: "Add WhatsApp",
+          add: "Add inbox",
           disconnect: "Disconnect",
           tryAgain: "Try Again",
           qrcode: "QR CODE",
@@ -981,7 +981,7 @@ const messages = {
       },
       whatsappModal: {
         title: {
-          add: "Add WhatsApp",
+          add: "Add inbox",
           edit: "Edit WhatsApp"
         },
         form: {
@@ -1301,7 +1301,7 @@ const messages = {
         },
         listItems: {
           dashboard: "Dashboard",
-          connections: "Connections",
+          connections: "Inbox",
           tickets: "Tickets",
           quickMessages: "Quick Responses",
           contacts: "Contacts",
