@@ -223,6 +223,9 @@ const useStyles = makeStyles(theme => ({
     height: "auto",
     display: "block",
     position: "relative",
+    // recebida não tem tique de entrega: sobra menos coisa à direita do
+    // texto, então o horário pode ficar mais perto do fim da frase
+    "& $textContentItem": { paddingRight: 46 },
     "&:hover [id^='messageActionsButton']": { display: "flex" },
     "&:hover [data-react-trigger], &:hover [data-forward-trigger]": {
       opacity: 1,
@@ -519,9 +522,11 @@ const useStyles = makeStyles(theme => ({
   textContentItem: {
     fontSize: "0.9063rem",
     lineHeight: 1.4,
-    [theme.breakpoints.down("xs")]: { padding: "3px 72px 6px 6px" },
+    // a reserva à direita é só o tanto que o horário ocupa (hora + tiques):
+    // 86px deixavam um vazio entre o fim da frase e a hora
+    [theme.breakpoints.down("xs")]: { padding: "3px 58px 6px 6px" },
     overflowWrap: "break-word",
-    padding: "3px 86px 6px 6px",
+    padding: "3px 62px 6px 6px",
     // o formatador só troca a PRIMEIRA quebra de linha por <br>; as outras
     // viravam espaço. Só dentro do parágrafo: na caixa inteira, a quebra que
     // ele deixa depois de cada parágrafo virava uma linha em branco no balão
@@ -546,7 +551,7 @@ const useStyles = makeStyles(theme => ({
     fontStyle: "italic",
     color: "rgba(0, 0, 0, 0.36)",
     overflowWrap: "break-word",
-    padding: "3px 80px 6px 6px"
+    padding: "3px 62px 6px 6px"
   },
 
   textContentItemEdited: {
@@ -623,7 +628,7 @@ const useStyles = makeStyles(theme => ({
     padding: "0 !important",
     overflow: "hidden",
     "& $messageMedia": { borderRadius: 0 },
-    "& $textContentItem": { padding: "6px 70px 6px 10px" },
+    "& $textContentItem": { padding: "6px 62px 6px 10px" },
     // o balão de mídia corta o que passa da borda: a reação fica por dentro,
     // no canto de baixo da foto/vídeo/GIF
     "& $reactions": { bottom: 8, left: 8 },
