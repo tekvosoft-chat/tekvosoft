@@ -296,13 +296,8 @@ const useStyles = makeStyles(theme => ({
       backgroundColor: alpha(PRIVATE_INK, 0.08)
     },
     "& .MuiTouchRipple-root": { color: alpha(PRIVATE_INK, 0.3) },
-    // botão de enviar: círculo escuro com a seta clara, que é o que se lê
-    // melhor sobre o amarelo
-    "& $roundBrand, & $roundAction": {
-      backgroundColor: PRIVATE_INK,
-      color: "#FFF7E8",
-      "&:hover": { backgroundColor: "#2A2006" }
-    }
+    // botão de enviar continua o da marca: é a ação principal da barra
+    "& $roundBrand": { color: "#FFFFFF" }
   },
   webIcon: {
     flex: "none",
@@ -683,6 +678,9 @@ const ActionButtons = props => {
         key="send"
         aria-label="sendMessage"
         component="span"
+        // sem tirar o foco do campo: era isso que fechava o teclado a cada
+        // mensagem enviada no celular
+        onMouseDown={event => event.preventDefault()}
         onClick={handleSendMessage}
         disabled={disableOption}
         className={roundClass}
@@ -1665,6 +1663,7 @@ const MessageInputCustom = props => {
       setInputMessage("");
       setShowEmoji(false);
       setReplyingMessage(null);
+      inputRef.current?.focus();
       haptic("send");
       try {
         await api.post(`/messages/${ticketId}`, {
@@ -1722,6 +1721,8 @@ const MessageInputCustom = props => {
     setShowEmoji(false);
     setLoading(false);
     setReplyingMessage(null);
+    // o cursor continua no campo: o teclado do celular não desce
+    inputRef.current?.focus();
     setEditingMessage(null);
     inputRef.current.focus();
   };
@@ -1941,7 +1942,13 @@ const MessageInputCustom = props => {
         <span>
           <IconButton
             className={`${classes.headIcon} ${classes.headIconAi}`}
-            onClick={e => setAiAnchor(e.currentTarget)}
+            // o toque não tira o foco do campo e o cursor volta para ele no
+            // mesmo gesto: é isso que mantém o teclado do celular aberto
+            onMouseDown={event => event.preventDefault()}
+            onClick={e => {
+              setAiAnchor(e.currentTarget);
+              inputRef.current?.focus();
+            }}
             aria-label={i18n.t("messagesInput.modes.ai", "Assistente")}
           >
             <OfflineBoltRoundedIcon />
@@ -1973,6 +1980,14 @@ const MessageInputCustom = props => {
       anchorOrigin={{ vertical: "top", horizontal: "right" }}
       transformOrigin={{ vertical: "bottom", horizontal: "right" }}
       classes={{ paper: classes.aiMenuPaper }}
+      // sem roubar o foco: no celular o teclado descia, a barra subia de
+      // lugar e o menu ficava solto no meio da tela
+      autoFocus={false}
+      disableAutoFocus
+      disableAutoFocusItem
+      disableEnforceFocus
+      disableRestoreFocus
+      MenuListProps={{ autoFocus: false, autoFocusItem: false }}
     >
       <MenuItem
         onClick={() => {

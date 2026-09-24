@@ -99,23 +99,23 @@ const useStyles = makeStyles(theme => {
       minWidth: 0,
       display: "flex",
       alignItems: "center",
-      gap: theme.spacing(1.25),
-      minHeight: 32
+      gap: theme.spacing(1),
+      minHeight: 26
     },
     recTime: {
       flex: "none",
       display: "inline-flex",
       alignItems: "center",
-      gap: 7,
-      minWidth: 62,
-      fontSize: "0.9375rem",
+      gap: 6,
+      minWidth: 54,
+      fontSize: "0.875rem",
       fontVariantNumeric: "tabular-nums",
       color: t.chat.text
     },
     wave: {
       flex: 1,
       minWidth: 0,
-      height: 30,
+      height: 22,
       display: "flex",
       alignItems: "center",
       justifyContent: "flex-end",
@@ -149,14 +149,15 @@ const useStyles = makeStyles(theme => {
     recBottom: { display: "contents" },
     trash: {
       flex: "none",
+      padding: 6,
       color: t.chat.icon,
       transition: "transform .15s ease, color .15s ease",
       "&:active": { transform: "scale(0.88)", color: t.semantic.danger },
-      "& svg": { fontSize: 24 }
+      "& svg": { fontSize: 21 }
     },
     liveDot: {
-      width: 10,
-      height: 10,
+      width: 8,
+      height: 8,
       borderRadius: "50%",
       backgroundColor: t.semantic.danger,
       animation: "$pulse 1.2s ease-in-out infinite"
@@ -170,8 +171,8 @@ const useStyles = makeStyles(theme => {
       "50%": { opacity: 0.35, transform: "scale(0.8)" }
     },
     send: {
-      width: 48,
-      height: 48,
+      width: 40,
+      height: 40,
       padding: 0,
       borderRadius: "50%",
       backgroundColor: t.brand.main,

@@ -812,7 +812,12 @@ const useStyles = makeStyles(theme => ({
     bottom: 4,
     lineHeight: "16px",
     right: 9,
-    color: theme.palette.tkv.chat.meta
+    color: theme.palette.tkv.chat.meta,
+    // hora e confirmação alinhadas pelo centro: o relógio e os tiques
+    // ficavam pendurados abaixo da linha da hora
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 3
   },
 
   timestampStickerLeft: {
@@ -856,9 +861,9 @@ const useStyles = makeStyles(theme => ({
   },
 
   ackIcons: {
-    fontSize: 18,
-    verticalAlign: "middle",
-    marginLeft: 4
+    fontSize: 15,
+    flex: "none",
+    marginLeft: 1
   },
 
   deletedIcon: {
@@ -869,9 +874,9 @@ const useStyles = makeStyles(theme => ({
 
   ackDoneReadIcon: {
     color: blue[500],
-    fontSize: 18,
-    verticalAlign: "middle",
-    marginLeft: 4
+    fontSize: 15,
+    flex: "none",
+    marginLeft: 1
   },
 
   downloadMedia: {

@@ -82,6 +82,34 @@ const sessions: Session[] = [];
 
 const retriesQrCodeMap = new Map<number, number>();
 
+/**
+ * Quedas seguidas de cada conexão, para espaçar a volta.
+ *
+ * Reconectar sempre em 2 segundos parece rápido, mas quando o WhatsApp está
+ * recusando (outro aparelho assumiu a sessão, limite de tentativas, instabi-
+ * lidade) isso vira um ciclo que só piora — e é o que faz a conexão "viver
+ * caindo". Aqui a espera cresce a cada queda seguida e zera quando conecta.
+ */
+const dropCountMap = new Map<number, number>();
+const RECONNECT_STEPS_MS = [2000, 5000, 15000, 30000, 60000, 120000];
+
+const reconnectDelay = (id: number, statusCode?: number): number => {
+  const drops = (dropCountMap.get(id) || 0) + 1;
+  dropCountMap.set(id, drops);
+
+  // 515 é o "reinicie agora" que o próprio WhatsApp pede depois de parear:
+  // não é queda, e esperar só atrasa a conexão
+  if (statusCode === DisconnectReason.restartRequired) return 1000;
+
+  // 440: outra sessão assumiu este número. Voltar correndo é brigar com ela
+  // e derrubar as duas; espera bem mais antes de tentar de novo.
+  if (statusCode === DisconnectReason.connectionReplaced) {
+    return Math.max(60000, RECONNECT_STEPS_MS[RECONNECT_STEPS_MS.length - 1]);
+  }
+
+  return RECONNECT_STEPS_MS[Math.min(drops - 1, RECONNECT_STEPS_MS.length - 1)];
+};
+
 export const getWbot = (whatsappId: number): Session => {
   const sessionIndex = sessions.findIndex(s => s.id === whatsappId);
 
@@ -447,8 +475,19 @@ export const initWASocket = async (
                     session: whatsapp
                   }
                 );
+                const statusCode = (lastDisconnect?.error as Boom)?.output
+                  ?.statusCode;
+                const delay = reconnectDelay(id, statusCode);
                 removeWbot(id, false).then(() => {
-                  logger.info(`Reconnecting ${name} in 2 seconds`);
+                  logger.info(
+                    {
+                      whatsappId: id,
+                      statusCode,
+                      quedasSeguidas: dropCountMap.get(id),
+                      emSegundos: delay / 1000
+                    },
+                    `Reconnecting ${name}`
+                  );
                   setTimeout(async () => {
                     await whatsapp.reload();
                     await StartWhatsAppSession(
@@ -456,7 +495,7 @@ export const initWASocket = async (
                       whatsapp.companyId,
                       true
                     );
-                  }, 2000);
+                  }, delay);
                 });
               } else {
                 // logged out
@@ -498,6 +537,7 @@ export const initWASocket = async (
                 qrcode: "",
                 retries: 0
               });
+              dropCountMap.delete(id);
 
               logger.debug(
                 {
