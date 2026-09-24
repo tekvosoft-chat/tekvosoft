@@ -839,24 +839,11 @@ const useStyles = makeStyles(theme => ({
     gap: 3
   },
 
-  timestampStickerLeft: {
-    backgroundColor: theme.palette.tkv.chat.bubbleIn,
-    borderRadius: 12,
-    padding: 5,
-    boxShadow:
-      theme.mode === "light" ? "0 1px 1px #b3b3b3" : "0 1px 1px #000000"
-  },
+  // figurinha não mostra horário: a etiqueta pendurada embaixo do recorte
+  // só sujava a imagem. O horário continua em toda mensagem comum.
+  timestampStickerLeft: { display: "none" },
 
-  timestampStickerRight: {
-    backgroundColor: theme.palette.tkv.chat.bubbleOut,
-    borderRadius: "12px 12px 4px 12px",
-    paddingLeft: 5,
-    paddingRight: 5,
-    paddingTop: 5,
-    paddingBottom: 0,
-    boxShadow:
-      theme.mode === "light" ? "0 1px 1px #b3b3b3" : "0 1px 1px #000000"
-  },
+  timestampStickerRight: { display: "none" },
 
   dailyTimestamp: {
     alignItems: "center",
