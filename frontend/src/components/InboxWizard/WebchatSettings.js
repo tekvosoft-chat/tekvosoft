@@ -7,6 +7,7 @@ import TextField from "@material-ui/core/TextField";
 import MenuItem from "@material-ui/core/MenuItem";
 import Switch from "@material-ui/core/Switch";
 import Button from "@material-ui/core/Button";
+import ButtonBase from "@material-ui/core/ButtonBase";
 import IconButton from "@material-ui/core/IconButton";
 import CloseRoundedIcon from "@material-ui/icons/CloseRounded";
 import FileCopyOutlinedIcon from "@material-ui/icons/FileCopyOutlined";
@@ -38,7 +39,18 @@ export const CONFIG_PADRAO = {
   allowEndConversation: true,
   greetingEnabled: false,
   collectEmail: false,
-  allowAfterResolved: true
+  allowAfterResolved: true,
+  giphyKey: "",
+  preChatFields: [
+    { key: "name", label: "Seu nome", type: "text", required: true },
+    { key: "email", label: "Seu e-mail", type: "email", required: false },
+    {
+      key: "phone",
+      label: "Telefone para contato",
+      type: "tel",
+      required: false
+    }
+  ]
 };
 
 const TEMPOS = [
@@ -250,6 +262,15 @@ const useStyles = makeStyles(theme => {
       cursor: "pointer"
     },
     corOn: { borderColor: theme.palette.text.primary },
+    obrigatorio: {
+      flex: "none",
+      padding: "5px 10px",
+      borderRadius: 999,
+      border: `1px solid ${t.border}`,
+      fontSize: "0.6875rem",
+      fontWeight: 700,
+      color: theme.palette.text.secondary
+    },
     script: {
       padding: "12px 14px",
       borderRadius: 12,

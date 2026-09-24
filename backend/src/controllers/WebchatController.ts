@@ -34,7 +34,8 @@ export const session = async (
   const sessionId = String(req.body?.sessionId || "").trim() || uuidv4();
   const { ticket } = await visitorTicket(inbox, sessionId, {
     name: req.body?.name,
-    email: req.body?.email
+    email: req.body?.email,
+    extra: req.body?.extra || {}
   });
   const messages = await historyFor(inbox, sessionId);
 

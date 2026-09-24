@@ -11,6 +11,7 @@ import { getIO } from "../../libs/socket";
 import { logger } from "../../utils/logger";
 import AppError from "../../errors/AppError";
 import saveMediaToFile from "../../helpers/saveMediaFile";
+import ContactCustomField from "../../models/ContactCustomField";
 
 /**
  * Canal do site: a bolinha de conversa que o cliente cola na página dele.
@@ -41,7 +42,23 @@ export type WebchatConfig = {
   allowEndConversation: boolean;
   collectEmail: boolean;
   allowAfterResolved: boolean;
+  preChatFields: PreChatField[];
+  giphyKey: string;
 };
+
+/** Pergunta feita antes da conversa começar. */
+export type PreChatField = {
+  key: string;
+  label: string;
+  type: string;
+  required: boolean;
+};
+
+const CAMPOS_PADRAO: PreChatField[] = [
+  { key: "name", label: "Seu nome", type: "text", required: true },
+  { key: "email", label: "Seu e-mail", type: "email", required: false },
+  { key: "phone", label: "Telefone para contato", type: "tel", required: false }
+];
 
 const ligado = (valor: unknown, padrao: boolean): boolean =>
   valor === undefined || valor === null ? padrao : !!valor;
@@ -75,7 +92,11 @@ export const configOf = (inbox: Whatsapp): WebchatConfig => {
     showFiles: ligado(config.showFiles, true),
     allowEndConversation: ligado(config.allowEndConversation, true),
     collectEmail: ligado(config.collectEmail, false),
-    allowAfterResolved: ligado(config.allowAfterResolved, true)
+    allowAfterResolved: ligado(config.allowAfterResolved, true),
+    preChatFields: Array.isArray(config.preChatFields)
+      ? (config.preChatFields as PreChatField[])
+      : CAMPOS_PADRAO,
+    giphyKey: String(config.giphyKey || "")
   };
 };
 
@@ -86,7 +107,11 @@ export const configOf = (inbox: Whatsapp): WebchatConfig => {
 export const visitorTicket = async (
   inbox: Whatsapp,
   sessionId: string,
-  visitor: { name?: string; email?: string } = {}
+  visitor: {
+    name?: string;
+    email?: string;
+    extra?: Record<string, string>;
+  } = {}
 ): Promise<{ ticket: Ticket; contact: Contact }> => {
   const number = `${VISITOR_PREFIX}${sessionId}`;
   const [contact] = await Contact.findOrCreate({
@@ -100,9 +125,35 @@ export const visitorTicket = async (
     } as never
   });
 
-  // nome informado depois (formulário do widget) atualiza o contato
+  // o que a pessoa responde no formulário vira ficha de contato aqui dentro
+  const mudancas: Record<string, unknown> = {};
   if (visitor.name?.trim() && contact.name === "Visitante do site") {
-    await contact.update({ name: visitor.name.trim() });
+    mudancas.name = visitor.name.trim();
+  }
+  if (visitor.email?.trim() && !contact.email) {
+    mudancas.email = visitor.email.trim();
+  }
+  if (Object.keys(mudancas).length) await contact.update(mudancas);
+
+  // telefone e perguntas próprias ficam nas informações extras
+  const extras = Object.entries(visitor.extra || {}).filter(
+    ([, valor]) => String(valor || "").trim().length > 0
+  );
+  if (extras.length) {
+    const atuais = await ContactCustomField.findAll({
+      where: { contactId: contact.id }
+    });
+    await Promise.all(
+      extras.map(([nome, valor]) => {
+        const existente = atuais.find(item => item.name === nome);
+        if (existente) return existente.update({ value: String(valor) });
+        return ContactCustomField.create({
+          contactId: contact.id,
+          name: nome,
+          value: String(valor)
+        } as never);
+      })
+    );
   }
 
   let ticket = await Ticket.findOne({
