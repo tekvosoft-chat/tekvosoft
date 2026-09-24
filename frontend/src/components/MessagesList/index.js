@@ -1810,6 +1810,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
     swipeRef.current = null;
     if (!swipe || swipe.axis !== "x") return;
     const { el } = swipe;
+    if (swipe.frame) cancelAnimationFrame(swipe.frame);
     el.style.transition = "transform .28s cubic-bezier(.2, .8, .2, 1)";
     el.style.transform = "";
     el.style.setProperty("--swipe", "0");
@@ -1829,6 +1830,27 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
     longPressRef.current.timer = null;
   };
 
+  /**
+   * Balão que está na altura do dedo. Os balões vêm na ordem da tela, então
+   * dá para achar por busca binária: antes media todos, um por um, e cada
+   * medida obriga o navegador a recalcular o desenho — numa conversa longa o
+   * gesto só começava depois disso, o que dava a sensação de travar.
+   */
+  const bubbleAtY = y => {
+    const bubbles = scrollRef.current?.querySelectorAll("[data-bubble]");
+    if (!bubbles?.length) return null;
+    let baixo = 0;
+    let alto = bubbles.length - 1;
+    while (baixo <= alto) {
+      const meio = (baixo + alto) >> 1;
+      const area = bubbles[meio].getBoundingClientRect();
+      if (y < area.top) alto = meio - 1;
+      else if (y > area.bottom) baixo = meio + 1;
+      else return bubbles[meio];
+    }
+    return null;
+  };
+
   // arrasto para o lado (o mesmo no balão e na linha vazia ao lado dele)
   const moveSwipe = touch => {
     const swipe = swipeRef.current;
@@ -1843,9 +1865,19 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
     }
     if (swipe.axis !== "x") return;
     swipe.dx = Math.max(0, dx);
-    const pull = swipe.dx < 64 ? swipe.dx : 64 + (swipe.dx - 64) * 0.3;
-    swipe.el.style.transform = `translateX(${Math.min(pull, 90)}px)`;
-    swipe.el.style.setProperty("--swipe", String(Math.min(1, swipe.dx / 56)));
+    // o dedo dispara muito mais eventos do que a tela desenha: pintar uma vez
+    // por quadro deixa o arrasto colado no dedo em vez de aos trancos
+    if (!swipe.frame) {
+      swipe.frame = requestAnimationFrame(() => {
+        swipe.frame = null;
+        const pull = swipe.dx < 64 ? swipe.dx : 64 + (swipe.dx - 64) * 0.3;
+        swipe.el.style.transform = `translateX(${Math.min(pull, 90)}px)`;
+        swipe.el.style.setProperty(
+          "--swipe",
+          String(Math.min(1, swipe.dx / 56))
+        );
+      });
+    }
     if (swipe.dx >= 56 && !swipe.buzzed) {
       swipe.buzzed = true;
       haptic("swipe");
@@ -1866,11 +1898,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
           if (e.touches.length !== 1 || e.target.closest?.("[data-bubble]"))
             return;
           const touch = e.touches[0];
-          const bubbles = scrollRef.current?.querySelectorAll("[data-bubble]");
-          const el = [...(bubbles || [])].find(node => {
-            const r = node.getBoundingClientRect();
-            return touch.clientY >= r.top && touch.clientY <= r.bottom;
-          });
+          const el = bubbleAtY(touch.clientY);
           const message =
             el &&
             messagesListRef.current.find(m => String(m.id) === String(el.id));
@@ -1919,7 +1947,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
           haptic("longPress");
           window.getSelection?.()?.removeAllRanges();
           openReactions(message, data, bubble, true);
-        }, 430);
+        }, 320);
         swipeRef.current = {
           x: touch.clientX,
           y: touch.clientY,
