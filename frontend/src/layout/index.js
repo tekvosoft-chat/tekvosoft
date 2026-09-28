@@ -18,8 +18,6 @@ import {
 } from "@material-ui/core";
 import SearchRoundedIcon from "@material-ui/icons/SearchRounded";
 
-import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
-
 import MainListItems from "./MainListItems";
 import MobileNav from "./MobileNav";
 import useNotificationSound, {
@@ -54,22 +52,14 @@ import NestedMenuItem from "material-ui-nested-menu-item";
 import GoogleAnalytics from "../components/GoogleAnalytics";
 import OnlyForSuperUser from "../components/OnlyForSuperUser";
 import NewTicketModal from "../components/NewTicketModal/index.js";
+import NewConversationModal from "../components/NewConversationModal";
+import CreateOutlinedIcon from "@material-ui/icons/CreateOutlined";
 import PullToRefresh from "../components/PullToRefresh";
 import HapticsBridge from "../components/Haptics/HapticsBridge";
 import CalendarReminders from "../components/CalendarReminders";
 
 const drawerWidth = 264;
-const drawerWidthCollapsed = 88;
 const appBarHeight = 56;
-const DRAWER_STORAGE_KEY = "drawerOpen";
-
-function getStoredDrawerOpen() {
-  return localStorage.getItem(DRAWER_STORAGE_KEY) === "true";
-}
-
-function persistDrawerOpenState(value) {
-  localStorage.setItem(DRAWER_STORAGE_KEY, String(value));
-}
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -163,117 +153,6 @@ const useStyles = makeStyles(theme => ({
     whiteSpace: "nowrap",
     maxWidth: "100%"
   },
-  /**
-   * Barra de cima.
-   *
-   * Antes ela era pintada de roxo por cima da AppBar, o que tornava a faixa
-   * um bloco maciço da cor da marca e obrigava todo ícone ali dentro a ser
-   * branco. Agora o normal é herdar a superfície clara.
-   *
-   * O que NÃO se perde: quando um administrador está personificando outra
-   * empresa, a barra continua mudando de cor. Isso não era enfeite, era
-   * aviso de que você não está na sua própria conta — e some com facilidade
-   * demais se a gente deixar. Ganhou tom de alerta, que comunica melhor do
-   * que "azul secundário".
-   */
-  toolbar: {
-    paddingRight: theme.spacing(2),
-    paddingLeft: theme.spacing(2),
-    gap: theme.spacing(0.25),
-    // No celular são até sete ícones mais o avatar em 390px. Sem apertar o
-    // respiro de cada um, o último item fica cortado na borda da tela.
-    // ícones na cor do texto da barra (o tema deixa IconButton cinza)
-    "& .MuiIconButton-root": {
-      color: "inherit",
-      "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.14)" }
-    },
-    [theme.breakpoints.down("xs")]: {
-      paddingLeft: theme.spacing(1.5),
-      paddingRight: theme.spacing(0.5),
-      gap: 0,
-      "& .MuiIconButton-root": { padding: 6 },
-      "& .MuiSvgIcon-root": { fontSize: 21 }
-    },
-    ...(localStorage.getItem("impersonated") === "true"
-      ? {
-          backgroundColor: theme.palette.tkv.semantic.warningSoft,
-          color: theme.palette.tkv.semantic.warning,
-          boxShadow: `inset 0 -2px 0 ${theme.palette.tkv.semantic.warning}`
-        }
-      : {})
-  },
-  toolbarIcon: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: appBarHeight,
-    padding: theme.spacing(0, 2),
-    flex: "none"
-  },
-  /**
-   * Barra superior na cor do tema, de ponta a ponta, com a logo em branco —
-   * como no Whaticket. Troca de cor junto com o tema escolhido pela empresa;
-   * o menu lateral fica logo abaixo dela.
-   */
-  appBar: {
-    zIndex: theme.zIndex.drawer + 1,
-    // abaixo da faixa de teste grátis, quando ela existe
-    top: "calc(var(--safe-top, 0px) + var(--banner-h, 0px))",
-    width: "100%",
-    marginLeft: 0,
-    backgroundColor: theme.palette.tkv.brand.main,
-    color: theme.palette.tkv.brand.contrastText,
-    borderBottom: "none",
-    boxShadow: `0 1px 0 ${theme.palette.tkv.brand.hover}`,
-    transition: theme.transitions.create("background-color")
-  },
-  appBarShift: {},
-  // celular: a faixa da hora e da bateria na mesma cor da barra
-  statusBarFill: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: "var(--safe-top, 0px)",
-    zIndex: theme.zIndex.drawer + 2,
-    backgroundColor: theme.palette.background.default
-  },
-  menuButton: {
-    marginRight: theme.spacing(0.5),
-    color: "inherit"
-  },
-  /**
-   * Recolher/expandir o menu: um botão redondo na BORDA do menu, na altura
-   * dos olhos, em vez de um ícone perdido na barra de cima. Ele acompanha a
-   * largura do menu e gira a seta conforme o estado.
-   */
-  drawerEdgeToggle: {
-    position: "fixed",
-    top: `calc(var(--banner-h, 0px) + ${theme.spacing(4)}px)`,
-    left: drawerWidth - 14,
-    zIndex: theme.zIndex.drawer + 2,
-    width: 28,
-    height: 28,
-    padding: 0,
-    borderRadius: "50%",
-    color: theme.palette.tkv.brand.text,
-    backgroundColor: theme.palette.tkv.surface,
-    border: `1px solid ${theme.palette.tkv.border}`,
-    boxShadow: "0 4px 14px -6px rgba(12, 10, 20, 0.45)",
-    transition: theme.transitions.create(["left", "background-color"], {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.enteringScreen
-    }),
-    "&:hover": { backgroundColor: theme.palette.tkv.brand.textSoft },
-    "& svg": {
-      fontSize: 18,
-      transition: "transform .25s ease"
-    }
-  },
-  drawerEdgeToggleClosed: {
-    left: drawerWidthCollapsed - 14,
-    "& svg": { transform: "rotate(180deg)" }
-  },
   // A logo vira uma silhueta clara (ou escura, se o tema for claro demais
   // para texto branco): assim ela combina com qualquer cor de barra, em vez
   // de ficar presa às cores da imagem original.
@@ -335,20 +214,6 @@ const useStyles = makeStyles(theme => ({
   // e o espaço era somado duas vezes.
   drawerPaperOffset: {
     paddingTop: `calc(var(--banner-h, 0px) + ${theme.spacing(1.25)}px)`
-  },
-  drawerPaperClose: {
-    overflowX: "hidden",
-    overflowY: "clip",
-    transition: theme.transitions.create("width", {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.leavingScreen
-    }),
-    width: drawerWidthCollapsed,
-    // um respiro da borda esquerda da tela
-    paddingLeft: theme.spacing(1),
-    [theme.breakpoints.up("sm")]: {
-      width: drawerWidthCollapsed
-    }
   },
   // Some sem desmontar: a barra continua viva (notificações, som, socket),
   // só não ocupa a tela enquanto a conversa está aberta.
@@ -426,9 +291,6 @@ const useStyles = makeStyles(theme => ({
     boxShadow: theme.shadows[1],
     overflow: "hidden"
   },
-  sidebarCardCollapsed: {
-    margin: theme.spacing(0, 1, 1.25)
-  },
   sidebarTools: {
     flex: "none",
     display: "flex",
@@ -441,11 +303,6 @@ const useStyles = makeStyles(theme => ({
     "& .MuiSvgIcon-root": { fontSize: 20 },
     "&:empty": { display: "none" }
   },
-  sidebarToolsCollapsed: {
-    flexDirection: "column",
-    justifyContent: "flex-start",
-    padding: theme.spacing(0.75, 0, 0)
-  },
   phoneFloatingTools: {
     position: "fixed",
     top: "calc(var(--safe-top, 0px) + var(--banner-h, 0px) + 6px)",
@@ -454,6 +311,28 @@ const useStyles = makeStyles(theme => ({
     display: "flex",
     gap: 4,
     "&:empty": { display: "none" }
+  },
+  // busca e, ao lado, o lápis de nova conversa (como no Chatwoot)
+  sidebarTop: {
+    flex: "none",
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    margin: theme.spacing(1.25, 1.25, 0.5),
+    "& $sidebarSearch": { flex: 1, minWidth: 0, margin: 0 }
+  },
+  composeButton: {
+    flex: "none",
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    border: `1px solid ${theme.palette.tkv.border}`,
+    color: theme.palette.text.secondary,
+    "&:hover": {
+      color: theme.palette.tkv.brand.text,
+      backgroundColor: theme.palette.tkv.brand.textSoft
+    },
+    "& svg": { fontSize: 19 }
   },
   sidebarSearch: {
     flex: "none",
@@ -478,11 +357,6 @@ const useStyles = makeStyles(theme => ({
     flex: 1,
     minWidth: 0,
     fontSize: "0.875rem"
-  },
-  sidebarSearchCollapsed: {
-    flex: "none",
-    alignSelf: "center",
-    margin: theme.spacing(1, 0, 0.5)
   },
   kbd: {
     flex: "none",
@@ -519,10 +393,6 @@ const useStyles = makeStyles(theme => ({
     backgroundColor: theme.palette.tkv.brand.textSoft,
     "&:hover": { backgroundColor: theme.palette.tkv.brand.textSoft },
     "& $userName": { color: theme.palette.tkv.brand.text }
-  },
-  userCardCollapsed: {
-    justifyContent: "center",
-    padding: theme.spacing(0.75, 0)
   },
   userAvatarWrap: {
     position: "relative",
@@ -619,15 +489,10 @@ const LoggedInLayout = ({ children, themeToggle }) => {
   const searchRef = React.useRef(null);
   const [languageOpen, setLanguageOpen] = useState(false);
   const { handleLogout, loading } = useContext(AuthContext);
-  const [drawerOpen, setDrawerOpen] = useState(() => {
-    const isDesktop = window.matchMedia("(min-width:600px)").matches;
-
-    if (!isDesktop) {
-      return false;
-    }
-
-    return getStoredDrawerOpen();
-  });
+  // menu lateral fixo no computador: sempre aberto, sem recolher
+  const [drawerOpen, setDrawerOpen] = useState(
+    () => window.matchMedia("(min-width:600px)").matches
+  );
   const [drawerVariant, setDrawerVariant] = useState("permanent");
   // const [dueDate, setDueDate] = useState("");
   const { user } = useContext(AuthContext);
@@ -636,18 +501,14 @@ const LoggedInLayout = ({ children, themeToggle }) => {
   const trialStatus = getTrialStatus(user);
 
   const theme = useTheme();
-  const greaterThenSm = useMediaQuery(theme.breakpoints.up("sm"));
-  // Três faixas de verdade, não duas:
-  //   telefone  (<600px)  -> sem barra lateral, navegação por baixo
-  //   tablet    (600-959) -> barra lateral só de ícones
-  //   desktop   (>=960)   -> barra lateral completa, a pessoa escolhe
+  // telefone (<600px): sem barra lateral, a navegação fica embaixo.
+  // Do tablet para cima: menu lateral fixo e sempre aberto, em árvore.
   const isPhone = useMediaQuery(theme.breakpoints.down("xs"));
   // Dentro de uma conversa (de atendimento ou do chat interno), o celular
   // mostra só a conversa, como no WhatsApp: sem a barra de cima e sem a
   // navegação de baixo. A saída é a seta de voltar no cabeçalho dela.
   const inConversation =
     isPhone && /^\/(tickets|chats)\/[^/]+/.test(location.pathname);
-  const greaterThenMd = useMediaQuery(theme.breakpoints.up("md"));
   const { colorMode } = useContext(ColorModeContext);
 
   const [currentLanguage, setCurrentLanguage] = useState(i18n.language);
@@ -682,6 +543,8 @@ const LoggedInLayout = ({ children, themeToggle }) => {
   // o aviso de conexão agora é do NetworkStatus, na tela inteira
 
   const [newTicketContact, setNewTicketContact] = useState(null);
+  // lápis do menu lateral: nova conversa (caixa de entrada + contato)
+  const [composeOpen, setComposeOpen] = useState(false);
 
   //################### CODIGOS DE TESTE #########################################
   // useEffect(() => {
@@ -764,19 +627,8 @@ const LoggedInLayout = ({ children, themeToggle }) => {
     }
 
     setDrawerVariant("permanent");
-    // No tablet a barra fica recolhida: 264px de menu comem metade da tela.
-    setDrawerOpen(greaterThenMd ? getStoredDrawerOpen() : false);
-  }, [isPhone, greaterThenMd]);
-
-  useEffect(() => {
-    // Só o desktop guarda a preferência; no tablet o recolhido é imposto e
-    // gravá-lo apagaria a escolha que a pessoa fez no computador.
-    if (!greaterThenMd) {
-      return;
-    }
-
-    persistDrawerOpenState(drawerOpen);
-  }, [drawerOpen, greaterThenMd]);
+    setDrawerOpen(true);
+  }, [isPhone]);
 
   useEffect(() => {
     const companyId = localStorage.getItem("companyId");
@@ -871,16 +723,6 @@ const LoggedInLayout = ({ children, themeToggle }) => {
     }
   };
 
-  const handleDrawerToggle = () => {
-    setDrawerOpen(prevState => {
-      const nextState = !prevState;
-      if (greaterThenSm) {
-        persistDrawerOpenState(nextState);
-      }
-      return nextState;
-    });
-  };
-
   const handleMenuItemClick = () => {
     const { innerWidth: width } = window;
     if (width <= 600) {
@@ -931,49 +773,18 @@ const LoggedInLayout = ({ children, themeToggle }) => {
       )}
       {!isPhone && (
         <>
-          <Tooltip
-            title={
-              drawerOpen ? "Recolher menu lateral" : "Expandir menu lateral"
-            }
-            placement="right"
-          >
-            <IconButton
-              aria-label={
-                drawerOpen ? "Recolher menu lateral" : "Expandir menu lateral"
-              }
-              onClick={handleDrawerToggle}
-              className={clsx(
-                classes.drawerEdgeToggle,
-                !drawerOpen && classes.drawerEdgeToggleClosed,
-                inConversation && classes.hiddenInConversation
-              )}
-            >
-              <ChevronLeftIcon />
-            </IconButton>
-          </Tooltip>
           <Drawer
             variant={drawerVariant}
-            className={
-              drawerOpen ? classes.drawerPaper : classes.drawerPaperClose
-            }
+            className={classes.drawerPaper}
             onClose={drawerClose}
             classes={{
-              paper: clsx(
-                classes.drawerPaper,
-                classes.drawerPaperOffset,
-                !drawerOpen && classes.drawerPaperClose
-              )
+              paper: clsx(classes.drawerPaper, classes.drawerPaperOffset)
             }}
             open={drawerOpen}
           >
             {/* Cartão do menu: busca, itens e, no rodapé, quem está logado. */}
-            <div
-              className={clsx(
-                classes.sidebarCard,
-                !drawerOpen && classes.sidebarCardCollapsed
-              )}
-            >
-              {drawerOpen ? (
+            <div className={clsx(classes.sidebarCard)}>
+              <div className={classes.sidebarTop}>
                 <label className={classes.sidebarSearch}>
                   <SearchRoundedIcon fontSize="small" />
                   <InputBase
@@ -991,54 +802,37 @@ const LoggedInLayout = ({ children, themeToggle }) => {
                   />
                   {!menuQuery && <kbd className={classes.kbd}>Ctrl K</kbd>}
                 </label>
-              ) : (
                 <Tooltip
-                  title={`${i18n.t("mainDrawer.listItems.search")} (Ctrl K)`}
-                  placement="right"
+                  title={i18n.t("mainDrawer.tree.compose", "Nova conversa")}
                 >
                   <IconButton
-                    className={classes.sidebarSearchCollapsed}
-                    aria-label={i18n.t("mainDrawer.listItems.search")}
-                    onClick={() => {
-                      setDrawerOpen(true);
-                      setTimeout(() => searchRef.current?.focus(), 180);
-                    }}
+                    className={classes.composeButton}
+                    aria-label={i18n.t(
+                      "mainDrawer.tree.compose",
+                      "Nova conversa"
+                    )}
+                    onClick={() => setComposeOpen(true)}
                   >
-                    <SearchRoundedIcon fontSize="small" />
+                    <CreateOutlinedIcon />
                   </IconButton>
                 </Tooltip>
-              )}
+              </div>
 
               {/* o que ficava na barra de cima agora mora no topo do menu */}
-              <div
-                className={clsx(
-                  classes.sidebarTools,
-                  !drawerOpen && classes.sidebarToolsCollapsed
-                )}
-              >
+              <div className={clsx(classes.sidebarTools)}>
                 <PhoneCall />
               </div>
 
               <List className={classes.containerWithScroll}>
-                <MainListItems
-                  drawerClose={drawerClose}
-                  drawerOpen={drawerOpen}
-                  collapsed={!drawerOpen}
-                  query={drawerOpen ? menuQuery : ""}
-                />
+                <MainListItems drawerClose={drawerClose} query={menuQuery} />
               </List>
 
               <div className={classes.userArea}>
-                <Tooltip
-                  title={!drawerOpen ? user?.name || "" : ""}
-                  placement="right"
-                >
+                <Tooltip title="" placement="right">
                   <ButtonBase
                     className={clsx(
                       classes.userCard,
-                      location.pathname === "/profile" &&
-                        classes.userCardActive,
-                      !drawerOpen && classes.userCardCollapsed
+                      location.pathname === "/profile" && classes.userCardActive
                     )}
                     onClick={handleSidebarProfileMenu}
                   >
@@ -1155,6 +949,10 @@ const LoggedInLayout = ({ children, themeToggle }) => {
           <PhoneCall />
         </div>
       )}
+      <NewConversationModal
+        open={composeOpen}
+        onClose={() => setComposeOpen(false)}
+      />
       <NewTicketModal
         modalOpen={!!newTicketContact}
         contact={newTicketContact}

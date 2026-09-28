@@ -33,6 +33,7 @@ type IndexQuery = {
   all: string;
   queueIds: string;
   channels: string;
+  whatsappIds?: string;
   contactId: string;
   tags: string;
   users: string;
@@ -43,6 +44,7 @@ interface TicketData {
   status: string;
   queueId: number;
   userId: number;
+  whatsappId?: number;
 }
 
 const updateMutex = new Mutex();
@@ -61,6 +63,7 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
     showAll,
     queueIds: queueIdsStringified,
     channels: channelsStringified,
+    whatsappIds: whatsappIdsStringified,
     contactId,
     tags: tagIdsStringified,
     users: userIdsStringified,
@@ -98,6 +101,16 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
     }
   }
 
+  // caixas de entrada escolhidas no menu lateral (Conversas > Canais)
+  let whatsappIds: number[] = [];
+  if (whatsappIdsStringified) {
+    try {
+      whatsappIds = JSON.parse(whatsappIdsStringified).map(Number);
+    } catch {
+      whatsappIds = [];
+    }
+  }
+
   const { tickets, count } = await ListTicketsService({
     isSearch: isSearch === "true",
     searchParam,
@@ -114,6 +127,7 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
     userId,
     queueIds,
     channels,
+    whatsappIds,
     withUnreadMessages,
     notClosed: !!notClosed,
     all: !!all,
@@ -181,14 +195,15 @@ export const kanban = async (
 };
 
 export const store = async (req: Request, res: Response): Promise<Response> => {
-  const { contactId, userId, queueId }: TicketData = req.body;
+  const { contactId, userId, queueId, whatsappId }: TicketData = req.body;
   const { companyId } = req.user;
 
   const ticket = await CreateTicketService({
     contactId,
     userId,
     companyId,
-    queueId
+    queueId,
+    whatsappId: Number(whatsappId) || undefined
   });
 
   const io = getIO();

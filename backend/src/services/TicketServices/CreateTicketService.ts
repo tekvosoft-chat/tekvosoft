@@ -6,6 +6,7 @@ import ShowContactService from "../ContactServices/ShowContactService";
 import { getIO } from "../../libs/socket";
 import FindOrCreateATicketTrakingService from "./FindOrCreateATicketTrakingService";
 import Contact from "../../models/Contact";
+import Whatsapp from "../../models/Whatsapp";
 import { incrementCounter } from "../CounterServices/IncrementCounter";
 
 interface Request {
@@ -13,15 +14,32 @@ interface Request {
   userId: number;
   companyId: number;
   queueId?: number;
+  // caixa de entrada escolhida no "nova conversa"; sem ela, a padrão
+  whatsappId?: number;
 }
 
 const CreateTicketService = async ({
   contactId,
   userId,
   queueId,
-  companyId
+  companyId,
+  whatsappId
 }: Request): Promise<Ticket> => {
-  const defaultWhatsapp = await GetDefaultWhatsApp(companyId);
+  let defaultWhatsapp: Whatsapp;
+  if (whatsappId) {
+    defaultWhatsapp = await Whatsapp.findByPk(whatsappId);
+    // só dá para começar conversa por WhatsApp conectado da própria empresa
+    if (
+      !defaultWhatsapp ||
+      defaultWhatsapp.companyId !== companyId ||
+      (defaultWhatsapp.channel || "whatsapp") !== "whatsapp" ||
+      defaultWhatsapp.status !== "CONNECTED"
+    ) {
+      throw new AppError("ERR_INBOX_UNAVAILABLE");
+    }
+  } else {
+    defaultWhatsapp = await GetDefaultWhatsApp(companyId);
+  }
 
   let ticket = await CheckContactOpenTickets(
     contactId,

@@ -33,6 +33,11 @@ import { i18n } from "../../translate/i18n";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import useSettings from "../../hooks/useSettings";
 import api from "../../services/api";
+import {
+  DEFAULT_NAV,
+  setTicketsNav,
+  useTicketsNav
+} from "../../helpers/ticketsNav";
 import toastError from "../../errors/toastError";
 
 /**
@@ -369,6 +374,14 @@ const TicketsManagerTabs = () => {
   // canais marcados no filtro (vazio = todos)
   const [channelFilter, setChannelFilter] = useState([]);
   const [canais, setCanais] = useState([]);
+  // caixas de entrada da empresa (nome da escolhida no menu lateral)
+  const [inboxes, setInboxes] = useState([]);
+  // o que o menu lateral escolheu (Conversas > ...): ver helpers/ticketsNav
+  const nav = useTicketsNav();
+  const whatsappFilter = useMemo(
+    () => (nav.inbox ? [Number(nav.inbox)] : []),
+    [nav.inbox]
+  );
   const [openCount, setOpenCount] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
   const [showTabGroups, setShowTabGroups] = useState(false);
@@ -430,6 +443,7 @@ const TicketsManagerTabs = () => {
           ...new Set((data || []).map(item => item.channel || "whatsapp"))
         ].filter(tipo => CANAIS[tipo]);
         setCanais(tipos);
+        setInboxes(data || []);
       })
       .catch(() => setCanais([]));
   }, []);
@@ -480,6 +494,18 @@ const TicketsManagerTabs = () => {
     setFocused(false);
     searchRef.current?.blur();
   };
+
+  useEffect(() => {
+    setFilter(
+      nav.view === "closed" || nav.view === "groups" ? nav.view : "open"
+    );
+    if (nav.view === "pending") setTabOpen("pending");
+    if (nav.view === "all") setTabOpen("open");
+  }, [nav.view]);
+
+  useEffect(() => {
+    setQueueFilter(nav.queue ? [Number(nav.queue)] : []);
+  }, [nav.queue]);
 
   const toggleQueue = id =>
     setQueueFilter(prev =>
@@ -706,10 +732,11 @@ const TicketsManagerTabs = () => {
             {chip(
               "all",
               "Tudo",
-              filter === "open" && queueFilter.length === 0,
+              filter === "open" && queueFilter.length === 0 && !nav.inbox,
               () => {
                 setFilter("open");
                 setQueueFilter([]);
+                setTicketsNav(DEFAULT_NAV);
               }
             )}
             {showTabGroups &&
@@ -717,13 +744,21 @@ const TicketsManagerTabs = () => {
                 "groups",
                 i18n.t("tickets.tabs.groups.title"),
                 filter === "groups",
-                () => setFilter(f => (f === "groups" ? "open" : "groups"))
+                () =>
+                  setTicketsNav({
+                    ...nav,
+                    view: filter === "groups" ? "all" : "groups"
+                  })
               )}
             {chip(
               "closed",
               i18n.t("tickets.tabs.closed.title"),
               filter === "closed",
-              () => setFilter(f => (f === "closed" ? "open" : "closed"))
+              () =>
+                setTicketsNav({
+                  ...nav,
+                  view: filter === "closed" ? "all" : "closed"
+                })
             )}
           </div>
           <Tooltip title="Novo contato">
@@ -803,6 +838,20 @@ const TicketsManagerTabs = () => {
             )}
           </div>
         )}
+        {/* caixa de entrada escolhida no menu lateral: dá para tirar aqui */}
+        {nav.inbox && (
+          <div className={classes.queueChips}>
+            {chip(
+              "inbox",
+              `${i18n.t("mainDrawer.tree.inboxFilter", "Caixa")}: ${
+                inboxes.find(item => item.id === Number(nav.inbox))?.name ||
+                `#${nav.inbox}`
+              }  ✕`,
+              true,
+              () => setTicketsNav({ ...nav, inbox: null })
+            )}
+          </div>
+        )}
         {/* filas em balõezinhos, embaixo: vão quebrando linha conforme a quantidade */}
         {userQueues.length > 0 && (
           <div className={classes.queueChips}>
@@ -829,6 +878,7 @@ const TicketsManagerTabs = () => {
             showAll
             selectedQueueIds={selectedQueueIds}
             channelFilter={channelFilter}
+            whatsappFilter={whatsappFilter}
             showTabGroups={showTabGroups}
           />
         </div>
@@ -839,6 +889,7 @@ const TicketsManagerTabs = () => {
             showAll
             selectedQueueIds={selectedQueueIds}
             channelFilter={channelFilter}
+            whatsappFilter={whatsappFilter}
             showTabGroups={showTabGroups}
           />
         </div>
@@ -849,6 +900,7 @@ const TicketsManagerTabs = () => {
             showAll
             selectedQueueIds={selectedQueueIds}
             channelFilter={channelFilter}
+            whatsappFilter={whatsappFilter}
             showTabGroups={showTabGroups}
           />
         </div>
@@ -856,7 +908,12 @@ const TicketsManagerTabs = () => {
         <div className={classes.listArea} key="open">
           <Tabs
             value={tabOpen}
-            onChange={(e, value) => setTabOpen(value)}
+            onChange={(e, value) =>
+              setTicketsNav({
+                ...nav,
+                view: value === "pending" ? "pending" : "all"
+              })
+            }
             variant="fullWidth"
             classes={{
               root: classes.pillTabs,
@@ -893,6 +950,7 @@ const TicketsManagerTabs = () => {
             showAll={showAll}
             selectedQueueIds={selectedQueueIds}
             channelFilter={channelFilter}
+            whatsappFilter={whatsappFilter}
             updateCount={setOpenCount}
             style={tabOpen === "open" ? undefined : { width: 0, height: 0 }}
             setTabOpen={setTabOpen}
@@ -902,6 +960,7 @@ const TicketsManagerTabs = () => {
             status="pending"
             selectedQueueIds={selectedQueueIds}
             channelFilter={channelFilter}
+            whatsappFilter={whatsappFilter}
             updateCount={setPendingCount}
             style={tabOpen === "pending" ? undefined : { width: 0, height: 0 }}
             setTabOpen={setTabOpen}

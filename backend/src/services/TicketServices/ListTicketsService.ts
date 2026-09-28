@@ -35,6 +35,7 @@ interface Request {
   minUpdatedAt?: string;
   showAll?: string;
   channels?: string[];
+  whatsappIds?: number[];
   userId: string;
   withUnreadMessages?: string;
   notClosed?: boolean;
@@ -90,6 +91,7 @@ const ListTicketsService = async ({
   minUpdatedAt,
   showAll,
   channels,
+  whatsappIds,
   userId,
   withUnreadMessages,
   notClosed,
@@ -297,6 +299,14 @@ const ListTicketsService = async ({
   }
 
   // de onde a mensagem chega: WhatsApp, Instagram, Facebook, site...
+  // caixas de entrada específicas (menu lateral > Canais)
+  if (Array.isArray(whatsappIds) && whatsappIds.length > 0) {
+    whereCondition = {
+      ...whereCondition,
+      whatsappId: { [Op.in]: whatsappIds.filter(Boolean) }
+    };
+  }
+
   if (Array.isArray(channels) && channels.length > 0) {
     whereCondition = {
       ...whereCondition,

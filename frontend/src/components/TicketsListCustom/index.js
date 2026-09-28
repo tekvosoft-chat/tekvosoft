@@ -190,6 +190,7 @@ const TicketsListCustom = props => {
     showAll,
     selectedQueueIds,
     channelFilter,
+    whatsappFilter,
     updateCount,
     style,
     setTabOpen,
@@ -235,7 +236,8 @@ const TicketsListCustom = props => {
     selectedQueueIds,
     // trocou o canal no filtro: a lista recomeça, senão as conversas antigas
     // continuam na tela junto com as novas
-    channelFilter
+    channelFilter,
+    whatsappFilter
   ]);
 
   const {
@@ -258,7 +260,10 @@ const TicketsListCustom = props => {
     tags: JSON.stringify(tags),
     users: JSON.stringify(users),
     queueIds: JSON.stringify(selectedQueueIds),
-    channels: channelFilter?.length ? JSON.stringify(channelFilter) : undefined
+    channels: channelFilter?.length ? JSON.stringify(channelFilter) : undefined,
+    whatsappIds: whatsappFilter?.length
+      ? JSON.stringify(whatsappFilter)
+      : undefined
   });
 
   // voltou ao app: a lista é recarregada para não ficar com conversas velhas
@@ -319,7 +324,10 @@ const TicketsListCustom = props => {
         // canal escolhido no filtro: um atendimento do site não entra na
         // lista quando só WhatsApp está marcado, e vice-versa
         (!channelFilter?.length ||
-          channelFilter.indexOf(ticket.channel || "whatsapp") > -1)
+          channelFilter.indexOf(ticket.channel || "whatsapp") > -1) &&
+        // caixa de entrada escolhida no menu lateral
+        (!whatsappFilter?.length ||
+          whatsappFilter.indexOf(ticket.whatsappId) > -1)
       );
     };
 
@@ -479,6 +487,7 @@ const TicketsListCustom = props => {
     user,
     selectedQueueIds,
     channelFilter,
+    whatsappFilter,
     contactId,
     tags,
     users,

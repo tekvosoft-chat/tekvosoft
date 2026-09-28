@@ -1300,6 +1300,22 @@ const messages = {
         }
       },
       mainDrawer: {
+        tree: {
+          conversations: "Conversaciones",
+          all: "Todas las conversaciones",
+          pending: "Sin atender",
+          closed: "Resueltas",
+          groups: "Grupos",
+          channels: "Canales",
+          queues: "Colas",
+          noChannels: "Ninguna bandeja de entrada",
+          noQueues: "Ninguna cola",
+          settings: "Configuración",
+          general: "General",
+          compose: "Nueva conversación",
+          offline: "Desconectada",
+          inboxFilter: "Bandeja"
+        },
         sections: {
           service: "Atención",
           audience: "Contactos",
@@ -2555,6 +2571,21 @@ const messages = {
           deleted: "Conversación eliminada"
         }
       },
+      newConversation: {
+        title: "Nueva conversación",
+        subtitle: "Elige por dónde sale el mensaje y para quién.",
+        inbox: "Bandeja de entrada",
+        connected: "Conectado",
+        disconnected: "Desconectado",
+        noInbox: "Ningún WhatsApp conectado para iniciar conversación.",
+        to: "Para",
+        searchContact: "Nombre o número",
+        changeContact: "Cambiar contacto",
+        queue: "Cola",
+        noQueue: "Sin cola",
+        cancel: "Cancelar",
+        start: "Iniciar conversación"
+      },
       ticketOptionsMenu: {
         schedule: "Agendamiento",
         delete: "Eliminar",
@@ -2687,6 +2718,8 @@ const messages = {
           "La IA no respondió ahora. Inténtalo de nuevo en un momento.",
         ERR_AI_INVALID_TONE: "Tono no válido.",
         ERR_AI_INVALID_ACTION: "Acción de IA no válida.",
+        ERR_INBOX_UNAVAILABLE:
+          "Esta bandeja de entrada no puede iniciar una conversación ahora (desconectada o no es WhatsApp).",
         ERR_FORBIDDEN: "No tienes permisos para acceder a este recurso.",
         ERR_CHECK_NUMBER: "No se pudo verificar el número de WhatsApp.",
         ERR_NO_OTHER_WHATSAPP:

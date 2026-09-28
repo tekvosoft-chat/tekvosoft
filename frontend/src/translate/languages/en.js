@@ -1293,6 +1293,22 @@ const messages = {
         }
       },
       mainDrawer: {
+        tree: {
+          conversations: "Conversations",
+          all: "All conversations",
+          pending: "Unattended",
+          closed: "Resolved",
+          groups: "Groups",
+          channels: "Channels",
+          queues: "Queues",
+          noChannels: "No inboxes",
+          noQueues: "No queues",
+          settings: "Settings",
+          general: "General",
+          compose: "New conversation",
+          offline: "Disconnected",
+          inboxFilter: "Inbox"
+        },
         sections: {
           service: "Service",
           audience: "Contacts",
@@ -2542,6 +2558,21 @@ const messages = {
           deleted: "Conversation deleted"
         }
       },
+      newConversation: {
+        title: "New conversation",
+        subtitle: "Choose where the message goes out from and to whom.",
+        inbox: "Inbox",
+        connected: "Connected",
+        disconnected: "Disconnected",
+        noInbox: "No connected WhatsApp to start a conversation.",
+        to: "To",
+        searchContact: "Name or number",
+        changeContact: "Change contact",
+        queue: "Queue",
+        noQueue: "No queue",
+        cancel: "Cancel",
+        start: "Start conversation"
+      },
       ticketOptionsMenu: {
         schedule: "Schedule",
         delete: "Delete",
@@ -2667,6 +2698,8 @@ const messages = {
           "The AI did not respond right now. Try again in a moment.",
         ERR_AI_INVALID_TONE: "Invalid tone.",
         ERR_AI_INVALID_ACTION: "Invalid AI action.",
+        ERR_INBOX_UNAVAILABLE:
+          "This inbox can't start a conversation right now (disconnected or not WhatsApp).",
         ERR_FORBIDDEN: "You do not have permission to access this resource.",
         ERR_CHECK_NUMBER: "Check the number and try again.",
         ERR_NO_OTHER_WHATSAPP: "There must be at least one default WhatsApp.",

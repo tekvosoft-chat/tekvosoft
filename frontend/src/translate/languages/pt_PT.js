@@ -1266,6 +1266,22 @@ const messages = {
         }
       },
       mainDrawer: {
+        tree: {
+          conversations: "Conversas",
+          all: "Todas as conversas",
+          pending: "Por atender",
+          closed: "Resolvidas",
+          groups: "Grupos",
+          channels: "Canais",
+          queues: "Filas",
+          noChannels: "Nenhuma caixa de entrada",
+          noQueues: "Nenhuma fila",
+          settings: "Definições",
+          general: "Geral",
+          compose: "Nova conversa",
+          offline: "Desligada",
+          inboxFilter: "Caixa"
+        },
         sections: {
           service: "Atendimento",
           audience: "Contactos",
@@ -2507,6 +2523,21 @@ const messages = {
           deleted: "Conversa eliminada"
         }
       },
+      newConversation: {
+        title: "Nova conversa",
+        subtitle: "Escolha por onde sai a mensagem e para quem.",
+        inbox: "Caixa de entrada",
+        connected: "Ligado",
+        disconnected: "Desligado",
+        noInbox: "Nenhum WhatsApp ligado para iniciar conversa.",
+        to: "Para",
+        searchContact: "Nome ou número",
+        changeContact: "Trocar contacto",
+        queue: "Fila",
+        noQueue: "Sem fila",
+        cancel: "Cancelar",
+        start: "Iniciar conversa"
+      },
       ticketOptionsMenu: {
         schedule: "Agendamento",
         delete: "Eliminar",
@@ -2638,6 +2669,8 @@ const messages = {
           "A IA não respondeu agora. Tente de novo daqui a pouco.",
         ERR_AI_INVALID_TONE: "Tom inválido.",
         ERR_AI_INVALID_ACTION: "Ação de IA inválida.",
+        ERR_INBOX_UNAVAILABLE:
+          "Esta caixa de entrada não pode iniciar conversa agora (desligada ou não é WhatsApp).",
         ERR_FORBIDDEN:
           "Acesso negado. Você não tem permissão para acessar este recurso.",
         ERR_CHECK_NUMBER: "Número não encontrado no Whatsapp.",
