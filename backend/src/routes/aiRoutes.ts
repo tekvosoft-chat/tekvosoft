@@ -15,6 +15,8 @@ aiRoutes.post(
   isAuth,
   AiController.applySuggestion
 );
+// barra de envio: melhorar, mudar o tom, corrigir, sugerir, perguntar
+aiRoutes.post("/ai/tickets/:ticketId/compose", isAuth, AiController.compose);
 aiRoutes.get(
   "/ai/contacts/:contactId/summary",
   isAuth,

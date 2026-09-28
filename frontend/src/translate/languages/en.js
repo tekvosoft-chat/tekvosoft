@@ -2364,6 +2364,34 @@ const messages = {
         openPaymentLink: "Open payment link"
       },
       messagesInput: {
+        ai: {
+          improve: "Improve reply",
+          tone: "Change tone",
+          fix: "Fix grammar and spelling",
+          suggest: "Suggest a reply",
+          summary: "Summarize the conversation",
+          ask: "Ask the Copilot",
+          needsText: "Type in the bar to improve the text",
+          writing: "Writing",
+          use: "Use",
+          regenerate: "Generate another version",
+          discard: "Discard",
+          keys: "Tab to use · Esc to discard",
+          done: {
+            improve: "Improved reply",
+            tone: "Tone",
+            fix: "Grammar fixed",
+            suggest: "Suggested reply",
+            ask: "Copilot answer"
+          },
+          tones: {
+            professional: "Professional",
+            casual: "Casual",
+            direct: "Direct",
+            confident: "Confident",
+            friendly: "Friendly"
+          }
+        },
         linkPreview: {
           loading: "Loading link preview…",
           remove: "Send without preview"
@@ -2630,6 +2658,15 @@ const messages = {
         ERR_INVALID_PRIORITY: "Invalid priority.",
         ERR_INVALID_SNOOZE:
           "Pick a date and time in the future to snooze the conversation.",
+        ERR_AI_NOT_CONFIGURED:
+          "AI is not set up. Add the key in Settings > Options > Artificial intelligence.",
+        ERR_AI_EMPTY_TEXT: "Type something in the bar first.",
+        ERR_AI_NO_MESSAGES:
+          "There are no messages in this conversation for the AI to read yet.",
+        ERR_AI_UNAVAILABLE:
+          "The AI did not respond right now. Try again in a moment.",
+        ERR_AI_INVALID_TONE: "Invalid tone.",
+        ERR_AI_INVALID_ACTION: "Invalid AI action.",
         ERR_FORBIDDEN: "You do not have permission to access this resource.",
         ERR_CHECK_NUMBER: "Check the number and try again.",
         ERR_NO_OTHER_WHATSAPP: "There must be at least one default WhatsApp.",

@@ -2376,6 +2376,34 @@ const messages = {
         openPaymentLink: "Abrir enlace de pago"
       },
       messagesInput: {
+        ai: {
+          improve: "Mejorar respuesta",
+          tone: "Cambiar tono",
+          fix: "Corregir gramática y ortografía",
+          suggest: "Sugerir una respuesta",
+          summary: "Resumir la conversación",
+          ask: "Preguntar al Copiloto",
+          needsText: "Escribe en la barra para mejorar el texto",
+          writing: "Escribiendo",
+          use: "Usar",
+          regenerate: "Generar otra versión",
+          discard: "Descartar",
+          keys: "Tab para usar · Esc para descartar",
+          done: {
+            improve: "Respuesta mejorada",
+            tone: "Tono",
+            fix: "Gramática corregida",
+            suggest: "Respuesta sugerida",
+            ask: "Respuesta del Copiloto"
+          },
+          tones: {
+            professional: "Profesional",
+            casual: "Casual",
+            direct: "Directo",
+            confident: "Seguro",
+            friendly: "Amigable"
+          }
+        },
         linkPreview: {
           loading: "Cargando vista previa…",
           remove: "Enviar sin vista previa"
@@ -2650,6 +2678,15 @@ const messages = {
         ERR_INVALID_PRIORITY: "Prioridad no válida.",
         ERR_INVALID_SNOOZE:
           "Elige una fecha y hora futura para posponer la conversación.",
+        ERR_AI_NOT_CONFIGURED:
+          "La IA no está configurada. Agrega la clave en Configuración > Opciones > Inteligencia artificial.",
+        ERR_AI_EMPTY_TEXT: "Escribe algo en la barra primero.",
+        ERR_AI_NO_MESSAGES:
+          "Todavía no hay mensajes en esta conversación para que la IA lea.",
+        ERR_AI_UNAVAILABLE:
+          "La IA no respondió ahora. Inténtalo de nuevo en un momento.",
+        ERR_AI_INVALID_TONE: "Tono no válido.",
+        ERR_AI_INVALID_ACTION: "Acción de IA no válida.",
         ERR_FORBIDDEN: "No tienes permisos para acceder a este recurso.",
         ERR_CHECK_NUMBER: "No se pudo verificar el número de WhatsApp.",
         ERR_NO_OTHER_WHATSAPP:

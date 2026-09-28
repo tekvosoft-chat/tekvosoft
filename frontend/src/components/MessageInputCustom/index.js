@@ -32,7 +32,13 @@ import PhotoCameraOutlinedIcon from "@material-ui/icons/PhotoCameraOutlined";
 import FlashOnRoundedIcon from "@material-ui/icons/FlashOnRounded";
 import SendRoundedIcon from "@material-ui/icons/SendRounded";
 import useMediaQuery from "@material-ui/core/useMediaQuery";
-import { Tooltip, InputAdornment, Typography, Popper } from "@material-ui/core";
+import {
+  Button,
+  Tooltip,
+  InputAdornment,
+  Typography,
+  Popper
+} from "@material-ui/core";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import { isString, isEmpty, isObject, has } from "lodash";
 
@@ -82,6 +88,13 @@ import OfflineBoltRoundedIcon from "@material-ui/icons/OfflineBoltRounded";
 import FullscreenRoundedIcon from "@material-ui/icons/FullscreenRounded";
 import SubjectRoundedIcon from "@material-ui/icons/SubjectRounded";
 import QuestionAnswerRoundedIcon from "@material-ui/icons/QuestionAnswerRounded";
+import EditRoundedIcon from "@material-ui/icons/EditRounded";
+import RecordVoiceOverRoundedIcon from "@material-ui/icons/RecordVoiceOverRounded";
+import SpellcheckRoundedIcon from "@material-ui/icons/SpellcheckRounded";
+import ContactSupportRoundedIcon from "@material-ui/icons/ContactSupportRounded";
+import ReplayRoundedIcon from "@material-ui/icons/ReplayRounded";
+import CloseRoundedIcon from "@material-ui/icons/CloseRounded";
+import ChevronRightRoundedIcon from "@material-ui/icons/ChevronRightRounded";
 import RoomOutlinedIcon from "@material-ui/icons/RoomOutlined";
 import { SendLocationDialog } from "../MessagesList/LocationMessage";
 import { SocketContext } from "../../context/Socket/SocketContext";
@@ -293,7 +306,126 @@ const useStyles = makeStyles(theme => ({
     fontSize: "0.9375rem",
     color: theme.palette.text.primary,
     "& svg": { fontSize: 20, color: theme.palette.text.secondary },
-    "&:hover": { backgroundColor: theme.palette.tkv.surfaceHover }
+    "&:hover": { backgroundColor: theme.palette.tkv.surfaceHover },
+    "&.Mui-disabled": { opacity: 0.45 }
+  },
+  aiChevron: { marginLeft: "auto" },
+  aiDivider: {
+    height: 1,
+    margin: "4px 6px",
+    backgroundColor: theme.palette.tkv.border
+  },
+  // sem texto na barra, as opções de melhorar não têm o que melhorar
+  aiHint: {
+    padding: "6px 12px 4px",
+    fontSize: "0.75rem",
+    color: theme.palette.text.secondary
+  },
+  // tons: no computador abrem ao lado do painel; no celular, logo abaixo
+  aiToneWrap: { position: "relative" },
+  aiTones: {
+    position: "absolute",
+    right: "calc(100% + 12px)",
+    top: -6,
+    minWidth: 170,
+    padding: 6,
+    borderRadius: 16,
+    backgroundColor:
+      theme.palette.tkv.surfaceRaised || theme.palette.tkv.surface,
+    border: `1px solid ${theme.palette.tkv.border}`,
+    boxShadow: "0 18px 44px -20px rgba(0,0,0,.55)",
+    animation: "$aiUp .12s ease-out both",
+    // ponte invisível até o painel: o mouse atravessa o vão sem fechar
+    "&::after": {
+      content: '""',
+      position: "absolute",
+      top: 0,
+      bottom: 0,
+      right: -14,
+      width: 14
+    },
+    [theme.breakpoints.down("xs")]: {
+      "&::after": { display: "none" },
+      position: "static",
+      minWidth: 0,
+      margin: "0 0 4px 32px",
+      padding: 0,
+      border: "none",
+      boxShadow: "none",
+      backgroundColor: "transparent",
+      animation: "none"
+    }
+  },
+  aiTone: { paddingLeft: 14 },
+
+  /**
+   * Sugestão da IA dentro da barra, em roxo: o texto da pessoa continua
+   * logo abaixo, para comparar. Usar troca o texto; ↻ pede outra versão;
+   * ✕ descarta.
+   */
+  aiSuggest: {
+    width: "calc(100% - 24px)",
+    margin: "8px 12px 0",
+    padding: "8px 8px 10px 14px",
+    borderRadius: 14,
+    color: theme.palette.tkv.brand.text,
+    backgroundColor: theme.palette.tkv.brand.textSoft,
+    border: `1px solid ${theme.palette.tkv.brand.textBorder}`,
+    animation: "$aiUp .16s ease-out both",
+    [theme.breakpoints.down("xs")]: {
+      width: "calc(100% - 12px)",
+      margin: "6px 6px 0"
+    }
+  },
+  aiSuggestHead: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    fontSize: "0.75rem",
+    fontWeight: 700,
+    letterSpacing: "0.01em",
+    "& > svg": { fontSize: 16 },
+    "& .MuiIconButton-root": { padding: 6, color: "inherit" },
+    "& .MuiIconButton-root svg": { fontSize: 18 }
+  },
+  aiSuggestText: {
+    maxHeight: 160,
+    overflowY: "auto",
+    paddingRight: 6,
+    fontSize: "0.9375rem",
+    lineHeight: 1.45,
+    fontWeight: 500,
+    whiteSpace: "pre-wrap",
+    overflowWrap: "anywhere",
+    ...theme.scrollbarStyles
+  },
+  aiSuggestFoot: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 8,
+    fontSize: "0.75rem",
+    color: theme.palette.text.secondary,
+    "& .MuiButton-root": { borderRadius: 999, padding: "3px 14px" },
+    [theme.breakpoints.down("xs")]: { "& > span": { display: "none" } }
+  },
+  aiDots: {
+    display: "inline-flex",
+    gap: 3,
+    marginLeft: 6,
+    "& i": {
+      width: 5,
+      height: 5,
+      borderRadius: "50%",
+      backgroundColor: "currentColor",
+      animation: "$aiDot 1s infinite ease-in-out"
+    },
+    "& i:nth-child(2)": { animationDelay: ".15s" },
+    "& i:nth-child(3)": { animationDelay: ".3s" }
+  },
+  "@keyframes aiDot": {
+    "0%, 80%, 100%": { opacity: 0.25, transform: "translateY(0)" },
+    "40%": { opacity: 1, transform: "translateY(-3px)" }
   },
   // modo privado: a conversa inteira fica amarela, como um recado colado
   // modo privado: a barra vira um post-it, igual nos dois temas — é o aviso
@@ -1359,6 +1491,94 @@ const MessageInputCustom = props => {
   const [privateMode, setPrivateMode] = useState(false);
   // painel do assistente, que sobe colado na barra e some ao escolher
   const [aiOpen, setAiOpen] = useState(false);
+  const [toneOpen, setToneOpen] = useState(false);
+  // sugestão da IA em roxo na barra: { action, tone, source, text, loading }
+  const [aiSuggestion, setAiSuggestion] = useState(null);
+  const aiRequest = useRef(0);
+
+  const closeAiMenu = () => {
+    setAiOpen(false);
+    setToneOpen(false);
+  };
+
+  // pede o texto; "previous" é a versão na tela quando a pessoa pede outra
+  const runAi = async (action, tone, source = inputMessage, previous) => {
+    const id = ++aiRequest.current;
+    closeAiMenu();
+    setAiSuggestion({
+      action,
+      tone,
+      source,
+      text: previous || "",
+      loading: true
+    });
+    try {
+      const { data } = await api.post(`/ai/tickets/${ticketId}/compose`, {
+        action,
+        tone,
+        text: source,
+        previous
+      });
+      if (id !== aiRequest.current) return;
+      setAiSuggestion({
+        action,
+        tone,
+        source,
+        text: data.text,
+        loading: false
+      });
+    } catch (err) {
+      if (id !== aiRequest.current) return;
+      setAiSuggestion(null);
+      toastError(err);
+    }
+  };
+
+  const regenerateAi = () =>
+    aiSuggestion &&
+    runAi(
+      aiSuggestion.action,
+      aiSuggestion.tone,
+      aiSuggestion.source,
+      aiSuggestion.text
+    );
+
+  const discardAi = () => {
+    aiRequest.current += 1;
+    setAiSuggestion(null);
+    setTimeout(() => inputRef.current?.focus(), 30);
+  };
+
+  const acceptAi = () => {
+    if (!aiSuggestion?.text) return;
+    setInputMessage(aiSuggestion.text);
+    setAiSuggestion(null);
+    setTimeout(() => inputRef.current?.focus(), 30);
+  };
+
+  // trocou de conversa: a sugestão era da outra
+  useEffect(() => {
+    aiRequest.current += 1;
+    setAiSuggestion(null);
+  }, [ticketId]);
+
+  // com a sugestão pronta, Tab usa e Esc descarta (no computador)
+  useEffect(() => {
+    if (!aiSuggestion || aiSuggestion.loading) return undefined;
+    const onKey = event => {
+      if (document.activeElement !== inputRef.current) return;
+      if (event.key === "Tab" && !event.shiftKey) {
+        event.preventDefault();
+        acceptAi();
+      } else if (event.key === "Escape") {
+        event.preventDefault();
+        discardAi();
+      }
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiSuggestion]);
 
   // tocar numa resposta sugerida põe o texto aqui na barra, sem enviar
   useEffect(() => {
@@ -2008,43 +2228,198 @@ const MessageInputCustom = props => {
    * fechar o modal fazia o teclado descer e subir — a pessoa via a tela
    * pulando e as opções nunca apareciam.
    */
+  const ai = (key, fallback) => i18n.t(`messagesInput.ai.${key}`, fallback);
+  const hasText = !!String(inputMessage || "").trim();
+  // mouse de verdade: o submenu de tons abre ao passar por cima
+  const canHover =
+    typeof window !== "undefined" &&
+    !!window.matchMedia?.("(hover: hover)").matches;
+  const TONES = {
+    professional: "Profissional",
+    casual: "Casual",
+    direct: "Direto",
+    confident: "Confiante",
+    friendly: "Amigável"
+  };
+
+  const aiItem = ({
+    key,
+    icon,
+    label,
+    onClick,
+    disabled,
+    extra,
+    className
+  }) => (
+    <ButtonBase
+      key={key}
+      className={clsx(classes.aiOption, className)}
+      disabled={disabled}
+      onMouseDown={event => event.preventDefault()}
+      onClick={onClick}
+    >
+      {icon}
+      {label}
+      {extra}
+    </ButtonBase>
+  );
+
   const aiMenu = aiOpen ? (
     <>
       <div
         className={classes.aiScrim}
         onMouseDown={event => event.preventDefault()}
-        onClick={() => setAiOpen(false)}
+        onClick={closeAiMenu}
       />
       <div className={classes.aiPanel}>
-        <ButtonBase
-          className={classes.aiOption}
-          onMouseDown={event => event.preventDefault()}
-          onClick={() => {
-            setAiOpen(false);
+        {!hasText && (
+          <div className={classes.aiHint}>
+            {ai("needsText", "Escreva na barra para melhorar o texto")}
+          </div>
+        )}
+        {aiItem({
+          key: "improve",
+          icon: <EditRoundedIcon />,
+          label: ai("improve", "Melhorar resposta"),
+          disabled: !hasText,
+          onClick: () => runAi("improve")
+        })}
+        <div
+          className={classes.aiToneWrap}
+          onMouseEnter={() => canHover && hasText && setToneOpen(true)}
+          onMouseLeave={() => canHover && setToneOpen(false)}
+        >
+          {aiItem({
+            key: "tone",
+            icon: <RecordVoiceOverRoundedIcon />,
+            label: ai("tone", "Alterar tom"),
+            disabled: !hasText,
+            onClick: () => setToneOpen(open => !open),
+            extra: <ChevronRightRoundedIcon className={classes.aiChevron} />
+          })}
+          {toneOpen && hasText && (
+            <div className={classes.aiTones}>
+              {Object.entries(TONES).map(([tone, fallback]) =>
+                aiItem({
+                  key: tone,
+                  label: ai(`tones.${tone}`, fallback),
+                  className: classes.aiTone,
+                  onClick: () => runAi("tone", tone)
+                })
+              )}
+            </div>
+          )}
+        </div>
+        {aiItem({
+          key: "fix",
+          icon: <SpellcheckRoundedIcon />,
+          label: ai("fix", "Corrigir gramática e ortografia"),
+          disabled: !hasText,
+          onClick: () => runAi("fix")
+        })}
+        <div className={classes.aiDivider} />
+        {aiItem({
+          key: "suggest",
+          icon: <QuestionAnswerRoundedIcon />,
+          label: ai("suggest", "Sugerir uma resposta"),
+          onClick: () => runAi("suggest")
+        })}
+        {aiItem({
+          key: "summary",
+          icon: <SubjectRoundedIcon />,
+          label: ai("summary", "Resumir a conversa"),
+          onClick: () => {
+            closeAiMenu();
             window.dispatchEvent(
               new CustomEvent(AI_ACTION_EVENT, { detail: "summary" })
             );
-          }}
-        >
-          <SubjectRoundedIcon />
-          {i18n.t("messagesInput.ai.summary", "Resumir a conversa")}
-        </ButtonBase>
-        <ButtonBase
-          className={classes.aiOption}
-          onMouseDown={event => event.preventDefault()}
-          onClick={() => {
-            setAiOpen(false);
-            window.dispatchEvent(
-              new CustomEvent(AI_ACTION_EVENT, { detail: "reply" })
-            );
-          }}
-        >
-          <QuestionAnswerRoundedIcon />
-          {i18n.t("messagesInput.ai.reply", "Sugestão de resposta")}
-        </ButtonBase>
+          }
+        })}
+        {/* o texto da barra vira o pedido: "explique o plano anual" */}
+        {aiItem({
+          key: "ask",
+          icon: <ContactSupportRoundedIcon />,
+          label: ai("ask", "Perguntar ao Copiloto"),
+          disabled: !hasText,
+          onClick: () => runAi("ask")
+        })}
       </div>
     </>
   ) : null;
+
+  const aiSuggestionBox = aiSuggestion && (
+    <div className={classes.aiSuggest} role="status" aria-live="polite">
+      <div className={classes.aiSuggestHead}>
+        <OfflineBoltRoundedIcon />
+        <span>
+          {aiSuggestion.action === "tone"
+            ? `${ai("done.tone", "Tom")}: ${ai(
+                `tones.${aiSuggestion.tone}`,
+                TONES[aiSuggestion.tone]
+              )}`
+            : {
+                improve: ai("done.improve", "Resposta melhorada"),
+                fix: ai("done.fix", "Gramática corrigida"),
+                suggest: ai("done.suggest", "Resposta sugerida"),
+                ask: ai("done.ask", "Resposta do Copiloto")
+              }[aiSuggestion.action]}
+        </span>
+        <span className={classes.headSpacer} />
+        <Tooltip title={ai("regenerate", "Gerar outra versão")}>
+          <span>
+            <IconButton
+              size="small"
+              disabled={aiSuggestion.loading}
+              onMouseDown={event => event.preventDefault()}
+              onClick={regenerateAi}
+              aria-label={ai("regenerate", "Gerar outra versão")}
+            >
+              <ReplayRoundedIcon />
+            </IconButton>
+          </span>
+        </Tooltip>
+        <Tooltip title={ai("discard", "Descartar")}>
+          <IconButton
+            size="small"
+            onMouseDown={event => event.preventDefault()}
+            onClick={discardAi}
+            aria-label={ai("discard", "Descartar")}
+          >
+            <CloseRoundedIcon />
+          </IconButton>
+        </Tooltip>
+      </div>
+      <div className={classes.aiSuggestText}>
+        {aiSuggestion.loading ? (
+          <>
+            {ai("writing", "Escrevendo")}
+            <span className={classes.aiDots} aria-hidden="true">
+              <i />
+              <i />
+              <i />
+            </span>
+          </>
+        ) : (
+          aiSuggestion.text
+        )}
+      </div>
+      {!aiSuggestion.loading && (
+        <div className={classes.aiSuggestFoot}>
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            startIcon={<CheckRoundedIcon />}
+            onMouseDown={event => event.preventDefault()}
+            onClick={acceptAi}
+          >
+            {ai("use", "Usar")}
+          </Button>
+          <span>{ai("keys", "Tab para usar · Esc para descartar")}</span>
+        </div>
+      )}
+    </div>
+  );
 
   if (groupLock)
     return (
@@ -2112,6 +2487,7 @@ const MessageInputCustom = props => {
       >
         {locationDialog}
         {composerHeader}
+        {aiSuggestionBox}
         {(replyingMessage && renderReplyingMessage(replyingMessage)) ||
           (editingMessage && renderReplyingMessage(editingMessage))}
         {showLinkPreview && (
@@ -2258,6 +2634,7 @@ const MessageInputCustom = props => {
       >
         {locationDialog}
         {composerHeader}
+        {aiSuggestionBox}
         <div
           className={classes.resizeHandle}
           onPointerDown={startResize}

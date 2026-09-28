@@ -2330,6 +2330,34 @@ const messages = {
         openPaymentLink: "Abrir link de pagamento"
       },
       messagesInput: {
+        ai: {
+          improve: "Melhorar resposta",
+          tone: "Alterar tom",
+          fix: "Corrigir gramática e ortografia",
+          suggest: "Sugerir uma resposta",
+          summary: "Resumir a conversa",
+          ask: "Perguntar ao Copiloto",
+          needsText: "Escreva na barra para melhorar o texto",
+          writing: "A escrever",
+          use: "Usar",
+          regenerate: "Gerar outra versão",
+          discard: "Descartar",
+          keys: "Tab para usar · Esc para descartar",
+          done: {
+            improve: "Resposta melhorada",
+            tone: "Tom",
+            fix: "Gramática corrigida",
+            suggest: "Resposta sugerida",
+            ask: "Resposta do Copiloto"
+          },
+          tones: {
+            professional: "Profissional",
+            casual: "Casual",
+            direct: "Direto",
+            confident: "Confiante",
+            friendly: "Amigável"
+          }
+        },
         linkPreview: {
           loading: "A carregar a pré-visualização…",
           remove: "Enviar sem pré-visualização"
@@ -2601,6 +2629,15 @@ const messages = {
         ERR_INVALID_PRIORITY: "Prioridade inválida.",
         ERR_INVALID_SNOOZE:
           "Escolha uma data e hora no futuro para adiar a conversa.",
+        ERR_AI_NOT_CONFIGURED:
+          "A IA não está configurada. Adicione a chave em Definições > Opções > Inteligência artificial.",
+        ERR_AI_EMPTY_TEXT: "Escreva algo na barra primeiro.",
+        ERR_AI_NO_MESSAGES:
+          "Ainda não há mensagens nesta conversa para a IA ler.",
+        ERR_AI_UNAVAILABLE:
+          "A IA não respondeu agora. Tente de novo daqui a pouco.",
+        ERR_AI_INVALID_TONE: "Tom inválido.",
+        ERR_AI_INVALID_ACTION: "Ação de IA inválida.",
         ERR_FORBIDDEN:
           "Acesso negado. Você não tem permissão para acessar este recurso.",
         ERR_CHECK_NUMBER: "Número não encontrado no Whatsapp.",

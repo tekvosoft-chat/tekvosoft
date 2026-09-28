@@ -19,8 +19,30 @@ import {
 import {
   analyzeContact,
   analyzeTicket,
+  composeWithAi,
   suggestQueues
 } from "../services/AiServices/TicketCopilot";
+
+/** Assistente da barra de envio: devolve o texto sugerido, não envia nada. */
+export const compose = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { companyId } = req.user;
+  const ticket = await ShowTicketService(
+    Number(req.params.ticketId),
+    companyId
+  );
+  const { action, text, tone, previous } = req.body || {};
+  const suggestion = await composeWithAi({
+    ticket,
+    action,
+    text,
+    tone,
+    previous
+  });
+  return res.json({ text: suggestion });
+};
 
 /** Copiloto de IA: sugere para o atendente e aplica o que ele aceitar. */
 export const ticketAnalysis = async (

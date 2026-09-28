@@ -75,12 +75,13 @@ const ask = async (
   companyId: number,
   system: string,
   user: string,
-  maxTokens = 500
+  maxTokens = 500,
+  temperature = 0.3
 ): Promise<Record<string, unknown>> => {
   const { client, model } = await clientOf(companyId);
   const completion = await client.chat.completions.create({
     model,
-    temperature: 0.3,
+    temperature,
     max_tokens: maxTokens,
     response_format: { type: "json_object" },
     messages: [
@@ -303,4 +304,102 @@ export const suggestQueues = async (
     about: String(queue.about || "").slice(0, 300),
     instructions: String(queue.instructions || "").slice(0, 500)
   }));
+};
+
+/**
+ * Assistente da barra de envio: melhora, muda o tom ou corrige o texto que o
+ * atendente escreveu, sugere a próxima resposta ou atende a um pedido livre
+ * ("Perguntar ao Copiloto", o texto da barra vira o prompt). Devolve só o
+ * texto; quem decide usar é a pessoa.
+ */
+export type ComposeAction = "improve" | "tone" | "fix" | "suggest" | "ask";
+
+const TONES: Record<string, string> = {
+  professional: "profissional e cordial",
+  casual: "casual e descontraído",
+  direct: "direto e objetivo, sem rodeios",
+  confident: "confiante e seguro",
+  friendly: "amigável e acolhedor"
+};
+
+const WRITING_RULES = [
+  "É uma mensagem de WhatsApp: natural, curta, sem assinatura, sem aspas em volta",
+  "e sem explicar o que foi feito. Mantenha emojis, quebras de linha, nomes, números",
+  "e links. Nunca invente preços, prazos ou dados.",
+  'Responda SOMENTE em JSON: {"text":"..."}'
+].join(" ");
+
+export const composeWithAi = async ({
+  ticket,
+  action,
+  text,
+  tone,
+  previous
+}: {
+  ticket: Ticket;
+  action: ComposeAction;
+  text?: string;
+  tone?: string;
+  // versão anterior: o "gerar outra" pede algo diferente dela
+  previous?: string;
+}): Promise<string> => {
+  const draft = String(text || "")
+    .trim()
+    .slice(0, 2000);
+  const needsDraft = ["improve", "tone", "fix", "ask"].includes(action);
+  if (needsDraft && !draft) throw new AppError("ERR_AI_EMPTY_TEXT", 400);
+  if (action === "tone" && !TONES[tone]) {
+    throw new AppError("ERR_AI_INVALID_TONE", 400);
+  }
+
+  const instruction = {
+    improve:
+      "Reescreva a mensagem do atendente para ficar mais clara, cordial e bem escrita, sem mudar o sentido e no mesmo idioma dela.",
+    tone: `Reescreva a mensagem do atendente com um tom ${TONES[tone]}, sem mudar o sentido e no mesmo idioma dela.`,
+    fix: "Corrija só a gramática, a ortografia e a pontuação da mensagem do atendente. Não troque palavras sem necessidade nem mude o tom.",
+    suggest:
+      "Escreva a próxima resposta do atendente para o cliente, no idioma do cliente. Se houver rascunho, siga a intenção dele.",
+    ask: "O atendente fez um pedido sobre esta conversa. Se ele pedir um texto para o cliente, escreva o texto pronto para enviar; se for uma pergunta, responda em poucas linhas."
+  }[action];
+  if (!instruction) throw new AppError("ERR_AI_INVALID_ACTION", 400);
+
+  // corrigir e mudar o tom não precisam da conversa: menos tokens
+  const withContext = ["improve", "suggest", "ask"].includes(action);
+  const lines = withContext ? await transcript(ticket.id) : "";
+  if (action === "suggest" && !lines) {
+    throw new AppError("ERR_AI_NO_MESSAGES", 400);
+  }
+
+  const user = [
+    lines && `Conversa (mais antiga primeiro):\n${lines}`,
+    draft &&
+      (action === "ask"
+        ? `Pedido do atendente: ${draft}`
+        : `Mensagem do atendente: ${draft}`),
+    previous && `Versão anterior (escreva uma diferente): ${previous}`
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  let data: Record<string, unknown>;
+  try {
+    data = await ask(
+      ticket.companyId,
+      `Você ajuda um atendente de WhatsApp. ${instruction} ${WRITING_RULES}`,
+      user,
+      500,
+      previous ? 0.8 : 0.4
+    );
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    logger.warn(
+      { ticketId: ticket.id, message: error?.message },
+      "TicketCopilot: o provedor de IA não respondeu"
+    );
+    throw new AppError("ERR_AI_UNAVAILABLE", 502);
+  }
+
+  const result = String(data.text || "").trim();
+  if (!result) throw new AppError("ERR_AI_UNAVAILABLE", 502);
+  return result.slice(0, 4000);
 };
