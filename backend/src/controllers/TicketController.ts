@@ -11,6 +11,9 @@ import ShowTicketUUIDService from "../services/TicketServices/ShowTicketFromUUID
 import ShowTicketService from "../services/TicketServices/ShowTicketService";
 import UpdateTicketService from "../services/TicketServices/UpdateTicketService";
 import ListTicketsServiceKanban from "../services/TicketServices/ListTicketsServiceKanban";
+import SetTicketPriorityService from "../services/TicketServices/SetTicketPriorityService";
+import SnoozeTicketService from "../services/TicketServices/SnoozeTicketService";
+import MarkTicketUnreadService from "../services/TicketServices/MarkTicketUnreadService";
 import EnsureSameCompany from "../helpers/EnsureSameCompany";
 
 type IndexQuery = {
@@ -266,4 +269,48 @@ export const remove = async (
     });
 
   return res.status(200).json({ message: "ticket deleted" });
+};
+
+// ações do menu de contexto da lista de conversas
+const actorOf = (req: Request) => ({
+  id: Number(req.user.id),
+  profile: req.user.profile
+});
+
+export const setPriority = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const ticket = await SetTicketPriorityService({
+    ticketId: req.params.ticketId,
+    companyId: req.user.companyId,
+    user: actorOf(req),
+    priority: req.body?.priority
+  });
+  return res.status(200).json(ticket);
+};
+
+export const snooze = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const ticket = await SnoozeTicketService({
+    ticketId: req.params.ticketId,
+    companyId: req.user.companyId,
+    user: actorOf(req),
+    until: req.body?.until ?? null
+  });
+  return res.status(200).json(ticket);
+};
+
+export const markUnread = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const ticket = await MarkTicketUnreadService({
+    ticketId: req.params.ticketId,
+    companyId: req.user.companyId,
+    user: actorOf(req)
+  });
+  return res.status(200).json(ticket);
 };

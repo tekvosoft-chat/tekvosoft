@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef } from "react";
 
 import { useHistory, useParams } from "react-router-dom";
 import { parseISO } from "date-fns";
@@ -26,8 +26,8 @@ import api from "../../services/api";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { TicketsContext } from "../../context/Tickets/TicketsContext";
 import toastError from "../../errors/toastError";
-import TicketMessagesDialog from "../TicketMessagesDialog";
 import UserAvatar from "../ui/UserAvatar";
+import PriorityIcon, { PRIORITY_KEYS } from "../TicketPriority";
 import { generateColor } from "../../helpers/colorGenerator";
 import { getInitials } from "../../helpers/getInitials";
 import pastRelativeDate from "../../helpers/pastRelativeDate";
@@ -130,6 +130,7 @@ const useStyles = makeStyles(theme => {
       fontSize: "0.6875rem",
       color: theme.palette.text.secondary
     },
+    priority: { flex: "none", alignSelf: "center", display: "flex" },
     preview: {
       display: "flex",
       alignItems: "center",
@@ -316,7 +317,8 @@ const TicketListItemCustom = ({
   ticket,
   setTabOpen,
   groupActionButtons,
-  onSelect
+  onSelect,
+  onOpenMenu
 }) => {
   const classes = useStyles();
   const history = useHistory();
@@ -328,8 +330,13 @@ const TicketListItemCustom = ({
   const { setCurrentTicket } = useContext(TicketsContext);
   const { user } = useContext(AuthContext);
 
-  const [openTicketMessageDialog, setOpenTicketMessageDialog] = useState(false);
-  const longPress = useRef({ timer: null, fired: false, start: null });
+  // segurar o dedo abre as ações; no computador é o botão direito
+  const longPress = useRef({
+    timer: null,
+    fired: false,
+    start: null,
+    pointer: "mouse"
+  });
 
   useEffect(() => {
     return () => {
@@ -411,11 +418,6 @@ const TicketListItemCustom = ({
 
   return (
     <div key={`ticket-${ticket.id}`}>
-      <TicketMessagesDialog
-        open={openTicketMessageDialog}
-        handleClose={() => setOpenTicketMessageDialog(false)}
-        ticketId={ticket.id}
-      />
       <ButtonBase
         component="div"
         className={clsx(classes.item, {
@@ -424,14 +426,17 @@ const TicketListItemCustom = ({
         })}
         onPointerDown={event => {
           longPress.current.fired = false;
+          longPress.current.pointer = event.pointerType;
           clearTimeout(longPress.current.timer);
           longPress.current.start = { x: event.clientX, y: event.clientY };
-          // segurar abre a prévia da conversa
-          longPress.current.timer = setTimeout(() => {
-            longPress.current.fired = true;
-            haptic("longPress");
-            setOpenTicketMessageDialog(true);
-          }, 480);
+          // no toque, segurar abre as ações (painel que desce do topo)
+          if (event.pointerType !== "mouse" && onOpenMenu) {
+            longPress.current.timer = setTimeout(() => {
+              longPress.current.fired = true;
+              haptic("longPress");
+              onOpenMenu(ticket, { sheet: true });
+            }, 480);
+          }
           if (isPending && canAct) return;
           rememberTicket(ticket);
           prefetchMessages(ticket.id);
@@ -447,7 +452,20 @@ const TicketListItemCustom = ({
         }}
         onPointerUp={() => clearTimeout(longPress.current.timer)}
         onPointerCancel={() => clearTimeout(longPress.current.timer)}
-        onContextMenu={event => event.preventDefault()}
+        onContextMenu={event => {
+          event.preventDefault();
+          // no Android o segurar também dispara contextmenu: quem abre ali
+          // é o temporizador do toque
+          if (longPress.current.pointer !== "mouse" || !onOpenMenu) return;
+          let { clientX: x, clientY: y } = event;
+          // tecla de menu do teclado: sem posição de mouse, abre no item
+          if (!x && !y) {
+            const box = event.currentTarget.getBoundingClientRect();
+            x = box.left + 24;
+            y = box.top + 24;
+          }
+          onOpenMenu(ticket, { position: { x, y } });
+        }}
         onClick={() => {
           if (longPress.current.fired) {
             longPress.current.fired = false;
@@ -482,6 +500,19 @@ const TicketListItemCustom = ({
               {ticket.channel === "whatsapp" && <WhatsAppIcon />}
               {formatWhatsappContactName(ticket.contact, ticket)}
             </span>
+            {ticket.priority > 0 && (
+              <Tooltip
+                title={i18n.t("ticketContextMenu.priorityTooltip", {
+                  level: i18n.t(
+                    `ticketContextMenu.priorities.${PRIORITY_KEYS[ticket.priority]}`
+                  )
+                })}
+              >
+                <span className={classes.priority}>
+                  <PriorityIcon level={ticket.priority} size={15} />
+                </span>
+              </Tooltip>
+            )}
             {ticket.updatedAt && (
               <span className={classes.time}>
                 {pastRelativeDate(parseISO(ticket.updatedAt))}

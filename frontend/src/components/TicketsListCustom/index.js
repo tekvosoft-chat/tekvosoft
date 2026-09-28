@@ -12,6 +12,9 @@ import Paper from "@material-ui/core/Paper";
 
 import TicketListItem from "../TicketListItemCustom";
 import TicketsListSkeleton from "../TicketsListSkeleton";
+import TicketContextMenu from "../TicketContextMenu";
+import TicketMessagesDialog from "../TicketMessagesDialog";
+import { isSnoozed } from "../../helpers/ticketSnooze";
 
 import useTickets from "../../hooks/useTickets";
 import { i18n } from "../../translate/i18n";
@@ -208,6 +211,14 @@ const TicketsListCustom = props => {
   const { user } = useContext(AuthContext);
   const { profile, queues } = user;
 
+  // um menu de ações e uma prévia para a lista inteira (e não um por item)
+  const [menu, setMenu] = useState({ open: false, ticketId: null });
+  const [previewTicketId, setPreviewTicketId] = useState(null);
+  const menuTicket = ticketsList.find(t => t.id === menu.ticketId);
+  // o menu continua desenhado enquanto fecha, mesmo se a conversa sumir
+  const lastMenuTicket = useRef(null);
+  if (menuTicket) lastMenuTicket.current = menuTicket;
+
   const socketManager = useContext(SocketContext);
 
   useEffect(() => {
@@ -288,9 +299,13 @@ const TicketsListCustom = props => {
     const companyId = localStorage.getItem("companyId");
     const socket = socketManager.GetSocket(companyId);
 
+    const searching = isSearch && searchParam;
+
     const shouldUpdateTicket = ticket => {
       return (
         (!isSearch || !searchParam) &&
+        // adiada fica fora da lista até a hora (a busca ainda acha)
+        (searching || !isSnoozed(ticket)) &&
         (!contactId || ticket.contactId === contactId) &&
         (!tags?.length ||
           tags.some(
@@ -352,6 +367,11 @@ const TicketsListCustom = props => {
 
       if (data.action === "update" && notBelongsToUserQueues(data.ticket)) {
         dispatch({ type: "DELETE_TICKET", payload: data.ticket?.id });
+      }
+
+      // acabou de ser adiada: sai da lista na hora, para todo mundo
+      if (data.action === "update" && !searching && isSnoozed(data.ticket)) {
+        dispatch({ type: "DELETE_TICKET", payload: data.ticket.id });
       }
 
       if (data.action === "delete") {
@@ -528,6 +548,14 @@ const TicketsListCustom = props => {
                   onSelect={onSelectTicket}
                   key={ticket.id}
                   groupActionButtons={!groups && !showTabGroups}
+                  onOpenMenu={(target, { position, sheet }) =>
+                    setMenu({
+                      open: true,
+                      ticketId: target.id,
+                      position,
+                      sheet: !!sheet
+                    })
+                  }
                 />
               ))}
             </>
@@ -535,6 +563,22 @@ const TicketsListCustom = props => {
           {loading && <TicketsListSkeleton />}
         </List>
       </Paper>
+      {lastMenuTicket.current && (
+        <TicketContextMenu
+          ticket={menuTicket || lastMenuTicket.current}
+          open={menu.open && !!menuTicket}
+          position={menu.position}
+          sheet={menu.sheet}
+          showTabGroups={showTabGroups}
+          onClose={() => setMenu(current => ({ ...current, open: false }))}
+          onPreview={target => setPreviewTicketId(target.id)}
+        />
+      )}
+      <TicketMessagesDialog
+        open={!!previewTicketId}
+        handleClose={() => setPreviewTicketId(null)}
+        ticketId={previewTicketId}
+      />
     </Paper>
   );
 };

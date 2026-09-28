@@ -2473,6 +2473,60 @@ const messages = {
         },
         extraInfo: "Otra información"
       },
+      ticketContextMenu: {
+        preview: "Ver conversación",
+        markUnread: "Marcar como no leída",
+        resolve: "Marcar como resuelta",
+        pending: "Dejar pendiente",
+        snooze: "Posponer",
+        priority: "Prioridad",
+        tags: "Asignar etiqueta",
+        agent: "Asignar agente",
+        queue: "Asignar cola",
+        openNewTab: "Abrir en una pestaña nueva",
+        copyLink: "Copiar enlace de la conversación",
+        delete: "Eliminar conversación",
+        loading: "Cargando…",
+        me: "(tú)",
+        empty: {
+          tags: "Todavía no hay etiquetas.",
+          agents: "No se encontraron agentes.",
+          queues: "Todavía no hay colas."
+        },
+        priorities: {
+          none: "Ninguna",
+          low: "Baja",
+          medium: "Media",
+          high: "Alta",
+          urgent: "Urgente"
+        },
+        priorityTooltip: "Prioridad: {{level}}",
+        snoozeOptions: {
+          reply: "Hasta que el cliente responda",
+          hour: "Por 1 hora",
+          tomorrow: "Hasta mañana",
+          nextWeek: "Hasta la próxima semana",
+          custom: "Elegir fecha y hora…",
+          clear: "Quitar el aplazamiento"
+        },
+        snoozeDialog: {
+          title: "Posponer la conversación hasta",
+          confirm: "Posponer",
+          cancel: "Cancelar"
+        },
+        toasts: {
+          unread: "Marcada como no leída",
+          resolved: "Conversación resuelta",
+          pending: "Conversación devuelta a la cola",
+          snoozed: "Pospuesta hasta {{when}}",
+          snoozedReply: "Pospuesta hasta que el cliente responda",
+          unsnoozed: "La conversación volvió a la lista",
+          assigned: "Asignada a {{name}}",
+          queued: "Enviada a la cola {{name}}",
+          copied: "Enlace copiado",
+          deleted: "Conversación eliminada"
+        }
+      },
       ticketOptionsMenu: {
         schedule: "Agendamiento",
         delete: "Eliminar",
@@ -2593,6 +2647,9 @@ const messages = {
         ERR_NOT_AUDIO: "Este mensaje no es un audio.",
         ERR_INTERNAL:
           "Error interno del servidor. Por favor, contacte con soporte.",
+        ERR_INVALID_PRIORITY: "Prioridad no válida.",
+        ERR_INVALID_SNOOZE:
+          "Elige una fecha y hora futura para posponer la conversación.",
         ERR_FORBIDDEN: "No tienes permisos para acceder a este recurso.",
         ERR_CHECK_NUMBER: "No se pudo verificar el número de WhatsApp.",
         ERR_NO_OTHER_WHATSAPP:

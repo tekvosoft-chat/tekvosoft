@@ -50,6 +50,15 @@ class Ticket extends Model<Ticket> {
   @Column
   isGroup: boolean;
 
+  // 0 nenhuma, 1 baixa, 2 média, 3 alta, 4 urgente
+  @Default(0)
+  @Column
+  priority: number;
+
+  // adiada: fica fora das listas até esta hora (ver SnoozeTicketService)
+  @Column
+  snoozedUntil: Date;
+
   @CreatedAt
   createdAt: Date;
 

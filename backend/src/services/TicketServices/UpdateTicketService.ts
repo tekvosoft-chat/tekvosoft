@@ -1,5 +1,6 @@
 import moment from "moment";
 import CheckContactOpenTickets from "../../helpers/CheckContactOpenTickets";
+import CheckTicketAccess from "../../helpers/CheckTicketAccess";
 import SetTicketMessagesAsRead from "../../helpers/SetTicketMessagesAsRead";
 import { getIO } from "../../libs/socket";
 import Ticket from "../../models/Ticket";
@@ -130,10 +131,8 @@ const UpdateTicketService = async ({
       }
     }
 
-    if (user && ticket.status !== "pending") {
-      if (user.profile !== "admin" && ticket.userId !== user.id) {
-        throw new AppError("ERR_FORBIDDEN", 403);
-      }
+    if (user) {
+      CheckTicketAccess(user, ticket);
     }
 
     const ticketTraking = await FindOrCreateATicketTrakingService({
@@ -217,7 +216,8 @@ const UpdateTicketService = async ({
           await ticket.update({
             chatbot: null,
             queueOptionId: null,
-            status: "closed"
+            status: "closed",
+            snoozedUntil: null
           });
 
           await ticket.reload();
@@ -292,7 +292,9 @@ const UpdateTicketService = async ({
       userId,
       whatsappId: ticket.whatsappId,
       chatbot,
-      queueOptionId
+      queueOptionId,
+      // encerrada não fica adiada: senão sumiria também dos resolvidos
+      ...(status === "closed" ? { snoozedUntil: null } : {})
     });
 
     // anota por onde o atendimento passou (mapa da conversa na ficha)

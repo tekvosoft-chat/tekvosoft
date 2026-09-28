@@ -40,6 +40,7 @@ import { makeRandomId } from "./helpers/MakeRandomId";
 import { flushPoolMonitor } from "./database/poolMonitor";
 import CheckAllContainersUpdateService from "./services/DockerServices/CheckAllContainersUpdateService";
 import { cacheLayer } from "./libs/cache";
+import { WakeSnoozedTicketsService } from "./services/TicketServices/SnoozeTicketService";
 
 const connection = process.env.REDIS_URI || "";
 const limiterMax = process.env.REDIS_OPT_LIMITER_MAX || 1;
@@ -570,6 +571,8 @@ async function handleEveryMinute(job: Job) {
 
     await handleRatingsTimeout();
     await handleTicketTimeouts();
+    // conversas adiadas que chegaram na hora voltam para a lista
+    await WakeSnoozedTicketsService();
     logger.trace(`handleEveryMinute: exiting - executionId: ${executionId}`);
   } catch (e) {
     logger.error(

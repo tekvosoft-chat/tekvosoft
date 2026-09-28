@@ -16,6 +16,9 @@ import CloseRoundedIcon from "@material-ui/icons/CloseRounded";
  *
  * Usamos o SwipeableDrawer (e não o Drawer simples) justamente pelo gesto de
  * arrastar, que é o que faz parecer nativo.
+ *
+ * Com anchor="top" ele desce do topo (ações da conversa na lista): cantos
+ * arredondados embaixo, alcinha embaixo e respiro para a barra de status.
  */
 const useStyles = makeStyles(theme => ({
   paper: {
@@ -31,6 +34,14 @@ const useStyles = makeStyles(theme => ({
     flexDirection: "column",
     // respeita a barra de gestos dos aparelhos sem botão físico
     paddingBottom: "var(--safe-bottom, 0px)"
+  },
+  paperTop: {
+    borderRadius: 0,
+    borderBottomLeftRadius: theme.palette.tkv.radius.xl,
+    borderBottomRightRadius: theme.palette.tkv.radius.xl,
+    boxShadow: "0 12px 40px rgba(12, 10, 20, 0.28)",
+    paddingBottom: 0,
+    paddingTop: "var(--safe-top, 0px)"
   },
   backdrop: {
     backgroundColor: "rgba(12, 10, 20, 0.44)",
@@ -85,13 +96,20 @@ const BottomSheet = ({
   title,
   subtitle,
   showClose = true,
+  anchor = "bottom",
   children
 }) => {
   const classes = useStyles();
+  const fromTop = anchor === "top";
+  const grabber = (
+    <div className={classes.grabber} aria-hidden="true">
+      <div className={classes.grabberBar} />
+    </div>
+  );
 
   return (
     <SwipeableDrawer
-      anchor="bottom"
+      anchor={fromTop ? "top" : "bottom"}
       open={open}
       onClose={onClose}
       onOpen={onOpen || (() => {})}
@@ -99,15 +117,15 @@ const BottomSheet = ({
       disableDiscovery
       // sobe um pouco mais devagar do que desce, como nos apps do celular
       transitionDuration={{ enter: 320, exit: 220 }}
-      classes={{ paper: classes.paper }}
+      classes={{
+        paper: fromTop ? `${classes.paper} ${classes.paperTop}` : classes.paper
+      }}
       ModalProps={{
         keepMounted: true,
         BackdropProps: { className: classes.backdrop }
       }}
     >
-      <div className={classes.grabber} aria-hidden="true">
-        <div className={classes.grabberBar} />
-      </div>
+      {!fromTop && grabber}
 
       {(title || showClose) && (
         <div className={classes.header}>
@@ -132,6 +150,7 @@ const BottomSheet = ({
       )}
 
       <div className={classes.content}>{children}</div>
+      {fromTop && grabber}
     </SwipeableDrawer>
   );
 };
@@ -142,7 +161,8 @@ BottomSheet.propTypes = {
   onOpen: PropTypes.func,
   title: PropTypes.node,
   subtitle: PropTypes.node,
-  showClose: PropTypes.bool
+  showClose: PropTypes.bool,
+  anchor: PropTypes.oneOf(["bottom", "top"])
 };
 
 export default BottomSheet;

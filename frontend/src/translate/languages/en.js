@@ -2460,6 +2460,60 @@ const messages = {
         },
         extraInfo: "Other information"
       },
+      ticketContextMenu: {
+        preview: "Peek at conversation",
+        markUnread: "Mark as unread",
+        resolve: "Mark as resolved",
+        pending: "Mark as pending",
+        snooze: "Snooze",
+        priority: "Priority",
+        tags: "Assign label",
+        agent: "Assign agent",
+        queue: "Assign queue",
+        openNewTab: "Open in new tab",
+        copyLink: "Copy conversation link",
+        delete: "Delete conversation",
+        loading: "Loading…",
+        me: "(you)",
+        empty: {
+          tags: "No labels created yet.",
+          agents: "No agents found.",
+          queues: "No queues created yet."
+        },
+        priorities: {
+          none: "None",
+          low: "Low",
+          medium: "Medium",
+          high: "High",
+          urgent: "Urgent"
+        },
+        priorityTooltip: "Priority: {{level}}",
+        snoozeOptions: {
+          reply: "Until the customer replies",
+          hour: "For 1 hour",
+          tomorrow: "Until tomorrow",
+          nextWeek: "Until next week",
+          custom: "Pick date and time…",
+          clear: "Unsnooze"
+        },
+        snoozeDialog: {
+          title: "Snooze the conversation until",
+          confirm: "Snooze",
+          cancel: "Cancel"
+        },
+        toasts: {
+          unread: "Marked as unread",
+          resolved: "Conversation resolved",
+          pending: "Conversation returned to the queue",
+          snoozed: "Snoozed until {{when}}",
+          snoozedReply: "Snoozed until the customer replies",
+          unsnoozed: "The conversation is back on the list",
+          assigned: "Assigned to {{name}}",
+          queued: "Sent to the {{name}} queue",
+          copied: "Link copied",
+          deleted: "Conversation deleted"
+        }
+      },
       ticketOptionsMenu: {
         schedule: "Schedule",
         delete: "Delete",
@@ -2573,6 +2627,9 @@ const messages = {
         ERR_NOT_AUDIO: "This message is not an audio.",
         ERR_INTERNAL: "Internal server error. Please contact support.",
         ERR_UNAUTHORIZED: "You are not authorized to perform this action.",
+        ERR_INVALID_PRIORITY: "Invalid priority.",
+        ERR_INVALID_SNOOZE:
+          "Pick a date and time in the future to snooze the conversation.",
         ERR_FORBIDDEN: "You do not have permission to access this resource.",
         ERR_CHECK_NUMBER: "Check the number and try again.",
         ERR_NO_OTHER_WHATSAPP: "There must be at least one default WhatsApp.",

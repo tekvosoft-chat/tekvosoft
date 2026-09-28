@@ -2425,6 +2425,60 @@ const messages = {
         },
         extraInfo: "Outras informações"
       },
+      ticketContextMenu: {
+        preview: "Espreitar conversa",
+        markUnread: "Marcar como não lida",
+        resolve: "Marcar como resolvida",
+        pending: "Deixar pendente",
+        snooze: "Adiar",
+        priority: "Prioridade",
+        tags: "Atribuir etiqueta",
+        agent: "Atribuir agente",
+        queue: "Atribuir fila",
+        openNewTab: "Abrir num novo separador",
+        copyLink: "Copiar ligação da conversa",
+        delete: "Eliminar conversa",
+        loading: "A carregar…",
+        me: "(você)",
+        empty: {
+          tags: "Ainda não há etiquetas.",
+          agents: "Nenhum agente encontrado.",
+          queues: "Ainda não há filas."
+        },
+        priorities: {
+          none: "Nenhuma",
+          low: "Baixa",
+          medium: "Média",
+          high: "Alta",
+          urgent: "Urgente"
+        },
+        priorityTooltip: "Prioridade: {{level}}",
+        snoozeOptions: {
+          reply: "Até o cliente responder",
+          hour: "Durante 1 hora",
+          tomorrow: "Até amanhã",
+          nextWeek: "Até à próxima semana",
+          custom: "Escolher data e hora…",
+          clear: "Retirar o adiamento"
+        },
+        snoozeDialog: {
+          title: "Adiar a conversa até",
+          confirm: "Adiar",
+          cancel: "Cancelar"
+        },
+        toasts: {
+          unread: "Marcada como não lida",
+          resolved: "Conversa resolvida",
+          pending: "Conversa devolvida à fila",
+          snoozed: "Adiada até {{when}}",
+          snoozedReply: "Adiada até o cliente responder",
+          unsnoozed: "A conversa voltou à lista",
+          assigned: "Atribuída a {{name}}",
+          queued: "Enviada para a fila {{name}}",
+          copied: "Ligação copiada",
+          deleted: "Conversa eliminada"
+        }
+      },
       ticketOptionsMenu: {
         schedule: "Agendamento",
         delete: "Eliminar",
@@ -2544,6 +2598,9 @@ const messages = {
         ERR_INTERNAL:
           "Erro interno do servidor. Por favor, contacte o suporte.",
         ERR_UNAUTHORIZED: "Não autorizado. Por favor, faça o login novamente.",
+        ERR_INVALID_PRIORITY: "Prioridade inválida.",
+        ERR_INVALID_SNOOZE:
+          "Escolha uma data e hora no futuro para adiar a conversa.",
         ERR_FORBIDDEN:
           "Acesso negado. Você não tem permissão para acessar este recurso.",
         ERR_CHECK_NUMBER: "Número não encontrado no Whatsapp.",

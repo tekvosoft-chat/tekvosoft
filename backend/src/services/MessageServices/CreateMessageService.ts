@@ -102,6 +102,12 @@ const CreateMessageService = async ({
   await message.ticket.contact.update({ presence: "available" });
   await message.ticket.contact.reload();
 
+  // o cliente escreveu: conversa adiada volta para a lista (o evento abaixo
+  // já sai com ela sem o adiamento)
+  if (!message.fromMe && message.ticket.snoozedUntil) {
+    await message.ticket.update({ snoozedUntil: null });
+  }
+
   if (message.ticket.queueId !== null && message.queueId === null) {
     await message.update({ queueId: message.ticket.queueId });
   }

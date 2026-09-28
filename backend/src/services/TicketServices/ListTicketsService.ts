@@ -373,6 +373,17 @@ const ListTicketsService = async ({
     };
   }
 
+  // conversa adiada fica fora das listas até a hora marcada; a busca, o
+  // número do atendimento e o histórico do contato continuam achando
+  if (!isSearch && !searchParam && !ticketId && !contactId) {
+    andedOrs.push({
+      [Op.or]: [
+        { snoozedUntil: null },
+        { snoozedUntil: { [Op.lte]: new Date() } }
+      ]
+    });
+  }
+
   whereCondition = {
     ...whereCondition,
     companyId

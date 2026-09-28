@@ -31,6 +31,28 @@ ticketRoutes.put(
   TicketController.update
 );
 
+// menu de contexto da lista de conversas
+ticketRoutes.put(
+  "/tickets/:ticketId/priority",
+  isAuth,
+  isCompliant,
+  TicketController.setPriority
+);
+
+ticketRoutes.put(
+  "/tickets/:ticketId/snooze",
+  isAuth,
+  isCompliant,
+  TicketController.snooze
+);
+
+ticketRoutes.put(
+  "/tickets/:ticketId/unread",
+  isAuth,
+  isCompliant,
+  TicketController.markUnread
+);
+
 ticketRoutes.delete(
   "/tickets/:ticketId",
   isAuth,
