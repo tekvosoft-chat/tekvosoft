@@ -55,6 +55,11 @@ services:
       # o watcher precisa de polling para enxergar alterações em volume montado
       CHOKIDAR_USEPOLLING: "true"
       BROWSER: none
+      # o hot reload do navegador precisa da porta publicada no host, não da
+      # 3000 de dentro do container. Quando o ./tekvosoft dev troca a porta
+      # (3000 ocupada), sem isto a aba nunca recebe as atualizações: fica com
+      # o bundle velho e quebra ao abrir uma tela carregada sob demanda
+      WDS_SOCKET_PORT: ${PORT:-3000}
     volumes:
       - ./frontend:/usr/src/app
       - frontend_node_modules:/usr/src/app/node_modules

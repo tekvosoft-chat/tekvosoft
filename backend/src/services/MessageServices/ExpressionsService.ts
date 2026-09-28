@@ -228,7 +228,7 @@ export const sendGif = async (
 /**
  * KLIPY (klipy.com): o mesmo acervo de GIFs e figurinhas que o Discord usa.
  *
- * A chave é gratuita e fica em Configurações > Serviços externos
+ * A chave é gratuita e fica em Configurações > Opções > Integrações
  * ("klipyApiKey"). Quando ela existe, é a fonte preferida de GIFs; sem ela,
  * o sistema continua usando o GIPHY.
  *

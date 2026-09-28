@@ -1721,7 +1721,7 @@ const messages = {
           "As figurinhas que chegarem nas conversas aparecem aqui para você reenviar.",
         noGifs: "Nenhum GIF encontrado.",
         gifsNotConfigured:
-          "Para usar GIFs, adicione a chave do GIPHY em Configurações > Opções > Serviços externos.",
+          "Os GIFs ainda não estão configurados: o administrador do sistema adiciona a chave do KLIPY em Configurações > Opções > Integrações.",
         sendSticker: "Enviar figurinha",
         sendGif: "Enviar GIF"
       },
@@ -1848,94 +1848,333 @@ const messages = {
         extensionBuildUnknownError: "Erro desconhecido na construção."
       },
       settings: {
-        klipyApiKey: {
-          title: "Chave da API do KLIPY"
-        },
-        giphyApiKey: {
-          title: "Chave do GIPHY (GIFs)"
-        },
-        hints: {
-          klipyKey:
-            "Chave gratuita do klipy.com (o mesmo acervo de GIFs e figurinhas usado pelo Discord). Com ela, a busca de GIFs e figurinhas do chat usa o KLIPY; sem ela, usa o GIPHY.",
-          giphyKey:
-            "Chave grátis criada em developers.giphy.com. Com ela, a equipe busca e envia GIFs pelo chat.",
-          groups: {
-            general: "Como o atendimento funciona no dia a dia.",
-            timeouts:
-              "O que o sistema faz sozinho quando uma conversa fica parada. Tempos em minutos; 0 desliga.",
-            officeHours:
-              "Horário de funcionamento e o que acontece com as mensagens que chegam fora dele.",
-            groups: "Como tratar as conversas de grupos do WhatsApp.",
-            confidenciality:
-              "O que cada atendente enxerga das conversas de outras filas.",
-            api: "Chave para sistemas externos consultarem os contatos pela API.",
-            externalServices:
-              "Inteligência artificial para transcrever áudios e a chave do GIPHY para enviar GIFs.",
-            serveradmin:
-              "Opções da instalação inteira: valem para todas as empresas."
+        options: {
+          nav: "Seções das opções",
+          sections: {
+            service: {
+              title: "Atendimento",
+              description:
+                "Mensagens automáticas e o que acontece quando uma conversa é aceita, transferida, encerrada ou reaberta."
+            },
+            automation: {
+              title: "Chatbot e automações",
+              description:
+                "O menu automático que recebe o cliente e o que o sistema faz sozinho com as conversas paradas."
+            },
+            hours: {
+              title: "Horário de funcionamento",
+              description:
+                "Em que horário a empresa atende e o que fazer com as mensagens que chegam fora dele."
+            },
+            chat: {
+              title: "Conversas",
+              description:
+                "O que a equipe vê e usa na tela de conversa: histórico, respostas rápidas, ligações e grupos."
+            },
+            ai: {
+              title: "Inteligência artificial",
+              description:
+                "Provedores e chaves da transcrição de áudios e do assistente de IA das filas."
+            },
+            integrations: {
+              title: "Integrações",
+              description:
+                "Chaves para outros sistemas e serviços trabalharem junto com o vuup.me."
+            },
+            files: {
+              title: "Arquivos",
+              description:
+                "Tamanho máximo dos arquivos enviados e recebidos pelas conexões. Vale para todas as empresas."
+            },
+            system: {
+              title: "Sistema",
+              description:
+                "Opções da instalação inteira. Valem para todas as empresas."
+            }
           },
-          ratings:
-            "Ao encerrar o atendimento, o cliente recebe um pedido para dar uma nota ao atendimento.",
-          calls:
-            "Quando o cliente liga pelo WhatsApp: ignorar a ligação ou responder avisando que não atendemos por chamada.",
-          chatbotAutoExit:
-            "Se o cliente digitar algo que não é uma opção do menu, a conversa sai do chatbot e segue para a fila.",
-          quickMessages:
-            "Respostas rápidas compartilhadas com toda a empresa ou só de cada usuário.",
-          tagsMode:
-            "Onde as tags ficam: no atendimento (acabam quando ele é encerrado), no contato (acompanham a pessoa) ou nos dois.",
-          numericIcons:
-            "No menu do chatbot, mostra as opções como 1️⃣ 2️⃣ 3️⃣ em vez de números comuns.",
-          ticketAccepted:
-            "Enviada ao cliente quando um atendente aceita a conversa. Deixe em branco para não enviar.",
-          transfer:
-            "Enviada ao cliente quando a conversa é transferida. Deixe em branco para não enviar.",
-          ratingsTimeout:
-            "Quanto tempo o cliente tem para responder a avaliação. Depois disso, o pedido expira.",
-          autoReopen:
-            "Se o cliente escrever de novo dentro desse tempo após o encerramento, o mesmo atendimento é reaberto. 0 desliga.",
-          noQueueTimeout:
-            "Conversas aguardando sem fila por mais tempo que isso recebem a ação escolhida ao lado. 0 desliga.",
-          noQueueTimeoutAction:
-            "O que fazer com a conversa sem fila que ficou parada: encerrar ou mandar para uma fila.",
-          openTicketTimeout:
-            "Conversas em atendimento sem nenhuma mensagem por esse tempo recebem a ação escolhida ao lado. 0 desliga.",
-          openTicketTimeoutAction:
-            "O que fazer com a conversa em atendimento que ficou parada: devolver para a fila ou encerrar.",
-          chatbotTimeout:
-            "Se o cliente parar de responder o chatbot por esse tempo, a ação escolhida ao lado é aplicada. 0 desliga.",
-          chatbotTimeoutAction:
-            "O que fazer quando o cliente abandona o chatbot: encerrar ou mandar para uma fila.",
-          officeHours:
-            "Liga o controle de horário de funcionamento, com horários da empresa inteira ou de cada fila.",
-          outOfHours:
-            "O que acontece com as mensagens que chegam fora do horário: ficam aguardando ou o atendimento é encerrado.",
-          ignoreGroups:
-            "Ativado, as mensagens de grupos do WhatsApp não viram atendimento.",
-          soundGroups: "Toca o aviso sonoro também para mensagens de grupos.",
-          groupsTab:
-            "Separa as conversas de grupos em uma aba própria em Atendimentos.",
-          messageVisibility:
-            "Respeitar fila da mensagem: cada atendente só vê as mensagens trocadas nas filas dele. Respeitar fila do ticket: vê todo o histórico do atendimento.",
-          keepQueueAndUser:
-            "Ativado, o atendimento encerrado guarda a fila e o atendente. Desativado, os dois são removidos ao encerrar.",
-          apiToken:
-            "Chave usada por sistemas externos para consultar os contatos pela API. Gere, copie e guarde em local seguro.",
-          aiProvider:
-            "Serviço de inteligência artificial que faz a transcrição dos áudios.",
-          aiKey: "Chave de acesso do serviço escolhido ao lado.",
-          audioTranscriptions:
-            'Mostra "transcrever" nos áudios da conversa. O áudio só vira texto quando alguém clica.',
-          allowSignup:
-            "Permite que novas empresas criem conta sozinhas pela página de cadastro.",
-          multithread:
-            "Roda as conexões do WhatsApp em processos separados. Ajuda em servidores com muitas conexões.",
-          uploadLimit:
-            "Tamanho máximo, em MB, dos arquivos que a equipe envia.",
-          downloadLimit:
-            "Tamanho máximo, em MB, dos arquivos recebidos que o sistema baixa. Acima disso, o cliente é avisado.",
-          gracePeriod:
-            "Por quantos dias uma empresa ainda usa o sistema depois do vencimento, antes de ser bloqueada."
+          groups: {
+            autoMessages: "Mensagens automáticas",
+            closing: "Encerramento",
+            rating: "Pesquisa de satisfação",
+            tags: "Tags",
+            chatbot: "Chatbot",
+            idle: "Conversas paradas",
+            idleHint:
+              "Escolha depois de quanto tempo o sistema age sozinho. Deixe 0 para não fazer nada.",
+            chatScreen: "Tela de conversa",
+            calls: "Ligações",
+            groups: "Grupos do WhatsApp",
+            transcription: "Transcrição de áudios",
+            agent: "Assistente de IA das filas",
+            agentHint:
+              "Usado pelas filas com o Assistente de IA ligado (Filas & Chatbot › editar fila), pela recepção inteligente e pelo assistente dentro da conversa. É separado da chave de transcrição.",
+            api: "API",
+            media: "GIFs e figurinhas",
+            limits: "Limites de tamanho",
+            access: "Idioma, cadastro e cobrança",
+            server: "Servidor"
+          },
+          units: {
+            minutes: "min",
+            days: "dias",
+            megabytes: "MB"
+          },
+          timeout: {
+            after: "Depois de",
+            then: "O sistema vai",
+            close: "Encerrar a conversa",
+            transferTo: "Mandar para a fila {{queue}}"
+          },
+          variables: {
+            title: "Dá para usar:",
+            firstname: "primeiro nome do cliente",
+            name: "nome completo",
+            greeting: "bom dia, boa tarde ou boa noite",
+            user: "nome do atendente",
+            queue: "nome da fila",
+            protocol: "número de protocolo"
+          },
+          notes: {
+            needsRating: "Ligue a avaliação para usar.",
+            needsSchedule: "Ligue o controle de horário para usar.",
+            groupsIgnored:
+              "Disponível quando as mensagens de grupos não são ignoradas.",
+            scheduleCompany:
+              "Os horários ficam na aba Horários, aqui em Configurações.",
+            scheduleQueue:
+              "Os horários de cada fila ficam em Filas & Chatbot, ao editar a fila."
+          },
+          apiToken: {
+            generate: "Gerar token",
+            copy: "Copiar",
+            remove: "Apagar",
+            empty: "Nenhum token gerado"
+          },
+          fields: {
+            ticketAcceptedMessage: {
+              title: "Ao aceitar a conversa",
+              description:
+                "Enviada ao cliente quando um atendente assume a conversa. Em branco, nada é enviado.",
+              placeholder:
+                "Ex.: {{greeting}}, {{firstname}}! Aqui é {{user}} e vou continuar seu atendimento."
+            },
+            transferMessage: {
+              title: "Ao transferir para outra fila",
+              description:
+                "Enviada ao cliente quando a conversa muda de fila. Se a conexão tiver uma mensagem de transferência própria, vale a dela. Em branco, nada é enviado.",
+              placeholder:
+                "Ex.: {{firstname}}, vou passar você para a equipe de {{queue}}. Já já alguém responde!"
+            },
+            keepUserAndQueue: {
+              title: "Guardar fila e atendente ao encerrar",
+              description:
+                "Ligado: a conversa encerrada continua com a fila e o atendente, e volta para eles se for reaberta. Desligado: os dois são removidos ao encerrar."
+            },
+            autoReopenTimeout: {
+              title: "Reabrir conversa recente",
+              description:
+                "Se o cliente escrever de novo até esse tempo depois do encerramento, a mesma conversa é reaberta, em vez de começar outra. 0 desliga."
+            },
+            userRating: {
+              title: "Pedir avaliação ao encerrar",
+              description:
+                "Ao encerrar a conversa, o cliente recebe um pedido para dar uma nota de 1 a 5 ao atendimento."
+            },
+            ratingsTimeout: {
+              title: "Prazo para avaliar",
+              description:
+                "Tempo que o cliente tem para mandar a nota. Depois disso, o pedido expira e ele recebe a mensagem de encerramento."
+            },
+            tagsMode: {
+              title: "Onde as tags ficam",
+              description:
+                "Na conversa: valem só para aquele atendimento. No contato: acompanham a pessoa em todas as conversas. Nos dois: vão para a conversa e para o contato.",
+              options: {
+                ticket: "Na conversa",
+                contact: "No contato",
+                both: "Nos dois"
+              }
+            },
+            chatbotAutoExit: {
+              title: "Sair do chatbot com resposta fora do menu",
+              description:
+                "Ligado: se o cliente escrever algo que não é uma opção, a conversa sai do chatbot e vai para um atendente. Desligado: o menu é enviado de novo."
+            },
+            showNumericIcons: {
+              title: "Números em emoji no menu",
+              description:
+                "Mostra as opções do chatbot como 1️⃣ 2️⃣ 3️⃣ em vez de 1, 2, 3."
+            },
+            chatbotTicketTimeout: {
+              title: "Cliente parou de responder o chatbot",
+              description:
+                "A conversa ainda está no menu automático e o cliente não respondeu mais."
+            },
+            noQueueTimeout: {
+              title: "Conversa esperando sem fila",
+              description:
+                "A conversa chegou, mas ainda não entrou em nenhuma fila."
+            },
+            openTicketTimeout: {
+              title: "Conversa em atendimento parada",
+              description:
+                "Um atendente assumiu a conversa, mas ninguém escreveu nada nesse tempo."
+            },
+            openTicketTimeoutAction: {
+              options: {
+                pending: "Devolver para a fila",
+                closed: "Encerrar a conversa"
+              }
+            },
+            scheduleType: {
+              title: "Controle de horário",
+              description:
+                "Fora do horário, o cliente recebe a mensagem de ausência e a conversa segue a regra abaixo.",
+              options: {
+                disabled: "Desligado",
+                company: "Um horário para a empresa toda",
+                queue: "Um horário para cada fila"
+              }
+            },
+            outOfHoursAction: {
+              title: "Mensagens fora do horário",
+              description:
+                "Depois do aviso de ausência, a conversa espera na fila até alguém atender, ou é encerrada na hora.",
+              options: {
+                pending: "Esperam na fila",
+                closed: "São encerradas"
+              }
+            },
+            messageVisibility: {
+              title: "Histórico que o atendente vê",
+              description:
+                "Vale para conversas que passaram por mais de uma fila: o atendente vê só o que foi falado nas filas dele, ou a conversa inteira.",
+              options: {
+                message: "Só das filas dele",
+                ticket: "A conversa inteira"
+              }
+            },
+            quickMessages: {
+              title: "Respostas rápidas",
+              description:
+                "Compartilhadas: todos veem e usam as mesmas. Cada usuário: cada um vê só as que criou.",
+              options: {
+                individual: "Cada usuário tem as suas",
+                company: "Compartilhadas"
+              }
+            },
+            call: {
+              title: "Ligações pelo WhatsApp",
+              description:
+                "O sistema não atende chamadas de voz nem de vídeo. Escolha se o cliente recebe uma mensagem automática pedindo que escreva.",
+              options: {
+                enabled: "Só ignorar",
+                disabled: "Avisar o cliente"
+              }
+            },
+            CheckMsgIsGroup: {
+              title: "Ignorar mensagens de grupos",
+              description:
+                "Ligado: mensagens de grupos do WhatsApp não viram conversa no sistema. Desligado: cada grupo vira uma conversa."
+            },
+            groupsTab: {
+              title: "Aba separada para grupos",
+              description:
+                "Mostra as conversas de grupos numa aba própria, longe das conversas com clientes."
+            },
+            soundGroupNotifications: {
+              title: "Avisos de mensagens de grupos",
+              description:
+                "Toca o som e mostra notificação também quando chega mensagem de grupo."
+            },
+            audioTranscriptions: {
+              title: "Transcrever áudios",
+              description:
+                "Mostra o botão “transcrever” nos áudios da conversa. O áudio só é enviado para a IA quando alguém clica."
+            },
+            aiProvider: {
+              title: "Provedor",
+              description: "Serviço que transforma o áudio em texto.",
+              options: {
+                openai: "OpenAI",
+                groq: "Groq"
+              }
+            },
+            openAiKey: {
+              title: "Chave de acesso",
+              description:
+                "Chave de API do provedor escolhido acima. OpenAI: platform.openai.com › API keys. Groq: console.groq.com › API Keys."
+            },
+            aiAgentProvider: {
+              title: "Provedor",
+              description:
+                "Serviço de IA que conversa com os clientes e sugere respostas para a equipe.",
+              options: {
+                openai: "OpenAI",
+                gemini: "Google Gemini",
+                groq: "Groq"
+              }
+            },
+            aiAgentApiKey: {
+              title: "Chave de acesso",
+              description: "Chave de API do provedor escolhido acima."
+            },
+            aiAgentModel: {
+              title: "Modelo",
+              description:
+                "Opcional. Em branco, usa o modelo que aparece no campo."
+            },
+            apiToken: {
+              title: "Token da API",
+              description:
+                "Chave que outros sistemas usam para criar, consultar, alterar e apagar contatos pela API. Quem tem o token tem esse acesso: guarde em lugar seguro e apague se vazar."
+            },
+            klipyApiKey: {
+              title: "Chave do KLIPY",
+              description:
+                "Chave gratuita do klipy.com (o acervo de GIFs e figurinhas do Discord). Com ela, a busca de GIFs e figurinhas do chat usa o KLIPY; sem ela, usa o GIPHY. Vale para todas as empresas."
+            },
+            uploadLimit: {
+              title: "Limite para enviar",
+              description:
+                "Arquivos maiores que isso não vão como anexo: o cliente recebe um link para baixar. Em branco, 15 MB."
+            },
+            downloadLimit: {
+              title: "Limite para receber",
+              description:
+                "Arquivos recebidos maiores que isso não são baixados, e o cliente recebe um aviso automático com o limite. Em branco, 15 MB."
+            },
+            defaultLanguage: {
+              title: "Idioma padrão",
+              description:
+                "Idioma das mensagens automáticas quando o contato, a conexão e a empresa não têm um idioma definido."
+            },
+            allowSignup: {
+              title: "Cadastro de novas empresas",
+              description:
+                "Deixa a página de cadastro aberta para novas empresas criarem conta sozinhas."
+            },
+            gracePeriod: {
+              title: "Carência após o vencimento",
+              description:
+                "Quantos dias uma empresa com pagamento vencido ainda usa o sistema antes de ser bloqueada."
+            },
+            useMultiThreadedWbot: {
+              title: "Conexões em threads separadas",
+              description:
+                "Roda cada conexão do WhatsApp numa thread própria. Ajuda servidores com muitas conexões. Vale a partir do próximo reinício."
+            },
+            extension: {
+              title: "Extensão de captura do WhatsApp Web",
+              description:
+                "Gera uma extensão do Chrome com a sua marca para conectar números pelo WhatsApp Web. Extraia o ZIP e carregue a pasta no Chrome como extensão descompactada."
+            },
+            restart: {
+              title: "Reiniciar o servidor",
+              description:
+                "Reinicia o backend. As conexões caem por alguns instantes e voltam sozinhas; esta tela recarrega em seguida."
+            }
+          }
         },
         saving: "Salvando…",
         appearance: {
@@ -1998,149 +2237,9 @@ const messages = {
           success: "Reinicialização do backend iniciada.",
           error: "Falha ao reiniciar o backend."
         },
-        group: {
-          general: "Geral",
-          timeouts: "Tempos de espera",
-          officeHours: "Horário de expediente",
-          groups: "Grupos",
-          confidenciality: "Confidencialidade",
-          api: "API",
-          externalServices: "Serviços externos",
-          serveradmin: "Administração do servidor"
-        },
         success: "Configurações salvas com sucesso.",
         copiedToClipboard: "Copiado para a área de transferência",
         title: "Configurações",
-        chatbotTicketTimeout: "Timeout do chatbot (minutos)",
-        chatbotTicketTimeoutAction: "Ação do timeout do chatbot",
-        settings: {
-          userCreation: {
-            name: "Criação de usuário",
-            options: {
-              enabled: "Ativado",
-              disabled: "Desativado"
-            }
-          }
-        },
-        validations: {
-          title: "Avaliações",
-          options: {
-            enabled: "Habilitado",
-            disabled: "Desabilitado"
-          }
-        },
-        OfficeManagement: {
-          title: "Gerenciamento de Expediente",
-          options: {
-            disabled: "Desabilitado",
-            ManagementByDepartment: "Gerenciamento Por Fila",
-            ManagementByCompany: "Gerenciamento Por Empresa"
-          }
-        },
-        outOfHoursAction: {
-          title: "Ação fora do expediente",
-          options: {
-            pending: "Deixar como pendente",
-            closed: "Fechar ticket"
-          }
-        },
-        IgnoreGroupMessages: {
-          title: "Ignorar Mensagens de Grupos",
-          options: {
-            enabled: "Ativado",
-            disabled: "Desativado"
-          }
-        },
-        soundGroupNotifications: {
-          title: "Notificações de som de grupo",
-          options: {
-            enabled: "Ativado",
-            disabled: "Desativado"
-          }
-        },
-        groupsTab: {
-          title: "Aba de Grupos",
-          options: {
-            enabled: "Ativado",
-            disabled: "Desativado"
-          }
-        },
-        VoiceAndVideoCalls: {
-          title: "Chamadas de Voz e Vídeo",
-          options: {
-            enabled: "Ignorar",
-            disabled: "informar indisponibilidade"
-          }
-        },
-        AutomaticChatbotOutput: {
-          title: "Saída automática de chatbot",
-          options: {
-            enabled: "Activado",
-            disabled: "Desativado"
-          }
-        },
-        ShowNumericEmoticons: {
-          title: "Exibir emojis numéricos na fila",
-          options: {
-            enabled: "Activado",
-            disabled: "Desativado"
-          }
-        },
-        QuickMessages: {
-          title: "Mensagens Rápidas",
-          options: {
-            enabled: "Por empresa",
-            disabled: "Por Usuário"
-          }
-        },
-        AllowRegistration: {
-          title: "Permitir cadastro",
-          options: {
-            enabled: "Ativado",
-            disabled: "Desativado"
-          }
-        },
-        MultiThreadedWbot: {
-          title: "Worker Multithread do WhatsApp",
-          options: {
-            enabled: "Ativado",
-            disabled: "Desativado"
-          }
-        },
-        FileUploadLimit: {
-          title: "Limite de Upload de arquivos (MB)"
-        },
-        FileDownloadLimit: {
-          title: "Limite de Download de arquivos (MB)"
-        },
-        messageVisibility: {
-          title: "Visibilidade da mensagem",
-          options: {
-            respectMessageQueue: "Respeitar fila da mensagem",
-            respectTicketQueue: "Respeitar fila do ticket"
-          }
-        },
-        keepQueueAndUser: {
-          title: "Manter fila e usuário no ticket fechado",
-          options: {
-            enabled: "Ativado",
-            disabled: "Desativado"
-          }
-        },
-        GracePeriod: {
-          title: "Carência após vencimento (dias)"
-        },
-        ticketAcceptedMessage: {
-          title: "Mensagem de ticket aceito",
-          placeholder: "Digite sua mensagem de ticket aceito aqui"
-        },
-        transferMessage: {
-          title: "Mensagem de transferência",
-          placeholder: "Digite sua mensagem de transferência aqui"
-        },
-        mustacheVariables: {
-          title: "Variáveis disponíveis:"
-        },
         WelcomeGreeting: {
           greetings: "Olá",
           welcome: "Seja bem-vindo a",
@@ -2175,20 +2274,6 @@ const messages = {
         },
         i18nSettings: {
           title: "Traduções"
-        },
-        AIProvider: {
-          title: "Serviço de IA"
-        },
-        AudioTranscriptions: {
-          title: "Transcrição de áudio"
-        },
-        TagsMode: {
-          title: "Modo de Tags",
-          options: {
-            ticket: "Ticket",
-            contact: "Contato",
-            both: "Ticket e Contacto"
-          }
         },
         docker: {
           title: "Containers Docker",
@@ -2565,7 +2650,8 @@ const messages = {
           description:
             "Configure os horários regulares de funcionamento para cada dia da semana.",
           rule: "Regra",
-          empty: "Sem horário definido: a fila atende a qualquer hora e ninguém recebe aviso de fora do expediente.",
+          empty:
+            "Sem horário definido: a fila atende a qualquer hora e ninguém recebe aviso de fora do expediente.",
           useDefault: "Usar segunda a sexta, das 9h às 18h",
           days: "Dias da Semana",
           hours: "Horários",

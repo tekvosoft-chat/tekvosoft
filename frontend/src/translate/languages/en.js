@@ -1719,7 +1719,7 @@ const messages = {
           "Stickers that arrive in conversations show up here so you can send them again.",
         noGifs: "No GIFs found.",
         gifsNotConfigured:
-          "To use GIFs, add your GIPHY key in Settings > Options > External services.",
+          "GIFs are not set up yet: the system administrator adds the KLIPY key in Settings > Options > Integrations.",
         sendSticker: "Send sticker",
         sendGif: "Send GIF"
       },
@@ -1845,91 +1845,332 @@ const messages = {
         extensionBuildUnknownError: "Unknown build error."
       },
       settings: {
-        klipyApiKey: {
-          title: "KLIPY API key"
-        },
-        giphyApiKey: {
-          title: "GIPHY key (GIFs)"
-        },
-        hints: {
-          klipyKey:
-            "Free key from klipy.com (the same GIF and sticker library Discord uses). With it, chat GIF and sticker search uses KLIPY; without it, GIPHY.",
-          giphyKey:
-            "Free key created at developers.giphy.com. With it, the team can search and send GIFs in the chat.",
-          groups: {
-            general: "How service works day to day.",
-            timeouts:
-              "What the system does on its own when a conversation goes idle. Times in minutes; 0 turns it off.",
-            officeHours:
-              "Business hours and what happens to messages that arrive outside them.",
-            groups: "How to handle WhatsApp group conversations.",
-            confidenciality:
-              "What each agent sees from other queues' conversations.",
-            api: "Key for external systems to read contacts through the API.",
-            externalServices:
-              "Artificial intelligence to transcribe audio and the GIPHY key to send GIFs.",
-            serveradmin:
-              "Options for the whole installation: they apply to every company."
+        options: {
+          nav: "Option sections",
+          sections: {
+            service: {
+              title: "Service",
+              description:
+                "Automatic messages and what happens when a conversation is accepted, transferred, closed or reopened."
+            },
+            automation: {
+              title: "Chatbot and automations",
+              description:
+                "The automatic menu that greets the customer and what the system does on its own with idle conversations."
+            },
+            hours: {
+              title: "Business hours",
+              description:
+                "When the company is open and what to do with messages that arrive outside those hours."
+            },
+            chat: {
+              title: "Conversations",
+              description:
+                "What the team sees and uses on the conversation screen: history, quick replies, calls and groups."
+            },
+            ai: {
+              title: "Artificial intelligence",
+              description:
+                "Providers and keys for audio transcription and for the queues' AI assistant."
+            },
+            integrations: {
+              title: "Integrations",
+              description:
+                "Keys that let other systems and services work together with vuup.me."
+            },
+            files: {
+              title: "Files",
+              description:
+                "Maximum size of the files sent and received through the connections. Applies to every company."
+            },
+            system: {
+              title: "System",
+              description:
+                "Options for the whole installation. They apply to every company."
+            }
           },
-          ratings:
-            "When the conversation is closed, the customer is asked to rate the service.",
-          calls:
-            "When the customer calls on WhatsApp: ignore the call or reply saying calls aren't answered.",
-          chatbotAutoExit:
-            "If the customer types something that isn't a menu option, the conversation leaves the chatbot and goes to the queue.",
-          quickMessages:
-            "Quick replies shared with the whole company or kept per user.",
-          tagsMode:
-            "Where tags live: on the ticket (gone when it closes), on the contact (follow the person) or both.",
-          numericIcons:
-            "In the chatbot menu, show options as 1️⃣ 2️⃣ 3️⃣ instead of plain numbers.",
-          ticketAccepted:
-            "Sent to the customer when an agent accepts the conversation. Leave blank to send nothing.",
-          transfer:
-            "Sent to the customer when the conversation is transferred. Leave blank to send nothing.",
-          ratingsTimeout:
-            "How long the customer has to answer the rating. After that, the request expires.",
-          autoReopen:
-            "If the customer writes again within this time after closing, the same ticket is reopened. 0 turns it off.",
-          noQueueTimeout:
-            "Waiting conversations without a queue for longer than this get the action chosen next to it. 0 turns it off.",
-          noQueueTimeoutAction:
-            "What to do with an idle conversation without a queue: close it or send it to a queue.",
-          openTicketTimeout:
-            "Open conversations with no messages for this long get the action chosen next to it. 0 turns it off.",
-          openTicketTimeoutAction:
-            "What to do with an idle open conversation: return it to the queue or close it.",
-          chatbotTimeout:
-            "If the customer stops answering the chatbot for this long, the chosen action is applied. 0 turns it off.",
-          chatbotTimeoutAction:
-            "What to do when the customer abandons the chatbot: close it or send it to a queue.",
-          officeHours:
-            "Turns on business-hours control, with hours for the whole company or per queue.",
-          outOfHours:
-            "What happens to messages that arrive outside business hours: they wait or the ticket is closed.",
-          ignoreGroups:
-            "When on, messages from WhatsApp groups don't become tickets.",
-          soundGroups: "Also play the notification sound for group messages.",
-          groupsTab: "Show group conversations in their own tab under Tickets.",
-          messageVisibility:
-            "Respect message queue: agents only see messages exchanged in their queues. Respect ticket queue: they see the whole ticket history.",
-          keepQueueAndUser:
-            "When on, a closed ticket keeps its queue and agent. When off, both are removed on close.",
-          apiToken:
-            "Key used by external systems to read contacts through the API. Generate, copy and keep it safe.",
-          aiProvider: "Artificial intelligence service that transcribes audio.",
-          aiKey: "Access key for the service chosen next to it.",
-          audioTranscriptions:
-            'Shows "transcribe" on audio messages. Audio is only turned into text when someone clicks it.',
-          allowSignup:
-            "Lets new companies create an account on their own through the sign-up page.",
-          multithread:
-            "Runs WhatsApp connections in separate processes. Helps on servers with many connections.",
-          uploadLimit: "Maximum size, in MB, of files the team sends.",
-          downloadLimit:
-            "Maximum size, in MB, of received files the system downloads. Above that, the customer is told.",
-          gracePeriod:
-            "How many days a company can still use the system after the due date before being blocked."
+          groups: {
+            autoMessages: "Automatic messages",
+            closing: "Closing",
+            rating: "Satisfaction survey",
+            tags: "Tags",
+            chatbot: "Chatbot",
+            idle: "Idle conversations",
+            idleHint:
+              "Choose after how long the system acts on its own. Leave 0 to do nothing.",
+            chatScreen: "Conversation screen",
+            calls: "Calls",
+            groups: "WhatsApp groups",
+            transcription: "Audio transcription",
+            agent: "Queues' AI assistant",
+            agentHint:
+              "Used by queues with the AI Assistant turned on (Queues & Chatbot › edit queue), by the smart reception and by the in-conversation assistant. It is separate from the transcription key.",
+            api: "API",
+            media: "GIFs and stickers",
+            limits: "Size limits",
+            access: "Language, sign-up and billing",
+            server: "Server"
+          },
+          units: {
+            minutes: "min",
+            days: "days",
+            megabytes: "MB"
+          },
+          timeout: {
+            after: "After",
+            then: "The system will",
+            close: "Close the conversation",
+            transferTo: "Send it to the {{queue}} queue"
+          },
+          variables: {
+            title: "You can use:",
+            firstname: "customer's first name",
+            name: "full name",
+            greeting: "good morning, afternoon or evening",
+            user: "agent's name",
+            queue: "queue name",
+            protocol: "protocol number"
+          },
+          notes: {
+            needsRating: "Turn on the rating request to use this.",
+            needsSchedule: "Turn on business hours to use this.",
+            groupsIgnored: "Available when group messages are not ignored.",
+            scheduleCompany:
+              "The hours are set in the Schedules tab, here in Settings.",
+            scheduleQueue:
+              "Each queue's hours are set in Queues & Chatbot, when editing the queue."
+          },
+          apiToken: {
+            generate: "Generate token",
+            copy: "Copy",
+            remove: "Delete",
+            empty: "No token generated"
+          },
+          fields: {
+            ticketAcceptedMessage: {
+              title: "When the conversation is accepted",
+              description:
+                "Sent to the customer when an agent takes over the conversation. Leave it blank to send nothing.",
+              placeholder:
+                "E.g.: {{greeting}}, {{firstname}}! This is {{user}}, I'll take it from here."
+            },
+            transferMessage: {
+              title: "When transferred to another queue",
+              description:
+                "Sent to the customer when the conversation changes queue. If the connection has its own transfer message, that one is used. Leave it blank to send nothing.",
+              placeholder:
+                "E.g.: {{firstname}}, I'm handing you over to the {{queue}} team. Someone will reply shortly!"
+            },
+            keepUserAndQueue: {
+              title: "Keep queue and agent when closing",
+              description:
+                "On: the closed conversation keeps its queue and agent, and goes back to them if it is reopened. Off: both are removed when it is closed."
+            },
+            autoReopenTimeout: {
+              title: "Reopen recent conversation",
+              description:
+                "If the customer writes again within this time after closing, the same conversation is reopened instead of starting a new one. 0 turns it off."
+            },
+            userRating: {
+              title: "Ask for a rating when closing",
+              description:
+                "When the conversation is closed, the customer is asked to rate the service from 1 to 5."
+            },
+            ratingsTimeout: {
+              title: "Time to rate",
+              description:
+                "How long the customer has to send the rating. After that, the request expires and they get the closing message."
+            },
+            tagsMode: {
+              title: "Where tags are kept",
+              description:
+                "In the conversation: they only apply to that service. In the contact: they follow the person across all conversations. Both: they go to the conversation and to the contact.",
+              options: {
+                ticket: "In the conversation",
+                contact: "In the contact",
+                both: "Both"
+              }
+            },
+            chatbotAutoExit: {
+              title: "Leave the chatbot on an off-menu reply",
+              description:
+                "On: if the customer writes something that is not an option, the conversation leaves the chatbot and goes to an agent. Off: the menu is sent again."
+            },
+            showNumericIcons: {
+              title: "Emoji numbers in the menu",
+              description:
+                "Shows the chatbot options as 1️⃣ 2️⃣ 3️⃣ instead of 1, 2, 3."
+            },
+            chatbotTicketTimeout: {
+              title: "Customer stopped answering the chatbot",
+              description:
+                "The conversation is still in the automatic menu and the customer has not replied anymore."
+            },
+            noQueueTimeout: {
+              title: "Conversation waiting without a queue",
+              description:
+                "The conversation arrived but has not entered any queue yet."
+            },
+            openTicketTimeout: {
+              title: "Idle conversation in service",
+              description:
+                "An agent took over the conversation, but nobody wrote anything during this time."
+            },
+            openTicketTimeoutAction: {
+              options: {
+                pending: "Return it to the queue",
+                closed: "Close the conversation"
+              }
+            },
+            scheduleType: {
+              title: "Business hours control",
+              description:
+                "Outside business hours, the customer gets the away message and the conversation follows the rule below.",
+              options: {
+                disabled: "Off",
+                company: "One schedule for the whole company",
+                queue: "One schedule per queue"
+              }
+            },
+            outOfHoursAction: {
+              title: "Messages outside business hours",
+              description:
+                "After the away message, the conversation waits in the queue until someone answers, or is closed right away.",
+              options: {
+                pending: "Wait in the queue",
+                closed: "Are closed"
+              }
+            },
+            messageVisibility: {
+              title: "History the agent sees",
+              description:
+                "For conversations that went through more than one queue: the agent sees only what was said in their queues, or the whole conversation.",
+              options: {
+                message: "Only their queues",
+                ticket: "The whole conversation"
+              }
+            },
+            quickMessages: {
+              title: "Quick replies",
+              description:
+                "Shared: everyone sees and uses the same ones. Per user: each person only sees the ones they created.",
+              options: {
+                individual: "Each user has their own",
+                company: "Shared"
+              }
+            },
+            call: {
+              title: "WhatsApp calls",
+              description:
+                "The system does not answer voice or video calls. Choose whether the customer gets an automatic message asking them to write instead.",
+              options: {
+                enabled: "Just ignore",
+                disabled: "Let the customer know"
+              }
+            },
+            CheckMsgIsGroup: {
+              title: "Ignore group messages",
+              description:
+                "On: messages from WhatsApp groups do not become conversations in the system. Off: each group becomes a conversation."
+            },
+            groupsTab: {
+              title: "Separate tab for groups",
+              description:
+                "Shows group conversations in their own tab, away from customer conversations."
+            },
+            soundGroupNotifications: {
+              title: "Group message alerts",
+              description:
+                "Also plays the sound and shows a notification when a group message arrives."
+            },
+            audioTranscriptions: {
+              title: "Transcribe audio",
+              description:
+                "Shows the “transcribe” button on audio messages. The audio is only sent to the AI when someone clicks it."
+            },
+            aiProvider: {
+              title: "Provider",
+              description: "Service that turns the audio into text.",
+              options: {
+                openai: "OpenAI",
+                groq: "Groq"
+              }
+            },
+            openAiKey: {
+              title: "Access key",
+              description:
+                "API key of the provider chosen above. OpenAI: platform.openai.com › API keys. Groq: console.groq.com › API Keys."
+            },
+            aiAgentProvider: {
+              title: "Provider",
+              description:
+                "AI service that talks to customers and suggests replies to the team.",
+              options: {
+                openai: "OpenAI",
+                gemini: "Google Gemini",
+                groq: "Groq"
+              }
+            },
+            aiAgentApiKey: {
+              title: "Access key",
+              description: "API key of the provider chosen above."
+            },
+            aiAgentModel: {
+              title: "Model",
+              description:
+                "Optional. When blank, the model shown in the field is used."
+            },
+            apiToken: {
+              title: "API token",
+              description:
+                "Key other systems use to create, read, update and delete contacts through the API. Whoever has the token has that access: keep it somewhere safe and delete it if it leaks."
+            },
+            klipyApiKey: {
+              title: "KLIPY key",
+              description:
+                "Free key from klipy.com (the GIF and sticker library used by Discord). With it, the chat's GIF and sticker search uses KLIPY; without it, GIPHY. Applies to every company."
+            },
+            uploadLimit: {
+              title: "Sending limit",
+              description:
+                "Files larger than this are not sent as attachments: the customer gets a download link instead. When blank, 15 MB."
+            },
+            downloadLimit: {
+              title: "Receiving limit",
+              description:
+                "Received files larger than this are not downloaded, and the customer gets an automatic notice with the limit. When blank, 15 MB."
+            },
+            defaultLanguage: {
+              title: "Default language",
+              description:
+                "Language of the automatic messages when the contact, the connection and the company have no language set."
+            },
+            allowSignup: {
+              title: "New company sign-up",
+              description:
+                "Keeps the sign-up page open so new companies can create an account on their own."
+            },
+            gracePeriod: {
+              title: "Grace period after due date",
+              description:
+                "How many days a company with an overdue payment can still use the system before being blocked."
+            },
+            useMultiThreadedWbot: {
+              title: "Connections in separate threads",
+              description:
+                "Runs each WhatsApp connection in its own thread. Helps servers with many connections. Takes effect after the next restart."
+            },
+            extension: {
+              title: "WhatsApp Web capture extension",
+              description:
+                "Builds a Chrome extension with your brand to connect numbers through WhatsApp Web. Extract the ZIP and load the folder in Chrome as an unpacked extension."
+            },
+            restart: {
+              title: "Restart the server",
+              description:
+                "Restarts the backend. Connections drop for a few moments and come back on their own; this screen reloads right after."
+            }
+          }
         },
         saving: "Saving…",
         appearance: {
@@ -1991,149 +2232,9 @@ const messages = {
           success: "Backend restart initiated.",
           error: "Failed to restart backend."
         },
-        group: {
-          general: "General",
-          timeouts: "Timeouts",
-          officeHours: "Office Hours",
-          groups: "Groups",
-          confidenciality: "Confidentiality",
-          api: "API",
-          externalServices: "External Services",
-          serveradmin: "Server Administration"
-        },
         success: "Setting saved successfully.",
         copiedToClipboard: "Copied to clipboard",
         title: "Settings",
-        chatbotTicketTimeout: "Chatbot ticket timeout (minutes)",
-        chatbotTicketTimeoutAction: "Action after chatbot timeout",
-        settings: {
-          userCreation: {
-            name: "User creation",
-            options: {
-              enabled: "Enabled",
-              disabled: "Disabled"
-            }
-          }
-        },
-        validations: {
-          title: "validations",
-          options: {
-            enabled: "enabled",
-            disabled: "disabled"
-          }
-        },
-        OfficeManagement: {
-          title: "Office Management",
-          options: {
-            disabled: "disabled",
-            ManagementByDepartment: "Management By Department",
-            ManagementByCompany: "Management By Company"
-          }
-        },
-        outOfHoursAction: {
-          title: "Out of Hours Action",
-          options: {
-            pending: "Leave as pending",
-            closed: "Close ticket"
-          }
-        },
-        IgnoreGroupMessages: {
-          title: "Ignore Group Messages",
-          options: {
-            enabled: "enabled",
-            disabled: "disabled"
-          }
-        },
-        soundGroupNotifications: {
-          title: "Sound on Group Notifications",
-          options: {
-            enabled: "enabled",
-            disabled: "disabled"
-          }
-        },
-        groupsTab: {
-          title: "Groups Tab",
-          options: {
-            enabled: "enabled",
-            disabled: "disabled"
-          }
-        },
-        VoiceAndVideoCalls: {
-          title: "Voice and video calls",
-          options: {
-            enabled: "Ignore",
-            disabled: "unavailability report"
-          }
-        },
-        AutomaticChatbotOutput: {
-          title: "Automatic Chatbot Output",
-          options: {
-            enabled: "enabled",
-            disabled: "disabled"
-          }
-        },
-        ShowNumericEmoticons: {
-          title: "Display numeric emojis in the queue",
-          options: {
-            enabled: "enabled",
-            disabled: "disabled"
-          }
-        },
-        QuickMessages: {
-          title: "Quick Messages",
-          options: {
-            enabled: "By company",
-            disabled: "By User"
-          }
-        },
-        AllowRegistration: {
-          title: "Allow Registration",
-          options: {
-            enabled: "enabled",
-            disabled: "disabled"
-          }
-        },
-        MultiThreadedWbot: {
-          title: "Multithreaded WhatsApp Worker",
-          options: {
-            enabled: "Enabled",
-            disabled: "Disabled"
-          }
-        },
-        FileUploadLimit: {
-          title: "File Upload Limit (MB)"
-        },
-        FileDownloadLimit: {
-          title: "File Download Limit (MB)"
-        },
-        messageVisibility: {
-          title: "Message Visibility",
-          options: {
-            respectMessageQueue: "Respect queue of message",
-            respectTicketQueue: "Respect queue of ticket"
-          }
-        },
-        keepQueueAndUser: {
-          title: "Keep queue and user on closed ticket",
-          options: {
-            enabled: "Enabled",
-            disabled: "Disabled"
-          }
-        },
-        GracePeriod: {
-          title: "Subscription Grace Period (days)"
-        },
-        ticketAcceptedMessage: {
-          title: "Ticket Accepted Message",
-          placeholder: "Enter your ticket accepted message here"
-        },
-        transferMessage: {
-          title: "Transfer Message",
-          placeholder: "Enter your transfer message here"
-        },
-        mustacheVariables: {
-          title: "Available variables:"
-        },
         WelcomeGreeting: {
           greetings: "Hello",
           welcome: "Welcome to",
@@ -2168,20 +2269,6 @@ const messages = {
         },
         i18nSettings: {
           title: "Translations"
-        },
-        AIProvider: {
-          title: "AI Provider"
-        },
-        AudioTranscriptions: {
-          title: "Audio Transcriptions"
-        },
-        TagsMode: {
-          title: "Tags Mode",
-          options: {
-            ticket: "Ticket",
-            contact: "Contact",
-            both: "Ticket and Contact"
-          }
         },
         docker: {
           title: "Docker Containers",
@@ -2557,7 +2644,8 @@ const messages = {
           description:
             "Configure regular business hours for each day of the week.",
           rule: "Rule",
-          empty: "No hours set: the queue answers at any time and nobody gets an out-of-hours reply.",
+          empty:
+            "No hours set: the queue answers at any time and nobody gets an out-of-hours reply.",
           useDefault: "Use Monday to Friday, 9am to 6pm",
           days: "Days of the Week",
           hours: "Hours",

@@ -298,7 +298,7 @@ const AiCopilot = ({ open, onClose, ticket, focus }) => {
           {!loading && error && (
             <div className={classes.center}>
               {error === "ERR_AI_NOT_CONFIGURED" ? (
-                "Configure a chave em Configurações > Assistente de IA das filas."
+                "Configure a chave em Configurações > Opções > Inteligência artificial."
               ) : error === "ERR_AI_NO_MESSAGES" ? (
                 "Ainda não há mensagens para eu ler nesta conversa."
               ) : (

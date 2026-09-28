@@ -463,7 +463,8 @@ const Queues = () => {
           <div className={classes.receptionHint}>
             Quem chamar é recebido pela IA, que lê a descrição das filas e
             encaminha direto para a certa. Precisa da chave em Configurações
-            &gt; Assistente de IA das filas e de uma descrição em cada fila.
+            &gt; Opções &gt; Inteligência artificial e de uma descrição em cada
+            fila.
           </div>
         </div>
         <Switch
