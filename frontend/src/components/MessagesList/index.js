@@ -223,9 +223,6 @@ const useStyles = makeStyles(theme => ({
     height: "auto",
     display: "block",
     position: "relative",
-    // recebida não tem tique de entrega: sobra menos coisa à direita do
-    // texto, então o horário pode ficar mais perto do fim da frase
-    "& $textContentItem": { paddingRight: 46 },
     "&:hover [id^='messageActionsButton']": { display: "flex" },
     "&:hover [data-react-trigger], &:hover [data-forward-trigger]": {
       opacity: 1,
@@ -336,7 +333,7 @@ const useStyles = makeStyles(theme => ({
     border: "1px solid #EFD292",
     // tudo dentro do post-it é escrito em tinta escura: no tema escuro o
     // texto, a hora e o cadeado sairiam claros e sumiriam no amarelo
-    "& $textContentItem, & $textContentItemEdited, & $mediaCaption, & a": {
+    "& $textContentItem, & $mediaCaption, & a": {
       color: "#3B2D08"
     },
     // a mensagem citada dentro do post-it: clara por baixo, tinta escura
@@ -522,15 +519,22 @@ const useStyles = makeStyles(theme => ({
   textContentItem: {
     fontSize: "0.9063rem",
     lineHeight: 1.4,
-    // a reserva à direita é só o tanto que o horário ocupa (hora + tiques):
-    // 86px deixavam um vazio entre o fim da frase e a hora
+    // coluna à direita para o horário quando o balão não termina em texto
+    // (localização, contato, mídia): o cartão não passa por baixo da hora
     [theme.breakpoints.down("xs")]: { padding: "3px 58px 6px 6px" },
     overflowWrap: "break-word",
     padding: "3px 62px 6px 6px",
     // o formatador só troca a PRIMEIRA quebra de linha por <br>; as outras
     // viravam espaço. Só dentro do parágrafo: na caixa inteira, a quebra que
     // ele deixa depois de cada parágrafo virava uma linha em branco no balão
-    "& > .whatsmarked p": { whiteSpace: "pre-wrap" }
+    "& > .whatsmarked p": { whiteSpace: "pre-wrap" },
+    // o último parágrafo corre em linha para a cópia do horário (metaSpacer)
+    // encostar no fim da frase, em vez de cair numa linha abaixo dele
+    "& > .whatsmarked, & > .whatsmarked > p:last-child": { display: "inline" },
+    // termina em texto: quem guarda o lugar do horário é a cópia, só na
+    // última linha e no tamanho exato dele. A coluna fixa acima não
+    // acompanhava o "Editada" e o texto passava por cima da hora
+    "&:has(> $metaSpacer)": { paddingRight: 6 }
   },
 
   messageLocation: {
@@ -554,10 +558,6 @@ const useStyles = makeStyles(theme => ({
     padding: "3px 62px 6px 6px"
   },
 
-  textContentItemEdited: {
-    overflowWrap: "break-word",
-    padding: "3px 120px 6px 6px"
-  },
   messageMediaDeleted: {
     filter: "grayscale(1)",
     opacity: 0.4
@@ -843,6 +843,17 @@ const useStyles = makeStyles(theme => ({
     alignItems: "center",
     gap: 3
   },
+  // cópia invisível do horário no fim da última linha do texto, como faz o
+  // WhatsApp: se couber ao lado da frase, o horário fica ali; se não, ela
+  // desce e abre uma linha só para ele. Por ser o mesmo conteúdo, a reserva
+  // acompanha "Editada", cadeado e tiques, em qualquer idioma
+  metaSpacer: {
+    position: "static",
+    visibility: "hidden",
+    verticalAlign: "top",
+    marginLeft: 4,
+    userSelect: "none"
+  },
 
   // figurinha não mostra horário: a etiqueta pendurada embaixo do recorte
   // só sujava a imagem. O horário continua em toda mensagem comum.
@@ -1017,8 +1028,7 @@ const useStyles = makeStyles(theme => ({
   linkCard: {
     display: "flex",
     alignItems: "stretch",
-    margin: "-1px -74px 6px -1px",
-    [theme.breakpoints.down("xs")]: { marginRight: -60 },
+    margin: "-1px -1px 6px -1px",
     borderRadius: 10,
     overflow: "hidden",
     whiteSpace: "normal",
@@ -2844,6 +2854,34 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
     }
   };
 
+  // o que vai no canto do balão: "Editada", cadeado, hora e tiques
+  const renderMeta = message => (
+    <>
+      {message.isEdited && <span> {i18n.t("message.edited")} </span>}
+      {message.fromMe && message.isPrivate && (
+        <Tooltip
+          title={i18n.t("message.private", "Só a equipe vê esta mensagem")}
+        >
+          <span className={classes.privateMark}>
+            <LockRoundedIcon />
+          </span>
+        </Tooltip>
+      )}
+      {format(parseISO(message.createdAt), "HH:mm")}
+      {message.fromMe && !message.isPrivate && renderMessageAck(message)}
+    </>
+  );
+
+  // vai logo depois do texto e guarda o lugar do horário (ver metaSpacer)
+  const renderMetaSpacer = message => (
+    <span
+      className={clsx(classes.timestamp, classes.metaSpacer)}
+      aria-hidden="true"
+    >
+      {renderMeta(message)}
+    </span>
+  );
+
   const timeline = history.items.length
     ? [...history.items, ...messagesList]
     : messagesList;
@@ -3651,22 +3689,14 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
               data?.message?.liveLocationMessage ? (
                 messageLocation(data, message)
               ) : isVCard(message.body) ? (
-                <div
-                  className={[
-                    clsx(classes.textContentItem, {
-                      [classes.textContentItemEdited]: message.isEdited
-                    }),
-                    { marginRight: 0 }
-                  ]}
-                >
+                <div className={[classes.textContentItem, { marginRight: 0 }]}>
                   {renderVCard(message.body)}
                 </div>
               ) : (
                 <div
                   className={[
                     clsx(classes.textContentItem, {
-                      [classes.textContentItemDeleted]: message.isDeleted,
-                      [classes.textContentItemEdited]: message.isEdited
+                      [classes.textContentItemDeleted]: message.isDeleted
                     })
                   ]}
                 >
@@ -3687,6 +3717,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                           />
                         )}
                         <WhatsMarked>{message.body}</WhatsMarked>
+                        {renderMetaSpacer(message)}
                       </>
                     ))}
                   <span
@@ -3696,10 +3727,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                       })
                     ]}
                   >
-                    {message.isEdited && (
-                      <span> {i18n.t("message.edited")} </span>
-                    )}
-                    {format(parseISO(message.createdAt), "HH:mm")}
+                    {renderMeta(message)}
                   </span>
                 </div>
               )}
@@ -3807,8 +3835,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
 
               <div
                 className={clsx(classes.textContentItem, {
-                  [classes.textContentItemDeleted]: message.isDeleted,
-                  [classes.textContentItemEdited]: message.isEdited
+                  [classes.textContentItemDeleted]: message.isDeleted
                 })}
               >
                 {message.isDeleted && (
@@ -3836,7 +3863,10 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                   (message.mediaUrl ? (
                     ""
                   ) : (
-                    <WhatsMarked>{message.body}</WhatsMarked>
+                    <>
+                      <WhatsMarked>{message.body}</WhatsMarked>
+                      {renderMetaSpacer(message)}
+                    </>
                   ))}
                 <span
                   className={[
@@ -3846,23 +3876,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                   ]}
                   style={{ bottom: messageError ? 24 : 0 }}
                 >
-                  {message.isEdited && (
-                    <span> {i18n.t("message.edited")} </span>
-                  )}
-                  {message.isPrivate && (
-                    <Tooltip
-                      title={i18n.t(
-                        "message.private",
-                        "Só a equipe vê esta mensagem"
-                      )}
-                    >
-                      <span className={classes.privateMark}>
-                        <LockRoundedIcon />
-                      </span>
-                    </Tooltip>
-                  )}
-                  {format(parseISO(message.createdAt), "HH:mm")}
-                  {!message.isPrivate && renderMessageAck(message)}
+                  {renderMeta(message)}
                 </span>
               </div>
               {message.mediaUrl && checkMessageMedia(message, data, isSticker)}
