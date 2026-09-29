@@ -11,6 +11,7 @@ import {
 } from "../services/DevPipeline/skills";
 import { teachSkill } from "../services/DevPipeline/teach";
 import { LlmError } from "../services/DevPipeline/llm";
+import { exportSkill } from "../services/DevPipeline/skillSync";
 
 /**
  * Skills do pipeline de IA (só o super): o que o time sabe, para os
@@ -88,6 +89,13 @@ export const update = async (
     changes.status = req.body.status;
   }
   await skill.update(changes);
+  if (skill.status === "active") {
+    try {
+      await exportSkill(skill);
+    } catch {
+      // sincronização com o repositório é melhor esforço
+    }
+  }
   emit();
   return res.json(skill);
 };
