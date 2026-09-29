@@ -126,14 +126,40 @@ export const sendWhatsappFile = async (
   try {
     const wbot = await GetTicketWbot(ticket);
 
-    const sendOptions = quotedMsg?.dataJson
-      ? {
-          quoted: {
-            key: JSON.parse(quotedMsg.dataJson)?.key || quotedMsg.id,
-            message: JSON.parse(quotedMsg.dataJson)?.message
-          }
+    let sendOptions: any = {};
+    if (quotedMsg) {
+      // tenta usar o JSON salvo; senão, constrói manualmente
+      let saved: any = null;
+      try {
+        saved = quotedMsg.dataJson ? JSON.parse(quotedMsg.dataJson) : null;
+      } catch {
+        // segue com fallback
+      }
+
+      if (saved?.key && saved?.message) {
+        sendOptions = { quoted: { key: saved.key, message: saved.message } };
+      } else {
+        const key = {
+          remoteJid: getJidOf(ticket),
+          fromMe: !!quotedMsg.fromMe,
+          id: quotedMsg.id
+        };
+
+        const bodyText = String(quotedMsg.body || "").slice(0, 4096);
+        const mediaType = quotedMsg.mediaType || "chat";
+
+        let message: any = { conversation: bodyText };
+        if (!bodyText) {
+          if (mediaType === "image") message = { imageMessage: {} };
+          else if (mediaType === "video") message = { videoMessage: {} };
+          else if (mediaType === "application" || mediaType === "document") message = { documentMessage: {} };
+          else if (mediaType === "audio") message = { audioMessage: {} };
+          else if (mediaType === "sticker") message = { stickerMessage: {} };
         }
-      : {};
+
+        sendOptions = { quoted: { key, message } };
+      }
+    }
 
     const sentMessage = await wbot.sendMessage(
       getJidOf(ticket),

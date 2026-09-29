@@ -48,16 +48,48 @@ const SendWhatsAppMessage = async ({
       }
     });
 
-    if (chatMessage) {
-      const msgFound = JSON.parse(chatMessage.dataJson);
+    // Monta o objeto "quoted" completo para o Baileys: tenta usar o JSON salvo,
+    // e se não houver ou estiver inválido, constrói a chave e um conteúdo mínimo.
+    let quoted: any = null;
 
-      options = {
-        quoted: {
-          key: msgFound?.key || chatMessage.id,
-          message: msgFound?.message
-        }
-      };
+    // 1) tentar o JSON salvo no banco
+    try {
+      const saved = chatMessage?.dataJson ? JSON.parse(chatMessage.dataJson) : null;
+      if (saved?.key && saved?.message) {
+        quoted = { key: saved.key, message: saved.message };
+      }
+    } catch {
+      // JSON inválido — cai para a construção manual
     }
+
+    // 2) construção manual (fallback)
+    if (!quoted) {
+      const key = {
+        remoteJid: getJidOf(ticket),
+        fromMe: !!(chatMessage?.fromMe ?? quotedMsg.fromMe),
+        id: quotedMsg.id
+      };
+
+      const bodyText = (chatMessage?.body ?? quotedMsg.body ?? "").slice(0, 4096);
+      const mediaType = chatMessage?.mediaType ?? quotedMsg.mediaType ?? "chat";
+
+      // para garantir que a citação apareça, caímos para um conteúdo textual mínimo
+      // quando não der para mapear a mídia seguramente.
+      let message: any = { conversation: bodyText };
+
+      // quando possível, indica o tipo base da mídia (sem depender de campos binários)
+      if (!bodyText) {
+        if (mediaType === "image") message = { imageMessage: {} };
+        else if (mediaType === "video") message = { videoMessage: {} };
+        else if (mediaType === "application" || mediaType === "document") message = { documentMessage: {} };
+        else if (mediaType === "audio") message = { audioMessage: {} };
+        else if (mediaType === "sticker") message = { stickerMessage: {} };
+      }
+
+      quoted = { key, message };
+    }
+
+    options = { quoted };
   }
 
   try {
