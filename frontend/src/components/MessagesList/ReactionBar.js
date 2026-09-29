@@ -1,12 +1,13 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { makeStyles } from "@material-ui/core/styles";
+import { makeStyles, useTheme } from "@material-ui/core/styles";
 import ButtonBase from "@material-ui/core/ButtonBase";
 import Dialog from "@material-ui/core/Dialog";
+import InputBase from "@material-ui/core/InputBase";
+import useMediaQuery from "@material-ui/core/useMediaQuery";
 import AddRoundedIcon from "@material-ui/icons/AddRounded";
-import "emoji-mart/css/emoji-mart.css";
-import { Picker } from "emoji-mart";
-import { emojiMartI18n } from "../../helpers/emojiMartI18n";
+import { i18n } from "../../translate/i18n";
+import EmojiTab from "../MessageInputCustom/EmojiTab";
 import { haptic } from "../../helpers/haptics";
 
 /**
@@ -107,6 +108,25 @@ const useStyles = makeStyles(theme => {
       color: t.semantic.danger,
       "& svg": { color: t.semantic.danger }
     },
+    // diálogo do seletor de emojis com busca
+    pickerWrap: {
+      width: 420,
+      maxWidth: "calc(100vw - 24px)",
+      display: "flex",
+      flexDirection: "column",
+      [theme.breakpoints.down("xs")]: { width: "100vw", maxWidth: "100vw" }
+    },
+    pickerHead: {
+      padding: "8px 10px",
+      borderBottom: `1px solid ${t.border}`
+    },
+    pickerSearch: {
+      width: "100%",
+      padding: "8px 12px",
+      borderRadius: 12,
+      backgroundColor: t.surfaceSunken,
+      color: theme.palette.text.primary
+    },
     "@keyframes fade": { from: { opacity: 0 }, to: { opacity: 1 } },
     "@keyframes barIn": {
       from: { opacity: 0, transform: "scale(.5) translateY(8px)" },
@@ -134,6 +154,9 @@ const ReactionBar = ({
   const actionsRef = useRef(null);
   const [pos, setPos] = useState(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const theme = useTheme();
+  const isPhone = useMediaQuery(theme.breakpoints.down("xs"));
 
   // posiciona acima da mensagem (ou abaixo, se não houver espaço) sem sair
   // da tela; as ações ficam do outro lado
@@ -199,9 +222,11 @@ const ReactionBar = ({
     const onScroll = () => onClose();
     window.addEventListener("keydown", onKey, true);
     window.addEventListener("resize", onScroll);
+    window.addEventListener("scroll", onScroll, true);
     return () => {
       window.removeEventListener("keydown", onKey, true);
       window.removeEventListener("resize", onScroll);
+      window.removeEventListener("scroll", onScroll, true);
     };
   }, [open, onClose]);
 
@@ -285,17 +310,32 @@ const ReactionBar = ({
           )}
         </div>
       )}
-      <Dialog open={pickerOpen} onClose={() => setPickerOpen(false)}>
-        <Picker
-          i18n={emojiMartI18n()}
-          perLine={window.innerWidth < 420 ? 8 : 12}
-          showPreview={false}
-          showSkinTones={false}
-          onSelect={e => {
-            setPickerOpen(false);
-            onPick(e.native);
-          }}
-        />
+      <Dialog
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        fullScreen={isPhone}
+        PaperProps={{ style: { borderRadius: isPhone ? 0 : 16 } }}
+      >
+        <div className={classes.pickerWrap}>
+          <div className={classes.pickerHead}>
+            <InputBase
+              autoFocus
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              placeholder={i18n.t("expressions.searchEmoji")}
+              className={classes.pickerSearch}
+              inputProps={{ "aria-label": i18n.t("expressions.searchEmoji") }}
+            />
+          </div>
+          <EmojiTab
+            query={query}
+            onPick={({ native }) => {
+              setPickerOpen(false);
+              haptic("selection");
+              onPick(native);
+            }}
+          />
+        </div>
       </Dialog>
     </>,
     document.body

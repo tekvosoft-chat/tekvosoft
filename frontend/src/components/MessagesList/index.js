@@ -1767,6 +1767,21 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
     });
   };
 
+  // pedido vindo do menu: abrir a ReactionBar ancorada ao balão
+  useEffect(() => {
+    const onOpen = e => {
+      const detail = e.detail || {};
+      const msg = detail.message;
+      const data = detail.data;
+      if (!msg) return;
+      const bubble = document.getElementById(String(msg.id));
+      if (!bubble) return;
+      openReactions(msg, data, bubble, isPhone);
+    };
+    window.addEventListener("vuup:open-reaction-bar", onOpen);
+    return () => window.removeEventListener("vuup:open-reaction-bar", onOpen);
+  }, [isPhone]);
+
   // duplo clique na linha (fora do balão) também responde à mensagem dela
   const handleRowDoubleClick = e => {
     if (isPhone || !canReply) return;

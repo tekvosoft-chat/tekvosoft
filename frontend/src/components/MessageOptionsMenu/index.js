@@ -6,7 +6,7 @@ import MenuItem from "@material-ui/core/MenuItem";
 import { i18n } from "../../translate/i18n";
 import api from "../../services/api";
 import ConfirmationModal from "../ConfirmationModal";
-import { Dialog, Menu } from "@material-ui/core";
+import { Menu } from "@material-ui/core";
 import { ReplyMessageContext } from "../../context/ReplyingMessage/ReplyingMessageContext";
 import { EditMessageContext } from "../../context/EditingMessage/EditingMessageContext";
 import toastError from "../../errors/toastError";
@@ -14,11 +14,8 @@ import MessageHistoryModal from "../MessageHistoryModal";
 import MessageForwardModal from "../MessageForwardModal";
 import { useStyles } from "./style";
 
-import "emoji-mart/css/emoji-mart.css";
-import { Picker } from "emoji-mart";
-import { emojiMartI18n } from "../../helpers/emojiMartI18n";
 
-const mostUsedEmojis = ["👍", "❤️", "😂", "🎉", "😮", "😢", "🙏"];
+
 
 const MessageOptionsMenu = ({
   message,
@@ -37,17 +34,11 @@ const MessageOptionsMenu = ({
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [forwardModalOpen, setForwardModalOpen] = useState(false);
   const [messageHistoryOpen, setMessageHistoryOpen] = useState(false);
-  const [showEmoji, setShowEmoji] = useState(false);
 
   const closeMenu = () => {
     handleClose();
-    setShowEmoji(false);
   };
 
-  const openEmoji = () => {
-    handleClose();
-    setShowEmoji(true);
-  };
 
   const handleDeleteMessage = async () => {
     try {
@@ -57,17 +48,14 @@ const MessageOptionsMenu = ({
     }
   };
 
-  const handleReact = async emoji => {
-    handleClose();
-    api
-      .post(`/messages/react/${message.id}`, {
-        ticketId: message.ticketId,
-        emoji
-      })
-      .catch(err => {
-        toastError(err);
-      });
-    setShowEmoji(false);
+  const handleOpenReactions = () => {
+    // abre a ReactionBar ancorada no balão da mensagem
+    closeMenu();
+    try {
+      window.dispatchEvent(
+        new CustomEvent("vuup:open-reaction-bar", { detail: { message, data } })
+      );
+    } catch (e) {}
   };
 
   const handleReplyMessage = () => {
@@ -119,15 +107,6 @@ const MessageOptionsMenu = ({
         messageId={message.id}
         message={message}
       />
-      <Dialog open={showEmoji} onClose={() => setShowEmoji(false)}>
-        <Picker
-          i18n={emojiMartI18n()}
-          perLine={16}
-          showPreview={false}
-          showSkinTones={false}
-          onSelect={e => handleReact(e.native)}
-        />
-      </Dialog>
       <Menu
         anchorEl={anchorEl}
         getContentAnchorEl={null}
@@ -143,20 +122,9 @@ const MessageOptionsMenu = ({
         onClose={closeMenu}
       >
         <div>
-          <div className={classes.flexContainer}>
-            {mostUsedEmojis.map((emoji, index) => (
-              <div
-                className={classes.emojiButton}
-                onClick={() => handleReact(emoji)}
-                key={index}
-              >
-                <span style={{ fontSize: "1rem" }}>{emoji}</span>
-              </div>
-            ))}
-            <div className={classes.emojiButton} onClick={openEmoji}>
-              <span style={{ fontSize: "1rem" }}>+</span>
-            </div>
-          </div>
+          <MenuItem key="react" onClick={handleOpenReactions}>
+            {i18n.t("messagesList.reactions.react")}
+          </MenuItem>
           {message.fromMe && [
             <MenuItem key="delete" onClick={handleOpenConfirmationModal}>
               {i18n.t("messageOptionsMenu.delete")}
