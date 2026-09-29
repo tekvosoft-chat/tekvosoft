@@ -2,6 +2,7 @@ import { Op } from "sequelize";
 import DevSkill from "../../models/DevSkill";
 import { DEFAULT_SKILLS } from "./defaultSkills";
 import { LearnerReply } from "./prompts";
+import { exportSkill } from "./skillSync";
 
 /**
  * Skills: o que o time sabe, em pedaços. Economia de token: a triagem vê
@@ -133,7 +134,14 @@ export const saveLesson = async (
       slug: target.slug,
       replacesId: target.id
     });
-    if (active) await target.update({ status: "archived" });
+    if (active) {
+      await target.update({ status: "archived" });
+      try {
+        await exportSkill(next);
+      } catch {
+        // exportar é melhor esforço: erro aqui não bloqueia o fluxo
+      }
+    }
     return next;
   }
 
@@ -149,7 +157,15 @@ export const saveLesson = async (
   const used = new Set(taken.map(skill => skill.slug));
   let slug = base;
   for (let n = 2; used.has(slug); n += 1) slug = `${base}-${n}`;
-  return DevSkill.create({ ...fields, slug });
+  const created = await DevSkill.create({ ...fields, slug });
+  if (status === "active") {
+    try {
+      await exportSkill(created);
+    } catch {
+      // sincronização com o repositório é melhor esforço
+    }
+  }
+  return created;
 };
 
 /** Aprova uma proposta: entra em uso e a versão que ela substitui sai. */
@@ -161,5 +177,10 @@ export const approveSkill = async (skill: DevSkill): Promise<DevSkill> => {
     );
   }
   await skill.update({ status: "active" });
+  try {
+    await exportSkill(skill);
+  } catch {
+    // erro ao exportar não impede aprovar
+  }
   return skill;
 };

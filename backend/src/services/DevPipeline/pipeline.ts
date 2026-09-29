@@ -14,6 +14,7 @@ import { costOf } from "./pricing";
 import { LlmUsage } from "./llm";
 import { copyImage } from "./images";
 import { ensureDefaultSkills } from "./skills";
+import { importSkillsFromRepo } from "./skillSync";
 import {
   Cancelled,
   DevError,
@@ -310,6 +311,9 @@ export const startDevPipeline = async (): Promise<void> => {
 
   await ensureDefaultSkills().catch(error =>
     logger.warn({ error }, "DevPipeline: skills padrão")
+  );
+  await importSkillsFromRepo().catch(error =>
+    logger.warn({ error }, "DevPipeline: import de skills do repositório")
   );
   await backfillCosts().catch(error =>
     logger.warn({ error }, "DevPipeline: custo das demandas antigas")
