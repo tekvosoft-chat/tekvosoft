@@ -34,6 +34,7 @@ const useStyles = makeStyles(theme => {
     subtitle: {
       margin: 0,
       fontSize: "0.8125rem",
+      fontWeight: 400,
       color: theme.palette.text.secondary
     },
     label: {

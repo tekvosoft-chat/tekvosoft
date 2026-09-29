@@ -9,6 +9,7 @@ import EmojiObjectsRoundedIcon from "@material-ui/icons/EmojiObjectsRounded";
 import ExtensionRoundedIcon from "@material-ui/icons/ExtensionRounded";
 import FolderRoundedIcon from "@material-ui/icons/FolderRounded";
 import DnsRoundedIcon from "@material-ui/icons/DnsRounded";
+import DeveloperBoardRoundedIcon from "@material-ui/icons/DeveloperBoardRounded";
 import BuildRoundedIcon from "@material-ui/icons/BuildRounded";
 import GetAppRoundedIcon from "@material-ui/icons/GetAppRounded";
 import ReplayRoundedIcon from "@material-ui/icons/ReplayRounded";
@@ -95,10 +96,27 @@ const DEFAULTS = {
   allowSignup: "disabled",
   gracePeriod: "0",
   useMultiThreadedWbot: "disabled",
-  extensionDownloadUrl: ""
+  extensionDownloadUrl: "",
+
+  // pipeline de IA (só o super; chaves com "_" ficam na empresa 1)
+  _devAiProvider: "anthropic",
+  _devAnthropicKey: "",
+  _devAnthropicModel: "claude-opus-5",
+  _devOpenAiKey: "",
+  _devOpenAiModel: "",
+  _devGithubRepo: "",
+  _devGithubToken: "",
+  _devGithubBranch: "",
+  _devAutoApprove: "disabled",
+  _devAutoTriage: "disabled",
+  _devReviewRounds: "",
+  _devTokenLimit: "",
+  _devAutoLearn: "enabled",
+  _devUsdBrl: ""
 };
 
-// "Arquivos" e "Sistema" valem para a instalação inteira: só o super vê
+// "Arquivos", "Sistema" e "Pipeline de IA" valem para a instalação
+// inteira: só o super vê
 const SECTIONS = [
   { id: "service", icon: HeadsetMicRoundedIcon },
   { id: "automation", icon: AccountTreeRoundedIcon },
@@ -107,7 +125,17 @@ const SECTIONS = [
   { id: "ai", icon: EmojiObjectsRoundedIcon },
   { id: "integrations", icon: ExtensionRoundedIcon },
   { id: "files", icon: FolderRoundedIcon, superOnly: true },
-  { id: "system", icon: DnsRoundedIcon, superOnly: true }
+  { id: "system", icon: DnsRoundedIcon, superOnly: true },
+  { id: "devPipeline", icon: DeveloperBoardRoundedIcon, superOnly: true }
+];
+
+// modelos do Claude oferecidos no pipeline: o Opus é o padrão; os outros
+// trocam qualidade por preço (Haiku) ou preço por qualidade (Fable)
+const CLAUDE_MODELS = [
+  "claude-opus-5",
+  "claude-sonnet-5",
+  "claude-haiku-4-5",
+  "claude-fable-5-1"
 ];
 
 // modelo usado quando o campo "Modelo" fica em branco (AiServices)
@@ -623,6 +651,72 @@ export default function Options({ settings, scheduleTypeChanged }) {
                   </div>
                 }
               />
+            </Group>
+          </>
+        );
+      case "devPipeline":
+        return (
+          <>
+            <Group
+              title={t("groups.devAi")}
+              description={t("groups.devAiHint")}
+            >
+              <SelectRow
+                id="_devAiProvider"
+                options={["anthropic", "openai"]}
+              />
+              {values._devAiProvider === "openai" ? (
+                <>
+                  <TextRow id="_devOpenAiKey" monospace placeholder="sk-..." />
+                  <TextRow
+                    id="_devOpenAiModel"
+                    stacked={false}
+                    placeholder="gpt-5"
+                  />
+                </>
+              ) : (
+                <>
+                  <TextRow
+                    id="_devAnthropicKey"
+                    monospace
+                    placeholder="sk-ant-..."
+                  />
+                  <SelectRow id="_devAnthropicModel" options={CLAUDE_MODELS} />
+                </>
+              )}
+            </Group>
+            <Group
+              title={t("groups.devRepo")}
+              description={t("groups.devRepoHint")}
+            >
+              <TextRow
+                id="_devGithubRepo"
+                stacked={false}
+                placeholder="tekvosoft-chat/tekvosoft"
+              />
+              <TextRow
+                id="_devGithubToken"
+                monospace
+                placeholder="github_pat_..."
+              />
+              <TextRow
+                id="_devGithubBranch"
+                stacked={false}
+                placeholder="main"
+              />
+            </Group>
+            <Group title={t("groups.devRules")}>
+              <SwitchRow id="_devAutoApprove" />
+              <SwitchRow id="_devAutoTriage" />
+              <NumberRow id="_devReviewRounds" placeholder="2" min={0} />
+              <NumberRow
+                id="_devTokenLimit"
+                unit={t("units.tokens")}
+                placeholder="400000"
+                min={20000}
+              />
+              <SwitchRow id="_devAutoLearn" />
+              <TextRow id="_devUsdBrl" stacked={false} placeholder="5,40" />
             </Group>
           </>
         );

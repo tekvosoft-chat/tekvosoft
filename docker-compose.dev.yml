@@ -32,9 +32,14 @@ services:
       PORT: 3000
       BACKEND_URL: http://localhost:${API_PORT:-8080}
       FRONTEND_URL: http://localhost:${PORT:-3000}
+      # pipeline de IA lê o repositório daqui quando não há GitHub com token
+      # configurado (o resultado vira patch; nenhum PR é aberto)
+      DEV_PIPELINE_REPO_PATH: /repo
     volumes:
       # código do host -> hot reload
       - ./backend:/usr/src/app
+      # o repositório inteiro, só leitura, para o pipeline de IA
+      - .:/repo:ro
       # Artefatos de build ficam em volumes, não no host. O container roda
       # como root; se estes caírem na sua pasta, viram arquivos que você
       # não consegue apagar nem sobrescrever sem sudo.

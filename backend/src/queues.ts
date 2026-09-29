@@ -41,6 +41,10 @@ import { flushPoolMonitor } from "./database/poolMonitor";
 import CheckAllContainersUpdateService from "./services/DockerServices/CheckAllContainersUpdateService";
 import { cacheLayer } from "./libs/cache";
 import { WakeSnoozedTicketsService } from "./services/TicketServices/SnoozeTicketService";
+import {
+  devPipelineQueue,
+  startDevPipeline
+} from "./services/DevPipeline/pipeline";
 
 const connection = process.env.REDIS_URI || "";
 const limiterMax = process.env.REDIS_OPT_LIMITER_MAX || 1;
@@ -698,6 +702,10 @@ export async function startQueueProcess() {
 
   userMonitor.process("EveryMinute", handleEveryMinute);
 
+  startDevPipeline().catch(error =>
+    logger.error(error, "DevPipeline: não iniciou")
+  );
+
   scheduleMonitor.add(
     "Verify",
     {},
@@ -728,7 +736,8 @@ export async function closeAllQueues(): Promise<void> {
     userMonitor,
     messageQueue,
     scheduleMonitor,
-    sendScheduledMessages
+    sendScheduledMessages,
+    devPipelineQueue
   ];
 
   logger.info(`Closing ${queues.length} queue(s)...`);

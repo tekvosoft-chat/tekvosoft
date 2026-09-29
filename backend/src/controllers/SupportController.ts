@@ -11,6 +11,10 @@ import SupportMessage, { SupportAttachment } from "../models/SupportMessage";
 import SupportTicket from "../models/SupportTicket";
 import User from "../models/User";
 import supportFiles from "../config/supportFiles";
+import DevTask from "../models/DevTask";
+import { loadDevConfig } from "../services/DevPipeline/config";
+import { createDevTaskFromSupport } from "../services/DevPipeline/pipeline";
+import { logger } from "../utils/logger";
 
 /**
  * Chamados de suporte.
@@ -161,9 +165,19 @@ export const show = async (req: Request, res: Response): Promise<Response> => {
     emit(ticket, "read");
   }
 
+  // o super vê se o chamado já virou demanda no pipeline de IA
+  const devTask = req.user.isSuper
+    ? await DevTask.findOne({
+        where: { supportTicketId: ticket.id },
+        attributes: ["id", "stage", "status"],
+        order: [["id", "DESC"]]
+      })
+    : null;
+
   return res.json({
     ...ticket.toJSON(),
-    messages: messages.map(publicMessage)
+    messages: messages.map(publicMessage),
+    devTask
   });
 };
 
@@ -205,6 +219,19 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   });
 
   emit(ticket, "create");
+
+  // sugestão de melhoria entra no pipeline de IA do super. A análise só
+  // começa sozinha se ele ligou isso em Configurações; senão espera ele
+  if (category === "suggestion") {
+    loadDevConfig()
+      .then(config =>
+        createDevTaskFromSupport(ticket, body || subject, config.autoTriage)
+      )
+      .catch(error =>
+        logger.warn({ error, ticketId: ticket.id }, "Sugestão fora do pipeline")
+      );
+  }
+
   return res.status(201).json(ticket);
 };
 

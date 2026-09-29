@@ -1296,6 +1296,7 @@ const messages = {
       },
       mainDrawer: {
         tree: {
+          devPipeline: "Pipeline de IA",
           conversations: "Conversas",
           all: "Todas as conversas",
           pending: "Não atendidas",
@@ -1318,6 +1319,8 @@ const messages = {
           system: "Sistema"
         },
         listItems: {
+          devPipeline: "Pipeline de IA",
+          super: "Super admin",
           dashboard: "Dashboard",
           connections: "Caixa de entrada",
           tickets: "Atendimentos",
@@ -1863,10 +1866,390 @@ const messages = {
         extensionBuilt: "Extensão construída com sucesso.",
         extensionBuildUnknownError: "Erro desconhecido na construção."
       },
+      devPipeline: {
+        title: "Pipeline de IA",
+        subtitle:
+          "Melhorias e correções feitas por agentes de IA: triagem, código, code review e PR. Você aprova antes do código e revisa o PR antes do merge.",
+        newTask: "Nova demanda",
+        search: "Buscar por título, empresa ou #número",
+        showCancelled: "Mostrar canceladas",
+        summary: "{{waiting}} esperando você · {{running}} rodando",
+        empty: "Nada por aqui",
+        showAll: "Ver todas ({{count}})",
+        tokens: "{{count}} tokens",
+        tokensDetail:
+          "{{input}} de entrada · {{output}} de saída · {{cached}} do cache",
+        round: "Rodada {{count}}",
+        effort: "Esforço {{value}}",
+        stages: {
+          intake: "Início",
+          prioritization: "Priorização",
+          development: "Desenvolvimento",
+          review: "Code review",
+          pr: "PR",
+          done: "Concluído",
+          cancelled: "Canceladas"
+        },
+        stageHints: {
+          intake:
+            "O agente entende o pedido, consulta o código e reescreve a tarefa",
+          prioritization: "Você confere a prioridade e aprova antes do código",
+          development: "O agente desenvolvedor escreve o código",
+          review: "O agente revisor confere o diff e pede ajustes",
+          pr: "Branch e PR prontos para você revisar",
+          done: "PR mergeado ou demanda concluída",
+          cancelled: "Demandas que não vão seguir"
+        },
+        line: {
+          queued: "Na fila",
+          running: {
+            intake: "Triagem analisando",
+            prioritization: "Preparando o desenvolvimento",
+            development: "Desenvolvedor escrevendo o código",
+            review: "Revisor conferindo o diff",
+            pr: "Abrindo o PR"
+          },
+          notAnalyzed: "Aguardando análise",
+          questions: "O agente tem perguntas para você",
+          approve: "Aprove para desenvolver",
+          stuck: "O revisor pede uma decisão sua",
+          pr: "PR #{{number}} aberto",
+          patch: "Patch pronto para baixar",
+          done: "Concluída",
+          cancelled: "Cancelada"
+        },
+        hints: {
+          running: "Os agentes estão trabalhando; a conversa atualiza sozinha.",
+          error:
+            "Veja o erro na conversa, corrija o que faltar e tente de novo.",
+          notAnalyzed:
+            "Pedido de cliente: a análise só começa quando você mandar.",
+          questions:
+            "Responda na caixa abaixo e clique em “Enviar aos agentes”.",
+          approve:
+            "Confira a especificação, ajuste a prioridade se precisar e aprove.",
+          stuck:
+            "Publique assim, peça outra rodada comentando abaixo ou cancele.",
+          pr: "Revise e teste antes do merge. Para pedir ajuste, comente abaixo.",
+          patch:
+            "Sem GitHub com token: aplique o patch com git apply. Para pedir ajuste, comente abaixo."
+        },
+        priority: {
+          urgent: "Urgente",
+          high: "Alta",
+          normal: "Normal",
+          low: "Baixa"
+        },
+        kind: {
+          bug: "Bug",
+          feature: "Funcionalidade",
+          improvement: "Melhoria",
+          chore: "Manutenção"
+        },
+        risk: {
+          low: "Risco baixo",
+          medium: "Risco médio",
+          high: "Risco alto"
+        },
+        severity: {
+          blocker: "Bloqueia",
+          major: "Importante",
+          minor: "Detalhe"
+        },
+        source: {
+          admin: "Você",
+          help: "Cliente"
+        },
+        agents: {
+          triage: "Xereta",
+          priority: "Sirene",
+          developer: "Zé Commit",
+          reviewer: "Dona Lupa",
+          learner: "Sabichão",
+          system: "Engrenagem",
+          human: "Você"
+        },
+        tabs: {
+          board: "Quadro",
+          skills: "Skills",
+          conversation: "Conversa",
+          spec: "Especificação",
+          code: "Código"
+        },
+        events: {
+          searched: "Buscou no código",
+          learned: "aprendeu {{count}} skill(s)",
+          learnedNothing:
+            "estudou a demanda e não achou nada novo para aprender",
+          request: "abriu o pedido",
+          readTriage: "consultou o código",
+          read: "leu",
+          spec: "reescreveu a tarefa",
+          question: "precisa de respostas",
+          questionHint: "Responda abaixo e clique em “Enviar aos agentes”.",
+          priority: "sugeriu prioridade {{priority}}",
+          edits: "alterou {{count}} arquivo(s)",
+          editErrors: "Edições que não serviram",
+          checks: "Erros de sintaxe",
+          notes: "Notas",
+          approved: "aprovou o código",
+          changes: "pediu ajustes",
+          stage: "Foi para {{stage}}",
+          error: "a etapa falhou",
+          pr: "abriu o PR #{{number}} (rascunho)",
+          patch: "deixou o patch pronto",
+          patchReason: {
+            local:
+              "Modo teste: o código veio desta máquina, então nenhum PR é aberto.",
+            no_token:
+              "Sem token do GitHub: baixe o patch e aplique com git apply."
+          },
+          stuckTitle: "precisa de você",
+          stuck:
+            "O revisor ainda pede ajustes depois de {{count}} rodada(s). Você decide: publicar assim, pedir outra rodada ou cancelar.",
+          merged: "PR #{{number}} mergeado: demanda concluída",
+          approve: "aprovou para desenvolvimento ({{priority}})",
+          publish: "mandou publicar mesmo assim",
+          done: "marcou como concluída",
+          cancel: "cancelou a demanda",
+          comment: "comentou",
+          rerun: "enviou aos agentes"
+        },
+        actions: {
+          learn: "Aprender com esta demanda",
+          approve: "Aprovar e desenvolver",
+          analyze: "Analisar agora",
+          retry: "Tentar de novo",
+          publish: "Publicar mesmo assim",
+          done: "Concluir",
+          cancel: "Cancelar demanda",
+          delete: "Excluir",
+          openPr: "Abrir PR",
+          download: "Baixar patch",
+          comment: "Só comentar",
+          rerun: "Enviar aos agentes",
+          save: "Salvar",
+          edit: "Editar",
+          close: "Fechar",
+          more: "Mais opções"
+        },
+        composer: {
+          placeholder: "Escreva para os agentes ou deixe uma nota…",
+          hint: "“Enviar aos agentes” manda isto {{target}}.",
+          toTriage: "para a triagem refazer a análise",
+          toDeveloper: "para o desenvolvedor ajustar o código",
+          busy: "Os agentes estão trabalhando: dá para comentar, e o envio fica para quando terminarem."
+        },
+        spec: {
+          skills: "Skills usadas",
+          task: "Tarefa",
+          title: "Título",
+          spec: "Especificação",
+          acceptance: "Critérios de aceite",
+          acceptanceHint: "Um critério por linha",
+          files: "Arquivos envolvidos",
+          priorityReason: "Por que esta prioridade",
+          original: "Pedido original",
+          empty: "A triagem ainda não rodou",
+          emptyHint: "Quando rodar, a tarefa reescrita aparece aqui."
+        },
+        code: {
+          empty: "Nenhum código ainda",
+          emptyHint: "O diff aparece aqui quando o desenvolvedor terminar.",
+          ops: {
+            create: "novo",
+            edit: "alterado",
+            delete: "apagado"
+          }
+        },
+        new: {
+          title: "Nova demanda",
+          subtitle:
+            "O agente de triagem consulta o código e reescreve a tarefa antes de qualquer linha de código.",
+          name: "Título",
+          description: "O que precisa ser feito",
+          descriptionHint:
+            "Descreva como falaria para alguém do time: onde acontece e o que deveria acontecer.",
+          priority: "Prioridade inicial",
+          create: "Criar e analisar"
+        },
+        setup: {
+          open: "Abrir configurações",
+          noKey: "Falta a chave da IA.",
+          noRepo: "Falta o repositório do GitHub.",
+          local:
+            "Modo teste: lendo o código desta máquina (vira patch, sem PR)",
+          readOnly: "{{repo}} sem token: lê o código e o resultado vira patch",
+          github: "PRs em {{repo}}",
+          provider: {
+            anthropic: "Claude",
+            openai: "OpenAI"
+          }
+        },
+        confirm: {
+          cancel: "Cancelar esta demanda?",
+          cancelText:
+            "Os agentes param antes da próxima chamada. Se ela veio de um cliente, ele é avisado na Ajuda.",
+          delete: "Excluir esta demanda?",
+          deleteText:
+            "A conversa dos agentes e o código gerado são apagados de vez."
+        },
+        toasts: {
+          learning: "O Sabichão está estudando esta demanda",
+          created: "Demanda #{{id}} criada: a triagem começou",
+          approved: "Aprovada: o desenvolvimento começou",
+          sent: "Enviado aos agentes"
+        },
+        agentRoles: {
+          triage: "triagem",
+          priority: "prioridade",
+          developer: "código",
+          reviewer: "revisão",
+          learner: "aprendizado"
+        },
+        designChip: "Interface",
+        images: {
+          title: "Imagens",
+          drop: "Arraste imagens, cole um print (Ctrl+V) ou toque para escolher. A IA enxerga.",
+          attach: "Anexar imagem",
+          remove: "Remover imagem",
+          tooBig: "{{name}} passa de 8 MB",
+          limit: "No máximo {{count}} imagens"
+        },
+        stats: {
+          title: "Resumo",
+          done: "Concluídas",
+          doneHint: "de {{total}} demandas",
+          open: "Faltam",
+          openHint: "{{count}} esperando aprovação",
+          spent: "Gasto total",
+          spentHint: "{{tokens}} tokens de IA",
+          average: "Média por concluída",
+          averageHint: "custo de IA por demanda pronta",
+          weeksTitle: "Últimas 8 semanas",
+          weeksHint: "Demandas criadas e concluídas por semana, e o gasto",
+          created: "Criadas",
+          doneLegend: "Concluídas",
+          spentLegend: "Gasto (R$)",
+          weekOf: "Semana de {{date}}",
+          createdCount: "{{count}} criada(s)",
+          doneCount: "{{count}} concluída(s)",
+          openersTitle: "Quem abriu",
+          openersHint: "{{team}} pelo time · {{help}} por clientes",
+          team: "Time (super)",
+          teamTitle: "A equipe de agentes"
+        },
+        skills: {
+          intro:
+            "O que os agentes sabem do projeto. Cada tarefa usa só as skills que a triagem escolher. Ensine com as suas palavras ou deixe o Sabichão aprender com as correções.",
+          teach: "Ensinar",
+          new: "Nova skill",
+          teachTitle: "Ensinar os agentes",
+          teachHint:
+            "Escreva do seu jeito: uma regra, um gosto de design, como uma parte do sistema funciona. A IA organiza numa skill (ou melhora uma que já existe).",
+          teachPlaceholder:
+            "Ex.: Nas telas de configuração, botão de salvar fica sempre no rodapé, alinhado à direita. No celular ele ocupa a largura toda.",
+          teachSend: "Organizar em skill",
+          teaching: "Organizando…",
+          editTitle: "Editar skill",
+          newTitle: "Nova skill",
+          fields: {
+            name: "Nome",
+            description: "Quando usar",
+            descriptionHint:
+              "Uma frase: é por ela que a triagem decide se a skill serve para a tarefa.",
+            content: "Conteúdo",
+            contentHint:
+              "Tópicos curtos e diretos. Tudo isto vai para o agente quando a skill é usada."
+          },
+          filters: {
+            active: "Em uso",
+            proposed: "Propostas",
+            archived: "Arquivadas"
+          },
+          search: "Buscar skill",
+          empty: {
+            active: "Nenhuma skill em uso",
+            proposed: "Nenhuma proposta esperando você",
+            archived: "Nada arquivado"
+          },
+          emptyHint:
+            "Ensine algo novo ou deixe o Sabichão aprender com as próximas demandas.",
+          status: {
+            active: "Em uso",
+            proposed: "Proposta",
+            archived: "Arquivada"
+          },
+          source: {
+            seed: "Padrão",
+            human: "Você",
+            agentFrom: "{{name}} · #{{id}}"
+          },
+          replaces: "Nova versão de “{{name}}”",
+          newProposal: "Skill nova",
+          uses: "usada {{count}} vez(es)",
+          lastUsed: "última em {{date}}",
+          more: "Ver tudo",
+          less: "Ver menos",
+          showOld: "Ver versão atual",
+          showNew: "Ver proposta",
+          approve: "Aprovar",
+          discard: "Descartar",
+          archive: "Arquivar",
+          restore: "Reativar",
+          confirmDiscard: "Descartar esta proposta?",
+          confirmDelete: "Excluir esta skill?",
+          toasts: {
+            approve: "Skill aprovada: os agentes já usam",
+            archive: "Skill arquivada",
+            restore: "Skill de volta em uso",
+            delete: "Skill excluída",
+            discard: "Proposta descartada",
+            saved: "Skill salva",
+            taught: "Aprendido: “{{name}}”"
+          }
+        },
+        errors: {
+          ERR_DEV_AI_NOT_CONFIGURED: "Falta a chave da IA em Configurações",
+          ERR_DEV_AI_AUTH: "A chave da IA foi recusada",
+          ERR_DEV_AI_MODEL:
+            "O modelo escolhido não existe ou não está liberado para esta chave",
+          ERR_DEV_AI_RATE_LIMIT:
+            "Limite de uso da IA atingido: tente daqui a pouco",
+          ERR_DEV_AI_OFFLINE: "Sem conexão com a IA",
+          ERR_DEV_AI_REFUSAL: "A IA recusou o pedido",
+          ERR_DEV_AI_TRUNCATED:
+            "A resposta da IA ficou grande demais e foi cortada",
+          ERR_DEV_AI_FORMAT: "A IA respondeu fora do formato combinado",
+          ERR_DEV_AI_FAILED: "A IA devolveu um erro",
+          ERR_DEV_NO_REPO: "Nenhum repositório configurado",
+          ERR_DEV_GITHUB_AUTH: "O token do GitHub foi recusado",
+          ERR_DEV_GITHUB_PERMISSION:
+            "O token do GitHub lê o repositório, mas não pode escrever nele. Crie o token com a organização dona do repositório como Resource owner e dê Contents e Pull requests em leitura e escrita",
+          ERR_DEV_GITHUB_FORBIDDEN:
+            "O token do GitHub não tem permissão para isso",
+          ERR_DEV_GITHUB_NOT_FOUND:
+            "Repositório ou branch não encontrado no GitHub",
+          ERR_DEV_GITHUB_RATE_LIMIT:
+            "Limite de uso do GitHub atingido: configure um token ou espere uma hora",
+          ERR_DEV_GITHUB_NO_TOKEN: "Falta o token do GitHub para abrir o PR",
+          ERR_DEV_GITHUB_FAILED: "O GitHub devolveu um erro",
+          ERR_DEV_NO_CHANGES: "O desenvolvedor não alterou nenhum arquivo",
+          ERR_DEV_TOO_BIG:
+            "Mudança grande demais para a revisão automática: divida a demanda",
+          ERR_DEV_TOKEN_LIMIT: "A demanda chegou ao limite de tokens",
+          ERR_DEV_FAILED: "Erro inesperado"
+        }
+      },
       settings: {
         options: {
           nav: "Seções das opções",
           sections: {
+            devPipeline: {
+              title: "Pipeline de IA",
+              description:
+                "Agentes que analisam pedidos de melhoria, escrevem o código, revisam e abrem PR no GitHub. Vale para a instalação inteira."
+            },
             service: {
               title: "Atendimento",
               description:
@@ -1909,6 +2292,13 @@ const messages = {
             }
           },
           groups: {
+            devAi: "Inteligência artificial",
+            devAiHint:
+              "Qual IA os agentes usam. O mesmo modelo faz triagem, código e revisão, com mais ou menos esforço em cada etapa, e o contexto do projeto fica em cache entre as chamadas.",
+            devRepo: "Repositório (GitHub)",
+            devRepoHint:
+              "De onde o código é lido e onde o PR é aberto. Sem token, o código é lido (se o repositório for público) e o resultado vira um patch para baixar.",
+            devRules: "Regras do pipeline",
             autoMessages: "Mensagens automáticas",
             closing: "Encerramento",
             rating: "Pesquisa de satisfação",
@@ -1931,6 +2321,7 @@ const messages = {
             server: "Servidor"
           },
           units: {
+            tokens: "tokens",
             minutes: "min",
             days: "dias",
             megabytes: "MB"
@@ -1967,6 +2358,82 @@ const messages = {
             empty: "Nenhum token gerado"
           },
           fields: {
+            _devAutoLearn: {
+              title: "Aprender sozinho",
+              description:
+                "O Sabichão estuda as correções de cada demanda (seus comentários, o que o revisor barrou, edições que falharam) e cria ou melhora skills. Ligado, elas já entram em uso; desligado, esperam sua aprovação na aba Skills. O que vem de pedido de cliente sempre espera."
+            },
+            _devUsdBrl: {
+              title: "Cotação do dólar (R$)",
+              description:
+                "Para mostrar o custo em reais. Em branco, usa a cotação do dia, atualizada a cada 12 horas."
+            },
+            _devAiProvider: {
+              title: "Provedor",
+              description: "Claude (Anthropic) ou GPT (OpenAI).",
+              options: {
+                anthropic: "Claude (Anthropic)",
+                openai: "GPT (OpenAI)"
+              }
+            },
+            _devAnthropicKey: {
+              title: "Chave da Anthropic",
+              description: "console.anthropic.com › API Keys."
+            },
+            _devAnthropicModel: {
+              title: "Modelo",
+              description:
+                "O Opus é o equilíbrio recomendado. Sonnet e Haiku custam menos por token; o Fable é o mais capaz e o mais caro.",
+              options: {
+                "claude-opus-5": "Claude Opus 5 (recomendado)",
+                "claude-sonnet-5": "Claude Sonnet 5 (mais barato)",
+                "claude-haiku-4-5": "Claude Haiku 4.5 (o mais barato)",
+                "claude-fable-5-1": "Claude Fable 5.1 (o mais capaz)"
+              }
+            },
+            _devOpenAiKey: {
+              title: "Chave da OpenAI",
+              description:
+                "platform.openai.com › API keys. Em branco, usa a chave do Assistente de IA (se ele for OpenAI)."
+            },
+            _devOpenAiModel: {
+              title: "Modelo",
+              description:
+                "Em branco, usa o que aparece no campo. Prefira um modelo de raciocínio: ele escreve código melhor."
+            },
+            _devGithubRepo: {
+              title: "Repositório",
+              description: "dono/nome, como aparece no endereço do GitHub."
+            },
+            _devGithubToken: {
+              title: "Token do GitHub",
+              description:
+                "Token fine-grained. Em Resource owner escolha o dono do repositório (se for uma organização, a organização, não a sua conta), acesso só a este repositório e Contents e Pull requests em leitura e escrita. Se a organização exigir, aprove o token em Settings › Personal access tokens. Os agentes nunca fazem merge: o PR sai como rascunho."
+            },
+            _devGithubBranch: {
+              title: "Branch base",
+              description: "De onde o código é lido e para onde o PR aponta."
+            },
+            _devAutoApprove: {
+              title: "Desenvolver sem aprovação",
+              description:
+                "Desligado (recomendado), a demanda para na Priorização até você aprovar: nenhum token de código é gasto sem você ver a especificação."
+            },
+            _devAutoTriage: {
+              title: "Analisar sugestões de clientes sozinho",
+              description:
+                "Sugestões abertas na Ajuda entram no quadro. Ligado, a triagem já roda; desligado, espera você clicar em Analisar."
+            },
+            _devReviewRounds: {
+              title: "Rodadas de ajuste",
+              description:
+                "Quantas vezes o revisor pode devolver o código ao desenvolvedor antes de pedir uma decisão sua."
+            },
+            _devTokenLimit: {
+              title: "Limite de tokens por demanda",
+              description:
+                "Teto de segurança: a demanda para com erro ao passar dele. Leitura de cache não entra na conta."
+            },
             ticketAcceptedMessage: {
               title: "Ao aceitar a conversa",
               description:
@@ -2707,6 +3174,24 @@ const messages = {
         ERR_AI_INVALID_ACTION: "Ação de IA inválida.",
         ERR_INBOX_UNAVAILABLE:
           "Essa caixa de entrada não pode começar conversa agora (desconectada ou não é WhatsApp).",
+        ERR_DEV_BUSY: "A demanda está rodando: espere os agentes terminarem",
+        ERR_DEV_INVALID_STAGE: "Essa ação não vale na etapa atual da demanda",
+        ERR_DEV_TITLE_REQUIRED: "Dê um título para a demanda",
+        ERR_DEV_COMMENT_REQUIRED: "Escreva o comentário",
+        ERR_DEV_SKILL_REQUIRED: "Escreva o nome e o conteúdo da skill",
+        ERR_DEV_AI_NOT_CONFIGURED:
+          "Falta a chave da IA do pipeline em Configurações",
+        ERR_DEV_AI_AUTH: "A chave da IA foi recusada",
+        ERR_DEV_AI_MODEL:
+          "O modelo escolhido não existe ou não está liberado para esta chave",
+        ERR_DEV_AI_RATE_LIMIT:
+          "Limite de uso da IA atingido: tente daqui a pouco",
+        ERR_DEV_AI_OFFLINE: "Sem conexão com a IA",
+        ERR_DEV_AI_REFUSAL: "A IA recusou o pedido",
+        ERR_DEV_AI_TRUNCATED:
+          "A resposta da IA ficou grande demais e foi cortada",
+        ERR_DEV_AI_FORMAT: "A IA respondeu fora do formato combinado",
+        ERR_DEV_AI_FAILED: "A IA devolveu um erro",
         ERR_FORBIDDEN: "Você não tem permissão para acessar este recurso.",
         ERR_CHECK_NUMBER: "Número não encontrado no Whatsapp.",
         ERR_NO_OTHER_WHATSAPP: "Deve haver pelo menos um WhatsApp padrão.",

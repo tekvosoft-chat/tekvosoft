@@ -1294,6 +1294,7 @@ const messages = {
       },
       mainDrawer: {
         tree: {
+          devPipeline: "AI pipeline",
           conversations: "Conversations",
           all: "All conversations",
           pending: "Unattended",
@@ -1316,6 +1317,8 @@ const messages = {
           system: "System"
         },
         listItems: {
+          devPipeline: "AI pipeline",
+          super: "Super admin",
           dashboard: "Dashboard",
           connections: "Inbox",
           tickets: "Tickets",
@@ -1860,10 +1863,386 @@ const messages = {
         extensionBuilt: "Extension built successfully.",
         extensionBuildUnknownError: "Unknown build error."
       },
+      devPipeline: {
+        title: "AI pipeline",
+        subtitle:
+          "Improvements and fixes built by AI agents: triage, code, code review and PR. You approve before any code and review the PR before merging.",
+        newTask: "New request",
+        search: "Search by title, company or #number",
+        showCancelled: "Show cancelled",
+        summary: "{{waiting}} waiting on you · {{running}} running",
+        empty: "Nothing here",
+        showAll: "Show all ({{count}})",
+        tokens: "{{count}} tokens",
+        tokensDetail:
+          "{{input}} input · {{output}} output · {{cached}} from cache",
+        round: "Round {{count}}",
+        effort: "Effort {{value}}",
+        stages: {
+          intake: "Intake",
+          prioritization: "Prioritization",
+          development: "Development",
+          review: "Code review",
+          pr: "PR",
+          done: "Done",
+          cancelled: "Cancelled"
+        },
+        stageHints: {
+          intake:
+            "The agent understands the request, checks the code and rewrites the task",
+          prioritization: "You check the priority and approve before any code",
+          development: "The developer agent writes the code",
+          review: "The reviewer agent checks the diff and asks for fixes",
+          pr: "Branch and PR ready for your review",
+          done: "PR merged or request completed",
+          cancelled: "Requests that won't move forward"
+        },
+        line: {
+          queued: "Queued",
+          running: {
+            intake: "Triage in progress",
+            prioritization: "Preparing development",
+            development: "Developer writing the code",
+            review: "Reviewer checking the diff",
+            pr: "Opening the PR"
+          },
+          notAnalyzed: "Waiting for analysis",
+          questions: "The agent has questions for you",
+          approve: "Approve to start development",
+          stuck: "The reviewer needs your decision",
+          pr: "PR #{{number}} open",
+          patch: "Patch ready to download",
+          done: "Done",
+          cancelled: "Cancelled"
+        },
+        hints: {
+          running:
+            "The agents are working; the conversation updates by itself.",
+          error:
+            "See the error in the conversation, fix what's missing and try again.",
+          notAnalyzed:
+            "Customer request: the analysis only starts when you say so.",
+          questions: "Answer in the box below and click “Send to agents”.",
+          approve: "Check the spec, adjust the priority if needed and approve.",
+          stuck:
+            "Publish as is, ask for another round by commenting below, or cancel.",
+          pr: "Review and test before merging. To ask for changes, comment below.",
+          patch:
+            "No GitHub token: apply the patch with git apply. To ask for changes, comment below."
+        },
+        priority: {
+          urgent: "Urgent",
+          high: "High",
+          normal: "Normal",
+          low: "Low"
+        },
+        kind: {
+          bug: "Bug",
+          feature: "Feature",
+          improvement: "Improvement",
+          chore: "Chore"
+        },
+        risk: {
+          low: "Low risk",
+          medium: "Medium risk",
+          high: "High risk"
+        },
+        severity: {
+          blocker: "Blocker",
+          major: "Major",
+          minor: "Minor"
+        },
+        source: {
+          admin: "You",
+          help: "Customer"
+        },
+        agents: {
+          triage: "Snoop",
+          priority: "Siren",
+          developer: "Joe Commit",
+          reviewer: "Auntie Loupe",
+          learner: "Know-It-All",
+          system: "Cogwheel",
+          human: "You"
+        },
+        tabs: {
+          board: "Board",
+          skills: "Skills",
+          conversation: "Conversation",
+          spec: "Spec",
+          code: "Code"
+        },
+        events: {
+          searched: "Searched the code",
+          learned: "learned {{count}} skill(s)",
+          learnedNothing: "studied the request and found nothing new to learn",
+          request: "opened the request",
+          readTriage: "checked the code",
+          read: "read",
+          spec: "rewrote the task",
+          question: "needs answers",
+          questionHint: "Answer below and click “Send to agents”.",
+          priority: "suggested {{priority}} priority",
+          edits: "changed {{count}} file(s)",
+          editErrors: "Edits that didn't apply",
+          checks: "Syntax errors",
+          notes: "Notes",
+          approved: "approved the code",
+          changes: "asked for changes",
+          stage: "Moved to {{stage}}",
+          error: "the step failed",
+          pr: "opened PR #{{number}} (draft)",
+          patch: "left the patch ready",
+          patchReason: {
+            local:
+              "Test mode: the code came from this machine, so no PR is opened.",
+            no_token:
+              "No GitHub token: download the patch and apply it with git apply."
+          },
+          stuckTitle: "needs you",
+          stuck:
+            "The reviewer still asks for changes after {{count}} round(s). You decide: publish as is, ask for another round, or cancel.",
+          merged: "PR #{{number}} merged: request completed",
+          approve: "approved for development ({{priority}})",
+          publish: "chose to publish anyway",
+          done: "marked as done",
+          cancel: "cancelled the request",
+          comment: "commented",
+          rerun: "sent to the agents"
+        },
+        actions: {
+          learn: "Learn from this request",
+          approve: "Approve and develop",
+          analyze: "Analyze now",
+          retry: "Try again",
+          publish: "Publish anyway",
+          done: "Mark as done",
+          cancel: "Cancel request",
+          delete: "Delete",
+          openPr: "Open PR",
+          download: "Download patch",
+          comment: "Just comment",
+          rerun: "Send to agents",
+          save: "Save",
+          edit: "Edit",
+          close: "Close",
+          more: "More options"
+        },
+        composer: {
+          placeholder: "Write to the agents or leave a note…",
+          hint: "“Send to agents” sends this {{target}}.",
+          toTriage: "to triage to redo the analysis",
+          toDeveloper: "to the developer to adjust the code",
+          busy: "The agents are working: you can comment, and sending waits until they finish."
+        },
+        spec: {
+          skills: "Skills used",
+          task: "Task",
+          title: "Title",
+          spec: "Spec",
+          acceptance: "Acceptance criteria",
+          acceptanceHint: "One criterion per line",
+          files: "Files involved",
+          priorityReason: "Why this priority",
+          original: "Original request",
+          empty: "Triage hasn't run yet",
+          emptyHint: "Once it runs, the rewritten task shows up here."
+        },
+        code: {
+          empty: "No code yet",
+          emptyHint: "The diff shows up here when the developer finishes.",
+          ops: {
+            create: "new",
+            edit: "changed",
+            delete: "deleted"
+          }
+        },
+        new: {
+          title: "New request",
+          subtitle:
+            "The triage agent checks the code and rewrites the task before any code is written.",
+          name: "Title",
+          description: "What needs to be done",
+          descriptionHint:
+            "Describe it as you would to a teammate: where it happens and what should happen.",
+          priority: "Initial priority",
+          create: "Create and analyze"
+        },
+        setup: {
+          open: "Open settings",
+          noKey: "The AI key is missing.",
+          noRepo: "The GitHub repository is missing.",
+          local:
+            "Test mode: reading the code on this machine (patch only, no PR)",
+          readOnly:
+            "{{repo}} without a token: reads the code, the result is a patch",
+          github: "PRs on {{repo}}",
+          provider: {
+            anthropic: "Claude",
+            openai: "OpenAI"
+          }
+        },
+        confirm: {
+          cancel: "Cancel this request?",
+          cancelText:
+            "The agents stop before their next call. If it came from a customer, they are notified in Help.",
+          delete: "Delete this request?",
+          deleteText:
+            "The agents' conversation and the generated code are deleted for good."
+        },
+        toasts: {
+          learning: "Know-It-All is studying this request",
+          created: "Request #{{id}} created: triage started",
+          approved: "Approved: development started",
+          sent: "Sent to the agents"
+        },
+        agentRoles: {
+          triage: "triage",
+          priority: "priority",
+          developer: "code",
+          reviewer: "review",
+          learner: "learning"
+        },
+        designChip: "Interface",
+        images: {
+          title: "Images",
+          drop: "Drag images, paste a screenshot (Ctrl+V) or tap to choose. The AI can see them.",
+          attach: "Attach image",
+          remove: "Remove image",
+          tooBig: "{{name}} is over 8 MB",
+          limit: "Up to {{count}} images"
+        },
+        stats: {
+          title: "Summary",
+          done: "Done",
+          doneHint: "of {{total}} requests",
+          open: "To do",
+          openHint: "{{count}} waiting for approval",
+          spent: "Total spent",
+          spentHint: "{{tokens}} AI tokens",
+          average: "Average per done",
+          averageHint: "AI cost per finished request",
+          weeksTitle: "Last 8 weeks",
+          weeksHint: "Requests created and finished per week, and the spend",
+          created: "Created",
+          doneLegend: "Done",
+          spentLegend: "Spend (R$)",
+          weekOf: "Week of {{date}}",
+          createdCount: "{{count}} created",
+          doneCount: "{{count}} done",
+          openersTitle: "Who opened",
+          openersHint: "{{team}} by the team · {{help}} by customers",
+          team: "Team (super)",
+          teamTitle: "The agent team"
+        },
+        skills: {
+          intro:
+            "What the agents know about the project. Each task only uses the skills triage picks. Teach in your own words or let Know-It-All learn from corrections.",
+          teach: "Teach",
+          new: "New skill",
+          teachTitle: "Teach the agents",
+          teachHint:
+            "Write it your way: a rule, a design preference, how part of the system works. The AI turns it into a skill (or improves an existing one).",
+          teachPlaceholder:
+            "E.g.: On settings screens, the save button always sits in the footer, aligned right. On phones it takes the full width.",
+          teachSend: "Turn into a skill",
+          teaching: "Organizing…",
+          editTitle: "Edit skill",
+          newTitle: "New skill",
+          fields: {
+            name: "Name",
+            description: "When to use",
+            descriptionHint:
+              "One sentence: triage uses it to decide whether the skill fits the task.",
+            content: "Content",
+            contentHint:
+              "Short, direct bullet points. All of it goes to the agent when the skill is used."
+          },
+          filters: {
+            active: "In use",
+            proposed: "Proposals",
+            archived: "Archived"
+          },
+          search: "Search skills",
+          empty: {
+            active: "No skills in use",
+            proposed: "No proposals waiting for you",
+            archived: "Nothing archived"
+          },
+          emptyHint:
+            "Teach something new or let Know-It-All learn from the next requests.",
+          status: {
+            active: "In use",
+            proposed: "Proposal",
+            archived: "Archived"
+          },
+          source: {
+            seed: "Default",
+            human: "You",
+            agentFrom: "{{name}} · #{{id}}"
+          },
+          replaces: "New version of “{{name}}”",
+          newProposal: "New skill",
+          uses: "used {{count}} time(s)",
+          lastUsed: "last on {{date}}",
+          more: "Show all",
+          less: "Show less",
+          showOld: "Show current version",
+          showNew: "Show proposal",
+          approve: "Approve",
+          discard: "Discard",
+          archive: "Archive",
+          restore: "Restore",
+          confirmDiscard: "Discard this proposal?",
+          confirmDelete: "Delete this skill?",
+          toasts: {
+            approve: "Skill approved: the agents use it now",
+            archive: "Skill archived",
+            restore: "Skill back in use",
+            delete: "Skill deleted",
+            discard: "Proposal discarded",
+            saved: "Skill saved",
+            taught: "Learned: “{{name}}”"
+          }
+        },
+        errors: {
+          ERR_DEV_AI_NOT_CONFIGURED: "The AI key is missing in Settings",
+          ERR_DEV_AI_AUTH: "The AI key was rejected",
+          ERR_DEV_AI_MODEL:
+            "The chosen model doesn't exist or isn't enabled for this key",
+          ERR_DEV_AI_RATE_LIMIT: "AI usage limit reached: try again shortly",
+          ERR_DEV_AI_OFFLINE: "Can't reach the AI",
+          ERR_DEV_AI_REFUSAL: "The AI declined the request",
+          ERR_DEV_AI_TRUNCATED: "The AI's answer got too long and was cut off",
+          ERR_DEV_AI_FORMAT: "The AI answered in an unexpected format",
+          ERR_DEV_AI_FAILED: "The AI returned an error",
+          ERR_DEV_NO_REPO: "No repository configured",
+          ERR_DEV_GITHUB_AUTH: "The GitHub token was rejected",
+          ERR_DEV_GITHUB_PERMISSION:
+            "The GitHub token can read the repository but can't write to it. Create the token with the organization that owns the repository as Resource owner and give it read and write on Contents and Pull requests",
+          ERR_DEV_GITHUB_FORBIDDEN:
+            "The GitHub token doesn't have permission for this",
+          ERR_DEV_GITHUB_NOT_FOUND: "Repository or branch not found on GitHub",
+          ERR_DEV_GITHUB_RATE_LIMIT:
+            "GitHub usage limit reached: set a token or wait an hour",
+          ERR_DEV_GITHUB_NO_TOKEN: "A GitHub token is needed to open the PR",
+          ERR_DEV_GITHUB_FAILED: "GitHub returned an error",
+          ERR_DEV_NO_CHANGES: "The developer didn't change any file",
+          ERR_DEV_TOO_BIG:
+            "Change too big for the automatic review: split the request",
+          ERR_DEV_TOKEN_LIMIT: "The request reached its token limit",
+          ERR_DEV_FAILED: "Unexpected error"
+        }
+      },
       settings: {
         options: {
           nav: "Option sections",
           sections: {
+            devPipeline: {
+              title: "AI pipeline",
+              description:
+                "Agents that analyze improvement requests, write the code, review it and open a PR on GitHub. Applies to the whole installation."
+            },
             service: {
               title: "Service",
               description:
@@ -1906,6 +2285,13 @@ const messages = {
             }
           },
           groups: {
+            devAi: "Artificial intelligence",
+            devAiHint:
+              "Which AI the agents use. The same model does triage, code and review, with more or less effort per step, and the project context is cached between calls.",
+            devRepo: "Repository (GitHub)",
+            devRepoHint:
+              "Where the code is read from and where the PR is opened. Without a token, the code is read (if the repository is public) and the result is a patch to download.",
+            devRules: "Pipeline rules",
             autoMessages: "Automatic messages",
             closing: "Closing",
             rating: "Satisfaction survey",
@@ -1928,6 +2314,7 @@ const messages = {
             server: "Server"
           },
           units: {
+            tokens: "tokens",
             minutes: "min",
             days: "days",
             megabytes: "MB"
@@ -1963,6 +2350,83 @@ const messages = {
             empty: "No token generated"
           },
           fields: {
+            _devAutoLearn: {
+              title: "Learn on its own",
+              description:
+                "Know-It-All studies each request's corrections (your comments, what the reviewer blocked, edits that failed) and creates or improves skills. On, they go straight into use; off, they wait for your approval in the Skills tab. Anything from customer requests always waits."
+            },
+            _devUsdBrl: {
+              title: "Dollar rate (R$)",
+              description:
+                "Used to show costs in reais. Left blank, it uses today's rate, refreshed every 12 hours."
+            },
+            _devAiProvider: {
+              title: "Provider",
+              description: "Claude (Anthropic) or GPT (OpenAI).",
+              options: {
+                anthropic: "Claude (Anthropic)",
+                openai: "GPT (OpenAI)"
+              }
+            },
+            _devAnthropicKey: {
+              title: "Anthropic key",
+              description: "console.anthropic.com › API Keys."
+            },
+            _devAnthropicModel: {
+              title: "Model",
+              description:
+                "Opus is the recommended balance. Sonnet and Haiku cost less per token; Fable is the most capable and the most expensive.",
+              options: {
+                "claude-opus-5": "Claude Opus 5 (recommended)",
+                "claude-sonnet-5": "Claude Sonnet 5 (cheaper)",
+                "claude-haiku-4-5": "Claude Haiku 4.5 (cheapest)",
+                "claude-fable-5-1": "Claude Fable 5.1 (most capable)"
+              }
+            },
+            _devOpenAiKey: {
+              title: "OpenAI key",
+              description:
+                "platform.openai.com › API keys. Left blank, it uses the AI Assistant key (if that one is OpenAI)."
+            },
+            _devOpenAiModel: {
+              title: "Model",
+              description:
+                "Left blank, it uses the one shown in the field. Prefer a reasoning model: it writes better code."
+            },
+            _devGithubRepo: {
+              title: "Repository",
+              description: "owner/name, as it appears in the GitHub URL."
+            },
+            _devGithubToken: {
+              title: "GitHub token",
+              description:
+                "Fine-grained token. As Resource owner pick the repository owner (for an organization, the organization, not your account), access to this repository only, and read and write on Contents and Pull requests. If the organization requires it, approve the token under Settings › Personal access tokens. The agents never merge: the PR is opened as a draft."
+            },
+            _devGithubBranch: {
+              title: "Base branch",
+              description:
+                "Where the code is read from and what the PR targets."
+            },
+            _devAutoApprove: {
+              title: "Develop without approval",
+              description:
+                "Off (recommended), the request waits in Prioritization until you approve: no code tokens are spent before you see the spec."
+            },
+            _devAutoTriage: {
+              title: "Analyze customer suggestions automatically",
+              description:
+                "Suggestions opened in Help show up on the board. On, triage runs right away; off, it waits for you to click Analyze."
+            },
+            _devReviewRounds: {
+              title: "Fix rounds",
+              description:
+                "How many times the reviewer can send the code back to the developer before asking for your decision."
+            },
+            _devTokenLimit: {
+              title: "Token limit per request",
+              description:
+                "Safety cap: the request stops with an error when it goes past it. Cache reads don't count."
+            },
             ticketAcceptedMessage: {
               title: "When the conversation is accepted",
               description:
@@ -2700,6 +3164,22 @@ const messages = {
         ERR_AI_INVALID_ACTION: "Invalid AI action.",
         ERR_INBOX_UNAVAILABLE:
           "This inbox can't start a conversation right now (disconnected or not WhatsApp).",
+        ERR_DEV_BUSY: "The request is running: wait for the agents to finish",
+        ERR_DEV_INVALID_STAGE:
+          "This action isn't valid at the request's current stage",
+        ERR_DEV_TITLE_REQUIRED: "Give the request a title",
+        ERR_DEV_COMMENT_REQUIRED: "Write the comment",
+        ERR_DEV_SKILL_REQUIRED: "Write the skill's name and content",
+        ERR_DEV_AI_NOT_CONFIGURED: "The pipeline AI key is missing in Settings",
+        ERR_DEV_AI_AUTH: "The AI key was rejected",
+        ERR_DEV_AI_MODEL:
+          "The chosen model doesn't exist or isn't enabled for this key",
+        ERR_DEV_AI_RATE_LIMIT: "AI usage limit reached: try again shortly",
+        ERR_DEV_AI_OFFLINE: "Can't reach the AI",
+        ERR_DEV_AI_REFUSAL: "The AI declined the request",
+        ERR_DEV_AI_TRUNCATED: "The AI's answer got too long and was cut off",
+        ERR_DEV_AI_FORMAT: "The AI answered in an unexpected format",
+        ERR_DEV_AI_FAILED: "The AI returned an error",
         ERR_FORBIDDEN: "You do not have permission to access this resource.",
         ERR_CHECK_NUMBER: "Check the number and try again.",
         ERR_NO_OTHER_WHATSAPP: "There must be at least one default WhatsApp.",

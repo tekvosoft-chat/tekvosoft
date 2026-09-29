@@ -27,6 +27,7 @@ import CodeRoundedIcon from "@material-ui/icons/CodeRounded";
 import LocalAtmOutlinedIcon from "@material-ui/icons/LocalAtmOutlined";
 import TuneRoundedIcon from "@material-ui/icons/TuneRounded";
 import HelpOutlineIcon from "@material-ui/icons/HelpOutline";
+import DeveloperBoardRoundedIcon from "@material-ui/icons/DeveloperBoardRounded";
 import ExpandMoreRoundedIcon from "@material-ui/icons/ExpandMoreRounded";
 import { isArray } from "lodash";
 
@@ -450,6 +451,13 @@ const MainListItems = ({ drawerClose, query = "" }) => {
           to: "/settings"
         }
       ]
+    },
+    // pipeline de IA: só o dono da instalação
+    user?.super && {
+      key: "devPipeline",
+      icon: <DeveloperBoardRoundedIcon />,
+      label: t("devPipeline", "Pipeline de IA"),
+      to: "/dev-pipeline"
     },
     {
       key: "helps",

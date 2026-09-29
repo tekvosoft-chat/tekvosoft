@@ -23,6 +23,9 @@ import UserDevice from "../models/UserDevice";
 import CalendarEvent from "../models/CalendarEvent";
 import TicketJourney from "../models/TicketJourney";
 import SupportMessage from "../models/SupportMessage";
+import DevTask from "../models/DevTask";
+import DevTaskEvent from "../models/DevTaskEvent";
+import DevSkill from "../models/DevSkill";
 import TicketTraking from "../models/TicketTraking";
 import Counter from "../models/Counter";
 import UserRating from "../models/UserRating";
@@ -106,7 +109,10 @@ const models = [
   SupportMessage,
   UserDevice,
   CalendarEvent,
-  TicketJourney
+  TicketJourney,
+  DevTask,
+  DevTaskEvent,
+  DevSkill
 ];
 
 sequelize.addModels(models);

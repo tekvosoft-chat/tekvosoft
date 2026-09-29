@@ -60,6 +60,28 @@ envia pelo Gmail. Configure `N8N_WEBHOOK_URL` e `N8N_WEBHOOK_SECRET` no `.env`.
 Sem a URL nada é enviado e o código de navegador novo fica desligado. Os GIFs
 ficam em `frontend/public/email/`.
 
+## Pipeline de IA (painel do super)
+
+Demandas de melhoria viram PR por agentes: triagem (já sugere a prioridade),
+aprovação de uma pessoa, desenvolvedor, revisor e PR em rascunho na branch
+`ai/<id>-<assunto>`. Código em `backend/src/services/DevPipeline/`; tela em
+`frontend/src/pages/DevPipeline/` (rota `/dev-pipeline`). Sugestão aberta na
+Ajuda entra no quadro, e o cliente acompanha pela conversa do chamado.
+
+- Configuração em Configurações > Opções > Pipeline de IA, chaves `_dev*` na
+  empresa 1 (só o super lê). Nunca mande segredo para o prompt.
+- Os agentes leem este arquivo como regra. Não editam `.github/`, Docker,
+  `scripts/`, `package*.json`, `.env` nem migration existente (`repo.ts`).
+- Sem token do GitHub o resultado vira patch. Em dev, o compose monta o
+  repositório em `/repo` (só leitura) e o pipeline lê de lá.
+- Skills (`DevSkills`, aba Skills do painel): a triagem vê só o índice e
+  escolhe; código e revisão recebem inteiras só as escolhidas. As padrão
+  ficam em `defaultSkills.ts` (semeadas pelo slug, sem sobrescrever edição).
+  O Sabichão (`learn` em `agents.ts`) transforma correções em skill; versão
+  que encolhe a skill, ou que vem de pedido de cliente, espera aprovação.
+- Custo: `pricing.ts` (preço de tabela em US$ por modelo) e cotação do dia
+  (ou `_devUsdBrl`); a tela mostra em reais. Imagens em `private/dev-pipeline`.
+
 ## Convenções entre as pontas
 
 - Mensagens enviadas ao WhatsApp são traduzidas **no backend** com `_t()`. Nunca

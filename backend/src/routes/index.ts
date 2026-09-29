@@ -36,11 +36,13 @@ import calendarRoutes from "./calendarRoutes";
 import aiRoutes from "./aiRoutes";
 import webchatRoutes from "./webchatRoutes";
 import superRoutes from "./superRoutes";
+import devTaskRoutes from "./devTaskRoutes";
 
 const routes = Router();
 
 routes.use(userRoutes);
 routes.use(superRoutes);
+routes.use(devTaskRoutes);
 routes.use("/auth", authRoutes);
 routes.use(settingRoutes);
 routes.use(contactRoutes);

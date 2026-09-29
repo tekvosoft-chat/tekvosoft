@@ -6,6 +6,7 @@ interface Request {
   user: {
     profile: string;
     companyId: number;
+    isSuper?: boolean;
   };
 }
 
@@ -30,6 +31,11 @@ export const GetSettingService = async ({
   user
 }: Request): Promise<string> => {
   if (user.profile !== "admin" && !(key in safeSettingsKeys)) {
+    throw new AppError("ERR_NO_PERMISSION", 403);
+  }
+  // chave com "_" é do super (gateway de pagamento, pipeline de IA): um
+  // admin comum da empresa 1 não lê segredo da instalação
+  if (key.startsWith("_") && !user.isSuper) {
     throw new AppError("ERR_NO_PERMISSION", 403);
   }
 

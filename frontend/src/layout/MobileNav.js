@@ -26,6 +26,7 @@ import SyncAltIcon from "@material-ui/icons/SyncAlt";
 import AccountTreeOutlinedIcon from "@material-ui/icons/AccountTreeOutlined";
 import PeopleAltOutlinedIcon from "@material-ui/icons/PeopleAltOutlined";
 import CodeRoundedIcon from "@material-ui/icons/CodeRounded";
+import DeveloperBoardRoundedIcon from "@material-ui/icons/DeveloperBoardRounded";
 import LocalAtmIcon from "@material-ui/icons/LocalAtm";
 import SettingsOutlinedIcon from "@material-ui/icons/SettingsOutlined";
 import ListIcon from "@material-ui/icons/ListAlt";
@@ -451,6 +452,19 @@ const MobileNav = ({ onOpenProfile }) => {
       );
 
       list.push({ label: t("administration"), items: admin });
+    }
+
+    if (user?.super) {
+      list.push({
+        label: t("super"),
+        items: [
+          {
+            to: "/dev-pipeline",
+            label: t("devPipeline"),
+            icon: <DeveloperBoardRoundedIcon />
+          }
+        ]
+      });
     }
 
     // o que já está na barra de baixo não se repete aqui

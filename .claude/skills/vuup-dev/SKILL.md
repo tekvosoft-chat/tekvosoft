@@ -73,6 +73,11 @@ o i18next (v19) troca por vazio.
   `transcript`, `composeWithAi`); chave em Configurações > Opções > IA.
 - Configurações > Opções: `components/Settings/Options/` (`controls.js` + seções em `index.js`).
 - Regra de acesso a ticket: `backend/src/helpers/CheckTicketAccess.ts`.
+- Pipeline de IA: `backend/src/services/DevPipeline/` (`agents.ts` = etapas,
+  `prompts.ts` = regras dos agentes, `workspace.ts` = edições e diff,
+  `repo.ts` = GitHub/local e travas) + `frontend/src/pages/DevPipeline/`.
+  Testar sem gastar: tarefa pequena com `gpt-5-mini` (~US$ 0,02 o ciclo);
+  depois apague as tarefas e as chaves `_dev*` de teste.
 - Estilo: MUI v4 + `makeStyles`, tokens em `theme.palette.tkv.*`
   (`surface`, `border`, `brand.text`, `brand.textSoft`, `semantic.*`).
   Comentários em português explicando o porquê.

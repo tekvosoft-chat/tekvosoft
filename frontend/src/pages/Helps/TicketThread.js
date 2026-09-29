@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useHistory } from "react-router-dom";
 import { makeStyles, useTheme } from "@material-ui/core/styles";
 import useMediaQuery from "@material-ui/core/useMediaQuery";
 import Button from "@material-ui/core/Button";
@@ -12,6 +13,7 @@ import SendRoundedIcon from "@material-ui/icons/SendRounded";
 import CheckCircleOutlineRoundedIcon from "@material-ui/icons/CheckCircleOutlineRounded";
 import ReplayRoundedIcon from "@material-ui/icons/ReplayRounded";
 import DeleteOutlineRoundedIcon from "@material-ui/icons/DeleteOutlineRounded";
+import DeveloperBoardRoundedIcon from "@material-ui/icons/DeveloperBoardRounded";
 import moment from "moment";
 import { toast } from "react-toastify";
 
@@ -29,6 +31,35 @@ import {
   toneStyle,
   useSupportLive
 } from "./supportShared";
+
+// sugestão que entrou no pipeline de IA: o que cada etapa quer dizer para
+// o cliente (o super vê o nome da etapa)
+const PIPELINE = {
+  intake: {
+    label: "Início",
+    note: "Recebemos sua sugestão: ela entrou na fila de melhorias"
+  },
+  prioritization: {
+    label: "Priorização",
+    note: "Sua sugestão foi analisada e priorizada pela equipe"
+  },
+  development: {
+    label: "Desenvolvimento",
+    note: "Sua sugestão está sendo desenvolvida"
+  },
+  pr: {
+    label: "PR",
+    note: "A melhoria ficou pronta e está na revisão final da equipe"
+  },
+  done: {
+    label: "Concluído",
+    note: "Melhoria concluída: ela chega numa das próximas atualizações"
+  },
+  cancelled: {
+    label: "Cancelado",
+    note: "Não vamos seguir com esta sugestão por enquanto"
+  }
+};
 
 /**
  * A conversa de um chamado, aberta ao lado (no celular, sobe de baixo).
@@ -214,8 +245,10 @@ const TicketThread = ({ ticketId, isSuper, onClose }) => {
   const [files, setFiles] = useState([]);
   const [sending, setSending] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [sendingToPipeline, setSendingToPipeline] = useState(false);
   const bodyRef = useRef(null);
   const fileRef = useRef(null);
+  const history = useHistory();
 
   const load = useCallback(async () => {
     if (!ticketId) return;
@@ -283,6 +316,19 @@ const TicketThread = ({ ticketId, isSuper, onClose }) => {
     } catch (err) {
       toastError(err);
     }
+  };
+
+  // o super leva o chamado para o pipeline de IA (a triagem já começa)
+  const toPipeline = async () => {
+    setSendingToPipeline(true);
+    try {
+      const { data } = await api.post(`/dev-tasks/from-support/${ticketId}`);
+      toast.success(`Demanda #${data.id} criada no pipeline de IA`);
+      await load();
+    } catch (err) {
+      toastError(err);
+    }
+    setSendingToPipeline(false);
   };
 
   const mine = message =>
@@ -380,6 +426,36 @@ const TicketThread = ({ ticketId, isSuper, onClose }) => {
                     {categoryOf(ticket.category).label}
                   </span>
                 </div>
+                <div className={classes.label}>Pipeline de IA</div>
+                <div className={classes.chips}>
+                  {ticket.devTask ? (
+                    <ButtonBase
+                      className={classes.chip}
+                      style={toneStyle(theme, "brand")}
+                      onClick={() =>
+                        history.push(`/dev-pipeline?task=${ticket.devTask.id}`)
+                      }
+                    >
+                      <DeveloperBoardRoundedIcon
+                        style={{ fontSize: 16, marginRight: 6 }}
+                      />
+                      #{ticket.devTask.id} ·{" "}
+                      {PIPELINE[ticket.devTask.stage]?.label ||
+                        ticket.devTask.stage}
+                    </ButtonBase>
+                  ) : (
+                    <ButtonBase
+                      className={`${classes.chip} ${classes.chipOff}`}
+                      disabled={sendingToPipeline}
+                      onClick={toPipeline}
+                    >
+                      <DeveloperBoardRoundedIcon
+                        style={{ fontSize: 16, marginRight: 6 }}
+                      />
+                      Levar ao pipeline de IA
+                    </ButtonBase>
+                  )}
+                </div>
               </>
             ) : (
               <div className={classes.chips}>
@@ -408,7 +484,14 @@ const TicketThread = ({ ticketId, isSuper, onClose }) => {
 
           <div ref={bodyRef} className={classes.body}>
             {ticket.messages.map(message =>
-              message.kind === "status" ? (
+              message.kind === "pipeline" ? (
+                <div key={message.id} className={classes.system}>
+                  {isSuper
+                    ? `Pipeline de IA: ${PIPELINE[message.body]?.label || message.body}`
+                    : PIPELINE[message.body]?.note || message.body}{" "}
+                  · {moment(message.createdAt).format("DD/MM HH:mm")}
+                </div>
+              ) : message.kind === "status" ? (
                 <div key={message.id} className={classes.system}>
                   {statusText(message)} ·{" "}
                   {moment(message.createdAt).format("DD/MM HH:mm")}
