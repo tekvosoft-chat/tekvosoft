@@ -456,10 +456,19 @@ function Chat() {
   const currentRef = useRef(null);
   currentRef.current = current;
 
+  // mantém a lista de conversas ordenada por recência (updatedAt desc)
+  const ts = v => {
+    const t = new Date(v || 0).getTime();
+    return Number.isFinite(t) ? t : 0;
+  };
+  const sortChatsByUpdatedAtDesc = list =>
+    [...list].sort((a, b) => ts(b && b.updatedAt) - ts(a && a.updatedAt));
+
   const loadChats = useCallback(async () => {
     try {
       const { data } = await api.get("/chats");
-      setChats(data.records || []);
+      const recs = data.records || [];
+      setChats(sortChatsByUpdatedAtDesc(recs));
     } catch (err) {
       toastError(err);
     }
@@ -526,7 +535,7 @@ function Chat() {
         const next = exists
           ? prev.map(c => (c.id === record.id ? { ...c, ...record } : c))
           : [record, ...prev];
-        return next;
+        return sortChatsByUpdatedAtDesc(next);
       });
 
     const onChatUser = data => {
@@ -544,11 +553,13 @@ function Chat() {
         return;
       }
       if (data.chat) {
-        // conversa com novidade sobe para o topo
-        setChats(prev => [
-          { ...(prev.find(c => c.id === data.chat.id) || {}), ...data.chat },
-          ...prev.filter(c => c.id !== data.chat.id)
-        ]);
+        setChats(prev => {
+          const exists = prev.some(c => c.id === data.chat.id);
+          const next = exists
+            ? prev.map(c => (c.id === data.chat.id ? { ...c, ...data.chat } : c))
+            : [data.chat, ...prev];
+          return sortChatsByUpdatedAtDesc(next);
+        });
       }
       if (
         data.action === "new-message" &&
@@ -586,15 +597,24 @@ function Chat() {
     history.push(`/chats/${chat.uuid}`);
   };
   const upsertLocal = chat =>
-    setChats(prev =>
-      prev.some(c => c.id === chat.id)
+    setChats(prev => {
+      const exists = prev.some(c => c.id === chat.id);
+      const next = exists
         ? prev.map(c => (c.id === chat.id ? { ...c, ...chat } : c))
-        : [chat, ...prev]
-    );
+        : [chat, ...prev];
+      return sortChatsByUpdatedAtDesc(next);
+    });
 
   const sendMessage = async text => {
     try {
       await api.post(`/chats/${current.id}/messages`, { message: text });
+      // ao confirmar envio, garante recência local antes do evento do servidor
+      setChats(prev => {
+        const next = prev.map(c =>
+          c.id === current.id ? { ...c, updatedAt: new Date().toISOString() } : c
+        );
+        return sortChatsByUpdatedAtDesc(next);
+      });
     } catch (err) {
       toastError(err);
     }
