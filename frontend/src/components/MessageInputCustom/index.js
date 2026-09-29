@@ -100,6 +100,7 @@ import { SendLocationDialog } from "../MessagesList/LocationMessage";
 import { SocketContext } from "../../context/Socket/SocketContext";
 import { getDraft, saveDraft } from "../../helpers/drafts";
 import { haptic } from "../../helpers/haptics";
+import { CONFIRMED_EVENT } from "../MessagesList/optimisticSend";
 
 const Mp3Recorder = new MicRecorder({ bitRate: 128 });
 
@@ -1481,6 +1482,18 @@ const MessageInputCustom = props => {
       alive = false;
     };
   }, [ticket?.id, ticket?.isGroup]);
+
+  // limpa o estado de resposta após o envio confirmado pelo servidor
+  useEffect(() => {
+    const onConfirmed = () => {
+      if (replyingMessage) setReplyingMessage(null);
+    };
+    window.addEventListener(CONFIRMED_EVENT, onConfirmed);
+    return () => {
+      window.removeEventListener(CONFIRMED_EVENT, onConfirmed);
+    };
+  }, [replyingMessage, setReplyingMessage]);
+
   const showLinkPreview =
     !editingMessage && !!linkPreview.url && closedLink !== linkPreview.url;
   const { user } = useContext(AuthContext);
