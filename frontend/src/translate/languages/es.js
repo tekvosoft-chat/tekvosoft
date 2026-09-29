@@ -1206,7 +1206,34 @@ const messages = {
         successKanban: "Columna guardada con éxito."
       },
       chat: {
-        noTicketMessage: "Selecciona un ticket para empezar a conversar."
+        noTicketMessage: "Selecciona un ticket para empezar a conversar.",
+        calls: {
+          audio: "Llamada de audio",
+          video: "Videollamada",
+          more: "Más",
+          status: {
+            connecting: "Conectando…",
+            ringing: "Llamando…",
+            inCall: "En llamada",
+            ended: "Finalizada"
+          },
+          controls: {
+            mute: "Silenciar",
+            unmute: "Activar micrófono",
+            speaker: "Altavoz",
+            cameraOn: "Encender cámara",
+            cameraOff: "Apagar cámara",
+            end: "Finalizar"
+          },
+          log: {
+            title: "Llamadas",
+            emptyTitle: "Sin llamadas",
+            emptyDesc: "Tu historial de llamadas aparecerá aquí.",
+            start: "Iniciar llamada",
+            you: "Tú",
+            contact: "Contacto"
+          }
+        }
       },
       uploads: {
         titles: {

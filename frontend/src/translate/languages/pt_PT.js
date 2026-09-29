@@ -1173,12 +1173,68 @@ const messages = {
         successKanban: "Coluna salva com sucesso."
       },
       chat: {
-        noTicketMessage: "Selecione um ticket para começar a conversar."
+        noTicketMessage: "Selecione um ticket para começar a conversar.",
+        calls: {
+          audio: "Chamada de áudio",
+          video: "Videoconferência",
+          more: "Mais",
+          status: {
+            connecting: "A ligar…",
+            ringing: "A chamar…",
+            inCall: "Em chamada",
+            ended: "Terminada"
+          },
+          controls: {
+            mute: "Silenciar",
+            unmute: "Ativar microfone",
+            speaker: "Altifalante",
+            cameraOn: "Ligar câmara",
+            cameraOff: "Desligar câmara",
+            end: "Terminar"
+          },
+          log: {
+            title: "Ligações",
+            emptyTitle: "Sem ligações",
+            emptyDesc: "O seu histórico de ligações aparecerá aqui.",
+            start: "Iniciar chamada",
+            you: "Você",
+            contact: "Contacto"
+          }
+        }
       },
       uploads: {
         titles: {
           titleUploadMsgDragDrop: "ARRASTE E SOLTE FICHEIROS NO CAMPO ABAIXO",
           titleFileList: "Lista de ficheiros"
+        }
+      },
+      chat_calls: {
+        calls: {
+          audio: "Chamada de áudio",
+          video: "Videoconferência",
+          more: "Mais",
+          status: {
+            connecting: "A ligar…",
+            ringing: "A chamar…",
+            inCall: "Em chamada",
+            ended: "Terminada"
+          },
+          controls: {
+            mute: "Silenciar",
+            unmute: "Ativar microfone",
+            speaker: "Altifalante",
+            cameraOn: "Ligar câmara",
+            cameraOff: "Desligar câmara",
+            end: "Terminar"
+          },
+          log: {
+            title: "Ligações",
+            emptyTitle: "Sem ligações",
+            emptyDesc: "O seu histórico de ligações aparecerá aqui.",
+            start: "Iniciar chamada",
+            you: "Você",
+            contact: "Contacto"
+          }
         }
       },
       todolist: {

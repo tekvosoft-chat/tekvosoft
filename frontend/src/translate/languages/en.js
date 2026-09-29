@@ -1201,7 +1201,34 @@ const messages = {
         successKanban: "Lane saved successfully."
       },
       chat: {
-        noTicketMessage: "Select a ticket to start the conversation."
+        noTicketMessage: "Select a ticket to start the conversation.",
+        calls: {
+          audio: "Audio call",
+          video: "Video call",
+          more: "More",
+          status: {
+            connecting: "Connecting…",
+            ringing: "Ringing…",
+            inCall: "In call",
+            ended: "Ended"
+          },
+          controls: {
+            mute: "Mute",
+            unmute: "Unmute",
+            speaker: "Speaker",
+            cameraOn: "Turn camera on",
+            cameraOff: "Turn camera off",
+            end: "End call"
+          },
+          log: {
+            title: "Calls",
+            emptyTitle: "No calls yet",
+            emptyDesc: "Your call history will appear here.",
+            start: "Start a call",
+            you: "You",
+            contact: "Contact"
+          }
+        }
       },
       uploads: {
         titles: {

@@ -21,6 +21,7 @@ import ExploreRoundedIcon from "@material-ui/icons/ExploreRounded";
 import SearchRoundedIcon from "@material-ui/icons/SearchRounded";
 import CallRoundedIcon from "@material-ui/icons/CallRounded";
 import VideocamRoundedIcon from "@material-ui/icons/VideocamRounded";
+import MoreVertRoundedIcon from "@material-ui/icons/MoreVertRounded";
 import PeopleAltRoundedIcon from "@material-ui/icons/PeopleAltRounded";
 import PersonRoundedIcon from "@material-ui/icons/PersonRounded";
 import ArrowBackIosRoundedIcon from "@material-ui/icons/ArrowBackIosRounded";
@@ -40,8 +41,10 @@ import ChatMessages from "./ChatMessages";
 import ChatSearch from "./ChatSearch";
 import ChatDetails from "./ChatDetails";
 import GroupDialog from "./GroupDialog";
-import CallStage from "./CallStage";
+import CallOverlay from "./CallOverlay";
 import useCall from "./useCall";
+import BottomSheet from "../../components/ui/BottomSheet";
+import { i18n } from "../../translate/i18n";
 import {
   GroupIcon,
   OnlineDot,
@@ -447,6 +450,7 @@ function Chat() {
   const [search, setSearch] = useState({ open: false, tab: "all" });
   const [groupDialog, setGroupDialog] = useState({ open: false, chat: null });
   const [confirm, setConfirm] = useState(null); // { kind: "leave" | "delete", chat }
+  const [moreOpen, setMoreOpen] = useState(false);
   const scrollToBottomRef = useRef(() => {});
 
   const current = useMemo(
@@ -926,38 +930,70 @@ function Chat() {
                 <span className={classes.headDesc}>{current.description}</span>
               )}
             </div>
-            <Tooltip title="Chamada de voz">
-              <span>
-                <IconButton
-                  className={classes.headBtn}
-                  disabled={inThisCall || call.joining}
-                  onClick={() => joinCall(false)}
-                >
-                  <CallRoundedIcon />
-                </IconButton>
-              </span>
-            </Tooltip>
-            <Tooltip title="Chamada de vídeo">
-              <span>
-                <IconButton
-                  className={classes.headBtn}
-                  disabled={inThisCall || call.joining}
-                  onClick={() => joinCall(true)}
-                >
-                  <VideocamRoundedIcon />
-                </IconButton>
-              </span>
-            </Tooltip>
-            <Tooltip title={direct ? "Perfil" : "Membros"}>
-              <IconButton
-                className={`${classes.headBtn}${showDetails ? ` ${classes.headBtnOn}` : ""}`}
-                onClick={() => setShowDetails(v => !v)}
-              >
-                {direct ? <PersonRoundedIcon /> : <PeopleAltRoundedIcon />}
-              </IconButton>
-            </Tooltip>
+            {!isPhone && (
+              <>
+                <Tooltip title={i18n.t("chat.calls.audio")}>
+                  <span>
+                    <IconButton
+                      className={classes.headBtn}
+                      disabled={inThisCall || call.joining}
+                      onClick={() => joinCall(false)}
+                      aria-label={i18n.t("chat.calls.audio")}
+                    >
+                      <CallRoundedIcon />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+                <Tooltip title={i18n.t("chat.calls.video")}>
+                  <span>
+                    <IconButton
+                      className={classes.headBtn}
+                      disabled={inThisCall || call.joining}
+                      onClick={() => joinCall(true)}
+                      aria-label={i18n.t("chat.calls.video")}
+                    >
+                      <VideocamRoundedIcon />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+                <Tooltip title={direct ? "Perfil" : "Membros"}>
+                  <IconButton
+                    className={`${classes.headBtn}${showDetails ? ` ${classes.headBtnOn}` : ""}`}
+                    onClick={() => setShowDetails(v => !v)}
+                    aria-label={direct ? "Perfil" : "Membros"}
+                  >
+                    {direct ? <PersonRoundedIcon /> : <PeopleAltRoundedIcon />}
+                  </IconButton>
+                </Tooltip>
+              </>
+            )}
+            {isPhone && (
+              <>
+                <Tooltip title={i18n.t("chat.calls.audio")}>
+                  <span>
+                    <IconButton
+                      className={classes.headBtn}
+                      disabled={inThisCall || call.joining}
+                      onClick={() => joinCall(false)}
+                      aria-label={i18n.t("chat.calls.audio")}
+                    >
+                      <CallRoundedIcon />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+                <Tooltip title={i18n.t("chat.calls.more")}>
+                  <IconButton
+                    className={classes.headBtn}
+                    onClick={() => setMoreOpen(true)}
+                    aria-label={i18n.t("chat.calls.more")}
+                  >
+                    <MoreVertRoundedIcon />
+                  </IconButton>
+                </Tooltip>
+              </>
+            )}
           </div>
-          {inThisCall && <CallStage call={call} me={user} />}
+          {inThisCall && <CallOverlay call={call} me={user} chat={current} />}
           <ChatMessages
             key={current.id}
             chat={current}
@@ -990,11 +1026,21 @@ function Chat() {
     </section>
   );
 
+  const callMessages = useMemo(
+    () =>
+      (messages || []).filter(m =>
+        m?.type === "call" || m?.kind === "call" || m?.isCall || m?.meta?.call
+      ),
+    [messages]
+  );
+
   const detailsEl = current && (
     <ChatDetails
       chat={current}
       me={user}
       presence={presence}
+      calls={callMessages}
+      onStartCall={() => joinCall(false)}
       onOpenUser={openUser}
       onEdit={() => setGroupDialog({ open: true, chat: current })}
       onLeave={() => setConfirm({ kind: "leave", chat: current })}
@@ -1023,6 +1069,37 @@ function Chat() {
           {detailsEl}
         </Drawer>
       )}
+
+      {/* Menu de ações no celular */}
+      <BottomSheet
+        open={moreOpen}
+        onClose={() => setMoreOpen(false)}
+        title={i18n.t("chat.calls.more")}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => {
+              setMoreOpen(false);
+              if (!inThisCall && !call.joining) joinCall(true);
+            }}
+            startIcon={<VideocamRoundedIcon />}
+          >
+            {i18n.t("chat.calls.video")}
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              setMoreOpen(false);
+              setShowDetails(true);
+            }}
+            startIcon={direct ? <PersonRoundedIcon /> : <PeopleAltRoundedIcon />}
+          >
+            {direct ? "Perfil" : "Membros"}
+          </Button>
+        </div>
+      </BottomSheet>
 
       <ChatSearch
         open={search.open}

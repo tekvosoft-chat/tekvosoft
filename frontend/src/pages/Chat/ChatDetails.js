@@ -3,9 +3,11 @@ import { makeStyles } from "@material-ui/core/styles";
 import Button from "@material-ui/core/Button";
 import ButtonBase from "@material-ui/core/ButtonBase";
 import moment from "moment";
+import { i18n } from "../../translate/i18n";
 
 import api from "../../services/api";
 import UserAvatar from "../../components/ui/UserAvatar";
+import EmptyState from "../../components/ui/EmptyState";
 import { GroupIcon, OnlineDot, isDirect } from "./chatShared";
 
 /**
@@ -123,7 +125,16 @@ const useStyles = makeStyles(theme => {
       gap: 8
     },
     action: { borderRadius: 8, textTransform: "none", fontWeight: 600 },
-    danger: { color: theme.palette.tkv.semantic.danger }
+    danger: { color: theme.palette.tkv.semantic.danger },
+    callItem: {
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      padding: "6px 4px",
+      borderRadius: 8
+    },
+    callIcon: { flex: "none" },
+    callMeta: { fontSize: "0.8125rem", color: theme.palette.text.secondary }
   };
 });
 
@@ -134,7 +145,9 @@ const ChatDetails = ({
   onOpenUser,
   onEdit,
   onLeave,
-  onDelete
+  onDelete,
+  calls = [],
+  onStartCall
 }) => {
   const classes = useStyles();
   const [members, setMembers] = useState([]);
@@ -210,6 +223,40 @@ const ChatDetails = ({
             </div>
           </div>
         )}
+        <div className={classes.card}>
+          <div className={classes.label}>{i18n.t("chat.calls.log.title")}</div>
+          {calls.length === 0 ? (
+            <EmptyState
+              title={i18n.t("chat.calls.log.emptyTitle")}
+              description={i18n.t("chat.calls.log.emptyDesc")}
+              action={
+                <Button variant="contained" color="primary" size="small" onClick={onStartCall}>
+                  {i18n.t("chat.calls.log.start")}
+                </Button>
+              }
+            />
+          ) : (
+            calls.slice(0, 10).map(c => {
+              const mine = c.senderId === me.id;
+              const text = String(c.message || "");
+              const missed = /perdid|missed/i.test(text) || c.meta?.missed;
+              const video = /vídeo|video/i.test(text) || c.meta?.video;
+              const when = moment(c.createdAt).format("DD/MM HH:mm");
+              const dur = c.meta?.duration ? ` · ${c.meta.duration}` : "";
+              return (
+                <div key={c.id} className={classes.callItem}>
+                  <span className={classes.callIcon} aria-hidden>
+                    {missed ? "❌" : video ? "🎥" : "📞"}
+                  </span>
+                  <span className={classes.value} style={{ flex: 1 }}>
+                    {mine ? i18n.t("chat.calls.log.you") : c.sender?.name || i18n.t("chat.calls.log.contact")} — {when}
+                    <span className={classes.callMeta}>{dur}</span>
+                  </span>
+                </div>
+              );
+            })
+          )}
+        </div>
       </div>
     );
   }
@@ -263,6 +310,40 @@ const ChatDetails = ({
           {offline.map(m => renderMember(m, false))}
         </>
       )}
+      <div className={classes.card}>
+        <div className={classes.label}>{i18n.t("chat.calls.log.title")}</div>
+        {calls.length === 0 ? (
+          <EmptyState
+            title={i18n.t("chat.calls.log.emptyTitle")}
+            description={i18n.t("chat.calls.log.emptyDesc")}
+            action={
+              <Button variant="contained" color="primary" size="small" onClick={onStartCall}>
+                {i18n.t("chat.calls.log.start")}
+              </Button>
+            }
+          />
+        ) : (
+          calls.slice(0, 10).map(c => {
+            const mine = c.senderId === me.id;
+            const text = String(c.message || "");
+            const missed = /perdid|missed/i.test(text) || c.meta?.missed;
+            const video = /vídeo|video/i.test(text) || c.meta?.video;
+            const when = moment(c.createdAt).format("DD/MM HH:mm");
+            const dur = c.meta?.duration ? ` · ${c.meta.duration}` : "";
+            return (
+              <div key={c.id} className={classes.callItem}>
+                <span className={classes.callIcon} aria-hidden>
+                  {missed ? "❌" : video ? "🎥" : "📞"}
+                </span>
+                <span className={classes.value} style={{ flex: 1 }}>
+                  {mine ? i18n.t("chat.calls.log.you") : c.sender?.name || i18n.t("chat.calls.log.contact")} — {when}
+                  <span className={classes.callMeta}>{dur}</span>
+                </span>
+              </div>
+            );
+          })
+        )}
+      </div>
       <div className={classes.actions}>
         {canManage && (
           <Button
