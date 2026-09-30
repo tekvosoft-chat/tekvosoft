@@ -7,9 +7,12 @@ import DevTaskEvent from "../models/DevTaskEvent";
 import SupportMessage from "../models/SupportMessage";
 import SupportTicket from "../models/SupportTicket";
 import User from "../models/User";
-import { loadDevConfig } from "../services/DevPipeline/config";
+import { DevConfig, loadDevConfig } from "../services/DevPipeline/config";
 import { openRepo } from "../services/DevPipeline/repo";
-import { pullMerged } from "../services/DevPipeline/agents";
+import { pullMerged, testFeedback } from "../services/DevPipeline/agents";
+import { OPENROUTER_MODELS, SLOTS } from "../services/DevPipeline/models";
+import { modelInfo } from "../services/DevPipeline/catalog";
+import { browserReady } from "../services/DevPipeline/testRunner";
 import { usdToBrl } from "../services/DevPipeline/pricing";
 import {
   attachmentsOf,
@@ -24,6 +27,7 @@ import {
   emitDevTask,
   enqueueDevTask,
   enqueueLearning,
+  mergedDevTask,
   moveDevTask
 } from "../services/DevPipeline/pipeline";
 import { logger } from "../utils/logger";
@@ -49,6 +53,7 @@ const LIST_ATTRIBUTES = [
   "priority",
   "kind",
   "effort",
+  "difficulty",
   "risk",
   "questions",
   "reviewRound",
@@ -62,6 +67,7 @@ const LIST_ATTRIBUTES = [
   "tokensCached",
   "costUsd",
   "design",
+  "testVerdict",
   "createdAt",
   "updatedAt"
 ];
@@ -87,6 +93,30 @@ const text = (value: unknown, max: number) =>
 
 const userOf = (req: Request) => Number(req.user.id);
 
+/**
+ * Quem usa qual modelo, com o preço do dia (catálogo do OpenRouter). Claude
+ * e OpenAI usam um modelo só: a lista vem vazia e a tela mostra aquele.
+ */
+const teamModels = async (config: DevConfig) => {
+  if (config.provider !== "openrouter") return [];
+  return Promise.all(
+    SLOTS.map(async slot => {
+      const { model, fallbacks, effort } = config.models[slot];
+      const info = await modelInfo(model);
+      return {
+        slot,
+        model,
+        name: info.name,
+        fallbacks,
+        effort,
+        vision: info.vision,
+        // US$ por milhão de tokens: entrada, saída, leitura de cache
+        price: info.price
+      };
+    })
+  );
+};
+
 /** O que está configurado: a tela avisa o que falta antes de alguém tentar. */
 export const setup = async (req: Request, res: Response): Promise<Response> => {
   const config = await loadDevConfig();
@@ -94,6 +124,13 @@ export const setup = async (req: Request, res: Response): Promise<Response> => {
   return res.json({
     provider: config.provider,
     model: config.model,
+    models: await teamModels(config),
+    // o que cada vaga usa quando o campo fica em branco (Configurações)
+    defaults: Object.fromEntries(
+      SLOTS.map(slot => [slot, OPENROUTER_MODELS[slot].model])
+    ),
+    // navegador do testador: sem ele, a demanda conclui no merge
+    browser: browserReady(),
     hasKey: !!config.apiKey,
     repo: repo
       ? { kind: repo.kind, label: repo.label, canPublish: repo.canPublish }
@@ -130,10 +167,9 @@ const syncPull = async (task: DevTask) => {
   if (Date.now() - (lastPullCheck.get(task.id) || 0) < 60000) return;
   lastPullCheck.set(task.id, Date.now());
   const repo = openRepo(await loadDevConfig());
-  if (repo && (await pullMerged(task, repo))) {
-    await addDevEvent(task, "system", "merged", "", { number: task.prNumber });
-    await moveDevTask(task, "done", "idle");
-  }
+  const mergeSha = repo ? await pullMerged(task, repo) : null;
+  // aceito: vai para os testes (ou conclui, sem navegador)
+  if (mergeSha) await mergedDevTask(task, mergeSha, repo);
 };
 
 export const show = async (req: Request, res: Response): Promise<Response> => {
@@ -303,7 +339,16 @@ export const comment = async (
     await task.update({ feedback });
     await moveDevTask(task, "intake", "queued");
   } else {
-    await task.update({ feedback, reviewRound: 0, verdict: null });
+    // teste reprovado: o que o Clique viu na tela vai junto com o pedido
+    const tested = task.stage === "tests" ? await testFeedback(task) : [];
+    await task.update({
+      feedback: [...tested, ...feedback],
+      reviewRound: 0,
+      verdict: null,
+      // código novo, teste novo
+      testPlan: null,
+      testVerdict: null
+    });
     await moveDevTask(task, "development", "queued");
   }
   await enqueueDevTask(task);
@@ -321,6 +366,29 @@ export const publish = async (
   }
   await addDevEvent(task, "human", "publish", "", {}, userOf(req));
   await moveDevTask(task, "pr", "queued");
+  await enqueueDevTask(task);
+  return res.json(task);
+};
+
+/**
+ * Roda o teste de tela agora: depois do merge, quando a versão já subiu e a
+ * conferência automática não percebeu (versão feita à mão), ou no ambiente
+ * de dev, depois de aplicar o patch. Rodar de novo reaproveita o roteiro.
+ */
+export const runTests = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const task = await load(req.params.id);
+  if (busy(task) || !["pr", "tests", "done"].includes(task.stage)) {
+    throw new AppError("ERR_DEV_INVALID_STAGE", 409);
+  }
+  if (!browserReady()) throw new AppError("ERR_DEV_TEST_NO_BROWSER", 409);
+  // o testador tinha achado que não precisava: quem pediu quer ver
+  const plan = task.testPlan?.needed === false ? null : task.testPlan;
+  await task.update({ testPlan: plan, testVerdict: null });
+  await addDevEvent(task, "human", "test", "", {}, userOf(req));
+  await moveDevTask(task, "tests", "queued");
   await enqueueDevTask(task);
   return res.json(task);
 };

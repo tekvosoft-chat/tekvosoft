@@ -62,14 +62,33 @@ ficam em `frontend/public/email/`.
 
 ## Pipeline de IA (painel do super)
 
-Demandas de melhoria viram PR por agentes: triagem (já sugere a prioridade),
-aprovação de uma pessoa, desenvolvedor, revisor e PR em rascunho na branch
-`ai/<id>-<assunto>`. Código em `backend/src/services/DevPipeline/`; tela em
-`frontend/src/pages/DevPipeline/` (rota `/dev-pipeline`). Sugestão aberta na
-Ajuda entra no quadro, e o cliente acompanha pela conversa do chamado.
+Demandas de melhoria viram PR por agentes: triagem (já sugere a prioridade e
+a dificuldade), aprovação de uma pessoa, desenvolvedor, revisor, PR em
+rascunho e, depois do merge, teste de tela. Branch `<tipo>/<id>-<nome>`
+(`fix/`, `feat/`, `improve/`, `chore/`; nome curto que a triagem dá, cortado
+em palavra inteira; se já existir, ganha `-2`). Código em
+`backend/src/services/DevPipeline/`; tela em `frontend/src/pages/DevPipeline/`
+(rota `/dev-pipeline`). Sugestão aberta na Ajuda entra no quadro, e o cliente
+acompanha pela conversa do chamado.
 
 - Configuração em Configurações > Opções > Pipeline de IA, chaves `_dev*` na
   empresa 1 (só o super lê). Nunca mande segredo para o prompt.
+- Provedor padrão: OpenRouter (`llmOpenRouter.ts`), chave em `_devOpenRouterKey`
+  ou `OPENROUTER_API_KEY` da stack. Cada agente tem o seu modelo em
+  `models.ts` (troca por `_devModel<Vaga>`); a dificuldade da triagem escolhe
+  o do desenvolvedor e o do revisor (o caro só em média/difícil ou risco
+  alto). O custo vem do próprio OpenRouter em cada resposta; o catálogo
+  (`catalog.ts`) dá o preço do dia para a aba Time.
+- Equipe: Xereta (triagem), Sirene (prioridade, na mesma chamada), Zé Commit
+  (código), Dona Lupa (revisão), Clique (testes) e Sabichão (skills). Jeito de
+  cada um em `PERSONAS` (`prompts.ts`), uma linha só; fotos CC0 em
+  `frontend/public/agents/`.
+- Testes: o serviço `browser` do compose (Playwright, `PLAYWRIGHT_WS_ENDPOINT`)
+  roda o roteiro do Clique no sistema no ar, só-leitura (todo pedido que não
+  é GET é barrado) e logado por token feito no backend. Merge → etapa Testes;
+  roda sozinho quando o commit que está rodando (gitinfo) já contém o merge,
+  ou pelo botão. Fotos e vídeo ficam em `private/dev-pipeline` (`kind: "test"`,
+  nunca voltam para a IA como pedido).
 - Os agentes leem este arquivo como regra. Não editam `.github/`, Docker,
   `scripts/`, `package*.json`, `.env` nem migration existente (`repo.ts`).
 - Sem token do GitHub o resultado vira patch. Em dev, o compose monta o
@@ -79,8 +98,9 @@ Ajuda entra no quadro, e o cliente acompanha pela conversa do chamado.
   ficam em `defaultSkills.ts` (semeadas pelo slug, sem sobrescrever edição).
   O Sabichão (`learn` em `agents.ts`) transforma correções em skill; versão
   que encolhe a skill, ou que vem de pedido de cliente, espera aprovação.
-- Custo: `pricing.ts` (preço de tabela em US$ por modelo) e cotação do dia
-  (ou `_devUsdBrl`); a tela mostra em reais. Imagens em `private/dev-pipeline`.
+- Custo: o que o OpenRouter cobra (ou `pricing.ts`, preço de tabela, no Claude
+  e na OpenAI direto) e cotação do dia (ou `_devUsdBrl`); a tela mostra em
+  reais. Imagens em `private/dev-pipeline`.
 
 ## Convenções entre as pontas
 

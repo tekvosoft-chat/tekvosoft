@@ -29,6 +29,9 @@ services:
     environment:
       NODE_ENV: development
       LOG_LEVEL: debug
+      # o ts-node-dev só percebe o arquivo salvo com polling quando o código
+      # vem do Windows ou do Mac (o Docker não repassa o aviso de mudança)
+      CHOKIDAR_USEPOLLING: "true"
       PORT: 3000
       BACKEND_URL: http://localhost:${API_PORT:-8080}
       FRONTEND_URL: http://localhost:${PORT:-3000}
@@ -58,7 +61,10 @@ services:
       # O endereço do backend NÃO vem daqui: o app lê public/config.json,
       # que o ./tekvosoft dev gera no host com a porta já resolvida.
       # o watcher precisa de polling para enxergar alterações em volume montado
+      # (Windows e Mac não avisam o container). CHOKIDAR vale para o servidor
+      # de desenvolvimento; WATCHPACK, para o webpack 5 que compila o código
       CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
       BROWSER: none
       # o hot reload do navegador precisa da porta publicada no host, não da
       # 3000 de dentro do container. Quando o ./tekvosoft dev troca a porta
@@ -70,6 +76,18 @@ services:
       - frontend_node_modules:/usr/src/app/node_modules
     ports:
       - "${PORT:-3000}:3000"
+
+  browser:
+    # Em dev o sistema fica em localhost:3000 e a API em localhost:8080, como
+    # no seu navegador. Dentro deste container "localhost" é ele mesmo: um
+    # repasse leva essas duas portas ao frontend e ao backend, e o navegador
+    # de teste enxerga o sistema igual a você (mesmos cookies e websocket).
+    command:
+      - sh
+      - -c
+      - >-
+        node -e "const net=require('net');[[${PORT:-3000},'frontend',3000],[${API_PORT:-8080},'backend',3000]].forEach(([port,host,to])=>net.createServer(c=>{const u=net.connect(to,host);c.pipe(u).pipe(c);c.on('error',()=>u.destroy());u.on('error',()=>c.destroy())}).listen(port,'127.0.0.1'))" &
+        exec npx -y playwright@1.63.0 run-server --port 39321 --host 0.0.0.0
 
 volumes:
   backend_node_modules:

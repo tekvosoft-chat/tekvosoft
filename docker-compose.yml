@@ -92,6 +92,13 @@ services:
       EMAIL_ASSETS_URL: ${EMAIL_ASSETS_URL:-}
       LOGIN_EMAIL_CODE: ${LOGIN_EMAIL_CODE:-true}
       DUE_REMINDER_DAYS: ${DUE_REMINDER_DAYS:-3,2}
+      # --- pipeline de IA (painel do super) ---
+      # chave do OpenRouter: cada agente usa o modelo da tarefa dele. Também
+      # dá para colar em Configurações > Opções > Pipeline de IA
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      # navegador do testador (serviço "browser" abaixo). Vazio = sem teste
+      # de tela: a demanda conclui no merge
+      PLAYWRIGHT_WS_ENDPOINT: ${PLAYWRIGHT_WS_ENDPOINT-ws://browser:39321/}
     depends_on:
       postgres:
         condition: service_healthy
@@ -112,6 +119,30 @@ services:
       RECAPTCHA_SITE_KEY: ${RECAPTCHA_SITE_KEY:-}
     depends_on:
       - backend
+    networks: [tekvosoft]
+
+  # Navegador do testador do pipeline de IA (Playwright). O backend conecta
+  # aqui para gravar vídeo e tirar fotos do sistema depois do merge; o
+  # Chromium fica neste container, longe da imagem e dos segredos do
+  # backend, e só abre quando há teste. A versão tem de ser a mesma do
+  # playwright-core do backend (package.json).
+  browser:
+    image: mcr.microsoft.com/playwright:v1.63.0-noble
+    restart: always
+    init: true
+    user: pwuser
+    # sem shm_size: o Playwright abre o Chromium com --disable-dev-shm-usage
+    command:
+      [
+        "npx",
+        "-y",
+        "playwright@1.63.0",
+        "run-server",
+        "--port",
+        "39321",
+        "--host",
+        "0.0.0.0"
+      ]
     networks: [tekvosoft]
 
   # Backup e restauração. Não sobe junto com o sistema — só é acionado

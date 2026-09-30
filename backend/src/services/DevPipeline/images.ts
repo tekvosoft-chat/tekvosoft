@@ -55,7 +55,10 @@ const prepare = async (attachment: DevAttachment): Promise<LlmImage | null> => {
 };
 
 export const taskImages = async (task: DevTask): Promise<LlmImage[]> => {
-  const list = (task.attachments || []).slice(-MAX_IMAGES);
+  // fotos do testador são resultado, não pedido: ficam de fora
+  const list = (task.attachments || [])
+    .filter(attachment => attachment.kind !== "test")
+    .slice(-MAX_IMAGES);
   const images = await Promise.all(
     list.map(async attachment => {
       if (!cache.has(attachment.id)) {
@@ -84,6 +87,44 @@ export const attachmentsOf = (
     path: path.relative(devFiles.directory, file.path),
     eventId
   }));
+
+/** Imagens de uma lista de anexos (as fotos do testador, para ele conferir). */
+export const imagesOf = async (
+  attachments: DevAttachment[]
+): Promise<LlmImage[]> => {
+  const images = await Promise.all(
+    attachments.map(attachment =>
+      prepare(attachment).catch(error => {
+        logger.warn({ error, id: attachment.id }, "DevPipeline: imagem");
+        return null;
+      })
+    )
+  );
+  return images.filter(Boolean);
+};
+
+/** Grava na pasta privada o que o testador capturou (foto ou vídeo). */
+export const saveCapture = async (
+  data: Buffer,
+  name: string,
+  mimetype: string
+): Promise<DevAttachment> => {
+  await fs.promises.mkdir(devFiles.directory, { recursive: true });
+  const ext = mimetype === "video/webm" ? ".webm" : ".png";
+  const target = `${crypto.randomBytes(16).toString("hex")}${ext}`;
+  await fs.promises.writeFile(
+    path.join(devFiles.directory, target),
+    new Uint8Array(data.buffer as ArrayBuffer, data.byteOffset, data.length)
+  );
+  return {
+    id: crypto.randomBytes(8).toString("hex"),
+    name: name.slice(0, 180),
+    mimetype,
+    size: data.length,
+    path: target,
+    kind: "test"
+  };
+};
 
 /** Copia uma imagem de outro lugar (anexo de chamado da Ajuda). */
 export const copyImage = async (

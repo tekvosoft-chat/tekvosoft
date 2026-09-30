@@ -14,8 +14,8 @@ import {
   YAxis
 } from "recharts";
 
-import { brl, compact, getUsdRate, t, toneStyle } from "./shared";
-import { TEAM, agentName, agentRole } from "./team";
+import { brl, compact, getUsdRate, t } from "./shared";
+import { AgentAvatar, TEAM, agentName, agentRole } from "./team";
 
 /**
  * Resumo do pipeline no topo do quadro: quantas concluíram, quantas
@@ -131,23 +131,15 @@ const useStyles = makeStyles(theme => {
     member: {
       display: "inline-flex",
       alignItems: "center",
-      gap: 6,
-      height: 30,
-      padding: "0 10px 0 4px",
+      gap: 8,
+      height: 36,
+      padding: "0 12px 0 4px",
       borderRadius: tkv.radius.pill,
       border: `1px solid ${tkv.border}`,
       backgroundColor: tkv.surface,
       fontSize: "0.78rem",
       "& b": { color: theme.palette.text.primary },
       "& span": { color: theme.palette.text.secondary }
-    },
-    memberIcon: {
-      display: "grid",
-      placeItems: "center",
-      width: 22,
-      height: 22,
-      borderRadius: "50%",
-      "& svg": { fontSize: 14 }
     }
   };
 });
@@ -348,21 +340,13 @@ const StatsPanel = ({ stats }) => {
       </div>
 
       <div className={classes.team} aria-label={t("stats.teamTitle")}>
-        {TEAM.map(agent => {
-          const Icon = agent.icon;
-          return (
-            <span key={agent.key} className={classes.member}>
-              <span
-                className={classes.memberIcon}
-                style={toneStyle(theme, agent.tone)}
-              >
-                <Icon />
-              </span>
-              <b>{agentName(agent.key)}</b>
-              <span>{agentRole(agent.key)}</span>
-            </span>
-          );
-        })}
+        {TEAM.map(agent => (
+          <span key={agent.key} className={classes.member}>
+            <AgentAvatar agent={agent.key} size={28} />
+            <b>{agentName(agent.key)}</b>
+            <span>{agentRole(agent.key)}</span>
+          </span>
+        ))}
       </div>
     </div>
   );

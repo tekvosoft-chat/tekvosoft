@@ -26,7 +26,7 @@ export interface DevChange {
 
 /** Pedido de ajuste que o próximo agente precisa atender. */
 export interface DevFeedback {
-  from: "reviewer" | "human";
+  from: "reviewer" | "human" | "tester";
   text: string;
   path?: string;
   severity?: string;
@@ -41,6 +41,17 @@ export interface DevAttachment {
   // caminho dentro da pasta privada do pipeline: nunca vai para o navegador
   path?: string;
   eventId?: number;
+  // "test": foto ou vídeo do testador. Não volta para a IA como pedido
+  kind?: string;
+}
+
+/** Roteiro do testador para o navegador (prompts.ts, TESTER_PLAN). */
+export interface DevTestPlan {
+  needed: boolean;
+  reason: string;
+  devices: string[];
+  steps: { action: string; target: string; value: string; note: string }[];
+  checks: string[];
 }
 
 /** Problema achado pela verificação automática (sintaxe), sem IA. */
@@ -79,7 +90,7 @@ class DevTask extends Model<DevTask> {
   @Column
   supportTicketId: number;
 
-  // intake | prioritization | development | review | pr | done | cancelled
+  // intake | prioritization | development | review | pr | tests | done | cancelled
   @Default("intake")
   @Column
   stage: string;
@@ -102,6 +113,10 @@ class DevTask extends Model<DevTask> {
 
   @Column
   effort: string;
+
+  // easy | medium | hard: escolhe o modelo do desenvolvedor e do revisor
+  @Column
+  difficulty: string;
 
   @Column
   risk: string;
@@ -188,6 +203,17 @@ class DevTask extends Model<DevTask> {
   @Default([])
   @Column(DataType.JSONB)
   attachments: DevAttachment[];
+
+  @Column(DataType.JSONB)
+  testPlan: DevTestPlan;
+
+  // pass | fail | unclear | skipped
+  @Column
+  testVerdict: string;
+
+  // commit do merge do PR: os testes esperam a versão com ele entrar no ar
+  @Column
+  mergeSha: string;
 
   @CreatedAt
   createdAt: Date;

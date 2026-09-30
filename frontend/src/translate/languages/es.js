@@ -1872,9 +1872,63 @@ const messages = {
         extensionBuildUnknownError: "Error de construcción desconocido."
       },
       devPipeline: {
+        difficulty: {
+          easy: "Fácil",
+          medium: "Media",
+          hard: "Difícil"
+        },
+        devices: {
+          desktop: "Computadora",
+          mobile: "Celular"
+        },
+        testActions: {
+          goto: "Abrir",
+          click: "Hacer clic en",
+          fill: "Completar",
+          press: "Tecla",
+          wait: "Esperar",
+          scroll: "Desplazar",
+          screenshot: "Foto"
+        },
+        agentBios: {
+          triage:
+            "Curiosa, hurga en el código hasta encontrar dónde vive el problema. Escribe poco y va al grano: reescribe el pedido, señala los archivos y dice si es fácil o difícil.",
+          priority:
+            "Decide qué es urgente de verdad, sin falsas alarmas. Trabaja junto a Xereta, en la misma llamada.",
+          developer:
+            "Dev pragmático: hace el cambio más pequeño que resuelve y no deja cabos sueltos. En las solicitudes difíciles, entra con el modelo más potente.",
+          reviewer:
+            "Revisora exigente y justa: mira cada línea con lupa, pero solo frena lo que es un problema de verdad.",
+          tester:
+            "El fotógrafo del equipo: después del merge, abre el sistema en producción, graba video y toma fotos en computadora y celular para demostrar que funciona.",
+          learner:
+            "El profesor del equipo: convierte cada tropiezo en una lección corta que los otros agentes no olvidan."
+        },
+        team: {
+          intro:
+            "Cada agente usa el modelo que su tarea necesita, a través de OpenRouter. El modelo caro solo entra cuando el triaje dice que la solicitud es media o difícil.",
+          price: "{{input}} entrada · {{output}} salida, por millón de tokens",
+          sameCall:
+            "Decide junto a Xereta, en la misma llamada: no cuesta nada extra.",
+          single:
+            "Todos los agentes usan {{provider}} · {{model}}. Con OpenRouter, cada uno usa el modelo de su tarea, y sale más barato.",
+          routingTitle: "Quién escribe y quién revisa, según la dificultad",
+          difficulty: "Dificultad",
+          routingHint:
+            "Riesgo alto (dinero, datos, login o envío de mensajes) cuenta como difícil. Si un modelo se cae, OpenRouter usa el de reserva solo."
+        },
+        slots: {
+          triage: "Siempre",
+          developer: "Solicitud fácil",
+          developerHard: "Media o difícil",
+          reviewer: "Fácil o media",
+          reviewerHard: "Difícil o riesgosa",
+          tester: "Siempre",
+          learner: "Siempre"
+        },
         title: "Pipeline de IA",
         subtitle:
-          "Mejoras y correcciones hechas por agentes de IA: triaje, código, code review y PR. Apruebas antes del código y revisas el PR antes del merge.",
+          "Mejoras y correcciones hechas por agentes de IA: triaje, código, code review, PR y pruebas. Apruebas antes del código y revisas el PR antes del merge.",
         newTask: "Nueva solicitud",
         search: "Buscar por título, empresa o #número",
         showCancelled: "Mostrar canceladas",
@@ -1887,6 +1941,7 @@ const messages = {
         round: "Ronda {{count}}",
         effort: "Esfuerzo {{value}}",
         stages: {
+          tests: "Pruebas",
           intake: "Inicio",
           prioritization: "Priorización",
           development: "Desarrollo",
@@ -1896,22 +1951,28 @@ const messages = {
           cancelled: "Canceladas"
         },
         stageHints: {
+          tests:
+            "Después del merge, Clique prueba en pantalla con fotos y video",
           intake:
             "El agente entiende el pedido, consulta el código y reescribe la tarea",
           prioritization: "Revisas la prioridad y apruebas antes del código",
           development: "El agente desarrollador escribe el código",
           review: "El agente revisor revisa el diff y pide ajustes",
           pr: "Branch y PR listos para que los revises",
-          done: "PR fusionado o solicitud terminada",
+          done: "Probada en pantalla o terminada por ti",
           cancelled: "Solicitudes que no seguirán"
         },
         line: {
+          testsWaiting: "Esperando la nueva versión en producción",
+          testsFailed: "La prueba en pantalla falló",
+          testsUnclear: "La prueba no pudo confirmarlo",
           queued: "En cola",
           running: {
-            intake: "Triaje analizando",
+            tests: "Clique probando en pantalla",
+            intake: "Xereta analizando el pedido",
             prioritization: "Preparando el desarrollo",
-            development: "Desarrollador escribiendo el código",
-            review: "Revisor revisando el diff",
+            development: "Zé Commit escribiendo el código",
+            review: "Dona Lupa revisando el diff",
             pr: "Abriendo el PR"
           },
           notAnalyzed: "Esperando análisis",
@@ -1924,6 +1985,12 @@ const messages = {
           cancelled: "Cancelada"
         },
         hints: {
+          testsWaiting:
+            "El PR fue aceptado. Cuando suba la nueva versión (actualización del stack), Clique prueba solo. Si ya está en producción, ejecútala ahora.",
+          testsFailed:
+            "Mira las fotos en la conversación. Para corregir, escribe abajo y haz clic en “Enviar a los agentes”: lo que vio Clique va junto.",
+          testsUnclear:
+            "Clique no pudo ver el resultado (el motivo está en la conversación). Ejecútala de nuevo o termina.",
           running:
             "Los agentes están trabajando; la conversación se actualiza sola.",
           error:
@@ -1966,6 +2033,7 @@ const messages = {
           help: "Cliente"
         },
         agents: {
+          tester: "Clique",
           triage: "Chismoso",
           priority: "Sirena",
           developer: "Pepe Commit",
@@ -1975,6 +2043,7 @@ const messages = {
           human: "Tú"
         },
         tabs: {
+          team: "Equipo",
           board: "Tablero",
           skills: "Skills",
           conversation: "Conversación",
@@ -1982,6 +2051,28 @@ const messages = {
           code: "Código"
         },
         events: {
+          test: "pidió ejecutar las pruebas en pantalla",
+          testPlan: "planeó la prueba en pantalla",
+          testNotNeeded: "vio que este cambio no aparece en pantalla",
+          testRun: "grabó la prueba: {{count}} foto(s)",
+          testSkip: "omitió la prueba en pantalla",
+          testChecks: "Lo que las fotos deben mostrar",
+          testSteps: "Guion",
+          testFailedSteps: "Pasos que fallaron",
+          testPageErrors: "Errores de JavaScript en pantalla",
+          testSafe:
+            "Navegador de solo lectura: {{count}} intento(s) de guardar bloqueado(s); nada en el sistema fue modificado.",
+          testOk: "OK",
+          testNotOk: "No",
+          testResult: {
+            pass: "aprobó en pantalla",
+            fail: "falló en pantalla",
+            unclear: "no pudo confirmarlo"
+          },
+          testSkipReason: {
+            no_browser:
+              "El navegador de pruebas no está configurado (PLAYWRIGHT_WS_ENDPOINT)."
+          },
           searched: "Buscó en el código",
           learned: "aprendió {{count}} skill(s)",
           learnedNothing:
@@ -2012,7 +2103,7 @@ const messages = {
           stuckTitle: "te necesita",
           stuck:
             "El revisor sigue pidiendo ajustes después de {{count}} ronda(s). Tú decides: publicar así, pedir otra ronda o cancelar.",
-          merged: "PR #{{number}} fusionado: solicitud terminada",
+          merged: "PR #{{number}} fusionado",
           approve: "aprobó para desarrollo ({{priority}})",
           publish: "decidió publicar de todos modos",
           done: "marcó como terminada",
@@ -2021,6 +2112,10 @@ const messages = {
           rerun: "envió a los agentes"
         },
         actions: {
+          testNow: "Ejecutar pruebas ahora",
+          testAgain: "Ejecutar de nuevo",
+          doneAnyway: "Terminar de todos modos",
+          doneWithoutTests: "Terminar sin probar",
           learn: "Aprender de esta solicitud",
           approve: "Aprobar y desarrollar",
           analyze: "Analizar ahora",
@@ -2079,6 +2174,8 @@ const messages = {
           create: "Crear y analizar"
         },
         setup: {
+          perAgent: "OpenRouter · un modelo por agente",
+          seeTeam: "ver el equipo",
           open: "Abrir configuración",
           noKey: "Falta la clave de la IA.",
           noRepo: "Falta el repositorio de GitHub.",
@@ -2088,6 +2185,7 @@ const messages = {
             "{{repo}} sin token: lee el código y el resultado queda como patch",
           github: "PRs en {{repo}}",
           provider: {
+            openrouter: "OpenRouter",
             anthropic: "Claude",
             openai: "OpenAI"
           }
@@ -2101,12 +2199,14 @@ const messages = {
             "La conversación de los agentes y el código generado se borran para siempre."
         },
         toasts: {
+          testing: "Clique está probando en pantalla",
           learning: "Sabelotodo está estudiando esta solicitud",
           created: "Solicitud #{{id}} creada: el triaje empezó",
           approved: "Aprobada: el desarrollo empezó",
           sent: "Enviado a los agentes"
         },
         agentRoles: {
+          tester: "pruebas",
           triage: "triaje",
           priority: "prioridad",
           developer: "código",
@@ -2216,6 +2316,17 @@ const messages = {
           }
         },
         errors: {
+          ERR_DEV_AI_CREDITS:
+            "Se acabó el crédito de OpenRouter (o el límite de la clave): recarga en openrouter.ai",
+          ERR_DEV_AI_TIMEOUT:
+            "La IA tardó demasiado en responder: inténtalo de nuevo",
+          ERR_DEV_TEST_NO_BROWSER:
+            "El navegador de pruebas no está configurado",
+          ERR_DEV_TEST_NO_URL:
+            "Falta la dirección del sistema (FRONTEND_URL) para la prueba",
+          ERR_DEV_TEST_NO_USER:
+            "No hay un super admin activo para que la prueba entre",
+          ERR_DEV_TEST_BROWSER: "El navegador de pruebas no respondió",
           ERR_DEV_AI_NOT_CONFIGURED: "Falta la clave de la IA en Configuración",
           ERR_DEV_AI_AUTH: "La clave de la IA fue rechazada",
           ERR_DEV_AI_MODEL:
@@ -2254,7 +2365,7 @@ const messages = {
             devPipeline: {
               title: "Pipeline de IA",
               description:
-                "Agentes que analizan pedidos de mejora, escriben el código, lo revisan y abren un PR en GitHub. Vale para toda la instalación."
+                "Agentes que analizan pedidos de mejora, escriben el código, lo revisan, abren un PR en GitHub y lo prueban en pantalla después del merge. Vale para toda la instalación."
             },
             service: {
               title: "Atención",
@@ -2298,9 +2409,12 @@ const messages = {
             }
           },
           groups: {
+            devModels: "Modelos por agente (OpenRouter)",
+            devModelsHint:
+              "En blanco, cada agente usa el predeterminado (aparece en el campo). Para cambiarlo, usa el nombre del modelo como figura en openrouter.ai, ej.: openai/gpt-6-luna.",
             devAi: "Inteligencia artificial",
             devAiHint:
-              "Qué IA usan los agentes. El mismo modelo hace triaje, código y revisión, con más o menos esfuerzo en cada etapa, y el contexto del proyecto queda en caché entre llamadas.",
+              "Qué IA usan los agentes. Con OpenRouter, cada agente usa el modelo de su tarea (el caro solo en las solicitudes difíciles); con Claude u OpenAI, un solo modelo hace todo. El contexto del proyecto queda en caché entre llamadas.",
             devRepo: "Repositorio (GitHub)",
             devRepoHint:
               "De dónde se lee el código y dónde se abre el PR. Sin token, el código se lee (si el repositorio es público) y el resultado queda como un patch para descargar.",
@@ -2364,6 +2478,45 @@ const messages = {
             empty: "Ningún token generado"
           },
           fields: {
+            _devOpenRouterKey: {
+              title: "Clave de OpenRouter",
+              description:
+                "openrouter.ai › Keys. En blanco, usa la variable OPENROUTER_API_KEY del stack."
+            },
+            _devModelTriage: {
+              title: "Xereta (triaje)",
+              description:
+                "Lee el pedido, encuentra los archivos y escribe la tarea."
+            },
+            _devModelDeveloper: {
+              title: "Zé Commit: solicitud fácil",
+              description:
+                "Escribe el código cuando el triaje dice que es fácil."
+            },
+            _devModelDeveloperHard: {
+              title: "Zé Commit: media o difícil",
+              description:
+                "Escribe el código de las solicitudes medias, difíciles o riesgosas."
+            },
+            _devModelReviewer: {
+              title: "Dona Lupa: fácil o media",
+              description:
+                "Revisa el código de las solicitudes fáciles y medias."
+            },
+            _devModelReviewerHard: {
+              title: "Dona Lupa: difícil o riesgosa",
+              description:
+                "Revisa las difíciles. Una familia de modelo distinta a la del desarrollador detecta lo que él no vio."
+            },
+            _devModelTester: {
+              title: "Clique (pruebas)",
+              description:
+                "Planea la prueba en pantalla y revisa las fotos. Necesita ver imágenes."
+            },
+            _devModelLearner: {
+              title: "Sabichão (skills)",
+              description: "Convierte correcciones y enseñanzas en skills."
+            },
             _devAutoLearn: {
               title: "Aprender solo",
               description:
@@ -2376,8 +2529,10 @@ const messages = {
             },
             _devAiProvider: {
               title: "Proveedor",
-              description: "Claude (Anthropic) o GPT (OpenAI).",
+              description:
+                "OpenRouter (recomendado: un modelo por agente, el más barato), Claude (Anthropic) o GPT (OpenAI).",
               options: {
+                openrouter: "OpenRouter (recomendado)",
                 anthropic: "Claude (Anthropic)",
                 openai: "GPT (OpenAI)"
               }
@@ -3150,6 +3305,7 @@ const messages = {
           "El backend se está iniciando y aún no está listo. Reintentando automáticamente."
       },
       backendErrors: {
+        ERR_DEV_TEST_NO_BROWSER: "El navegador de pruebas no está configurado",
         ERR_CODE_NOT_SENT:
           "No pudimos enviar el código a tu correo. Inténtalo de nuevo en un momento.",
         ERR_CODE_EXPIRED:

@@ -8,6 +8,7 @@ import DevTaskEvent from "../../models/DevTaskEvent";
 import SupportTicket from "../../models/SupportTicket";
 import SupportMessage from "../../models/SupportMessage";
 import supportFiles from "../../config/supportFiles";
+import { GitInfo } from "../../gitinfo";
 import { DevConfig, loadDevConfig } from "./config";
 import { RepoSource, openRepo } from "./repo";
 import { costOf } from "./pricing";
@@ -15,6 +16,7 @@ import { LlmUsage } from "./llm";
 import { copyImage } from "./images";
 import { ensureDefaultSkills } from "./skills";
 import { importSkillsFromRepo } from "./skillSync";
+import { browserReady } from "./testRunner";
 import {
   Cancelled,
   DevError,
@@ -22,7 +24,9 @@ import {
   develop,
   learn,
   publish,
+  pullMerged,
   review,
+  test,
   triage,
   unfinishedTasks
 } from "./agents";
@@ -34,7 +38,12 @@ import {
  * aprovar antes do código, responder uma pergunta ou decidir depois de
  * muitas rodadas de revisão.
  *
- *   intake -> prioritization -> development <-> review -> pr -> done
+ *   intake -> prioritization -> development <-> review -> pr -> tests -> done
+ *
+ * Testes: depois do merge o PR já está no main, mas só vale testar quando a
+ * versão nova sobe (o Portainer atualiza a stack). Na subida o backend
+ * confere, pelo commit que está rodando, se o merge já está nela, e só aí
+ * chama o testador. Dá também para rodar na hora, pelo botão.
  */
 const connection = process.env.REDIS_URI || "";
 export const devPipelineQueue = new Queue("DevPipeline", connection);
@@ -52,6 +61,7 @@ const CLIENT_STAGES = [
   "prioritization",
   "development",
   "pr",
+  "tests",
   "done",
   "cancelled"
 ];
@@ -234,6 +244,24 @@ const runTask = async (taskId: number): Promise<void> => {
           )
         );
         return;
+      } else if (task.stage === "tests") {
+        const outcome = await test(ctx);
+        if (outcome === "pass" || outcome === "skipped") {
+          await moveDevTask(task, "done", "idle");
+          return;
+        }
+        // reprovou ou não deu para ver: a pessoa decide (rodar de novo,
+        // mandar ajustar ou concluir assim mesmo)
+        await moveDevTask(task, "tests", "waiting");
+        if (outcome === "fail") {
+          await learn(ctx).catch(error =>
+            logger.warn(
+              { taskId, ...errorOf(error) },
+              "DevPipeline: aprendizado falhou"
+            )
+          );
+        }
+        return;
       } else {
         return;
       }
@@ -278,6 +306,92 @@ export const enqueueLearning = async (task: DevTask): Promise<void> => {
 };
 
 /**
+ * A versão que está rodando já tem o merge desta demanda? O CI grava o
+ * commit de cada imagem (gitinfo); o GitHub diz se ele vem depois do merge.
+ * Sem commit (versão feita à mão, ambiente de dev), não dá para saber: fica
+ * o botão "Rodar testes".
+ */
+const deployed = async (task: DevTask, repo: RepoSource): Promise<boolean> => {
+  const running = String(GitInfo.commitHash || "").trim();
+  if (!task.mergeSha || !running || repo.kind !== "github") return false;
+  return (
+    (await repo.contains(task.mergeSha, running).catch(() => null)) === true
+  );
+};
+
+/** PR aceito: a demanda vai para os testes (ou conclui, sem navegador). */
+export const mergedDevTask = async (
+  task: DevTask,
+  mergeSha: string,
+  repo: RepoSource
+): Promise<void> => {
+  await task.update({
+    mergeSha: mergeSha === "merged" ? null : mergeSha,
+    testPlan: null,
+    testVerdict: null
+  });
+  await addDevEvent(task, "system", "merged", "", { number: task.prNumber });
+  if (!browserReady()) {
+    await moveDevTask(task, "done", "idle");
+    return;
+  }
+  await moveDevTask(task, "tests", "waiting");
+  // quem atualiza a stack na hora (ou tem deploy automático) já testa
+  if (await deployed(task, repo)) await enqueueDevTask(task);
+};
+
+// conferência de PR no GitHub: a cada 5 minutos, só das que esperam merge
+const MERGE_CHECK = 5 * 60 * 1000;
+let mergeTimer: NodeJS.Timeout | null = null;
+
+const checkMerges = async () => {
+  const tasks = await DevTask.findAll({
+    where: {
+      stage: "pr",
+      status: "waiting",
+      prNumber: { [Op.ne]: null }
+    },
+    limit: 20
+  });
+  if (!tasks.length) return;
+  const repo = openRepo(await loadDevConfig());
+  if (!repo || repo.kind !== "github") return;
+  // eslint-disable-next-line no-restricted-syntax
+  for (const task of tasks) {
+    const mergeSha = await pullMerged(task, repo).catch(() => null);
+    if (mergeSha) await mergedDevTask(task, mergeSha, repo);
+  }
+};
+
+/**
+ * Subida do servidor: as demandas que esperavam a versão nova para testar
+ * vão para a fila se o merge delas já está no que subiu.
+ */
+const testDeployed = async () => {
+  if (!browserReady()) return;
+  const waiting = await DevTask.findAll({
+    where: {
+      stage: "tests",
+      status: "waiting",
+      testVerdict: null,
+      mergeSha: { [Op.ne]: null }
+    }
+  });
+  if (!waiting.length) return;
+  const repo = openRepo(await loadDevConfig());
+  if (!repo) return;
+  // eslint-disable-next-line no-restricted-syntax
+  for (const task of waiting) {
+    if (await deployed(task, repo)) {
+      logger.info(
+        `DevPipeline: versão com a demanda #${task.id} no ar, testando`
+      );
+      await enqueueDevTask(task);
+    }
+  }
+};
+
+/**
  * Demandas de antes do custo em dólar: calcula pelo que ficou registrado
  * em cada fala (modelo e tokens). Roda uma vez por demanda.
  */
@@ -318,6 +432,16 @@ export const startDevPipeline = async (): Promise<void> => {
   await backfillCosts().catch(error =>
     logger.warn({ error }, "DevPipeline: custo das demandas antigas")
   );
+  await testDeployed().catch(error =>
+    logger.warn({ error }, "DevPipeline: testes da versão nova")
+  );
+  if (!mergeTimer) {
+    mergeTimer = setInterval(() => {
+      checkMerges().catch(error =>
+        logger.warn({ error }, "DevPipeline: conferência de merge")
+      );
+    }, MERGE_CHECK);
+  }
 
   // servidor caiu no meio de uma etapa: ela volta para a fila
   const pending = await unfinishedTasks();

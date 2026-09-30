@@ -22,6 +22,8 @@ const fakeRepo = (files: Record<string, string>): RepoSource => ({
     throw new Error("sem publicação no teste");
   },
   pull: async () => null,
+  branchExists: async () => false,
+  contains: async () => null,
   search: async (_sha, query) =>
     Object.keys(files)
       .filter(file => files[file].includes(query))

@@ -12,6 +12,7 @@ export const STAGES = [
   { key: "development", tone: "brand" },
   { key: "review", tone: "success" },
   { key: "pr", tone: "brand" },
+  { key: "tests", tone: "info" },
   { key: "done", tone: "success" }
 ];
 export const CANCELLED = { key: "cancelled", tone: "neutral" };
@@ -31,6 +32,21 @@ export const priorityRank = key =>
     0,
     PRIORITIES.findIndex(priority => priority.key === key)
   );
+
+/**
+ * Dificuldade que a triagem deu: escolhe o modelo do desenvolvedor e do
+ * revisor. Demanda antiga não tem; vale o tamanho estimado (S, M, L).
+ */
+export const DIFFICULTIES = [
+  { key: "easy", tone: "success" },
+  { key: "medium", tone: "warning" },
+  { key: "hard", tone: "danger" }
+];
+export const difficultyOf = task => {
+  const key =
+    task?.difficulty || { S: "easy", M: "medium", L: "hard" }[task?.effort];
+  return DIFFICULTIES.find(item => item.key === key) || null;
+};
 
 export const busy = task => ["queued", "running"].includes(task?.status);
 export const closed = task => ["done", "cancelled"].includes(task?.stage);
@@ -149,6 +165,17 @@ export const statusLine = task => {
           mine: true
         }
       : { tone: "success", text: t("line.patch"), mine: true };
+  }
+  if (task.stage === "tests") {
+    // reprovado ou sem conclusão: a pessoa decide; antes disso, o Clique
+    // espera a versão nova subir, sem precisar de ninguém
+    if (task.testVerdict === "fail") {
+      return { tone: "danger", text: t("line.testsFailed"), mine: true };
+    }
+    if (task.testVerdict === "unclear") {
+      return { tone: "warning", text: t("line.testsUnclear"), mine: true };
+    }
+    return { tone: "info", text: t("line.testsWaiting") };
   }
   return { tone: "neutral", text: "" };
 };

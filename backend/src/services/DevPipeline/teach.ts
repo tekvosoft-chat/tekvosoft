@@ -1,5 +1,5 @@
 import DevSkill from "../../models/DevSkill";
-import { loadDevConfig } from "./config";
+import { loadDevConfig, modelFor } from "./config";
 import { LlmError, parseJson } from "./llm";
 import { callLlm } from "./providers";
 import { costOf } from "./pricing";
@@ -37,9 +37,13 @@ export const teachSkill = async (text: string): Promise<DevSkill> => {
     known += block;
   }
 
+  // o mesmo modelo do Sabichão (no OpenRouter, o barato)
+  const chosen = modelFor(config, "learner", "low");
   const result = await callLlm(config.provider, {
     apiKey: config.apiKey,
-    model: config.model,
+    model: chosen.model,
+    fallbacks: chosen.fallbacks,
+    timeoutMs: 4 * 60 * 1000,
     context: CONTEXT_INTRO,
     system: TEACHER,
     messages: [
@@ -50,7 +54,7 @@ export const teachSkill = async (text: string): Promise<DevSkill> => {
     ],
     schema: LEARNER_SCHEMA,
     schemaName: "teach",
-    effort: "low",
+    effort: chosen.effort,
     maxTokens: 8000
   });
   const lesson = parseJson<LearnerReply>(result.text).lessons?.[0];
@@ -60,6 +64,6 @@ export const teachSkill = async (text: string): Promise<DevSkill> => {
   return saveLesson(lesson, {
     source: "human",
     active: true,
-    costUsd: costOf(result.model, result.usage) || 0
+    costUsd: result.cost ?? (costOf(result.model, result.usage) || 0)
   });
 };

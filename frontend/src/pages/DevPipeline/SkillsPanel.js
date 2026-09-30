@@ -8,14 +8,9 @@ import React, {
 import clsx from "clsx";
 import moment from "moment";
 import { makeStyles, useTheme } from "@material-ui/core/styles";
-import useMediaQuery from "@material-ui/core/useMediaQuery";
 import Button from "@material-ui/core/Button";
 import ButtonBase from "@material-ui/core/ButtonBase";
 import CircularProgress from "@material-ui/core/CircularProgress";
-import Dialog from "@material-ui/core/Dialog";
-import DialogActions from "@material-ui/core/DialogActions";
-import DialogContent from "@material-ui/core/DialogContent";
-import DialogTitle from "@material-ui/core/DialogTitle";
 import InputBase from "@material-ui/core/InputBase";
 import TextField from "@material-ui/core/TextField";
 import SearchRoundedIcon from "@material-ui/icons/SearchRounded";
@@ -31,6 +26,7 @@ import ConfirmationModal from "../../components/ConfirmationModal";
 import { SocketContext } from "../../context/Socket/SocketContext";
 import { Markdown, brl, t, toneStyle } from "./shared";
 import { agentName } from "./team";
+import DevDialog from "./DevDialog";
 
 /**
  * Skills do pipeline (só o super): o que os agentes sabem do projeto.
@@ -187,7 +183,6 @@ const useStyles = makeStyles(theme => {
       minWidth: 0
     },
     danger: { color: tkv.semantic.danger },
-    paper: { borderRadius: tkv.radius.xl },
     mono: {
       "& textarea": {
         fontFamily:
@@ -195,13 +190,7 @@ const useStyles = makeStyles(theme => {
         fontSize: "0.8125rem"
       }
     },
-    field: { marginTop: theme.spacing(1.5) },
-    dialogHint: {
-      margin: 0,
-      fontSize: "0.8125rem",
-      fontWeight: 400,
-      color: theme.palette.text.secondary
-    }
+    field: { marginTop: theme.spacing(1.5) }
   };
 });
 
@@ -344,8 +333,6 @@ const SkillCard = ({ skill, onEdit, onAction }) => {
 
 const SkillsPanel = ({ onCounts }) => {
   const classes = useStyles();
-  const theme = useTheme();
-  const phone = useMediaQuery(theme.breakpoints.down("xs"));
   const socketManager = useContext(SocketContext);
   const [skills, setSkills] = useState(null);
   const [filter, setFilter] = useState("active");
@@ -566,36 +553,13 @@ const SkillsPanel = ({ onCounts }) => {
         />
       )}
 
-      <Dialog
+      <DevDialog
         open={teaching}
-        onClose={() => !working && setTeaching(false)}
-        fullWidth
-        maxWidth="sm"
-        fullScreen={phone}
-        classes={{ paper: phone ? undefined : classes.paper }}
-      >
-        <DialogTitle>
-          {t("skills.teachTitle")}
-          <p className={classes.dialogHint}>{t("skills.teachHint")}</p>
-        </DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            fullWidth
-            multiline
-            minRows={8}
-            maxRows={18}
-            variant="outlined"
-            placeholder={t("skills.teachPlaceholder")}
-            value={lesson}
-            inputProps={{ maxLength: 8000 }}
-            onChange={e => setLesson(e.target.value)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button disabled={working} onClick={() => setTeaching(false)}>
-            {t("actions.close")}
-          </Button>
+        onClose={() => setTeaching(false)}
+        title={t("skills.teachTitle")}
+        hint={t("skills.teachHint")}
+        busy={working}
+        actions={
           <Button
             color="primary"
             variant="contained"
@@ -607,22 +571,43 @@ const SkillsPanel = ({ onCounts }) => {
           >
             {working ? t("skills.teaching") : t("skills.teachSend")}
           </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog
-        open={!!editing}
-        onClose={() => !working && setEditing(null)}
-        fullWidth
-        maxWidth="md"
-        fullScreen={phone}
-        classes={{ paper: phone ? undefined : classes.paper }}
+        }
       >
-        <DialogTitle>
-          {editing?.id ? t("skills.editTitle") : t("skills.newTitle")}
-        </DialogTitle>
+        <TextField
+          autoFocus
+          fullWidth
+          multiline
+          minRows={8}
+          maxRows={18}
+          variant="outlined"
+          placeholder={t("skills.teachPlaceholder")}
+          value={lesson}
+          inputProps={{ maxLength: 8000 }}
+          onChange={e => setLesson(e.target.value)}
+        />
+      </DevDialog>
+
+      <DevDialog
+        open={!!editing}
+        onClose={() => setEditing(null)}
+        title={editing?.id ? t("skills.editTitle") : t("skills.newTitle")}
+        maxWidth="md"
+        busy={working}
+        actions={
+          <Button
+            color="primary"
+            variant="contained"
+            disabled={
+              working || !editing?.name?.trim() || !editing?.content?.trim()
+            }
+            onClick={save}
+          >
+            {t("actions.save")}
+          </Button>
+        }
+      >
         {editing && (
-          <DialogContent>
+          <>
             <TextField
               fullWidth
               variant="outlined"
@@ -658,24 +643,9 @@ const SkillsPanel = ({ onCounts }) => {
               }
               className={clsx(classes.field, classes.mono)}
             />
-          </DialogContent>
+          </>
         )}
-        <DialogActions>
-          <Button disabled={working} onClick={() => setEditing(null)}>
-            {t("actions.close")}
-          </Button>
-          <Button
-            color="primary"
-            variant="contained"
-            disabled={
-              working || !editing?.name?.trim() || !editing?.content?.trim()
-            }
-            onClick={save}
-          >
-            {t("actions.save")}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      </DevDialog>
 
       <ConfirmationModal
         title={

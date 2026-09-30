@@ -99,7 +99,15 @@ const DEFAULTS = {
   extensionDownloadUrl: "",
 
   // pipeline de IA (só o super; chaves com "_" ficam na empresa 1)
-  _devAiProvider: "anthropic",
+  _devAiProvider: "openrouter",
+  _devOpenRouterKey: "",
+  _devModelTriage: "",
+  _devModelDeveloper: "",
+  _devModelDeveloperHard: "",
+  _devModelReviewer: "",
+  _devModelReviewerHard: "",
+  _devModelTester: "",
+  _devModelLearner: "",
   _devAnthropicKey: "",
   _devAnthropicModel: "claude-opus-5",
   _devOpenAiKey: "",
@@ -131,6 +139,18 @@ const SECTIONS = [
 
 // modelos do Claude oferecidos no pipeline: o Opus é o padrão; os outros
 // trocam qualidade por preço (Haiku) ou preço por qualidade (Fable)
+// vagas de modelo do pipeline no OpenRouter (models.ts no backend): o
+// campo em branco usa o padrão, que a API manda em /dev-tasks/setup
+const DEV_SLOTS = [
+  "Triage",
+  "Developer",
+  "DeveloperHard",
+  "Reviewer",
+  "ReviewerHard",
+  "Tester",
+  "Learner"
+];
+
 const CLAUDE_MODELS = [
   "claude-opus-5",
   "claude-sonnet-5",
@@ -275,6 +295,8 @@ export default function Options({ settings, scheduleTypeChanged }) {
   const [section, setSection] = useState(initialSection);
   const [buildingExtension, setBuildingExtension] = useState(false);
   const [restartingBackend, setRestartingBackend] = useState(false);
+  // modelo padrão de cada agente do pipeline (aparece no campo vazio)
+  const [devDefaults, setDevDefaults] = useState({});
   const navRef = useRef(null);
 
   useEffect(() => {
@@ -355,6 +377,19 @@ export default function Options({ settings, scheduleTypeChanged }) {
       // sem armazenamento, a seção só não é lembrada
     }
   };
+
+  // os padrões só interessam na seção do pipeline, que só o super vê
+  useEffect(() => {
+    if (active.id !== "devPipeline" || !isSuper) return undefined;
+    let alive = true;
+    api
+      .get("/dev-tasks/setup")
+      .then(({ data }) => alive && setDevDefaults(data?.defaults || {}))
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [active.id, isSuper]);
 
   // no celular, a pílula escolhida entra na faixa visível
   useEffect(() => {
@@ -663,9 +698,16 @@ export default function Options({ settings, scheduleTypeChanged }) {
             >
               <SelectRow
                 id="_devAiProvider"
-                options={["anthropic", "openai"]}
+                options={["openrouter", "anthropic", "openai"]}
               />
-              {values._devAiProvider === "openai" ? (
+              {values._devAiProvider === "openrouter" && (
+                <TextRow
+                  id="_devOpenRouterKey"
+                  monospace
+                  placeholder="sk-or-v1-..."
+                />
+              )}
+              {values._devAiProvider === "openai" && (
                 <>
                   <TextRow id="_devOpenAiKey" monospace placeholder="sk-..." />
                   <TextRow
@@ -674,7 +716,8 @@ export default function Options({ settings, scheduleTypeChanged }) {
                     placeholder="gpt-5"
                   />
                 </>
-              ) : (
+              )}
+              {values._devAiProvider === "anthropic" && (
                 <>
                   <TextRow
                     id="_devAnthropicKey"
@@ -685,6 +728,26 @@ export default function Options({ settings, scheduleTypeChanged }) {
                 </>
               )}
             </Group>
+            {values._devAiProvider === "openrouter" && (
+              <Group
+                title={t("groups.devModels")}
+                description={t("groups.devModelsHint")}
+              >
+                {DEV_SLOTS.map(slot => (
+                  <TextRow
+                    key={slot}
+                    id={`_devModel${slot}`}
+                    monospace
+                    stacked={false}
+                    placeholder={
+                      devDefaults[
+                        slot.charAt(0).toLowerCase() + slot.slice(1)
+                      ] || ""
+                    }
+                  />
+                ))}
+              </Group>
+            )}
             <Group
               title={t("groups.devRepo")}
               description={t("groups.devRepoHint")}

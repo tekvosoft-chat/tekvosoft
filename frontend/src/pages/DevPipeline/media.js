@@ -39,6 +39,13 @@ const useStyles = makeStyles(theme => {
       "& img": { width: "100%", height: "100%", objectFit: "cover" }
     },
     thumbLarge: { width: 132, height: 96 },
+    // foto do teste: inteira (a do celular é em pé), num quadro maior
+    thumbWhole: {
+      width: 176,
+      height: 132,
+      "& img": { objectFit: "contain" },
+      [theme.breakpoints.down("xs")]: { width: "calc(50% - 3px)" }
+    },
     remove: {
       position: "absolute",
       top: 2,
@@ -68,6 +75,36 @@ const useStyles = makeStyles(theme => {
       borderColor: tkv.brand.main,
       backgroundColor: tkv.brand.textSoft,
       color: tkv.brand.text
+    },
+    // vídeo do teste: computador ao lado do celular; no celular, um embaixo
+    // do outro
+    videos: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+      gap: 8,
+      marginTop: 8
+    },
+    video: {
+      margin: 0,
+      "& video": {
+        display: "block",
+        width: "100%",
+        maxHeight: 360,
+        borderRadius: tkv.radius.md,
+        border: `1px solid ${tkv.border}`,
+        backgroundColor: "#000"
+      },
+      "& figcaption": {
+        marginTop: 4,
+        fontSize: "0.72rem",
+        color: theme.palette.text.secondary
+      }
+    },
+    videoLoading: {
+      display: "block",
+      height: 160,
+      borderRadius: tkv.radius.md,
+      backgroundColor: tkv.surfaceSunken
     }
   };
 });
@@ -86,7 +123,7 @@ const loadImage = async (taskId, fileId) => {
 };
 
 /** Miniatura de uma imagem já anexada; tocar abre em tamanho real. */
-export const DevImage = ({ taskId, file, large }) => {
+export const DevImage = ({ taskId, file, large, whole }) => {
   const classes = useStyles();
   const [src, setSrc] = useState(null);
   useEffect(() => {
@@ -100,7 +137,10 @@ export const DevImage = ({ taskId, file, large }) => {
   }, [taskId, file.id]);
   return (
     <ButtonBase
-      className={clsx(classes.thumb, { [classes.thumbLarge]: large })}
+      className={clsx(classes.thumb, {
+        [classes.thumbLarge]: large,
+        [classes.thumbWhole]: whole
+      })}
       onClick={() => src && window.open(src, "_blank", "noopener")}
       aria-label={file.name}
       title={file.name}
@@ -110,13 +150,59 @@ export const DevImage = ({ taskId, file, large }) => {
   );
 };
 
-export const DevImages = ({ taskId, files, large }) => {
+export const DevImages = ({ taskId, files, large, whole }) => {
   const classes = useStyles();
   if (!files?.length) return null;
   return (
     <div className={classes.thumbs}>
       {files.map(file => (
-        <DevImage key={file.id} taskId={taskId} file={file} large={large} />
+        <DevImage
+          key={file.id}
+          taskId={taskId}
+          file={file}
+          large={large}
+          whole={whole}
+        />
+      ))}
+    </div>
+  );
+};
+
+/** Vídeo do teste de tela (webm), carregado pela API como as imagens. */
+export const DevVideo = ({ taskId, file }) => {
+  const classes = useStyles();
+  const [src, setSrc] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    loadImage(taskId, file.id)
+      .then(url => alive && setSrc(url))
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [taskId, file.id]);
+  return (
+    <figure className={classes.video}>
+      {src ? (
+        // eslint-disable-next-line jsx-a11y/media-has-caption
+        <video src={src} controls playsInline preload="metadata" />
+      ) : (
+        <span className={classes.videoLoading} />
+      )}
+      <figcaption>
+        {t(`devices.${file.name.replace(/\.webm$/, "")}`)}
+      </figcaption>
+    </figure>
+  );
+};
+
+export const DevVideos = ({ taskId, files }) => {
+  const classes = useStyles();
+  if (!files?.length) return null;
+  return (
+    <div className={classes.videos}>
+      {files.map(file => (
+        <DevVideo key={file.id} taskId={taskId} file={file} />
       ))}
     </div>
   );

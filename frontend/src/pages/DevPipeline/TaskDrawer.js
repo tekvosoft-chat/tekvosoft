@@ -12,6 +12,7 @@ import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import TextField from "@material-ui/core/TextField";
 import CloseRoundedIcon from "@material-ui/icons/CloseRounded";
+import ArrowBackRoundedIcon from "@material-ui/icons/ArrowBackRounded";
 import MoreVertRoundedIcon from "@material-ui/icons/MoreVertRounded";
 import CheckRoundedIcon from "@material-ui/icons/CheckRounded";
 import AddPhotoAlternateOutlinedIcon from "@material-ui/icons/AddPhotoAlternateOutlined";
@@ -35,6 +36,7 @@ import {
   busy,
   closed,
   compact,
+  difficultyOf,
   errorOf,
   priorityOf,
   statusLine,
@@ -43,9 +45,10 @@ import {
   totalTokens,
   useDevLive
 } from "./shared";
-import { agentName, agentOf, agentRole } from "./team";
+import { AgentAvatar, agentName, agentRole } from "./team";
 import {
   DevImages,
+  DevVideos,
   IMAGE_TYPES,
   PendingImages,
   pastedImages,
@@ -53,13 +56,23 @@ import {
 } from "./media";
 
 /**
- * Uma demanda aberta ao lado (no celular, sobe de baixo): em que etapa
- * está, o que espera da pessoa e três abas. Conversa: o que cada agente
- * disse e fez, em ordem, e a caixa para falar com eles. Especificação: a
- * tarefa reescrita pela triagem, que dá para ajustar à mão. Código: o diff.
+ * Uma demanda aberta ao lado (no celular, ocupa a tela toda, com uma barra
+ * fixa no topo para voltar): em que etapa está, o que espera da pessoa e
+ * três abas. Conversa: o que cada agente disse e fez, em ordem (com as
+ * fotos e o vídeo do teste de tela), e a caixa para falar com eles.
+ * Especificação: a tarefa reescrita pela triagem, que dá para ajustar à
+ * mão. Código: o diff.
  */
 // falas de uma linha só (decisões e mudanças de etapa)
-const LINE_KINDS = ["stage", "approve", "publish", "done", "cancel", "merged"];
+const LINE_KINDS = [
+  "stage",
+  "approve",
+  "publish",
+  "done",
+  "cancel",
+  "merged",
+  "test"
+];
 
 const useStyles = makeStyles(theme => {
   const tkv = theme.palette.tkv;
@@ -74,9 +87,33 @@ const useStyles = makeStyles(theme => {
       backgroundColor: tkv.surface,
       [theme.breakpoints.down("xs")]: {
         width: "100%",
-        height: "calc(var(--vh, 100vh) - 16px)",
-        borderRadius: "22px 22px 0 0"
+        height: "var(--vh, 100vh)",
+        maxHeight: "none",
+        borderRadius: 0
       }
+    },
+    // celular: barra fixa no topo, com voltar e o menu sempre à mão
+    appBar: {
+      flex: "none",
+      display: "flex",
+      alignItems: "center",
+      gap: 4,
+      minHeight: 56,
+      padding: "0 4px",
+      paddingTop: "var(--safe-top, 0px)",
+      borderBottom: `1px solid ${tkv.border}`,
+      backgroundColor: tkv.surface
+    },
+    appBarText: {
+      flex: 1,
+      minWidth: 0,
+      fontSize: "0.9375rem",
+      fontWeight: 600,
+      color: theme.palette.text.secondary,
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      "& b": { color: theme.palette.text.primary }
     },
     head: {
       flex: "none",
@@ -84,7 +121,7 @@ const useStyles = makeStyles(theme => {
       padding: theme.spacing(2, 1.5, 1.5, 2.5),
       borderBottom: `1px solid ${tkv.border}`,
       [theme.breakpoints.down("xs")]: {
-        padding: theme.spacing(1.5, 1, 1.25, 2)
+        padding: theme.spacing(2, 2, 2)
       }
     },
     headTop: { display: "flex", alignItems: "flex-start", gap: 4 },
@@ -94,7 +131,8 @@ const useStyles = makeStyles(theme => {
       fontWeight: 700,
       lineHeight: 1.3,
       color: theme.palette.text.primary,
-      overflowWrap: "anywhere"
+      overflowWrap: "anywhere",
+      [theme.breakpoints.down("xs")]: { fontSize: "1.1875rem" }
     },
     meta: {
       marginTop: 4,
@@ -200,15 +238,51 @@ const useStyles = makeStyles(theme => {
       display: "flex",
       flexWrap: "wrap",
       alignItems: "center",
-      gap: 6,
-      [theme.breakpoints.down("xs")]: { width: "100%" }
+      gap: 8,
+      [theme.breakpoints.down("xs")]: {
+        width: "100%",
+        flexDirection: "column",
+        alignItems: "stretch"
+      }
     },
     action: {
       borderRadius: tkv.radius.pill,
       textTransform: "none",
       fontWeight: 700,
       boxShadow: "none",
-      [theme.breakpoints.down("xs")]: { flex: "1 1 auto" }
+      [theme.breakpoints.down("xs")]: { minHeight: 42 }
+    },
+    branch: {
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 4,
+      maxWidth: "100%",
+      height: 24,
+      padding: "0 9px",
+      borderRadius: tkv.radius.pill,
+      border: `1px solid ${tkv.border}`,
+      fontFamily: mono,
+      fontSize: "0.72rem",
+      color: theme.palette.text.secondary,
+      "& svg": { fontSize: 14, flex: "none" },
+      "& span": {
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap"
+      }
+    },
+    steps2: { margin: "6px 0 0", paddingLeft: 22, "& li": { marginBottom: 3 } },
+    stepCode: {
+      fontFamily: mono,
+      fontSize: "0.75rem",
+      overflowWrap: "anywhere"
+    },
+    verdict: {
+      display: "flex",
+      gap: 8,
+      alignItems: "flex-start",
+      marginTop: 6,
+      "& > span:last-child": { flex: 1, minWidth: 0 }
     },
     danger: { color: tkv.semantic.danger },
     // no computador o cabeçalho fica parado e só a aba rola; no celular ele
@@ -228,6 +302,9 @@ const useStyles = makeStyles(theme => {
       flex: "none",
       display: "flex",
       gap: 4,
+      overflowX: "auto",
+      scrollbarWidth: "none",
+      "&::-webkit-scrollbar": { display: "none" },
       padding: theme.spacing(1, 2, 0),
       borderBottom: `1px solid ${tkv.border}`,
       backgroundColor: tkv.surface,
@@ -238,7 +315,8 @@ const useStyles = makeStyles(theme => {
       }
     },
     tab: {
-      height: 38,
+      flex: "none",
+      height: 42,
       padding: "0 12px",
       fontSize: "0.875rem",
       fontWeight: 600,
@@ -256,7 +334,7 @@ const useStyles = makeStyles(theme => {
       [theme.breakpoints.down("xs")]: {
         overflowY: "visible",
         minHeight: "55%",
-        padding: theme.spacing(1.5, 1.5)
+        padding: theme.spacing(2, 1.5, 3)
       }
     },
     timeline: {
@@ -264,20 +342,21 @@ const useStyles = makeStyles(theme => {
       flexDirection: "column",
       gap: theme.spacing(1.75)
     },
-    event: { display: "flex", alignItems: "flex-start", gap: 10 },
-    avatar: {
-      flex: "none",
-      display: "grid",
-      placeItems: "center",
-      width: 32,
-      height: 32,
-      borderRadius: "50%",
-      border: "1px solid transparent",
-      "& svg": { fontSize: 18 }
+    event: {
+      display: "flex",
+      alignItems: "flex-start",
+      gap: 10,
+      // celular: a foto sobe para a linha do nome e o balão fica largo
+      [theme.breakpoints.down("xs")]: { display: "block" }
     },
-    avatarNeutral: {
-      backgroundColor: `${tkv.surface} !important`,
-      borderColor: tkv.border
+    eventAvatar: {
+      marginTop: 2,
+      [theme.breakpoints.down("xs")]: { display: "none" }
+    },
+    headAvatar: {
+      display: "none",
+      alignSelf: "center",
+      [theme.breakpoints.down("xs")]: { display: "inline-flex" }
     },
     eventMain: { flex: 1, minWidth: 0 },
     eventHead: {
@@ -393,7 +472,8 @@ const useStyles = makeStyles(theme => {
       flex: "none",
       padding: theme.spacing(1.25, 1.5),
       paddingBottom: `calc(${theme.spacing(1.25)}px + var(--safe-bottom, 0px))`,
-      borderTop: `1px solid ${tkv.border}`
+      borderTop: `1px solid ${tkv.border}`,
+      backgroundColor: tkv.surface
     },
     input: {
       width: "100%",
@@ -413,7 +493,8 @@ const useStyles = makeStyles(theme => {
     composerHint: {
       flex: "1 1 200px",
       fontSize: "0.75rem",
-      color: theme.palette.text.secondary
+      color: theme.palette.text.secondary,
+      [theme.breakpoints.down("xs")]: { flexBasis: "100%" }
     },
     specHead: {
       display: "flex",
@@ -537,7 +618,7 @@ const DiffView = ({ diff, changedFiles }) => {
   });
 };
 
-const TaskDrawer = ({ taskId, onClose, onChanged }) => {
+const TaskDrawer = ({ taskId, setup, onClose, onChanged }) => {
   const classes = useStyles();
   const theme = useTheme();
   const isPhone = useMediaQuery(theme.breakpoints.down("xs"));
@@ -807,7 +888,41 @@ const TaskDrawer = ({ taskId, onClose, onChanged }) => {
           })
         );
       }
+      // o merge manda para os testes sozinho; o botão é para quando a
+      // mudança já está no ar por outro caminho (ou o patch foi aplicado)
+      if (setup?.browser) {
+        buttons.push(
+          secondary("test", t("actions.testNow"), () =>
+            act("test", {}, t("toasts.testing"))
+          )
+        );
+      }
       buttons.push(secondary("done", t("actions.done"), () => act("done")));
+    } else if (task.stage === "tests") {
+      if (task.testVerdict === "fail" || task.testVerdict === "unclear") {
+        hint =
+          task.testVerdict === "fail"
+            ? t("hints.testsFailed")
+            : t("hints.testsUnclear");
+        buttons.push(
+          primary("test", t("actions.testAgain"), () =>
+            act("test", {}, t("toasts.testing"))
+          )
+        );
+        buttons.push(
+          secondary("done", t("actions.doneAnyway"), () => act("done"))
+        );
+      } else {
+        hint = t("hints.testsWaiting");
+        buttons.push(
+          primary("test", t("actions.testNow"), () =>
+            act("test", {}, t("toasts.testing"))
+          )
+        );
+        buttons.push(
+          secondary("done", t("actions.doneWithoutTests"), () => act("done"))
+        );
+      }
     }
 
     return (
@@ -906,6 +1021,14 @@ const TaskDrawer = ({ taskId, onClose, onChanged }) => {
         return meta.skills?.length
           ? t("events.learned", { count: meta.skills.length })
           : t("events.learnedNothing");
+      case "test_plan":
+        return meta.needed ? t("events.testPlan") : t("events.testNotNeeded");
+      case "test_run":
+        return t("events.testRun", { count: meta.images?.length || 0 });
+      case "test_result":
+        return t(`events.testResult.${meta.verdict || "unclear"}`);
+      case "test_skip":
+        return t("events.testSkip");
       default:
         return i18n.exists(`devPipeline.events.${kind}`)
           ? t(`events.${kind}`)
@@ -1103,6 +1226,123 @@ const TaskDrawer = ({ taskId, onClose, onChanged }) => {
         );
       case "stuck":
         return t("events.stuck", { count: meta.rounds || 0 });
+      case "test_plan":
+        return (
+          <>
+            {content && <div className={classes.plain}>{content}</div>}
+            {meta.needed && meta.devices?.length > 0 && (
+              <div className={classes.files}>
+                {meta.devices.map(device => (
+                  <span
+                    key={device}
+                    className={classes.chip}
+                    style={toneStyle(theme, "info")}
+                  >
+                    {t(`devices.${device}`)}
+                  </span>
+                ))}
+              </div>
+            )}
+            {meta.needed && meta.checks?.length > 0 && (
+              <>
+                <div className={classes.sub}>{t("events.testChecks")}</div>
+                <ul className={classes.list}>
+                  {meta.checks.map(check => (
+                    <li key={check}>{check}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+            {meta.needed && meta.steps?.length > 0 && (
+              <>
+                <div className={classes.sub}>{t("events.testSteps")}</div>
+                <ol className={classes.steps2}>
+                  {meta.steps.map((step, index) => (
+                    // eslint-disable-next-line react/no-array-index-key
+                    <li key={index}>
+                      {t(`testActions.${step.action}`)}{" "}
+                      {step.target && (
+                        <span className={classes.stepCode}>{step.target}</span>
+                      )}
+                      {step.note ? ` · ${step.note}` : ""}
+                    </li>
+                  ))}
+                </ol>
+              </>
+            )}
+          </>
+        );
+      case "test_run": {
+        const pick = ids =>
+          (ids || [])
+            .map(id => (task.attachments || []).find(file => file.id === id))
+            .filter(Boolean);
+        const failed = (meta.log || []).filter(entry => !entry.ok);
+        return (
+          <>
+            <DevImages taskId={task.id} files={pick(meta.images)} whole />
+            <DevVideos taskId={task.id} files={pick(meta.videos)} />
+            {failed.length > 0 && (
+              <>
+                <div className={clsx(classes.sub, classes.problem)}>
+                  {t("events.testFailedSteps")}
+                </div>
+                <ul className={classes.list}>
+                  {failed.map(entry => (
+                    <li key={`${entry.device}-${entry.step}`}>
+                      {t(`devices.${entry.device}`)} · {entry.step}.{" "}
+                      {t(`testActions.${entry.action}`)}{" "}
+                      <span className={classes.stepCode}>{entry.target}</span>:{" "}
+                      {entry.error}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+            {meta.pageErrors?.length > 0 && (
+              <>
+                <div className={clsx(classes.sub, classes.problem)}>
+                  {t("events.testPageErrors")}
+                </div>
+                <ul className={classes.list}>
+                  {meta.pageErrors.map(error => (
+                    <li key={error} className={classes.stepCode}>
+                      {error}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+            <div className={classes.usage}>
+              {t("events.testSafe", { count: meta.blocked?.length || 0 })}
+            </div>
+          </>
+        );
+      }
+      case "test_result":
+        return (
+          <>
+            {content && (
+              <Markdown text={content} className={classes.markdown} />
+            )}
+            {(meta.findings || []).map(finding => (
+              <div key={finding.check} className={classes.verdict}>
+                <span
+                  className={classes.chip}
+                  style={toneStyle(theme, finding.ok ? "success" : "danger")}
+                >
+                  {finding.ok ? t("events.testOk") : t("events.testNotOk")}
+                </span>
+                <span>
+                  <b>{finding.check}</b>
+                  {finding.note ? ` · ${finding.note}` : ""}
+                </span>
+              </div>
+            ))}
+          </>
+        );
+      case "test_skip":
+        return t(`events.testSkipReason.${meta.reason || "no_browser"}`);
       default: {
         // pedido e comentários podem trazer imagens
         const files = (meta.images || [])
@@ -1143,21 +1383,20 @@ const TaskDrawer = ({ taskId, onClose, onChanged }) => {
       );
     }
 
-    const agent = agentOf(event.agent);
-    const Icon = agent.icon;
     const content = eventContent(event);
     return (
       <div key={event.id} className={classes.event}>
-        <span
-          className={clsx(classes.avatar, {
-            [classes.avatarNeutral]: agent.tone === "neutral"
-          })}
-          style={toneStyle(theme, agent.tone)}
-        >
-          <Icon />
-        </span>
+        <AgentAvatar
+          agent={event.agent}
+          size={36}
+          badge
+          className={classes.eventAvatar}
+        />
         <div className={classes.eventMain}>
           <div className={classes.eventHead}>
+            <span className={classes.headAvatar}>
+              <AgentAvatar agent={event.agent} size={24} />
+            </span>
             <b>{who}</b>
             {!["human", "system"].includes(event.agent) && (
               <span className={classes.role}>{agentRole(event.agent)}</span>
@@ -1181,6 +1420,11 @@ const TaskDrawer = ({ taskId, onClose, onChanged }) => {
   };
 
   // ------------------------------------------------------------ especificação
+
+  // as fotos e vídeos do testador aparecem na conversa, não no pedido
+  const requestImages = (task?.attachments || []).filter(
+    file => file.kind !== "test"
+  );
 
   const renderSpec = () => {
     if (editing) {
@@ -1282,12 +1526,12 @@ const TaskDrawer = ({ taskId, onClose, onChanged }) => {
                 {fileChips(task.skills)}
               </div>
             )}
-            {task.attachments?.length > 0 && (
+            {requestImages.length > 0 && (
               <div className={classes.card}>
                 <div className={classes.sub} style={{ marginTop: 0 }}>
                   {t("images.title")}
                 </div>
-                <DevImages taskId={task.id} files={task.attachments} large />
+                <DevImages taskId={task.id} files={requestImages} large />
               </div>
             )}
             {task.priorityReason && (
@@ -1407,6 +1651,22 @@ const TaskDrawer = ({ taskId, onClose, onChanged }) => {
         </div>
       ) : (
         <>
+          {isPhone && (
+            <div className={classes.appBar}>
+              <IconButton aria-label={t("actions.close")} onClick={onClose}>
+                <ArrowBackRoundedIcon />
+              </IconButton>
+              <div className={classes.appBarText}>
+                <b>#{task.id}</b> · {t(`stages.${task.stage}`)}
+              </div>
+              <IconButton
+                aria-label={t("actions.more")}
+                onClick={e => setMenu(e.currentTarget)}
+              >
+                <MoreVertRoundedIcon />
+              </IconButton>
+            </div>
+          )}
           <div ref={scrollerRef} className={classes.scroller}>
             <div className={classes.head}>
               <div className={classes.headTop}>
@@ -1420,15 +1680,22 @@ const TaskDrawer = ({ taskId, onClose, onChanged }) => {
                       })})`}
                   </div>
                 </div>
-                <IconButton
-                  aria-label={t("actions.more")}
-                  onClick={e => setMenu(e.currentTarget)}
-                >
-                  <MoreVertRoundedIcon />
-                </IconButton>
-                <IconButton aria-label={t("actions.close")} onClick={onClose}>
-                  <CloseRoundedIcon />
-                </IconButton>
+                {!isPhone && (
+                  <>
+                    <IconButton
+                      aria-label={t("actions.more")}
+                      onClick={e => setMenu(e.currentTarget)}
+                    >
+                      <MoreVertRoundedIcon />
+                    </IconButton>
+                    <IconButton
+                      aria-label={t("actions.close")}
+                      onClick={onClose}
+                    >
+                      <CloseRoundedIcon />
+                    </IconButton>
+                  </>
+                )}
               </div>
 
               {task.stage === "cancelled" ? (
@@ -1467,12 +1734,12 @@ const TaskDrawer = ({ taskId, onClose, onChanged }) => {
                     {t("designChip")}
                   </span>
                 )}
-                {task.effort && (
+                {difficultyOf(task) && (
                   <span
                     className={classes.chip}
-                    style={toneStyle(theme, "neutral")}
+                    style={toneStyle(theme, difficultyOf(task).tone)}
                   >
-                    {t("effort", { value: task.effort })}
+                    {t(`difficulty.${difficultyOf(task).key}`)}
                   </span>
                 )}
                 {task.risk && (
@@ -1493,6 +1760,12 @@ const TaskDrawer = ({ taskId, onClose, onChanged }) => {
                     style={toneStyle(theme, "neutral")}
                   >
                     {t("round", { count: task.reviewRound })}
+                  </span>
+                )}
+                {task.branch && (
+                  <span className={classes.branch} title={task.branch}>
+                    <CallSplitRoundedIcon />
+                    <span>{task.branch}</span>
                   </span>
                 )}
               </div>
@@ -1596,11 +1869,15 @@ const TaskDrawer = ({ taskId, onClose, onChanged }) => {
                 />
               </div>
               <div className={classes.composerRow}>
-                <span className={classes.composerHint}>
-                  {canRerun
-                    ? t("composer.hint", { target: rerunTarget })
-                    : t("composer.busy")}
-                </span>
+                {/* no celular a explicação só aparece quando há o que
+                    enviar: sem isso a caixa ocupa um quinto da tela */}
+                {(!isPhone || text.trim() || images.length > 0) && (
+                  <span className={classes.composerHint}>
+                    {canRerun
+                      ? t("composer.hint", { target: rerunTarget })
+                      : t("composer.busy")}
+                  </span>
+                )}
                 <Button
                   size="small"
                   className={classes.action}
@@ -1641,6 +1918,17 @@ const TaskDrawer = ({ taskId, onClose, onChanged }) => {
             >
               {t("actions.learn")}
             </MenuItem>
+            {setup?.browser && ["pr", "tests", "done"].includes(task.stage) && (
+              <MenuItem
+                disabled={busy(task)}
+                onClick={() => {
+                  setMenu(null);
+                  act("test", {}, t("toasts.testing"));
+                }}
+              >
+                {t("actions.testNow")}
+              </MenuItem>
+            )}
             {!closed(task) && (
               <MenuItem
                 onClick={() => {

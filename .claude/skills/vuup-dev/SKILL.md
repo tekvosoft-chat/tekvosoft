@@ -12,9 +12,10 @@ Leia o `AGENTS.md` da raiz para as regras do projeto. Aqui fica só o
 
 - Subir/recriar: `./tekvosoft dev` (gera `.env` e `frontend/public/config.json`,
   troca portas ocupadas sozinho). Portas atuais ficam no `.env`
-  (`PORT`, `API_PORT`) — nesta máquina: frontend **3001**, API **8081**.
-- Login semeado: `admin@tekvosoft.local` / `123456` (empresa 1, super).
-- Containers: `tekvosoft-frontend-1`, `tekvosoft-backend-1`, `tekvosoft-postgres-1`, `tekvosoft-redis-1`.
+  (`PORT`, `API_PORT`; padrão 3000 e 8080).
+- Login semeado: o `ADMIN_EMAIL` do `.env` (padrão `admin@vuup.local`) / `123456` (empresa 1, super).
+- Containers: `tekvosoft-frontend-1`, `tekvosoft-backend-1`, `tekvosoft-postgres-1`, `tekvosoft-redis-1`, `tekvosoft-browser-1` (Playwright do testador).
+- Windows (Git Bash): o repositório precisa de LF (`git config core.autocrlf false` e checkout de novo), e `docker exec`/`docker cp` com caminho `/...` pedem `MSYS_NO_PATHCONV=1`. Hot reload depende do polling do compose de dev.
 - O `node_modules` de cada pacote vive num volume do container: rode
   ferramentas com `docker exec tekvosoft-<frontend|backend>-1 npx ...`.
   Os erros de tipo que o editor mostra no backend (`findByPk does not exist`)
@@ -39,8 +40,11 @@ docker exec tekvosoft-frontend-1 npx eslint <arquivos>
 docker logs --since 60s tekvosoft-frontend-1 | grep -E "compiled|Failed"
 ```
 
-Tela real (headless): no scratchpad, `npm i playwright-core` uma vez e use
-`chromium.launch({ executablePath: "/usr/bin/google-chrome" })`. Login pelo
+Tela real (headless): sem instalar nada, copie o script para o backend
+(`docker cp` + `docker exec -w /usr/src/app tekvosoft-backend-1 node x.js`) e
+use `chromium.connect("ws://browser:39321/")` do `playwright-core`, abrindo
+`http://localhost:3000` (o container do navegador repassa localhost para o
+frontend e o backend). Login pelo
 formulário (`input[name=email]`, `input[name=password]`, `button[type=submit]`).
 Dicas de seletor:
 - itens da lista de conversas: `div[role="button"]` com `hasText`;
@@ -76,8 +80,10 @@ o i18next (v19) troca por vazio.
 - Pipeline de IA: `backend/src/services/DevPipeline/` (`agents.ts` = etapas,
   `prompts.ts` = regras dos agentes, `workspace.ts` = edições e diff,
   `repo.ts` = GitHub/local e travas) + `frontend/src/pages/DevPipeline/`.
-  Testar sem gastar: tarefa pequena com `gpt-5-mini` (~US$ 0,02 o ciclo);
-  depois apague as tarefas e as chaves `_dev*` de teste.
+  Provedor padrão: OpenRouter, um modelo por agente (`models.ts`). Demanda
+  fácil custa ~US$ 0,015 o ciclo inteiro (triagem, código, revisão e teste);
+  depois apague as tarefas e as chaves `_dev*` de teste. Editar o backend
+  com uma demanda rodando reinicia o servidor e ela volta para a fila.
 - Estilo: MUI v4 + `makeStyles`, tokens em `theme.palette.tkv.*`
   (`surface`, `border`, `brand.text`, `brand.textSoft`, `semantic.*`).
   Comentários em português explicando o porquê.

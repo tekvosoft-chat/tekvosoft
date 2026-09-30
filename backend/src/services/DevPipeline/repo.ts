@@ -9,7 +9,8 @@ import { DevChange } from "../../models/DevTask";
  * De onde os agentes leem o código e para onde vai o PR.
  *
  *  - GitHub com token: lê o commit mais novo da branch base, cria a branch
- *    ai/<id>-<assunto>, faz o commit e abre o PR como rascunho;
+ *    <tipo>/<id>-<nome> (fix/12-botao-salvar-celular), faz o commit e abre
+ *    o PR como rascunho;
  *  - GitHub sem token (repositório público): só lê; o resultado fica como
  *    patch para baixar;
  *  - código local (DEV_PIPELINE_REPO_PATH, só no ambiente de dev): lê a
@@ -40,6 +41,8 @@ export interface PublishResult {
 export interface PullState {
   open: boolean;
   merged: boolean;
+  // commit que o merge criou na branch base
+  mergeSha?: string;
 }
 
 export interface RepoSource {
@@ -51,6 +54,10 @@ export interface RepoSource {
   read(sha: string, file: string): Promise<string | null>;
   publish(request: PublishRequest): Promise<PublishResult>;
   pull(number: number): Promise<PullState | null>;
+  // a branch já existe? (outra demanda, ou outro ambiente, pode ter o nome)
+  branchExists(branch: string): Promise<boolean>;
+  // o commit "head" já contém o "base"? (null = não dá para saber)
+  contains(base: string, head: string): Promise<boolean | null>;
   // linhas "caminho:linha: texto" onde o termo aparece (null = sem busca)
   search(sha: string, query: string): Promise<string[] | null>;
 }
@@ -118,6 +125,42 @@ export const writeBlock = (
     return "migration existente é imutável: crie uma nova";
   }
   return null;
+};
+
+// ---------------------------------------------------------------------------
+// nome das branches
+
+// tipo da demanda vira o começo da branch, como o time já faz à mão
+const BRANCH_PREFIX: Record<string, string> = {
+  bug: "fix",
+  feature: "feat",
+  improvement: "improve",
+  chore: "chore"
+};
+const BRANCH_WORDS = 5;
+const BRANCH_CHARS = 40;
+
+/**
+ * Nome da branch: <tipo>/<id>-<nome>, com o nome curto que a triagem deu
+ * (ou o título). Corta em palavra inteira, nunca no meio: nada de
+ * "ai/5-reacoes-usar-barra-igual-ao-whatsapp-e-t".
+ */
+export const branchName = (id: number, kind: string, name: string): string => {
+  const words = String(name || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean)
+    .slice(0, BRANCH_WORDS);
+  let short = "";
+  // eslint-disable-next-line no-restricted-syntax
+  for (const word of words) {
+    const next = short ? `${short}-${word}` : word;
+    if (next.length > BRANCH_CHARS) break;
+    short = next;
+  }
+  return `${BRANCH_PREFIX[kind] || "task"}/${id}-${short || "tarefa"}`;
 };
 
 // ---------------------------------------------------------------------------
@@ -343,7 +386,28 @@ class GithubSource implements RepoSource {
     const res = await this.call(`/pulls/${number}`);
     if (!res.ok) return null;
     const data = await res.json();
-    return { open: data.state === "open", merged: !!data.merged };
+    return {
+      open: data.state === "open",
+      merged: !!data.merged,
+      mergeSha: data.merge_commit_sha || undefined
+    };
+  }
+
+  async branchExists(branch: string): Promise<boolean> {
+    const res = await this.call(`/git/ref/heads/${encodeRef(branch)}`);
+    if (res.status === 404) return false;
+    if (!res.ok) await GithubSource.fail(res);
+    return true;
+  }
+
+  async contains(base: string, head: string): Promise<boolean | null> {
+    const res = await this.call(
+      `/compare/${encodeURIComponent(base)}...${encodeURIComponent(head)}`
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    // "ahead": head veio depois de base; "identical": é o mesmo commit
+    return ["ahead", "identical"].includes(data.status);
   }
 
   /**
@@ -438,6 +502,14 @@ class LocalSource implements RepoSource {
   }
 
   async pull(): Promise<PullState | null> {
+    return null;
+  }
+
+  async branchExists(): Promise<boolean> {
+    return false;
+  }
+
+  async contains(): Promise<boolean | null> {
     return null;
   }
 

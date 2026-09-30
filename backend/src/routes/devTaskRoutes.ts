@@ -57,6 +57,7 @@ devTaskRoutes.post(
   ...guard,
   DevTaskController.publish
 );
+devTaskRoutes.post("/dev-tasks/:id/test", ...guard, DevTaskController.runTests);
 devTaskRoutes.post("/dev-tasks/:id/done", ...guard, DevTaskController.finish);
 devTaskRoutes.post("/dev-tasks/:id/cancel", ...guard, DevTaskController.cancel);
 

@@ -51,6 +51,10 @@ const PIPELINE = {
     label: "PR",
     note: "A melhoria ficou pronta e está na revisão final da equipe"
   },
+  tests: {
+    label: "Testes",
+    note: "A melhoria foi aprovada e passa pelos testes finais"
+  },
   done: {
     label: "Concluído",
     note: "Melhoria concluída: ela chega numa das próximas atualizações"

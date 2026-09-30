@@ -1864,9 +1864,63 @@ const messages = {
         extensionBuildUnknownError: "Unknown build error."
       },
       devPipeline: {
+        difficulty: {
+          easy: "Easy",
+          medium: "Medium",
+          hard: "Hard"
+        },
+        devices: {
+          desktop: "Desktop",
+          mobile: "Mobile"
+        },
+        testActions: {
+          goto: "Open",
+          click: "Click",
+          fill: "Fill in",
+          press: "Key",
+          wait: "Wait",
+          scroll: "Scroll",
+          screenshot: "Photo"
+        },
+        agentBios: {
+          triage:
+            "Curious, digs through the code until she finds where the problem lives. Writes little and gets straight to the point: rewrites the request, points to the files and says whether it's easy or hard.",
+          priority:
+            "Decides what is truly urgent, with no false alarms. Works alongside Xereta, in the same call.",
+          developer:
+            "Pragmatic dev: makes the smallest change that solves it and leaves no loose ends. On hard requests, he brings in the strongest model.",
+          reviewer:
+            "Demanding but fair reviewer: goes over every line with a magnifying glass, but only blocks real problems.",
+          tester:
+            "The team's photographer: after the merge, opens the live system, records video and takes photos on desktop and mobile to prove it works.",
+          learner:
+            "The team's teacher: turns every slip into a short lesson the other agents won't forget."
+        },
+        team: {
+          intro:
+            "Each agent uses the model its task calls for, through OpenRouter. The expensive model only steps in when triage says the request is medium or hard.",
+          price: "{{input}} input · {{output}} output, per million tokens",
+          sameCall:
+            "Decides together with Xereta, in the same call: it costs nothing extra.",
+          single:
+            "All agents use {{provider}} · {{model}}. With OpenRouter, each one uses the model for its task, which is cheaper.",
+          routingTitle: "Who writes and who reviews, by difficulty",
+          difficulty: "Difficulty",
+          routingHint:
+            "High risk (money, data, login or sending messages) counts as hard. If a model goes down, OpenRouter switches to the backup on its own."
+        },
+        slots: {
+          triage: "Always",
+          developer: "Easy request",
+          developerHard: "Medium or hard",
+          reviewer: "Easy or medium",
+          reviewerHard: "Hard or risky",
+          tester: "Always",
+          learner: "Always"
+        },
         title: "AI pipeline",
         subtitle:
-          "Improvements and fixes built by AI agents: triage, code, code review and PR. You approve before any code and review the PR before merging.",
+          "Improvements and fixes built by AI agents: triage, code, code review, PR and tests. You approve before any code and review the PR before merging.",
         newTask: "New request",
         search: "Search by title, company or #number",
         showCancelled: "Show cancelled",
@@ -1879,6 +1933,7 @@ const messages = {
         round: "Round {{count}}",
         effort: "Effort {{value}}",
         stages: {
+          tests: "Tests",
           intake: "Intake",
           prioritization: "Prioritization",
           development: "Development",
@@ -1888,22 +1943,28 @@ const messages = {
           cancelled: "Cancelled"
         },
         stageHints: {
+          tests:
+            "After the merge, Clique tests on screen with photos and video",
           intake:
             "The agent understands the request, checks the code and rewrites the task",
           prioritization: "You check the priority and approve before any code",
           development: "The developer agent writes the code",
           review: "The reviewer agent checks the diff and asks for fixes",
           pr: "Branch and PR ready for your review",
-          done: "PR merged or request completed",
+          done: "Tested on screen or completed by you",
           cancelled: "Requests that won't move forward"
         },
         line: {
+          testsWaiting: "Waiting for the new version to go live",
+          testsFailed: "The screen test failed",
+          testsUnclear: "The test couldn't confirm it",
           queued: "Queued",
           running: {
-            intake: "Triage in progress",
+            tests: "Clique testing on screen",
+            intake: "Xereta analyzing the request",
             prioritization: "Preparing development",
-            development: "Developer writing the code",
-            review: "Reviewer checking the diff",
+            development: "Zé Commit writing the code",
+            review: "Dona Lupa checking the diff",
             pr: "Opening the PR"
           },
           notAnalyzed: "Waiting for analysis",
@@ -1916,6 +1977,12 @@ const messages = {
           cancelled: "Cancelled"
         },
         hints: {
+          testsWaiting:
+            "The PR was accepted. When the new version goes live (stack update), Clique tests on his own. If it's already live, run it now.",
+          testsFailed:
+            "See the photos in the conversation. To fix it, write below and click “Send to agents”: what Clique saw goes along.",
+          testsUnclear:
+            "Clique couldn't see the result (the reason is in the conversation). Run it again or complete it.",
           running:
             "The agents are working; the conversation updates by itself.",
           error:
@@ -1957,6 +2024,7 @@ const messages = {
           help: "Customer"
         },
         agents: {
+          tester: "Clique",
           triage: "Snoop",
           priority: "Siren",
           developer: "Joe Commit",
@@ -1966,6 +2034,7 @@ const messages = {
           human: "You"
         },
         tabs: {
+          team: "Team",
           board: "Board",
           skills: "Skills",
           conversation: "Conversation",
@@ -1973,6 +2042,28 @@ const messages = {
           code: "Code"
         },
         events: {
+          test: "asked to run the screen tests",
+          testPlan: "planned the screen test",
+          testNotNeeded: "saw that this change doesn't show on screen",
+          testRun: "recorded the test: {{count}} photo(s)",
+          testSkip: "skipped the screen test",
+          testChecks: "What the photos need to show",
+          testSteps: "Script",
+          testFailedSteps: "Steps that failed",
+          testPageErrors: "JavaScript errors on screen",
+          testSafe:
+            "Read-only browser: {{count}} save attempt(s) blocked; nothing in the system was changed.",
+          testOk: "OK",
+          testNotOk: "No",
+          testResult: {
+            pass: "passed on screen",
+            fail: "failed on screen",
+            unclear: "couldn't confirm it"
+          },
+          testSkipReason: {
+            no_browser:
+              "The test browser isn't configured (PLAYWRIGHT_WS_ENDPOINT)."
+          },
           searched: "Searched the code",
           learned: "learned {{count}} skill(s)",
           learnedNothing: "studied the request and found nothing new to learn",
@@ -2002,7 +2093,7 @@ const messages = {
           stuckTitle: "needs you",
           stuck:
             "The reviewer still asks for changes after {{count}} round(s). You decide: publish as is, ask for another round, or cancel.",
-          merged: "PR #{{number}} merged: request completed",
+          merged: "PR #{{number}} merged",
           approve: "approved for development ({{priority}})",
           publish: "chose to publish anyway",
           done: "marked as done",
@@ -2011,6 +2102,10 @@ const messages = {
           rerun: "sent to the agents"
         },
         actions: {
+          testNow: "Run tests now",
+          testAgain: "Run again",
+          doneAnyway: "Complete anyway",
+          doneWithoutTests: "Complete without testing",
           learn: "Learn from this request",
           approve: "Approve and develop",
           analyze: "Analyze now",
@@ -2069,6 +2164,8 @@ const messages = {
           create: "Create and analyze"
         },
         setup: {
+          perAgent: "OpenRouter · one model per agent",
+          seeTeam: "see the team",
           open: "Open settings",
           noKey: "The AI key is missing.",
           noRepo: "The GitHub repository is missing.",
@@ -2078,6 +2175,7 @@ const messages = {
             "{{repo}} without a token: reads the code, the result is a patch",
           github: "PRs on {{repo}}",
           provider: {
+            openrouter: "OpenRouter",
             anthropic: "Claude",
             openai: "OpenAI"
           }
@@ -2091,12 +2189,14 @@ const messages = {
             "The agents' conversation and the generated code are deleted for good."
         },
         toasts: {
+          testing: "Clique is testing on screen",
           learning: "Know-It-All is studying this request",
           created: "Request #{{id}} created: triage started",
           approved: "Approved: development started",
           sent: "Sent to the agents"
         },
         agentRoles: {
+          tester: "tests",
           triage: "triage",
           priority: "priority",
           developer: "code",
@@ -2206,6 +2306,15 @@ const messages = {
           }
         },
         errors: {
+          ERR_DEV_AI_CREDITS:
+            "OpenRouter credit ran out (or the key limit was reached): top up at openrouter.ai",
+          ERR_DEV_AI_TIMEOUT: "The AI took too long to answer: try again",
+          ERR_DEV_TEST_NO_BROWSER: "The test browser isn't configured",
+          ERR_DEV_TEST_NO_URL:
+            "The system address (FRONTEND_URL) is missing for the test",
+          ERR_DEV_TEST_NO_USER:
+            "No active super admin for the test to sign in as",
+          ERR_DEV_TEST_BROWSER: "The test browser didn't respond",
           ERR_DEV_AI_NOT_CONFIGURED: "The AI key is missing in Settings",
           ERR_DEV_AI_AUTH: "The AI key was rejected",
           ERR_DEV_AI_MODEL:
@@ -2241,7 +2350,7 @@ const messages = {
             devPipeline: {
               title: "AI pipeline",
               description:
-                "Agents that analyze improvement requests, write the code, review it and open a PR on GitHub. Applies to the whole installation."
+                "Agents that analyze improvement requests, write the code, review it, open a PR on GitHub and test it on screen after the merge. Applies to the whole installation."
             },
             service: {
               title: "Service",
@@ -2285,9 +2394,12 @@ const messages = {
             }
           },
           groups: {
+            devModels: "Models per agent (OpenRouter)",
+            devModelsHint:
+              "Leave blank to use each agent's default (shown in the field). To change it, use the model name as listed on openrouter.ai, e.g. openai/gpt-6-luna.",
             devAi: "Artificial intelligence",
             devAiHint:
-              "Which AI the agents use. The same model does triage, code and review, with more or less effort per step, and the project context is cached between calls.",
+              "Which AI the agents use. With OpenRouter, each agent uses the model for its task (the expensive one only on hard requests); with Claude or OpenAI, a single model does everything. The project context is cached between calls.",
             devRepo: "Repository (GitHub)",
             devRepoHint:
               "Where the code is read from and where the PR is opened. Without a token, the code is read (if the repository is public) and the result is a patch to download.",
@@ -2350,6 +2462,42 @@ const messages = {
             empty: "No token generated"
           },
           fields: {
+            _devOpenRouterKey: {
+              title: "OpenRouter key",
+              description:
+                "openrouter.ai › Keys. Leave blank to use the stack's OPENROUTER_API_KEY variable."
+            },
+            _devModelTriage: {
+              title: "Xereta (triage)",
+              description:
+                "Reads the request, finds the files and writes the task."
+            },
+            _devModelDeveloper: {
+              title: "Zé Commit: easy request",
+              description: "Writes the code when triage says it's easy."
+            },
+            _devModelDeveloperHard: {
+              title: "Zé Commit: medium or hard",
+              description: "Writes the code for medium, hard or risky requests."
+            },
+            _devModelReviewer: {
+              title: "Dona Lupa: easy or medium",
+              description: "Reviews the code of easy and medium requests."
+            },
+            _devModelReviewerHard: {
+              title: "Dona Lupa: hard or risky",
+              description:
+                "Reviews the hard ones. A different model family from the developer's catches what he missed."
+            },
+            _devModelTester: {
+              title: "Clique (tests)",
+              description:
+                "Plans the screen test and checks the photos. Must be able to see images."
+            },
+            _devModelLearner: {
+              title: "Sabichão (skills)",
+              description: "Turns corrections and lessons into skills."
+            },
             _devAutoLearn: {
               title: "Learn on its own",
               description:
@@ -2362,8 +2510,10 @@ const messages = {
             },
             _devAiProvider: {
               title: "Provider",
-              description: "Claude (Anthropic) or GPT (OpenAI).",
+              description:
+                "OpenRouter (recommended: one model per agent, the cheapest), Claude (Anthropic) or GPT (OpenAI).",
               options: {
+                openrouter: "OpenRouter (recommended)",
                 anthropic: "Claude (Anthropic)",
                 openai: "GPT (OpenAI)"
               }
@@ -3127,6 +3277,7 @@ const messages = {
           "Backend is starting up and not ready yet. Retrying automatically."
       },
       backendErrors: {
+        ERR_DEV_TEST_NO_BROWSER: "The test browser isn't configured",
         ERR_CODE_NOT_SENT:
           "We couldn't send the code to your email. Please try again in a moment.",
         ERR_CODE_EXPIRED:

@@ -1,13 +1,15 @@
 import { Op } from "sequelize";
 import DevTask, { DevCheck, DevFeedback } from "../../models/DevTask";
 import DevTaskEvent from "../../models/DevTaskEvent";
-import { DevConfig } from "./config";
+import { DevConfig, modelFor } from "./config";
 import { Effort, LlmResult, LlmTurn, parseJson } from "./llm";
 import { callLlm } from "./providers";
-import { RepoSource, buildRepoMap, canRead } from "./repo";
+import { RepoSource, branchName, buildRepoMap, canRead } from "./repo";
 import { Workspace } from "./workspace";
 import { costOf } from "./pricing";
-import { taskImages } from "./images";
+import { imagesOf, taskImages } from "./images";
+import { AgentSlot, slotsFor } from "./models";
+import { browserReady, cleanPlan, runBrowserTest } from "./testRunner";
 import {
   markUsed,
   saveLesson,
@@ -29,7 +31,13 @@ import {
   ReviewerReply,
   LEARNER,
   LEARNER_SCHEMA,
-  LearnerReply
+  LearnerReply,
+  TESTER_PLAN,
+  TESTER_PLAN_SCHEMA,
+  TesterPlanReply,
+  TESTER_JUDGE,
+  TESTER_JUDGE_SCHEMA,
+  TesterJudgeReply
 } from "./prompts";
 
 /**
@@ -37,15 +45,20 @@ import {
  * limites fixos de rodadas: o custo de uma tarefa é previsível.
  *
  *  triagem: 1 chamada (2 se pedir para ver arquivos). Já sai com a
- *    prioridade sugerida: um pedido só faz os dois papéis.
+ *    prioridade e a dificuldade: um pedido só faz os papéis.
  *  desenvolvedor: lê só os arquivos que a triagem apontou (grandes vêm como
  *    índice, e ele pede os trechos); edita por search/replace; a sintaxe é
  *    conferida sem IA e o erro volta para ele antes de gastar o revisor.
  *  revisor: vê o diff e, quando cabem, os arquivos alterados completos;
  *    nunca o repositório inteiro.
  *  PR: sem IA; a descrição é montada com o que os agentes já escreveram.
+ *  testador: depois do merge, com a versão no ar, planeja um teste de
+ *    tela, o navegador executa (fotos e vídeo) e ele confere as fotos.
  *  aprendiz: só roda quando houve correção (da pessoa, do revisor, edição
  *    que falhou) e transforma a lição em skill para as próximas tarefas.
+ *
+ * Modelos: no OpenRouter cada agente tem o seu (models.ts), e a dificuldade
+ * que a triagem deu escolhe o do desenvolvedor e o do revisor.
  *
  * Skills: a triagem vê só o índice e escolhe; os outros recebem inteiras
  * só as escolhidas. Imagens: até 4, reduzidas, para triagem e código (e
@@ -120,6 +133,29 @@ const projectContext = async (
   return text;
 };
 
+// arquivos do commit (o do GitHub não muda; a pasta local, sim)
+const trees = new Map<string, Set<string>>();
+
+/** Caminhos citados que não existem no commit. */
+const missingFiles = async (
+  repo: RepoSource,
+  sha: string,
+  files: string[]
+): Promise<string[]> => {
+  const key = repo.kind === "github" ? `${repo.label}:${sha}` : "";
+  let known = key ? trees.get(key) : null;
+  if (!known) {
+    known = new Set((await repo.list(sha)).map(file => file.path));
+    if (key) {
+      if (trees.size >= 4) trees.delete(trees.keys().next().value);
+      trees.set(key, known);
+    }
+  }
+  return unique(files.map(cleanPath))
+    .filter(file => canRead(file) && !known.has(file))
+    .slice(0, 8);
+};
+
 // ---------------------------------------------------------------------------
 // uma chamada a um agente, com a conta de tokens da tarefa
 
@@ -129,15 +165,24 @@ interface Asked<T> {
   meta: Record<string, unknown>;
 }
 
+interface Question {
+  // vaga do agente: escolhe o modelo (models.ts)
+  slot: AgentSlot;
+  context: string;
+  system: string;
+  messages: LlmTurn[];
+  schema: Record<string, unknown>;
+  schemaName: string;
+  // esforço de Claude e OpenAI; no OpenRouter vale o da vaga
+  effort: Effort;
+  maxTokens: number;
+  // quanto esperar: a triagem desiste bem antes do desenvolvedor
+  timeoutMs: number;
+}
+
 const ask = async <T>(
   ctx: RunContext,
-  context: string,
-  system: string,
-  messages: LlmTurn[],
-  schema: Record<string, unknown>,
-  schemaName: string,
-  effort: Effort,
-  maxTokens: number
+  question: Question
 ): Promise<Asked<T>> => {
   if (await ctx.isCancelled()) throw new Cancelled();
   const { task, config } = ctx;
@@ -145,19 +190,23 @@ const ask = async <T>(
     throw new DevError("ERR_DEV_TOKEN_LIMIT", String(config.tokenLimit));
   }
 
+  const chosen = modelFor(config, question.slot, question.effort);
   const result = await callLlm(config.provider, {
     apiKey: config.apiKey,
-    model: config.model,
-    context,
-    system,
-    messages,
-    schema,
-    schemaName,
-    effort,
-    maxTokens
+    model: chosen.model,
+    fallbacks: chosen.fallbacks,
+    context: question.context,
+    system: question.system,
+    messages: question.messages,
+    schema: question.schema,
+    schemaName: question.schemaName,
+    effort: chosen.effort,
+    maxTokens: question.maxTokens,
+    timeoutMs: question.timeoutMs
   });
   const { usage } = result;
-  const cost = costOf(result.model, usage);
+  // o OpenRouter diz quanto cobrou; os outros, pela tabela de preços
+  const cost = result.cost ?? costOf(result.model, usage);
   await task.update({
     tokensIn: task.tokensIn + usage.input + usage.cacheWrite,
     tokensOut: task.tokensOut + usage.output,
@@ -167,9 +216,11 @@ const ask = async <T>(
   return {
     data: parseJson<T>(result.text),
     result,
-    meta: { model: result.model, usage, cost }
+    meta: { model: result.model, slot: question.slot, usage, cost }
   };
 };
+
+const MINUTE = 60 * 1000;
 
 /** Resultado das buscas no código, no formato que o agente lê. */
 const searchCode = async (
@@ -201,8 +252,11 @@ const lastEvent = (task: DevTask, agent: string, kind: string) =>
   });
 
 const feedbackLine = (item: DevFeedback) => {
-  const who =
-    item.from === "human" ? "pessoa" : `revisor · ${item.severity || "major"}`;
+  const who = {
+    human: "pessoa",
+    tester: "testador, na tela",
+    reviewer: `revisor · ${item.severity || "major"}`
+  }[item.from];
   return `- [${who}]${item.path ? ` ${item.path}:` : ""} ${item.text}`;
 };
 
@@ -240,16 +294,19 @@ export const triage = async (
   const messages: LlmTurn[] = [
     { role: "user", content: request.join("\n\n"), images }
   ];
-  let reply = await ask<TriageReply>(
-    ctx,
+  // resposta curta de propósito: a triagem que escreve demais trava e gasta
+  const question = (): Question => ({
+    slot: "triage",
     context,
-    TRIAGE,
+    system: TRIAGE,
     messages,
-    TRIAGE_SCHEMA,
-    "triage",
-    "medium",
-    16000
-  );
+    schema: TRIAGE_SCHEMA,
+    schemaName: "triage",
+    effort: "low",
+    maxTokens: 8000,
+    timeoutMs: 3 * MINUTE
+  });
+  let reply = await ask<TriageReply>(ctx, question());
 
   const peekList = unique((reply.data.peek || []).map(cleanPath)).filter(
     canRead
@@ -277,16 +334,25 @@ export const triage = async (
         content: `${[...views, found].filter(Boolean).join("\n\n")}\n\nAgora feche a triagem: status "ready" ou "questions".`
       }
     );
-    reply = await ask<TriageReply>(
-      ctx,
-      context,
-      TRIAGE,
-      messages,
-      TRIAGE_SCHEMA,
-      "triage",
-      "medium",
-      16000
+    reply = await ask<TriageReply>(ctx, question());
+  }
+
+  // caminho que não existe: a IA deduziu pelo nome da tela ou da rota (já
+  // aconteceu com /tags, que só redireciona para o Kanban). Uma chance de
+  // corrigir ou perguntar, sem nova leitura de código
+  const missing =
+    reply.data.status === "ready"
+      ? await missingFiles(repo, sha, reply.data.files || [])
+      : [];
+  if (missing.length) {
+    messages.push(
+      { role: "assistant", content: reply.result.text, raw: reply.result.raw },
+      {
+        role: "user",
+        content: `Estes caminhos não existem no repositório: ${missing.join(", ")}. Arquivo novo que a tarefa cria: mantenha e diga na spec. Senão, corrija pelo mapa; se o pedido fala de tela ou função que não existe mais, status "questions" e pergunte. Responda com status "ready" ou "questions".`
+      }
     );
+    reply = await ask<TriageReply>(ctx, question());
   }
 
   const data = reply.data;
@@ -307,18 +373,25 @@ export const triage = async (
   // só skills que existem e estão em uso (a IA pode inventar um slug)
   const chosen = await skillsFor(data.skills || [], !!data.design);
   const skills = chosen.map(skill => skill.slug);
+  const difficulty = ["easy", "medium", "hard"].includes(data.difficulty)
+    ? data.difficulty
+    : "medium";
   await task.update({
     design: !!data.design,
     skills,
     title: String(data.title || task.title).slice(0, 200),
     spec: data.spec,
-    acceptance: (data.acceptance || []).slice(0, 8),
+    acceptance: (data.acceptance || []).slice(0, 6),
     files,
     kind: data.kind,
-    effort: data.effort,
+    difficulty,
     risk: data.risk,
     priority: data.priority,
     priorityReason: data.priorityReason,
+    // o nome já aparece no cartão; depois do PR aberto, não muda mais
+    ...(task.prUrl
+      ? {}
+      : { branch: branchName(task.id, data.kind, data.branch || data.title) }),
     questions: [],
     feedback: []
   });
@@ -328,8 +401,9 @@ export const triage = async (
     acceptance: task.acceptance,
     files,
     kind: data.kind,
-    effort: data.effort,
+    difficulty,
     risk: data.risk,
+    branch: task.branch,
     design: !!data.design,
     skills: chosen.map(skill => skill.name)
   });
@@ -427,18 +501,21 @@ export const develop = async (ctx: RunContext): Promise<void> => {
   let reads = 0;
   let fixes = 0;
   let delivered = false;
+  // fácil vai no modelo barato; média, difícil ou arriscada, no forte
+  const { developer: slot } = slotsFor(task);
 
   for (let turn = 0; turn < MAX_TURNS; turn += 1) {
-    const reply = await ask<DeveloperReply>(
-      ctx,
+    const reply = await ask<DeveloperReply>(ctx, {
+      slot,
       context,
-      DEVELOPER,
+      system: DEVELOPER,
       messages,
-      DEVELOPER_SCHEMA,
-      "developer",
-      "high",
-      64000
-    );
+      schema: DEVELOPER_SCHEMA,
+      schemaName: "developer",
+      effort: "high",
+      maxTokens: 64000,
+      timeoutMs: 12 * MINUTE
+    });
     messages.push({
       role: "assistant",
       content: reply.result.text,
@@ -580,16 +657,18 @@ export const review = async (ctx: RunContext): Promise<boolean> => {
     .filter(Boolean)
     .join("\n\n");
 
-  const reply = await ask<ReviewerReply>(
-    ctx,
+  // difícil ou arriscada: revisão por outra família de modelo
+  const reply = await ask<ReviewerReply>(ctx, {
+    slot: slotsFor(task).reviewer,
     context,
-    REVIEWER,
-    [{ role: "user", content, images }],
-    REVIEWER_SCHEMA,
-    "review",
-    "high",
-    16000
-  );
+    system: REVIEWER,
+    messages: [{ role: "user", content, images }],
+    schema: REVIEWER_SCHEMA,
+    schemaName: "review",
+    effort: "high",
+    maxTokens: 16000,
+    timeoutMs: 8 * MINUTE
+  });
   const comments = reply.data.comments || [];
   const blocking = comments.filter(comment => comment.severity !== "minor");
   // erro de sintaxe barra sempre; pedido de mudança sem nada grave, não
@@ -630,17 +709,33 @@ export const review = async (ctx: RunContext): Promise<boolean> => {
 // ---------------------------------------------------------------------------
 // 4. PR (sem IA)
 
-const slug = (text: string) =>
-  String(text || "tarefa")
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 40)
-    .replace(/-+$/, "") || "tarefa";
+/** Qual modelo cada agente usou nesta demanda (o último de cada um). */
+const modelsUsed = async (task: DevTask): Promise<string> => {
+  const events = await DevTaskEvent.findAll({
+    where: {
+      taskId: task.id,
+      agent: { [Op.in]: ["triage", "developer", "reviewer"] }
+    },
+    order: [["id", "ASC"]],
+    attributes: ["agent", "meta"]
+  });
+  const last: Record<string, string> = {};
+  events.forEach(event => {
+    const model = String(event.meta?.model || "");
+    if (model) last[event.agent] = model;
+  });
+  const names: Record<string, string> = {
+    triage: "triagem da Xereta",
+    developer: "código do Zé Commit",
+    reviewer: "revisão da Dona Lupa"
+  };
+  return Object.keys(names)
+    .filter(agent => last[agent])
+    .map(agent => `${names[agent]} (${last[agent]})`)
+    .join(", ");
+};
 
-const prBody = async (task: DevTask, config: DevConfig) => {
+const prBody = async (task: DevTask) => {
   const [developer, reviewer] = await Promise.all([
     lastEvent(task, "developer", "edits"),
     lastEvent(task, "reviewer", "review")
@@ -673,17 +768,32 @@ const prBody = async (task: DevTask, config: DevConfig) => {
       ? `### Code review da IA (rodada ${task.reviewRound})\n${reviewer.content}${minor.length ? `\n\nSugestões que não bloqueiam:\n${minor.join("\n")}` : ""}`
       : "",
     "---",
-    `Gerado pelo pipeline de IA do vuup.me (${config.model}): triagem do Xereta, código do Zé Commit e revisão da Dona Lupa. Tokens: ${task.tokensIn} de entrada, ${task.tokensOut} de saída, ${task.tokensCached} lidos do cache (≈ US$ ${(task.costUsd || 0).toFixed(2)}).`,
-    "Nada disto foi executado nem testado: revise e teste antes do merge."
+    `Gerado pelo pipeline de IA do vuup.me: ${await modelsUsed(task)}. Tokens: ${task.tokensIn} de entrada, ${task.tokensOut} de saída, ${task.tokensCached} lidos do cache (≈ US$ ${(task.costUsd || 0).toFixed(2)}).`,
+    "Nada disto foi executado ainda: revise antes do merge. Depois do merge, com a versão no ar, o Clique testa a tela e mostra fotos e vídeo na demanda."
   ]
     .filter(Boolean)
     .join("\n\n");
 };
 
+/**
+ * Na primeira publicação, a branch não pode já existir: o mesmo número de
+ * demanda aparece em outro ambiente (o de teste e o de produção têm bancos
+ * separados), e o commit iria parar em cima do trabalho de outra demanda.
+ */
+const freeBranch = async (repo: RepoSource, branch: string) => {
+  let candidate = branch;
+  for (let n = 2; n < 20 && (await repo.branchExists(candidate)); n += 1) {
+    candidate = `${branch}-${n}`;
+  }
+  return candidate;
+};
+
 export const publish = async (ctx: RunContext): Promise<void> => {
-  const { task, repo, config } = ctx;
+  const { task, repo } = ctx;
   if (!task.changes?.length) throw new DevError("ERR_DEV_NO_CHANGES");
-  const branch = task.branch || `ai/${task.id}-${slug(task.title)}`;
+  const planned = task.branch || branchName(task.id, task.kind, task.title);
+  const branch =
+    repo.canPublish && !task.prUrl ? await freeBranch(repo, planned) : planned;
 
   if (!repo.canPublish) {
     await task.update({ branch });
@@ -698,7 +808,7 @@ export const publish = async (ctx: RunContext): Promise<void> => {
     baseSha: task.baseSha,
     branch,
     title: task.title,
-    body: await prBody(task, config),
+    body: await prBody(task),
     message: `${task.title}\n\nTarefa #${task.id} do pipeline de IA do vuup.me.`,
     changes: task.changes
   });
@@ -738,6 +848,15 @@ const lessonSignals = async (task: DevTask): Promise<string[]> => {
         .forEach(comment =>
           signals.push(
             `- O revisor barrou (${comment.severity}) ${comment.path}: ${comment.message}`
+          )
+        );
+    }
+    if (event.agent === "tester" && meta.verdict === "fail") {
+      ((meta as { findings?: TesterJudgeReply["findings"] }).findings || [])
+        .filter(finding => !finding.ok)
+        .forEach(finding =>
+          signals.push(
+            `- O teste de tela reprovou: ${finding.check} (${finding.note})`
           )
         );
     }
@@ -784,16 +903,17 @@ export const learn = async (
     .join("\n\n");
 
   const before = task.costUsd || 0;
-  const reply = await ask<LearnerReply>(
-    ctx,
-    CONTEXT_INTRO,
-    LEARNER,
-    [{ role: "user", content }],
-    LEARNER_SCHEMA,
-    "learner",
-    "low",
-    8000
-  );
+  const reply = await ask<LearnerReply>(ctx, {
+    slot: "learner",
+    context: CONTEXT_INTRO,
+    system: LEARNER,
+    messages: [{ role: "user", content }],
+    schema: LEARNER_SCHEMA,
+    schemaName: "learner",
+    effort: "low",
+    maxTokens: 8000,
+    timeoutMs: 4 * MINUTE
+  });
   const lessons = (reply.data.lessons || [])
     .filter(lesson => String(lesson.content || "").trim())
     .slice(0, 2);
@@ -828,13 +948,190 @@ export const learn = async (
 };
 
 /** PR mergeado no GitHub: a tarefa está concluída. */
+// ---------------------------------------------------------------------------
+// 6. testador (Clique): teste de tela no sistema no ar
+
+const TEST_DIFF_CHARS = 12000;
+// telas de quem não está logado: o testador já entra logado
+const PUBLIC_ROUTES = [
+  "/login",
+  "/signup",
+  "/forgot-password",
+  "/reset-password"
+];
+
+/** Telas que o testador pode abrir: as rotas do frontend. */
+const appRoutes = async (repo: RepoSource, sha: string): Promise<string> => {
+  const source = await repo
+    .read(sha, "frontend/src/routes/index.js")
+    .catch(() => null);
+  const routes = unique(
+    [...String(source || "").matchAll(/path="([^"]+)"/g)].map(match => match[1])
+  ).filter(route => !PUBLIC_ROUTES.includes(route));
+  return routes.join(" ") || "/";
+};
+
+export type TestOutcome = "pass" | "fail" | "unclear" | "skipped";
+
+/**
+ * Planeja (uma vez por versão do código), roda no navegador e confere.
+ * Sem navegador configurado, ou quando a mudança não aparece na tela, o
+ * teste é pulado com o motivo.
+ */
+export const test = async (ctx: RunContext): Promise<TestOutcome> => {
+  const { task, repo } = ctx;
+  if (!browserReady()) {
+    await task.update({ testVerdict: "skipped" });
+    await ctx.say("tester", "test_skip", "", { reason: "no_browser" });
+    return "skipped";
+  }
+
+  let plan = task.testPlan;
+  if (!plan) {
+    const sha = await repo.head();
+    const diff = String(task.diff || "");
+    const content = [
+      `# Tarefa #${task.id}: ${task.title}`,
+      task.spec || task.description,
+      `## Critérios de aceite\n${(task.acceptance || [])
+        .map(item => `- ${item}`)
+        .join("\n")}`,
+      task.design ? "Tarefa de interface: teste também no celular." : "",
+      `## Arquivos alterados\n${(task.changes || [])
+        .map(change => `- ${change.path} (${change.op})`)
+        .join("\n")}`,
+      `## Diff${diff.length > TEST_DIFF_CHARS ? " (cortado)" : ""}\n\`\`\`diff\n${diff.slice(
+        0,
+        TEST_DIFF_CHARS
+      )}\n\`\`\``,
+      `## Telas do sistema (rotas)\n${await appRoutes(repo, sha)}`
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+    // o contexto curto basta: o roteiro sai do diff e das rotas, não do
+    // mapa do repositório inteiro
+    const reply = await ask<TesterPlanReply>(ctx, {
+      slot: "tester",
+      context: CONTEXT_INTRO,
+      system: TESTER_PLAN,
+      messages: [{ role: "user", content }],
+      schema: TESTER_PLAN_SCHEMA,
+      schemaName: "test_plan",
+      effort: "low",
+      maxTokens: 6000,
+      timeoutMs: 3 * MINUTE
+    });
+    plan = cleanPlan(reply.data);
+    await task.update({ testPlan: plan });
+    await ctx.say("tester", "test_plan", plan.reason, {
+      ...reply.meta,
+      needed: plan.needed,
+      devices: plan.devices,
+      steps: plan.steps,
+      checks: plan.checks
+    });
+  }
+  if (!plan.needed) {
+    await task.update({ testVerdict: "skipped" });
+    return "skipped";
+  }
+
+  const run = await runBrowserTest(plan);
+  const shots = run.captures.filter(file => file.mimetype.startsWith("image/"));
+  const videos = run.captures.filter(file =>
+    file.mimetype.startsWith("video/")
+  );
+  await task.update({
+    attachments: [...(task.attachments || []), ...run.captures]
+  });
+  await ctx.say("tester", "test_run", "", {
+    url: run.url,
+    images: shots.map(file => file.id),
+    videos: videos.map(file => file.id),
+    log: run.log,
+    blocked: run.blocked,
+    pageErrors: run.pageErrors
+  });
+
+  const photos = shots.slice(0, 8);
+  const noteOf = (id: string) =>
+    run.log.find(entry => entry.shot === id)?.note || "";
+  const content = [
+    `# Tarefa #${task.id}: ${task.title}`,
+    task.spec || task.description,
+    `## O que as fotos precisam mostrar (checks)\n${plan.checks
+      .map(check => `- ${check}`)
+      .join("\n")}`,
+    `## Passos\n${run.log
+      .map(
+        entry =>
+          `- [${entry.device}] ${entry.step}. ${entry.action} ${entry.target}: ${
+            entry.ok ? "ok" : `FALHOU (${entry.error})`
+          }`
+      )
+      .join("\n")}`,
+    run.pageErrors.length
+      ? `## Erros de JavaScript na página\n${run.pageErrors
+          .map(error => `- ${error}`)
+          .join("\n")}`
+      : "",
+    `## Fotos, na ordem\n${photos
+      .map(
+        (file, index) =>
+          `${index + 1}. ${file.name}${noteOf(file.id) ? `: ${noteOf(file.id)}` : ""}`
+      )
+      .join("\n")}`
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+  const judge = await ask<TesterJudgeReply>(ctx, {
+    slot: "tester",
+    context: CONTEXT_INTRO,
+    system: TESTER_JUDGE,
+    messages: [{ role: "user", content, images: await imagesOf(photos) }],
+    schema: TESTER_JUDGE_SCHEMA,
+    schemaName: "test_result",
+    effort: "low",
+    maxTokens: 4000,
+    timeoutMs: 3 * MINUTE
+  });
+  const verdict = ["pass", "fail", "unclear"].includes(judge.data.verdict)
+    ? judge.data.verdict
+    : "unclear";
+  await task.update({ testVerdict: verdict });
+  await ctx.say("tester", "test_result", judge.data.summary || "", {
+    ...judge.meta,
+    verdict,
+    findings: (judge.data.findings || []).slice(0, 6)
+  });
+  return verdict;
+};
+
+/** O que o testador reprovou, como pedido de ajuste ao desenvolvedor. */
+export const testFeedback = async (task: DevTask): Promise<DevFeedback[]> => {
+  const result = await lastEvent(task, "tester", "test_result");
+  const findings = (result?.meta?.findings ||
+    []) as TesterJudgeReply["findings"];
+  return findings
+    .filter(finding => !finding.ok)
+    .map(finding => ({
+      from: "tester" as const,
+      text: `${finding.check}: ${finding.note}`
+    }));
+};
+
+/**
+ * PR mergeado no GitHub? Devolve o commit do merge (os testes esperam a
+ * versão com ele entrar no ar), ou null enquanto não foi.
+ */
 export const pullMerged = async (
   task: DevTask,
   repo: RepoSource
-): Promise<boolean> => {
-  if (!task.prNumber || repo.kind !== "github") return false;
+): Promise<string | null> => {
+  if (!task.prNumber || repo.kind !== "github") return null;
   const state = await repo.pull(task.prNumber);
-  return !!state?.merged;
+  if (!state?.merged) return null;
+  return state.mergeSha || "merged";
 };
 
 // tarefas paradas em "rodando" quando o servidor caiu

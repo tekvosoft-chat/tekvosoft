@@ -1,5 +1,6 @@
 /**
- * Contrato comum aos provedores de IA do pipeline (Claude e OpenAI).
+ * Contrato comum aos provedores de IA do pipeline (Claude, OpenAI e
+ * OpenRouter).
  *
  * Cada agente manda: um contexto estável (regras do projeto + mapa do
  * repositório), o papel dele, a conversa e o formato JSON da resposta. O
@@ -45,6 +46,10 @@ export interface LlmRequest {
   schemaName: string;
   effort: Effort;
   maxTokens: number;
+  // OpenRouter: tentados em ordem se o modelo principal falhar
+  fallbacks?: string[];
+  // quanto esperar a resposta; a triagem desiste antes do desenvolvedor
+  timeoutMs?: number;
 }
 
 export interface LlmResult {
@@ -52,6 +57,8 @@ export interface LlmResult {
   raw?: unknown;
   usage: LlmUsage;
   model: string;
+  // US$ cobrados, quando o provedor informa (o OpenRouter informa)
+  cost?: number;
 }
 
 /** Erro do provedor, já com o código que a tela sabe traduzir. */
