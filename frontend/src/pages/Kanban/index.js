@@ -95,7 +95,11 @@ const useStyles = makeStyles(theme => {
       padding: theme.spacing(3, 3, 2),
       [theme.breakpoints.down("xs")]: { padding: theme.spacing(2, 1.5, 1.5) }
     },
-    titleBox: { flex: "1 1 280px", minWidth: 0 },
+    titleBox: {
+      flex: "1 1 280px",
+      minWidth: 0,
+      [theme.breakpoints.down("xs")]: { display: "none" }
+    },
     title: {
       fontSize: "1.375rem",
       fontWeight: 700,
