@@ -1,6 +1,5 @@
 /**
- * Contrato comum aos provedores de IA do pipeline (Claude, OpenAI e
- * OpenRouter).
+ * O que um agente pede à IA (pelo OpenRouter) e o que volta.
  *
  * Cada agente manda: um contexto estável (regras do projeto + mapa do
  * repositório), o papel dele, a conversa e o formato JSON da resposta. O
@@ -16,7 +15,7 @@ export interface LlmUsage {
   output: number;
   // entrada lida do cache: sai bem mais barata
   cacheRead: number;
-  // entrada gravada no cache (o Claude cobra um pouco mais por ela)
+  // entrada gravada no cache (Claude e Gemini cobram um pouco mais por ela)
   cacheWrite: number;
 }
 
@@ -31,9 +30,6 @@ export interface LlmTurn {
   content: string;
   // só em mensagem da pessoa: prints e rascunhos que acompanham o texto
   images?: LlmImage[];
-  // resposta original do provedor, devolvida igual na rodada seguinte
-  // (o Claude precisa receber os blocos de raciocínio como vieram)
-  raw?: unknown;
 }
 
 export interface LlmRequest {
@@ -46,7 +42,7 @@ export interface LlmRequest {
   schemaName: string;
   effort: Effort;
   maxTokens: number;
-  // OpenRouter: tentados em ordem se o modelo principal falhar
+  // tentados em ordem se o modelo principal falhar
   fallbacks?: string[];
   // quanto esperar a resposta; a triagem desiste antes do desenvolvedor
   timeoutMs?: number;
@@ -54,10 +50,9 @@ export interface LlmRequest {
 
 export interface LlmResult {
   text: string;
-  raw?: unknown;
   usage: LlmUsage;
   model: string;
-  // US$ cobrados, quando o provedor informa (o OpenRouter informa)
+  // US$ cobrados, como o OpenRouter informa na resposta
   cost?: number;
 }
 

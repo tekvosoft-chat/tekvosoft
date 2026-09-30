@@ -1,7 +1,8 @@
 import { Effort } from "./llm";
 
 /**
- * Qual modelo cada agente usa quando o pipeline roda pelo OpenRouter.
+ * Qual modelo cada agente usa (pelo OpenRouter). Fixo aqui de propósito: não
+ * se troca pela tela; mudar de modelo é mudar este arquivo.
  *
  * Um modelo por tarefa, pelo custo que a tarefa pede: ler e resumir
  * (triagem, testes, aprendizado) vai num modelo rápido e barato; escrever
@@ -94,10 +95,6 @@ export const REFERENCE_PRICES: Record<string, [number, number, number]> = {
   "z-ai/glm-5.3-flash": [0.15, 0.5, 0.03],
   "deepseek/deepseek-v4.1-flash": [0.3, 1.2, 0.006]
 };
-
-// chave em Configurações que troca o modelo de cada vaga (vazio = padrão)
-export const slotSetting = (slot: AgentSlot): string =>
-  `_devModel${slot.charAt(0).toUpperCase()}${slot.slice(1)}`;
 
 export type Difficulty = "easy" | "medium" | "hard";
 

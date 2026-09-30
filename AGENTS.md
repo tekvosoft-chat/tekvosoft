@@ -73,12 +73,12 @@ acompanha pela conversa do chamado.
 
 - Configuração em Configurações > Opções > Pipeline de IA, chaves `_dev*` na
   empresa 1 (só o super lê). Nunca mande segredo para o prompt.
-- Provedor padrão: OpenRouter (`llmOpenRouter.ts`), chave em `_devOpenRouterKey`
-  ou `OPENROUTER_API_KEY` da stack. Cada agente tem o seu modelo em
-  `models.ts` (troca por `_devModel<Vaga>`); a dificuldade da triagem escolhe
-  o do desenvolvedor e o do revisor (o caro só em média/difícil ou risco
-  alto). O custo vem do próprio OpenRouter em cada resposta; o catálogo
-  (`catalog.ts`) dá o preço do dia para a aba Time.
+- IA: só o OpenRouter (`llmOpenRouter.ts`), com a chave só na stack
+  (`OPENROUTER_API_KEY`); a tela não tem campo de chave nem de modelo. Cada
+  agente tem o seu modelo fixo em `models.ts`; a dificuldade da triagem
+  escolhe o do desenvolvedor e o do revisor (o caro só em média/difícil ou
+  risco alto). O custo vem do próprio OpenRouter em cada resposta; o
+  catálogo (`catalog.ts`) dá o preço do dia para a aba Time.
 - Equipe: Xereta (triagem), Sirene (prioridade, na mesma chamada), Zé Commit
   (código), Dona Lupa (revisão), Clique (testes) e Sabichão (skills). Jeito de
   cada um em `PERSONAS` (`prompts.ts`), uma linha só; fotos CC0 em
@@ -98,8 +98,8 @@ acompanha pela conversa do chamado.
   ficam em `defaultSkills.ts` (semeadas pelo slug, sem sobrescrever edição).
   O Sabichão (`learn` em `agents.ts`) transforma correções em skill; versão
   que encolhe a skill, ou que vem de pedido de cliente, espera aprovação.
-- Custo: o que o OpenRouter cobra (ou `pricing.ts`, preço de tabela, no Claude
-  e na OpenAI direto) e cotação do dia (ou `_devUsdBrl`); a tela mostra em
+- Custo: o que o OpenRouter cobra (`pricing.ts` é a reserva: demanda antiga
+  ou resposta sem custo) e cotação do dia (ou `_devUsdBrl`); a tela mostra em
   reais. Imagens em `private/dev-pipeline`.
 
 ## Convenções entre as pontas

@@ -3,7 +3,6 @@ import {
   OPENROUTER_MODELS,
   SLOTS,
   difficultyOf,
-  slotSetting,
   slotsFor
 } from "../../services/DevPipeline/models";
 import { cleanPlan } from "../../services/DevPipeline/testRunner";
@@ -47,13 +46,15 @@ describe("nome da branch", () => {
 });
 
 describe("modelo de cada agente", () => {
-  it("toda vaga tem modelo, reserva e chave de configuração", () => {
+  it("toda vaga tem modelo e reserva", () => {
     SLOTS.forEach(slot => {
       expect(OPENROUTER_MODELS[slot].model).toMatch(/^[a-z0-9-]+\/[\w.-]+$/);
       expect(OPENROUTER_MODELS[slot].fallbacks.length).toBeGreaterThan(0);
-      expect(slotSetting(slot)).toMatch(/^_devModel[A-Z]/);
+      // reserva igual ao principal não serve para nada
+      expect(OPENROUTER_MODELS[slot].fallbacks).not.toContain(
+        OPENROUTER_MODELS[slot].model
+      );
     });
-    expect(slotSetting("developerHard")).toBe("_devModelDeveloperHard");
   });
 
   it("a dificuldade escolhe quem escreve e quem revisa", () => {

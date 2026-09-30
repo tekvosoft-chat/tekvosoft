@@ -7,7 +7,7 @@ import DevTaskEvent from "../models/DevTaskEvent";
 import SupportMessage from "../models/SupportMessage";
 import SupportTicket from "../models/SupportTicket";
 import User from "../models/User";
-import { DevConfig, loadDevConfig } from "../services/DevPipeline/config";
+import { loadDevConfig } from "../services/DevPipeline/config";
 import { openRepo } from "../services/DevPipeline/repo";
 import { pullMerged, testFeedback } from "../services/DevPipeline/agents";
 import { OPENROUTER_MODELS, SLOTS } from "../services/DevPipeline/models";
@@ -93,15 +93,11 @@ const text = (value: unknown, max: number) =>
 
 const userOf = (req: Request) => Number(req.user.id);
 
-/**
- * Quem usa qual modelo, com o preço do dia (catálogo do OpenRouter). Claude
- * e OpenAI usam um modelo só: a lista vem vazia e a tela mostra aquele.
- */
-const teamModels = async (config: DevConfig) => {
-  if (config.provider !== "openrouter") return [];
-  return Promise.all(
+/** Quem usa qual modelo, com o preço do dia (catálogo do OpenRouter). */
+const teamModels = async () =>
+  Promise.all(
     SLOTS.map(async slot => {
-      const { model, fallbacks, effort } = config.models[slot];
+      const { model, fallbacks, effort } = OPENROUTER_MODELS[slot];
       const info = await modelInfo(model);
       return {
         slot,
@@ -115,20 +111,13 @@ const teamModels = async (config: DevConfig) => {
       };
     })
   );
-};
 
 /** O que está configurado: a tela avisa o que falta antes de alguém tentar. */
 export const setup = async (req: Request, res: Response): Promise<Response> => {
   const config = await loadDevConfig();
   const repo = openRepo(config);
   return res.json({
-    provider: config.provider,
-    model: config.model,
-    models: await teamModels(config),
-    // o que cada vaga usa quando o campo fica em branco (Configurações)
-    defaults: Object.fromEntries(
-      SLOTS.map(slot => [slot, OPENROUTER_MODELS[slot].model])
-    ),
+    models: await teamModels(),
     // navegador do testador: sem ele, a demanda conclui no merge
     browser: browserReady(),
     hasKey: !!config.apiKey,

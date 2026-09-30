@@ -99,19 +99,6 @@ const DEFAULTS = {
   extensionDownloadUrl: "",
 
   // pipeline de IA (só o super; chaves com "_" ficam na empresa 1)
-  _devAiProvider: "openrouter",
-  _devOpenRouterKey: "",
-  _devModelTriage: "",
-  _devModelDeveloper: "",
-  _devModelDeveloperHard: "",
-  _devModelReviewer: "",
-  _devModelReviewerHard: "",
-  _devModelTester: "",
-  _devModelLearner: "",
-  _devAnthropicKey: "",
-  _devAnthropicModel: "claude-opus-5",
-  _devOpenAiKey: "",
-  _devOpenAiModel: "",
   _devGithubRepo: "",
   _devGithubToken: "",
   _devGithubBranch: "",
@@ -135,27 +122,6 @@ const SECTIONS = [
   { id: "files", icon: FolderRoundedIcon, superOnly: true },
   { id: "system", icon: DnsRoundedIcon, superOnly: true },
   { id: "devPipeline", icon: DeveloperBoardRoundedIcon, superOnly: true }
-];
-
-// modelos do Claude oferecidos no pipeline: o Opus é o padrão; os outros
-// trocam qualidade por preço (Haiku) ou preço por qualidade (Fable)
-// vagas de modelo do pipeline no OpenRouter (models.ts no backend): o
-// campo em branco usa o padrão, que a API manda em /dev-tasks/setup
-const DEV_SLOTS = [
-  "Triage",
-  "Developer",
-  "DeveloperHard",
-  "Reviewer",
-  "ReviewerHard",
-  "Tester",
-  "Learner"
-];
-
-const CLAUDE_MODELS = [
-  "claude-opus-5",
-  "claude-sonnet-5",
-  "claude-haiku-4-5",
-  "claude-fable-5-1"
 ];
 
 // modelo usado quando o campo "Modelo" fica em branco (AiServices)
@@ -276,6 +242,23 @@ const useStyles = makeStyles(theme => {
         borderColor: tkv.semantic.danger,
         backgroundColor: tkv.semantic.dangerSoft
       }
+    },
+    // chave do OpenRouter na stack: achou (verde) ou não (aviso)
+    keyStatus: {
+      display: "inline-flex",
+      alignItems: "center",
+      height: 28,
+      padding: "0 12px",
+      borderRadius: tkv.radius.pill,
+      fontSize: "0.8125rem",
+      fontWeight: 700,
+      whiteSpace: "nowrap",
+      color: tkv.semantic.success,
+      backgroundColor: tkv.semantic.successSoft
+    },
+    keyMissing: {
+      color: tkv.semantic.warning,
+      backgroundColor: tkv.semantic.warningSoft
     }
   };
 });
@@ -295,8 +278,9 @@ export default function Options({ settings, scheduleTypeChanged }) {
   const [section, setSection] = useState(initialSection);
   const [buildingExtension, setBuildingExtension] = useState(false);
   const [restartingBackend, setRestartingBackend] = useState(false);
-  // modelo padrão de cada agente do pipeline (aparece no campo vazio)
-  const [devDefaults, setDevDefaults] = useState({});
+  // a chave do OpenRouter vem da stack: a tela só diz se o backend achou
+  // (null enquanto não sabe)
+  const [devKey, setDevKey] = useState(null);
   const navRef = useRef(null);
 
   useEffect(() => {
@@ -378,13 +362,13 @@ export default function Options({ settings, scheduleTypeChanged }) {
     }
   };
 
-  // os padrões só interessam na seção do pipeline, que só o super vê
+  // só interessa na seção do pipeline, que só o super vê
   useEffect(() => {
     if (active.id !== "devPipeline" || !isSuper) return undefined;
     let alive = true;
     api
       .get("/dev-tasks/setup")
-      .then(({ data }) => alive && setDevDefaults(data?.defaults || {}))
+      .then(({ data }) => alive && setDevKey(!!data?.hasKey))
       .catch(() => {});
     return () => {
       alive = false;
@@ -692,62 +676,28 @@ export default function Options({ settings, scheduleTypeChanged }) {
       case "devPipeline":
         return (
           <>
+            {/* IA: sempre o OpenRouter, com os modelos fixos no sistema (a
+                aba Time do pipeline mostra quem usa qual). Nada se troca
+                aqui: a chave fica na stack e a linha só diz se ela chegou */}
             <Group
               title={t("groups.devAi")}
               description={t("groups.devAiHint")}
             >
-              <SelectRow
-                id="_devAiProvider"
-                options={["openrouter", "anthropic", "openai"]}
+              <Row
+                id="devOpenRouterKey"
+                control={
+                  devKey === null ? null : (
+                    <span
+                      className={clsx(classes.keyStatus, {
+                        [classes.keyMissing]: !devKey
+                      })}
+                    >
+                      {devKey ? t("devKey.ok") : t("devKey.missing")}
+                    </span>
+                  )
+                }
               />
-              {values._devAiProvider === "openrouter" && (
-                <TextRow
-                  id="_devOpenRouterKey"
-                  monospace
-                  placeholder="sk-or-v1-..."
-                />
-              )}
-              {values._devAiProvider === "openai" && (
-                <>
-                  <TextRow id="_devOpenAiKey" monospace placeholder="sk-..." />
-                  <TextRow
-                    id="_devOpenAiModel"
-                    stacked={false}
-                    placeholder="gpt-5"
-                  />
-                </>
-              )}
-              {values._devAiProvider === "anthropic" && (
-                <>
-                  <TextRow
-                    id="_devAnthropicKey"
-                    monospace
-                    placeholder="sk-ant-..."
-                  />
-                  <SelectRow id="_devAnthropicModel" options={CLAUDE_MODELS} />
-                </>
-              )}
             </Group>
-            {values._devAiProvider === "openrouter" && (
-              <Group
-                title={t("groups.devModels")}
-                description={t("groups.devModelsHint")}
-              >
-                {DEV_SLOTS.map(slot => (
-                  <TextRow
-                    key={slot}
-                    id={`_devModel${slot}`}
-                    monospace
-                    stacked={false}
-                    placeholder={
-                      devDefaults[
-                        slot.charAt(0).toLowerCase() + slot.slice(1)
-                      ] || ""
-                    }
-                  />
-                ))}
-              </Group>
-            )}
             <Group
               title={t("groups.devRepo")}
               description={t("groups.devRepoHint")}

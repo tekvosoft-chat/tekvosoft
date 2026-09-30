@@ -1905,8 +1905,6 @@ const messages = {
           price: "{{input}} entrada · {{output}} saída, por milhão de tokens",
           sameCall:
             "Decide junto com a Xereta, na mesma chamada: não custa nada a mais.",
-          single:
-            "Todos os agentes usam {{provider}} · {{model}}. Com o OpenRouter, cada um usa o modelo da sua tarefa, e fica mais barato.",
           routingTitle: "Quem escreve e quem revisa, pela dificuldade",
           difficulty: "Dificuldade",
           routingHint:
@@ -2171,17 +2169,12 @@ const messages = {
           perAgent: "OpenRouter · um modelo por agente",
           seeTeam: "ver o time",
           open: "Abrir configurações",
-          noKey: "Falta a chave da IA.",
+          noKey: "Falta a chave do OpenRouter: OPENROUTER_API_KEY na stack.",
           noRepo: "Falta o repositório do GitHub.",
           local:
             "Modo teste: lendo o código desta máquina (vira patch, sem PR)",
           readOnly: "{{repo}} sem token: lê o código e o resultado vira patch",
-          github: "PRs em {{repo}}",
-          provider: {
-            openrouter: "OpenRouter",
-            anthropic: "Claude",
-            openai: "OpenAI"
-          }
+          github: "PRs em {{repo}}"
         },
         confirm: {
           cancel: "Cancelar esta demanda?",
@@ -2318,7 +2311,8 @@ const messages = {
             "Falta o endereço do sistema (FRONTEND_URL) para o teste",
           ERR_DEV_TEST_NO_USER: "Nenhum super admin ativo para o teste entrar",
           ERR_DEV_TEST_BROWSER: "O navegador de testes não respondeu",
-          ERR_DEV_AI_NOT_CONFIGURED: "Falta a chave da IA em Configurações",
+          ERR_DEV_AI_NOT_CONFIGURED:
+            "Falta a chave do OpenRouter (variável OPENROUTER_API_KEY na stack)",
           ERR_DEV_AI_AUTH: "A chave da IA foi recusada",
           ERR_DEV_AI_MODEL:
             "O modelo escolhido não existe ou não está liberado para esta chave",
@@ -2399,13 +2393,14 @@ const messages = {
                 "Opções da instalação inteira. Valem para todas as empresas."
             }
           },
+          devKey: {
+            ok: "Configurada",
+            missing: "Não encontrada"
+          },
           groups: {
-            devModels: "Modelos por agente (OpenRouter)",
-            devModelsHint:
-              "Em branco, cada agente usa o padrão (aparece no campo). Para trocar, use o nome do modelo como está no openrouter.ai, ex.: openai/gpt-6-luna.",
             devAi: "Inteligência artificial",
             devAiHint:
-              "Qual IA os agentes usam. Com o OpenRouter, cada agente usa o modelo da sua tarefa (o caro só nas demandas difíceis); com Claude ou OpenAI, um modelo só faz tudo. O contexto do projeto fica em cache entre as chamadas.",
+              "Os agentes usam o OpenRouter, cada um com o modelo da sua tarefa, definidos no sistema (a aba Time do Pipeline de IA mostra quem usa qual). O contexto do projeto fica em cache entre as chamadas.",
             devRepo: "Repositório (GitHub)",
             devRepoHint:
               "De onde o código é lido e onde o PR é aberto. Sem token, o código é lido (se o repositório for público) e o resultado vira um patch para baixar.",
@@ -2469,41 +2464,10 @@ const messages = {
             empty: "Nenhum token gerado"
           },
           fields: {
-            _devOpenRouterKey: {
+            devOpenRouterKey: {
               title: "Chave do OpenRouter",
               description:
-                "openrouter.ai › Keys. Em branco, usa a variável OPENROUTER_API_KEY da stack."
-            },
-            _devModelTriage: {
-              title: "Xereta (triagem)",
-              description: "Lê o pedido, acha os arquivos e escreve a tarefa."
-            },
-            _devModelDeveloper: {
-              title: "Zé Commit: demanda fácil",
-              description: "Escreve o código quando a triagem diz que é fácil."
-            },
-            _devModelDeveloperHard: {
-              title: "Zé Commit: média ou difícil",
-              description:
-                "Escreve o código das demandas médias, difíceis ou arriscadas."
-            },
-            _devModelReviewer: {
-              title: "Dona Lupa: fácil ou média",
-              description: "Revisa o código das demandas fáceis e médias."
-            },
-            _devModelReviewerHard: {
-              title: "Dona Lupa: difícil ou arriscada",
-              description:
-                "Revisa as difíceis. Uma família diferente da do desenvolvedor pega o que ele não viu."
-            },
-            _devModelTester: {
-              title: "Clique (testes)",
-              description:
-                "Planeja o teste de tela e confere as fotos. Precisa enxergar imagem."
-            },
-            _devModelLearner: {
-              title: "Sabichão (skills)",
-              description: "Transforma correções e ensinamentos em skills."
+                "Vem da variável OPENROUTER_API_KEY da stack, junto das outras. Não fica salva aqui."
             },
             _devAutoLearn: {
               title: "Aprender sozinho",
@@ -2514,41 +2478,6 @@ const messages = {
               title: "Cotação do dólar (R$)",
               description:
                 "Para mostrar o custo em reais. Em branco, usa a cotação do dia, atualizada a cada 12 horas."
-            },
-            _devAiProvider: {
-              title: "Provedor",
-              description:
-                "OpenRouter (recomendado: um modelo por agente, o mais barato), Claude (Anthropic) ou GPT (OpenAI).",
-              options: {
-                openrouter: "OpenRouter (recomendado)",
-                anthropic: "Claude (Anthropic)",
-                openai: "GPT (OpenAI)"
-              }
-            },
-            _devAnthropicKey: {
-              title: "Chave da Anthropic",
-              description: "console.anthropic.com › API Keys."
-            },
-            _devAnthropicModel: {
-              title: "Modelo",
-              description:
-                "O Opus é o equilíbrio recomendado. Sonnet e Haiku custam menos por token; o Fable é o mais capaz e o mais caro.",
-              options: {
-                "claude-opus-5": "Claude Opus 5 (recomendado)",
-                "claude-sonnet-5": "Claude Sonnet 5 (mais barato)",
-                "claude-haiku-4-5": "Claude Haiku 4.5 (o mais barato)",
-                "claude-fable-5-1": "Claude Fable 5.1 (o mais capaz)"
-              }
-            },
-            _devOpenAiKey: {
-              title: "Chave da OpenAI",
-              description:
-                "platform.openai.com › API keys. Em branco, usa a chave do Assistente de IA (se ele for OpenAI)."
-            },
-            _devOpenAiModel: {
-              title: "Modelo",
-              description:
-                "Em branco, usa o que aparece no campo. Prefira um modelo de raciocínio: ele escreve código melhor."
             },
             _devGithubRepo: {
               title: "Repositório",

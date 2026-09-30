@@ -142,16 +142,6 @@ const useStyles = makeStyles(theme => {
       fontSize: "0.75rem",
       fontWeight: 700,
       whiteSpace: "nowrap"
-    },
-    single: {
-      padding: theme.spacing(1.5, 2),
-      marginBottom: theme.spacing(2),
-      borderRadius: tkv.radius.lg,
-      border: `1px solid ${tkv.border}`,
-      backgroundColor: tkv.surface,
-      fontSize: "0.875rem",
-      color: theme.palette.text.secondary,
-      "& b": { color: theme.palette.text.primary }
     }
   };
 });
@@ -189,20 +179,11 @@ const TeamPanel = ({ setup }) => {
   const theme = useTheme();
   const models = setup?.models || [];
   const bySlot = slot => models.find(model => model.slot === slot);
-  const perAgent = setup?.provider === "openrouter" && models.length > 0;
+  const perAgent = models.length > 0;
 
   return (
     <div>
       <p className={classes.intro}>{t("team.intro")}</p>
-
-      {!perAgent && setup && (
-        <div className={classes.single}>
-          {t("team.single", {
-            provider: t(`setup.provider.${setup.provider}`),
-            model: setup.model
-          })}
-        </div>
-      )}
 
       <div className={classes.grid}>
         {TEAM.map(agent => (

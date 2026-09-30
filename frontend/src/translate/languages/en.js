@@ -1902,8 +1902,6 @@ const messages = {
           price: "{{input}} input · {{output}} output, per million tokens",
           sameCall:
             "Decides together with Xereta, in the same call: it costs nothing extra.",
-          single:
-            "All agents use {{provider}} · {{model}}. With OpenRouter, each one uses the model for its task, which is cheaper.",
           routingTitle: "Who writes and who reviews, by difficulty",
           difficulty: "Difficulty",
           routingHint:
@@ -2167,18 +2165,14 @@ const messages = {
           perAgent: "OpenRouter · one model per agent",
           seeTeam: "see the team",
           open: "Open settings",
-          noKey: "The AI key is missing.",
+          noKey:
+            "The OpenRouter key is missing: OPENROUTER_API_KEY in the stack.",
           noRepo: "The GitHub repository is missing.",
           local:
             "Test mode: reading the code on this machine (patch only, no PR)",
           readOnly:
             "{{repo}} without a token: reads the code, the result is a patch",
-          github: "PRs on {{repo}}",
-          provider: {
-            openrouter: "OpenRouter",
-            anthropic: "Claude",
-            openai: "OpenAI"
-          }
+          github: "PRs on {{repo}}"
         },
         confirm: {
           cancel: "Cancel this request?",
@@ -2315,7 +2309,8 @@ const messages = {
           ERR_DEV_TEST_NO_USER:
             "No active super admin for the test to sign in as",
           ERR_DEV_TEST_BROWSER: "The test browser didn't respond",
-          ERR_DEV_AI_NOT_CONFIGURED: "The AI key is missing in Settings",
+          ERR_DEV_AI_NOT_CONFIGURED:
+            "The OpenRouter key is missing (OPENROUTER_API_KEY variable in the stack)",
           ERR_DEV_AI_AUTH: "The AI key was rejected",
           ERR_DEV_AI_MODEL:
             "The chosen model doesn't exist or isn't enabled for this key",
@@ -2393,13 +2388,14 @@ const messages = {
                 "Options for the whole installation. They apply to every company."
             }
           },
+          devKey: {
+            ok: "Configured",
+            missing: "Not found"
+          },
           groups: {
-            devModels: "Models per agent (OpenRouter)",
-            devModelsHint:
-              "Leave blank to use each agent's default (shown in the field). To change it, use the model name as listed on openrouter.ai, e.g. openai/gpt-6-luna.",
             devAi: "Artificial intelligence",
             devAiHint:
-              "Which AI the agents use. With OpenRouter, each agent uses the model for its task (the expensive one only on hard requests); with Claude or OpenAI, a single model does everything. The project context is cached between calls.",
+              "The agents use OpenRouter, each with the model for its task, set by the system (the Team tab in the AI pipeline shows who uses which). The project context is cached between calls.",
             devRepo: "Repository (GitHub)",
             devRepoHint:
               "Where the code is read from and where the PR is opened. Without a token, the code is read (if the repository is public) and the result is a patch to download.",
@@ -2462,41 +2458,10 @@ const messages = {
             empty: "No token generated"
           },
           fields: {
-            _devOpenRouterKey: {
+            devOpenRouterKey: {
               title: "OpenRouter key",
               description:
-                "openrouter.ai › Keys. Leave blank to use the stack's OPENROUTER_API_KEY variable."
-            },
-            _devModelTriage: {
-              title: "Xereta (triage)",
-              description:
-                "Reads the request, finds the files and writes the task."
-            },
-            _devModelDeveloper: {
-              title: "Zé Commit: easy request",
-              description: "Writes the code when triage says it's easy."
-            },
-            _devModelDeveloperHard: {
-              title: "Zé Commit: medium or hard",
-              description: "Writes the code for medium, hard or risky requests."
-            },
-            _devModelReviewer: {
-              title: "Dona Lupa: easy or medium",
-              description: "Reviews the code of easy and medium requests."
-            },
-            _devModelReviewerHard: {
-              title: "Dona Lupa: hard or risky",
-              description:
-                "Reviews the hard ones. A different model family from the developer's catches what he missed."
-            },
-            _devModelTester: {
-              title: "Clique (tests)",
-              description:
-                "Plans the screen test and checks the photos. Must be able to see images."
-            },
-            _devModelLearner: {
-              title: "Sabichão (skills)",
-              description: "Turns corrections and lessons into skills."
+                "Comes from the stack's OPENROUTER_API_KEY variable, along with the others. It isn't stored here."
             },
             _devAutoLearn: {
               title: "Learn on its own",
@@ -2507,41 +2472,6 @@ const messages = {
               title: "Dollar rate (R$)",
               description:
                 "Used to show costs in reais. Left blank, it uses today's rate, refreshed every 12 hours."
-            },
-            _devAiProvider: {
-              title: "Provider",
-              description:
-                "OpenRouter (recommended: one model per agent, the cheapest), Claude (Anthropic) or GPT (OpenAI).",
-              options: {
-                openrouter: "OpenRouter (recommended)",
-                anthropic: "Claude (Anthropic)",
-                openai: "GPT (OpenAI)"
-              }
-            },
-            _devAnthropicKey: {
-              title: "Anthropic key",
-              description: "console.anthropic.com › API Keys."
-            },
-            _devAnthropicModel: {
-              title: "Model",
-              description:
-                "Opus is the recommended balance. Sonnet and Haiku cost less per token; Fable is the most capable and the most expensive.",
-              options: {
-                "claude-opus-5": "Claude Opus 5 (recommended)",
-                "claude-sonnet-5": "Claude Sonnet 5 (cheaper)",
-                "claude-haiku-4-5": "Claude Haiku 4.5 (cheapest)",
-                "claude-fable-5-1": "Claude Fable 5.1 (most capable)"
-              }
-            },
-            _devOpenAiKey: {
-              title: "OpenAI key",
-              description:
-                "platform.openai.com › API keys. Left blank, it uses the AI Assistant key (if that one is OpenAI)."
-            },
-            _devOpenAiModel: {
-              title: "Model",
-              description:
-                "Left blank, it uses the one shown in the field. Prefer a reasoning model: it writes better code."
             },
             _devGithubRepo: {
               title: "Repository",

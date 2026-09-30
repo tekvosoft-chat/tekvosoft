@@ -93,8 +93,8 @@ services:
       LOGIN_EMAIL_CODE: ${LOGIN_EMAIL_CODE:-true}
       DUE_REMINDER_DAYS: ${DUE_REMINDER_DAYS:-3,2}
       # --- pipeline de IA (painel do super) ---
-      # chave do OpenRouter: cada agente usa o modelo da tarefa dele. Também
-      # dá para colar em Configurações > Opções > Pipeline de IA
+      # chave do OpenRouter, a única IA do pipeline: cada agente usa o modelo
+      # fixo da tarefa dele (models.ts). Só vem daqui, nunca da tela
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       # navegador do testador (serviço "browser" abaixo). Vazio = sem teste
       # de tela: a demanda conclui no merge

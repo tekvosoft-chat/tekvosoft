@@ -80,7 +80,8 @@ o i18next (v19) troca por vazio.
 - Pipeline de IA: `backend/src/services/DevPipeline/` (`agents.ts` = etapas,
   `prompts.ts` = regras dos agentes, `workspace.ts` = edições e diff,
   `repo.ts` = GitHub/local e travas) + `frontend/src/pages/DevPipeline/`.
-  Provedor padrão: OpenRouter, um modelo por agente (`models.ts`). Demanda
+  IA só pelo OpenRouter (chave `OPENROUTER_API_KEY` no `.env`/stack), um
+  modelo fixo por agente (`models.ts`). Demanda
   fácil custa ~US$ 0,015 o ciclo inteiro (triagem, código, revisão e teste);
   depois apague as tarefas e as chaves `_dev*` de teste. Editar o backend
   com uma demanda rodando reinicia o servidor e ela volta para a fila.

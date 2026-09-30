@@ -499,25 +499,21 @@ const SetupStrip = ({ setup, onTeam }) => {
     );
   }
 
-  // OpenRouter: cada agente com o seu modelo; o time mostra quem usa qual
-  const perAgent = setup.provider === "openrouter" && setup.models?.length;
+  // OpenRouter, cada agente com o seu modelo (o time mostra quem usa
+  // qual); a chave vem da stack, então não há o que abrir em Configurações
   return (
     <div className={classes.setup}>
       {setup.hasKey ? (
         <span className={classes.setupChip} style={ok}>
           <MemoryRoundedIcon />
-          {perAgent
-            ? t("setup.perAgent")
-            : `${t(`setup.provider.${setup.provider}`)} · ${setup.model}`}
-          {perAgent && (
-            <ButtonBase className={classes.setupButton} onClick={onTeam}>
-              {t("setup.seeTeam")}
-            </ButtonBase>
-          )}
+          {t("setup.perAgent")}
+          <ButtonBase className={classes.setupButton} onClick={onTeam}>
+            {t("setup.seeTeam")}
+          </ButtonBase>
         </span>
       ) : (
         <span className={classes.setupChip} style={warn}>
-          <WarningRoundedIcon /> {t("setup.noKey")} {link}
+          <WarningRoundedIcon /> {t("setup.noKey")}
         </span>
       )}
       {repo}

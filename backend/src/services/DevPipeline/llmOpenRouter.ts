@@ -3,8 +3,9 @@ import { LlmError, LlmRequest, LlmResult } from "./llm";
 import { modelInfo } from "./catalog";
 
 /**
- * Pipeline de IA pelo OpenRouter: uma chave só e o modelo certo para cada
- * agente (models.ts). A API é a mesma da OpenAI, então vai pela SDK dela.
+ * A IA do pipeline, pelo OpenRouter: uma chave só (OPENROUTER_API_KEY, na
+ * stack) e o modelo certo para cada agente (models.ts). A API é a mesma da
+ * OpenAI, então vai pela SDK dela.
  *
  *  - resposta em JSON com formato fixo, e require_parameters: o OpenRouter
  *    só manda para provedor que garante o formato (e o raciocínio pedido);
@@ -67,6 +68,7 @@ interface OpenRouterUsage {
 export const callOpenRouter = async (
   request: LlmRequest
 ): Promise<LlmResult> => {
+  if (!request.apiKey) throw new LlmError("ERR_DEV_AI_NOT_CONFIGURED");
   const client = new OpenAI({
     apiKey: request.apiKey,
     baseURL: BASE_URL,

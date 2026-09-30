@@ -1,14 +1,14 @@
 import { Op } from "sequelize";
 import DevTask, { DevCheck, DevFeedback } from "../../models/DevTask";
 import DevTaskEvent from "../../models/DevTaskEvent";
-import { DevConfig, modelFor } from "./config";
-import { Effort, LlmResult, LlmTurn, parseJson } from "./llm";
-import { callLlm } from "./providers";
+import { DevConfig } from "./config";
+import { LlmResult, LlmTurn, parseJson } from "./llm";
+import { callOpenRouter } from "./llmOpenRouter";
 import { RepoSource, branchName, buildRepoMap, canRead } from "./repo";
 import { Workspace } from "./workspace";
 import { costOf } from "./pricing";
 import { imagesOf, taskImages } from "./images";
-import { AgentSlot, slotsFor } from "./models";
+import { AgentSlot, OPENROUTER_MODELS, slotsFor } from "./models";
 import { browserReady, cleanPlan, runBrowserTest } from "./testRunner";
 import {
   markUsed,
@@ -57,8 +57,8 @@ import {
  *  aprendiz: só roda quando houve correção (da pessoa, do revisor, edição
  *    que falhou) e transforma a lição em skill para as próximas tarefas.
  *
- * Modelos: no OpenRouter cada agente tem o seu (models.ts), e a dificuldade
- * que a triagem deu escolhe o do desenvolvedor e o do revisor.
+ * Modelos: cada agente tem o seu, fixo em models.ts (OpenRouter), e a
+ * dificuldade que a triagem deu escolhe o do desenvolvedor e o do revisor.
  *
  * Skills: a triagem vê só o índice e escolhe; os outros recebem inteiras
  * só as escolhidas. Imagens: até 4, reduzidas, para triagem e código (e
@@ -173,8 +173,6 @@ interface Question {
   messages: LlmTurn[];
   schema: Record<string, unknown>;
   schemaName: string;
-  // esforço de Claude e OpenAI; no OpenRouter vale o da vaga
-  effort: Effort;
   maxTokens: number;
   // quanto esperar: a triagem desiste bem antes do desenvolvedor
   timeoutMs: number;
@@ -190,8 +188,9 @@ const ask = async <T>(
     throw new DevError("ERR_DEV_TOKEN_LIMIT", String(config.tokenLimit));
   }
 
-  const chosen = modelFor(config, question.slot, question.effort);
-  const result = await callLlm(config.provider, {
+  // modelo, reservas e esforço vêm da vaga do agente (models.ts)
+  const chosen = OPENROUTER_MODELS[question.slot];
+  const result = await callOpenRouter({
     apiKey: config.apiKey,
     model: chosen.model,
     fallbacks: chosen.fallbacks,
@@ -205,7 +204,7 @@ const ask = async <T>(
     timeoutMs: question.timeoutMs
   });
   const { usage } = result;
-  // o OpenRouter diz quanto cobrou; os outros, pela tabela de preços
+  // o OpenRouter diz quanto cobrou; sem isso, a tabela de preços
   const cost = result.cost ?? costOf(result.model, usage);
   await task.update({
     tokensIn: task.tokensIn + usage.input + usage.cacheWrite,
@@ -302,7 +301,6 @@ export const triage = async (
     messages,
     schema: TRIAGE_SCHEMA,
     schemaName: "triage",
-    effort: "low",
     maxTokens: 8000,
     timeoutMs: 3 * MINUTE
   });
@@ -328,7 +326,7 @@ export const triage = async (
     const views = await Promise.all(peek.map(file => workspace.view(file)));
     const found = queries.length ? await searchCode(repo, sha, queries) : "";
     messages.push(
-      { role: "assistant", content: reply.result.text, raw: reply.result.raw },
+      { role: "assistant", content: reply.result.text },
       {
         role: "user",
         content: `${[...views, found].filter(Boolean).join("\n\n")}\n\nAgora feche a triagem: status "ready" ou "questions".`
@@ -346,7 +344,7 @@ export const triage = async (
       : [];
   if (missing.length) {
     messages.push(
-      { role: "assistant", content: reply.result.text, raw: reply.result.raw },
+      { role: "assistant", content: reply.result.text },
       {
         role: "user",
         content: `Estes caminhos não existem no repositório: ${missing.join(", ")}. Arquivo novo que a tarefa cria: mantenha e diga na spec. Senão, corrija pelo mapa; se o pedido fala de tela ou função que não existe mais, status "questions" e pergunte. Responda com status "ready" ou "questions".`
@@ -512,15 +510,10 @@ export const develop = async (ctx: RunContext): Promise<void> => {
       messages,
       schema: DEVELOPER_SCHEMA,
       schemaName: "developer",
-      effort: "high",
       maxTokens: 64000,
       timeoutMs: 12 * MINUTE
     });
-    messages.push({
-      role: "assistant",
-      content: reply.result.text,
-      raw: reply.result.raw
-    });
+    messages.push({ role: "assistant", content: reply.result.text });
     const data = reply.data;
 
     if (data.action === "read") {
@@ -665,7 +658,6 @@ export const review = async (ctx: RunContext): Promise<boolean> => {
     messages: [{ role: "user", content, images }],
     schema: REVIEWER_SCHEMA,
     schemaName: "review",
-    effort: "high",
     maxTokens: 16000,
     timeoutMs: 8 * MINUTE
   });
@@ -910,7 +902,6 @@ export const learn = async (
     messages: [{ role: "user", content }],
     schema: LEARNER_SCHEMA,
     schemaName: "learner",
-    effort: "low",
     maxTokens: 8000,
     timeoutMs: 4 * MINUTE
   });
@@ -1017,7 +1008,6 @@ export const test = async (ctx: RunContext): Promise<TestOutcome> => {
       messages: [{ role: "user", content }],
       schema: TESTER_PLAN_SCHEMA,
       schemaName: "test_plan",
-      effort: "low",
       maxTokens: 6000,
       timeoutMs: 3 * MINUTE
     });
@@ -1091,7 +1081,6 @@ export const test = async (ctx: RunContext): Promise<TestOutcome> => {
     messages: [{ role: "user", content, images: await imagesOf(photos) }],
     schema: TESTER_JUDGE_SCHEMA,
     schemaName: "test_result",
-    effort: "low",
     maxTokens: 4000,
     timeoutMs: 3 * MINUTE
   });

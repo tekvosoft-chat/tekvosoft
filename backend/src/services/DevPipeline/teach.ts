@@ -1,7 +1,8 @@
 import DevSkill from "../../models/DevSkill";
-import { loadDevConfig, modelFor } from "./config";
+import { loadDevConfig } from "./config";
 import { LlmError, parseJson } from "./llm";
-import { callLlm } from "./providers";
+import { callOpenRouter } from "./llmOpenRouter";
+import { OPENROUTER_MODELS } from "./models";
 import { costOf } from "./pricing";
 import { saveLesson } from "./skills";
 import {
@@ -37,9 +38,9 @@ export const teachSkill = async (text: string): Promise<DevSkill> => {
     known += block;
   }
 
-  // o mesmo modelo do Sabichão (no OpenRouter, o barato)
-  const chosen = modelFor(config, "learner", "low");
-  const result = await callLlm(config.provider, {
+  // o mesmo modelo do Sabichão
+  const chosen = OPENROUTER_MODELS.learner;
+  const result = await callOpenRouter({
     apiKey: config.apiKey,
     model: chosen.model,
     fallbacks: chosen.fallbacks,
