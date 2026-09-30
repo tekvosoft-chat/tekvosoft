@@ -97,6 +97,8 @@ interface IMe {
 
 const wbotMutex = new Mutex();
 const ackMutex = new Mutex();
+// Compartilhado entre sessões para proteger também upserts na reconexão.
+const messageMutexes = new Map<string, Mutex>();
 
 const groupContactCache = new SimpleObjectCache(1000 * 30, logger);
 const outOfHoursCache = new SimpleObjectCache(1000 * 60 * 5, logger);
@@ -1702,7 +1704,9 @@ const handleMessage = async (
       throw new Error("ERR_NO_WAPP_FOUND");
     }
 
-    const contact = await verifyContact(msgContact, wbot, companyId);
+    const contact = await verifyContact(msgContact, wbot, companyId, {
+      trustedMessage: true
+    });
 
     if (!msg.key.fromMe && !contact.isGroup) {
       const userRatingEnabled =
@@ -2341,7 +2345,7 @@ const wbotMessageListener = async (
 
       if (!messages) return;
 
-      messages.forEach(async (message: proto.IWebMessageInfo) => {
+      await Promise.all(messages.map(async (message: proto.IWebMessageInfo) => {
         if (!message?.message) {
           logger.warn(
             { message },
@@ -2350,12 +2354,42 @@ const wbotMessageListener = async (
           return;
         }
 
-        await wbot.sendReceipts([message.key], undefined);
-
-        if (await verifyRecentCampaign(message, companyId)) {
-          return;
+        // Só cópias da mesma mensagem esperam; outras conversas seguem livres.
+        const mutexKey = `${companyId}:${message.key.id}`;
+        let messageMutex = messageMutexes.get(mutexKey);
+        if (!messageMutex) {
+          messageMutex = new Mutex();
+          messageMutexes.set(mutexKey, messageMutex);
         }
-        await handleMessage(message, wbot, companyId);
+
+        await messageMutex
+          .runExclusive(async () => {
+            if (!message.key.fromMe) {
+              // Confirmação de entrega é auxiliar: falhar nela não pode perder
+              // a mensagem. Mensagens do próprio celular não recebem recibo.
+              await wbot.sendReceipts([message.key], undefined).catch(error =>
+                logger.warn({ error: error?.message }, "WhatsApp: receipt failed")
+              );
+            }
+
+            const storedMessage = await Message.findOne({
+              where: { id: message.key.id, companyId },
+              attributes: ["id"]
+            });
+            if (storedMessage) return;
+
+            if (await verifyRecentCampaign(message, companyId)) return;
+            await handleMessage(message, wbot, companyId);
+          })
+          .finally(() => {
+            // Não remove a trava enquanto outra cópia ainda espera por ela.
+            if (!messageMutex.isLocked()) {
+              messageMutexes.delete(mutexKey);
+            }
+          });
+      })).catch(error => {
+        Sentry.captureException(error);
+        logger.error({ error }, "WhatsApp: messages.upsert failed");
       });
     });
 

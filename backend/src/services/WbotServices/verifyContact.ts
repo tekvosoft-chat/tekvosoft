@@ -101,7 +101,11 @@ const getContactsByNumbers = async (
   });
 };
 
-async function getLid(msgContact: IMe, wbot: Session): Promise<string> {
+async function getLid(
+  msgContact: IMe,
+  wbot: Session,
+  trustedMessage = false
+): Promise<string> {
   const lid: string =
     msgContact.lid || (msgContact.id.includes("@lid") ? msgContact.id : null);
 
@@ -109,18 +113,26 @@ async function getLid(msgContact: IMe, wbot: Session): Promise<string> {
     return lid;
   }
 
-  const [ow] = await wbot.onWhatsApp(msgContact.id);
-  if (!ow?.exists) {
-    throw new Error("ERR_WAPP_CONTACT_NOT_FOUND");
-  }
+  try {
+    const [ow] = await wbot.onWhatsApp(msgContact.id);
+    if (!ow?.exists) {
+      throw new Error("ERR_WAPP_CONTACT_NOT_FOUND");
+    }
 
-  return (ow.lid as string) || null;
+    return (ow.lid as string) || null;
+  } catch (error) {
+    // Uma mensagem entregue pela sessão já comprova a identidade. A consulta
+    // auxiliar de LID não pode impedir a criação do contato e do ticket.
+    if (!trustedMessage) throw error;
+    return null;
+  }
 }
 
 export async function verifyContact(
   msgContact: IMe,
   wbot: Session,
-  companyId: number
+  companyId: number,
+  { trustedMessage = false }: { trustedMessage?: boolean } = {}
 ): Promise<Contact> {
   let profilePicUrl: string | undefined;
   let profileHiresPictureUrl: string | undefined;
@@ -222,7 +234,7 @@ export async function verifyContact(
         });
       }
     } else if (wbot && foundContact) {
-      const lid = await getLid(msgContact, wbot);
+      const lid = await getLid(msgContact, wbot, trustedMessage);
       const lidCandidates = lid
         ? getUniqueNumbers([
             lid,
@@ -257,7 +269,7 @@ export async function verifyContact(
       let currentContact = mergedContact || foundContact;
       let currentLidMap = currentContact.whatsappLidMap;
 
-      if (currentLidMap && lid !== currentLidMap.lid) {
+      if (lid && currentLidMap && lid !== currentLidMap.lid) {
         await WhatsappLidMap.destroy({
           where: { id: currentLidMap.id }
         });
@@ -279,7 +291,7 @@ export async function verifyContact(
         profileHiresPictureUrl: contactData.profileHiresPictureUrl
       });
     } else {
-      const lid = wbot && (await getLid(msgContact, wbot));
+      const lid = wbot && (await getLid(msgContact, wbot, trustedMessage));
 
       if (lid) {
         const lidCandidates = getUniqueNumbers([
