@@ -38,6 +38,7 @@ import { AuthContext } from "../../context/Auth/AuthContext";
 import { TicketsContext } from "../../context/Tickets/TicketsContext";
 import useSettings from "../../hooks/useSettings";
 import { copyToClipboard } from "../../helpers/copyToClipboard";
+import { haptic } from "../../helpers/haptics";
 import { formatWhatsappContactName } from "../../helpers/formatWhatsappDisplay";
 import {
   formatSnooze,
@@ -133,13 +134,40 @@ const useStyles = makeStyles(theme => {
       color: theme.palette.text.secondary
     },
 
-    // celular: painel que desce do topo
+    // celular: cabeçalho fixo e ações roláveis, sem mudar os outros painéis
+    sheetPaper: {
+      overflow: "hidden"
+    },
+    sheetHeader: {
+      padding: theme.spacing(1.5, 2, 1.5, 2.5),
+      "& .MuiIconButton-root": {
+        width: 40,
+        height: 40,
+        flex: "none",
+        borderRadius: tkv.radius.pill,
+        color: theme.palette.text.secondary
+      }
+    },
+    sheetTitle: {
+      fontSize: "1.0625rem",
+      fontWeight: 700,
+      lineHeight: 1.3,
+      overflowWrap: "anywhere"
+    },
+    sheetSubtitle: {
+      fontSize: "0.8125rem",
+      lineHeight: 1.4
+    },
+    sheetContent: {
+      padding: theme.spacing(0, 1.5, 1),
+      overscrollBehavior: "contain"
+    },
     sheetSection: {
       display: "flex",
       flexDirection: "column",
       "& + &": {
-        marginTop: 4,
-        paddingTop: 4,
+        marginTop: theme.spacing(1),
+        paddingTop: theme.spacing(1),
         borderTop: `1px solid ${tkv.border}`
       }
     },
@@ -147,16 +175,28 @@ const useStyles = makeStyles(theme => {
       justifyContent: "flex-start",
       gap: 14,
       width: "100%",
-      minHeight: 46,
-      padding: "0 10px",
+      flexShrink: 0,
+      minHeight: 48,
+      padding: theme.spacing(1.25, 1.5),
       borderRadius: tkv.radius.md,
       fontSize: "0.9375rem",
+      lineHeight: 1.4,
       fontWeight: 500,
       textAlign: "left",
       color: theme.palette.text.primary,
-      "&:active": { backgroundColor: tkv.surfaceHover },
-      "& $icon": { width: 22 },
-      "& $icon svg": { fontSize: 20 },
+      "&:active, &.Mui-focusVisible": { backgroundColor: tkv.surfaceHover },
+      "& $icon": { width: 24 },
+      "& $icon svg": { fontSize: 22 },
+      "& $label": {
+        whiteSpace: "normal",
+        overflowWrap: "anywhere"
+      },
+      "& $secondary": {
+        maxWidth: "40%",
+        marginLeft: 0,
+        whiteSpace: "normal",
+        textAlign: "right"
+      },
       // "Excluir" em vermelho também no painel (a cor acima venceria)
       "&$danger": { color: tkv.semantic.danger }
     },
@@ -217,6 +257,18 @@ const TicketContextMenu = ({
   }, [open]);
 
   useEffect(() => () => clearTimeout(hoverTimer.current), []);
+
+  useEffect(() => {
+    if (!open || !sheet) return undefined;
+    // Rolagem dentro do painel continua livre; só a janela fecha o overlay.
+    const close = () => onClose();
+    window.addEventListener("resize", close);
+    window.addEventListener("scroll", close);
+    return () => {
+      window.removeEventListener("resize", close);
+      window.removeEventListener("scroll", close);
+    };
+  }, [open, sheet, onClose]);
 
   useEffect(() => {
     if (view === "tags") {
@@ -705,7 +757,13 @@ const TicketContextMenu = ({
       <ButtonBase
         key={item.key}
         className={clsx(classes.sheetItem, { [classes.danger]: item.danger })}
-        onClick={() => (item.sub ? setView(item.sub) : run(item))}
+        aria-expanded={item.sub ? view === item.sub : undefined}
+        aria-pressed={typeof item.checked === "boolean" ? item.checked : undefined}
+        onClick={() => {
+          haptic("selection");
+          if (item.sub) setView(item.sub);
+          else run(item);
+        }}
       >
         {item.icon && <span className={classes.icon}>{item.icon}</span>}
         <span className={classes.label}>{item.label}</span>
@@ -731,6 +789,14 @@ const TicketContextMenu = ({
       anchor="top"
       open={open && !!sheet}
       onClose={closeAll}
+      classes={{
+        paper: classes.sheetPaper,
+        header: classes.sheetHeader,
+        title: classes.sheetTitle,
+        subtitle: classes.sheetSubtitle,
+        content: classes.sheetContent
+      }}
+      closeLabel={i18n.t("common.close")}
       title={formatWhatsappContactName(ticket.contact, ticket)}
       subtitle={`#${ticket.id} · ${
         ticket.queue?.name || i18n.t("ticketActions.noQueue")
@@ -738,7 +804,13 @@ const TicketContextMenu = ({
     >
       {view ? (
         <>
-          <ButtonBase className={classes.back} onClick={() => setView(null)}>
+          <ButtonBase
+            className={classes.back}
+            onClick={() => {
+              haptic("selection");
+              setView(null);
+            }}
+          >
             <ArrowBackRoundedIcon />
             {subTitle(view)}
           </ButtonBase>

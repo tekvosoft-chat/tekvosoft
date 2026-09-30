@@ -1,5 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
+import clsx from "clsx";
 import { makeStyles } from "@material-ui/core/styles";
 import SwipeableDrawer from "@material-ui/core/SwipeableDrawer";
 import Typography from "@material-ui/core/Typography";
@@ -97,13 +98,18 @@ const BottomSheet = ({
   subtitle,
   showClose = true,
   anchor = "bottom",
+  classes: sheetClasses = {},
+  closeLabel = "Fechar",
   children
 }) => {
   const classes = useStyles();
   const fromTop = anchor === "top";
   const grabber = (
-    <div className={classes.grabber} aria-hidden="true">
-      <div className={classes.grabberBar} />
+    <div
+      className={clsx(classes.grabber, sheetClasses.grabber)}
+      aria-hidden="true"
+    >
+      <div className={clsx(classes.grabberBar, sheetClasses.grabberBar)} />
     </div>
   );
 
@@ -118,38 +124,53 @@ const BottomSheet = ({
       // sobe um pouco mais devagar do que desce, como nos apps do celular
       transitionDuration={{ enter: 320, exit: 220 }}
       classes={{
-        paper: fromTop ? `${classes.paper} ${classes.paperTop}` : classes.paper
+        paper: clsx(
+          classes.paper,
+          fromTop && classes.paperTop,
+          sheetClasses.paper,
+          fromTop && sheetClasses.paperTop
+        )
       }}
       ModalProps={{
         keepMounted: true,
-        BackdropProps: { className: classes.backdrop }
+        BackdropProps: {
+          className: clsx(classes.backdrop, sheetClasses.backdrop)
+        }
       }}
     >
       {!fromTop && grabber}
 
       {(title || showClose) && (
-        <div className={classes.header}>
-          <div className={classes.titleBox}>
+        <div className={clsx(classes.header, sheetClasses.header)}>
+          <div className={clsx(classes.titleBox, sheetClasses.titleBox)}>
             {title && (
-              <Typography className={classes.title} component="h2">
+              <Typography
+                className={clsx(classes.title, sheetClasses.title)}
+                component="h2"
+              >
                 {title}
               </Typography>
             )}
             {subtitle && (
-              <Typography className={classes.subtitle} component="p">
+              <Typography
+                className={clsx(classes.subtitle, sheetClasses.subtitle)}
+                component="p"
+              >
                 {subtitle}
               </Typography>
             )}
           </div>
           {showClose && (
-            <IconButton onClick={onClose} size="small" aria-label="Fechar">
+            <IconButton onClick={onClose} size="small" aria-label={closeLabel}>
               <CloseRoundedIcon />
             </IconButton>
           )}
         </div>
       )}
 
-      <div className={classes.content}>{children}</div>
+      <div className={clsx(classes.content, sheetClasses.content)}>
+        {children}
+      </div>
       {fromTop && grabber}
     </SwipeableDrawer>
   );
@@ -162,7 +183,9 @@ BottomSheet.propTypes = {
   title: PropTypes.node,
   subtitle: PropTypes.node,
   showClose: PropTypes.bool,
-  anchor: PropTypes.oneOf(["bottom", "top"])
+  anchor: PropTypes.oneOf(["bottom", "top"]),
+  classes: PropTypes.object,
+  closeLabel: PropTypes.string
 };
 
 export default BottomSheet;
