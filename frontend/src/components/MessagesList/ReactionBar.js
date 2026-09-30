@@ -6,6 +6,7 @@ import Dialog from "@material-ui/core/Dialog";
 import InputBase from "@material-ui/core/InputBase";
 import useMediaQuery from "@material-ui/core/useMediaQuery";
 import AddRoundedIcon from "@material-ui/icons/AddRounded";
+import BottomSheet from "../ui/BottomSheet";
 import { i18n } from "../../translate/i18n";
 import EmojiTab from "../MessageInputCustom/EmojiTab";
 import { haptic } from "../../helpers/haptics";
@@ -114,7 +115,13 @@ const useStyles = makeStyles(theme => {
       maxWidth: "calc(100vw - 24px)",
       display: "flex",
       flexDirection: "column",
-      [theme.breakpoints.down("xs")]: { width: "100vw", maxWidth: "100vw" }
+      [theme.breakpoints.down("xs")]: {
+        width: "100%",
+        maxWidth: "100%",
+        height: "42vh",
+        minHeight: 220,
+        maxHeight: 400
+      }
     },
     pickerHead: {
       padding: "8px 10px",
@@ -238,6 +245,29 @@ const ReactionBar = ({
     onClose();
   };
 
+  const pickerContent = (
+    <div className={classes.pickerWrap}>
+      <div className={classes.pickerHead}>
+        <InputBase
+          autoFocus={!isPhone}
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder={i18n.t("expressions.searchEmoji")}
+          className={classes.pickerSearch}
+          inputProps={{ "aria-label": i18n.t("expressions.searchEmoji") }}
+        />
+      </div>
+      <EmojiTab
+        query={query}
+        onPick={({ native }) => {
+          setPickerOpen(false);
+          haptic("selection");
+          onPick(native);
+        }}
+      />
+    </div>
+  );
+
   return createPortal(
     <>
       {open && (
@@ -310,33 +340,23 @@ const ReactionBar = ({
           )}
         </div>
       )}
-      <Dialog
-        open={pickerOpen}
-        onClose={() => setPickerOpen(false)}
-        fullScreen={isPhone}
-        PaperProps={{ style: { borderRadius: isPhone ? 0 : 16 } }}
-      >
-        <div className={classes.pickerWrap}>
-          <div className={classes.pickerHead}>
-            <InputBase
-              autoFocus
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              placeholder={i18n.t("expressions.searchEmoji")}
-              className={classes.pickerSearch}
-              inputProps={{ "aria-label": i18n.t("expressions.searchEmoji") }}
-            />
-          </div>
-          <EmojiTab
-            query={query}
-            onPick={({ native }) => {
-              setPickerOpen(false);
-              haptic("selection");
-              onPick(native);
-            }}
-          />
-        </div>
-      </Dialog>
+      {isPhone ? (
+        <BottomSheet
+          open={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          showClose={false}
+        >
+          {pickerContent}
+        </BottomSheet>
+      ) : (
+        <Dialog
+          open={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          PaperProps={{ style: { borderRadius: 16 } }}
+        >
+          {pickerContent}
+        </Dialog>
+      )}
     </>,
     document.body
   );
