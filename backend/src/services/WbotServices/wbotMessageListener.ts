@@ -2347,7 +2347,7 @@ const wbotMessageListener = async (
       if (!messages) return;
 
       await Promise.all(messages.map(async (message: proto.IWebMessageInfo) => {
-        if (!message?.message) {
+        if (!message?.message || !message.key?.id) {
           logger.warn(
             { message },
             "wbotMessageListener: messages.upsert without supported content"
@@ -2365,19 +2365,18 @@ const wbotMessageListener = async (
 
         await messageMutex
           .runExclusive(async () => {
-            if (!message.key.fromMe) {
-              // O recibo é auxiliar: nem falha nem demora podem segurar o upsert.
-              // Mensagens do próprio celular não recebem recibo.
-              wbot.sendReceipts([message.key], undefined).catch(error =>
-                logger.warn({ error: error?.message }, "WhatsApp: receipt failed")
-              );
-            }
-
             const storedMessage = await Message.findOne({
               where: { id: message.key.id, companyId },
               attributes: ["id"]
             });
             if (storedMessage) return;
+
+            if (!message.key.fromMe) {
+              // O recibo não deve bloquear a gravação nem ser repetido em replay.
+              wbot.sendReceipts([message.key], undefined).catch(error =>
+                logger.warn({ error: error?.message }, "WhatsApp: receipt failed")
+              );
+            }
 
             if (await verifyRecentCampaign(message, companyId)) return;
             await handleMessage(message, wbot, companyId);

@@ -134,11 +134,25 @@ describe("ciclo de vida do WhatsApp", () => {
 
   it("reconecta uma queda de rede sem apagar as credenciais", async () => {
     const socket = await initWASocket(whatsapp);
+    expect(makeSocket.mock.calls[0][0].emitOwnEvents).toBe(true);
     await close(socket, 408);
     expect(socket.logout).not.toHaveBeenCalled();
     jest.advanceTimersByTime(120000);
     await flush();
     expect(StartWhatsAppSession).toHaveBeenCalledTimes(1);
+    expect(makeSocket).toHaveBeenCalledTimes(2);
+  });
+
+  it("tenta de novo se a primeira reconexão não criar um socket", async () => {
+    const socket = await initWASocket(whatsapp);
+    StartWhatsAppSession.mockResolvedValueOnce(undefined);
+    await close(socket, 408);
+    jest.advanceTimersByTime(2000);
+    await flush();
+    expect(StartWhatsAppSession).toHaveBeenCalledTimes(1);
+    jest.advanceTimersByTime(5000);
+    await flush();
+    expect(StartWhatsAppSession).toHaveBeenCalledTimes(2);
     expect(makeSocket).toHaveBeenCalledTimes(2);
   });
 

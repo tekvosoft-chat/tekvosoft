@@ -137,6 +137,7 @@ describe("recebimento do WhatsApp", () => {
     await Promise.all([upsert(first, [message("duplicate")]), upsert(second, [message("duplicate")])]);
     await upsert(second, [message("duplicate")], "append");
     expect(createMessage).toHaveBeenCalledTimes(1);
+    expect(first.sendReceipts.mock.calls.length + second.sendReceipts.mock.calls.length).toBe(1);
     expect(findTicket).toHaveBeenCalledTimes(1);
     expect(Message.findOne).toHaveBeenCalledWith({ where: { id: "duplicate", companyId: 2 }, attributes: ["id"] });
     expect(first.sendMessage).not.toHaveBeenCalled();

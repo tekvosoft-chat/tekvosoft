@@ -429,7 +429,9 @@ const createWASocket = async (
         wsocket = makeWASocket({
           logger: loggerBaileys,
           printQRInTerminal: false,
-          emitOwnEvents: false,
+          // Cópias de conversas iniciadas no WhatsApp oficial também precisam
+          // chegar ao messages.upsert, mesmo quando não há ticket aberto.
+          emitOwnEvents: true,
           markOnlineOnConnect: false,
           browser: [clientName, "Desktop", appVersion],
           auth: {
@@ -533,18 +535,28 @@ const createWASocket = async (
                     `Reconnecting ${name}`
                   );
                   if (sessions.some(session => session.id === id)) return;
-                  const timer = setTimeout(async () => {
+                  const schedule = (wait: number): void => {
+                    const timer = setTimeout(async () => {
                     if (reconnectTimers.get(id) !== timer) return;
                     reconnectTimers.delete(id);
                     try {
-                      await whatsapp.reload();
-                      await StartWhatsAppSession(whatsapp, whatsapp.companyId, true);
-                    } catch (error) {
-                      Sentry.captureException(error);
-                      logger.error({ error, whatsappId: id }, "WhatsApp: reconnect failed");
-                    }
-                  }, delay);
-                  reconnectTimers.set(id, timer);
+                        await whatsapp.reload();
+                        if (whatsapp.status === "DISCONNECTED") return;
+                        await StartWhatsAppSession(whatsapp, whatsapp.companyId, true);
+                      } catch (error) {
+                        Sentry.captureException(error);
+                        logger.error({ error, whatsappId: id }, "WhatsApp: reconnect failed");
+                      }
+                      // A inicialização registra a falha sem lançar; sem socket,
+                      // mantém a tentativa automática com espera progressiva.
+                      if (!sessions.some(session => session.id === id) &&
+                          whatsapp.status !== "DISCONNECTED") {
+                        schedule(reconnectDelay(id));
+                      }
+                    }, wait);
+                    reconnectTimers.set(id, timer);
+                  };
+                  schedule(delay);
                 });
               }
               return;
