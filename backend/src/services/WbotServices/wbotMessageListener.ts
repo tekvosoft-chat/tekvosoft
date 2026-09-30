@@ -99,6 +99,7 @@ const wbotMutex = new Mutex();
 const ackMutex = new Mutex();
 // Compartilhado entre sessões para proteger também upserts na reconexão.
 const messageMutexes = new Map<string, Mutex>();
+const listeningSockets = new WeakSet<Session>();
 
 const groupContactCache = new SimpleObjectCache(1000 * 30, logger);
 const outOfHoursCache = new SimpleObjectCache(1000 * 60 * 5, logger);
@@ -316,10 +317,14 @@ const getSenderMessage = (
 
 const getContactMessage = async (msg: WAMessage, wbot: Session) => {
   const isGroup = msg.key.remoteJid.includes("g.us");
-  const mainJid = isGroup
-    ? msg.key.remoteJid
-    : msg.key?.sender_pn || msg.key?.peer_recipient_pn || msg.key.remoteJid;
-  const numberJid = msg.key?.sender_pn || msg.key?.peer_recipient_pn;
+  // Na cópia enviada pelo celular, o contato é o destinatário, não o remetente.
+  const numberJid = msg.key.fromMe
+    ? msg.key?.peer_recipient_pn
+    : msg.key?.sender_pn;
+  const contactLid = msg.key.fromMe
+    ? msg.key?.peer_recipient_lid
+    : msg.key?.sender_lid;
+  const mainJid = isGroup ? msg.key.remoteJid : numberJid || msg.key.remoteJid;
   const rawNumber = mainJid.replace(/\D/g, "");
   return isGroup
     ? {
@@ -328,10 +333,9 @@ const getContactMessage = async (msg: WAMessage, wbot: Session) => {
       }
     : {
         id: mainJid,
-        lid:
-          msg.key?.sender_lid ||
-          msg.key?.peer_recipient_lid ||
-          (msg.key?.peer_recipient_pn ? msg.key.remoteJid : undefined),
+        lid: contactLid || (msg.key.remoteJid.endsWith("@lid")
+          ? msg.key.remoteJid
+          : undefined),
         jid: numberJid,
         name: msg.key.fromMe ? rawNumber : msg.pushName || msg.verifiedBizName
       };
@@ -1629,11 +1633,12 @@ const handleMessage = async (
   companyId: number,
   queueId?: number
 ): Promise<void> => {
-  if (!isValidMsg(msg)) return;
-
-  if (msg.message?.ephemeralMessage) {
-    msg.message = msg.message.ephemeralMessage.message;
+  // O WhatsApp oficial pode embrulhar inclusive texto em deviceSentMessage.
+  // Normaliza antes da validação, da leitura do corpo e da gravação.
+  while (msg.message?.deviceSentMessage?.message || msg.message?.ephemeralMessage?.message) {
+    msg.message = msg.message.deviceSentMessage?.message || msg.message.ephemeralMessage.message;
   }
+  if (!isValidMsg(msg)) return;
 
   try {
     let msgContact: IMe;
@@ -1662,14 +1667,8 @@ const handleMessage = async (
     if (msg.key.fromMe) {
       if (bodyMessage?.startsWith("\u200e")) return;
 
-      if (
-        !messageMedia &&
-        msgType !== "conversation" &&
-        msgType !== "extendedTextMessage" &&
-        msgType !== "vcard" &&
-        msgType !== "protocolMessage"
-      )
-        return;
+      // isValidMsg já valida os tipos; contatos e localização do celular
+      // também são mensagens válidas e precisam aparecer no atendimento.
       msgContact = await getContactMessage(msg, wbot);
     } else {
       msgContact = await getContactMessage(msg, wbot);
@@ -2336,6 +2335,8 @@ const wbotMessageListener = async (
   wbot: Session,
   companyId: number
 ): Promise<void> => {
+  if (listeningSockets.has(wbot)) return;
+  listeningSockets.add(wbot);
   try {
     wbot.ev.on("messages.upsert", async (messageUpsert: ImessageUpsert) => {
       logger.trace({ messageUpsert }, "wbotMessageListener: messages.upsert");
@@ -2365,9 +2366,9 @@ const wbotMessageListener = async (
         await messageMutex
           .runExclusive(async () => {
             if (!message.key.fromMe) {
-              // Confirmação de entrega é auxiliar: falhar nela não pode perder
-              // a mensagem. Mensagens do próprio celular não recebem recibo.
-              await wbot.sendReceipts([message.key], undefined).catch(error =>
+              // O recibo é auxiliar: nem falha nem demora podem segurar o upsert.
+              // Mensagens do próprio celular não recebem recibo.
+              wbot.sendReceipts([message.key], undefined).catch(error =>
                 logger.warn({ error: error?.message }, "WhatsApp: receipt failed")
               );
             }

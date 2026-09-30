@@ -1,7 +1,5 @@
 import { initWASocket } from "../../libs/wbot";
 import Whatsapp from "../../models/Whatsapp";
-import { wbotMessageListener } from "./wbotMessageListener";
-import wbotMonitor from "./wbotMonitor";
 import { logger } from "../../utils/logger";
 import { sendWhatsappUpdate } from "../WhatsappService/SocketSendWhatsappUpdate";
 
@@ -15,9 +13,7 @@ export const StartWhatsAppSession = async (
   sendWhatsappUpdate(whatsapp);
 
   try {
-    const wbot = await initWASocket(whatsapp, null, isRefresh);
-    wbotMessageListener(wbot, companyId);
-    wbotMonitor(wbot, whatsapp, companyId);
+    await initWASocket(whatsapp, null, isRefresh);
   } catch (err) {
     logger.error(err);
   }
